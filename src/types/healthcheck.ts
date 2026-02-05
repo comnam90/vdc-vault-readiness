@@ -38,8 +38,8 @@ export interface SecuritySummary {
 }
 
 export interface License {
-  Edition: string;
-  Status: string;
+  Edition: HealthcheckRowValue;
+  Status: HealthcheckRowValue;
   [key: string]: string | null | undefined;
 }
 

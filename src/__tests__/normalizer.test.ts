@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { normalizeHealthcheck } from "@/lib/normalizer";
-import type { ParsedHealthcheckSections } from "@/types/healthcheck";
+import type {
+  BackupServer,
+  JobInfo,
+  License,
+  ParsedHealthcheckSections,
+  SecuritySummary,
+} from "@/types/healthcheck";
 
 describe("normalizeHealthcheck", () => {
   it("converts boolean strings to booleans", () => {
@@ -697,6 +703,112 @@ describe("normalizeHealthcheck", () => {
       section: "jobInfo",
       rowIndex: 0,
       field: "JobName",
+    });
+  });
+
+  describe("null/undefined array elements", () => {
+    it("drops null elements in jobInfo and logs data error", () => {
+      const raw = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          null as unknown as JobInfo,
+          {
+            JobName: "Job B",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo2",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo).toHaveLength(1);
+      expect(result.jobInfo[0].JobName).toBe("Job B");
+      expect(result.dataErrors).toHaveLength(1);
+      expect(result.dataErrors[0]).toMatchObject({
+        level: "Data Error",
+        section: "jobInfo",
+        rowIndex: 0,
+        field: "_row",
+      });
+    });
+
+    it("drops undefined elements in backupServer and logs data error", () => {
+      const raw = {
+        backupServer: [
+          undefined as unknown as BackupServer,
+          { Version: "13.0.1.1071", Name: "ServerB" },
+        ],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.backupServer).toHaveLength(1);
+      expect(result.backupServer[0].Name).toBe("ServerB");
+      expect(result.dataErrors).toHaveLength(1);
+      expect(result.dataErrors[0]).toMatchObject({
+        level: "Data Error",
+        section: "backupServer",
+        rowIndex: 0,
+        field: "_row",
+      });
+    });
+
+    it("drops null elements in securitySummary and logs data error", () => {
+      const raw = {
+        backupServer: [],
+        securitySummary: [
+          null as unknown as SecuritySummary,
+          {
+            BackupFileEncryptionEnabled: "True",
+            ConfigBackupEncryptionEnabled: "False",
+          },
+        ],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.securitySummary).toHaveLength(1);
+      expect(result.securitySummary[0].BackupFileEncryptionEnabled).toBe(true);
+      expect(result.dataErrors).toHaveLength(1);
+      expect(result.dataErrors[0]).toMatchObject({
+        level: "Data Error",
+        section: "securitySummary",
+        rowIndex: 0,
+        field: "_row",
+      });
+    });
+
+    it("drops null elements in Licenses and logs data error", () => {
+      const raw = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [
+          null as unknown as License,
+          { Edition: "Enterprise", Status: "Active" },
+        ],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.Licenses).toHaveLength(1);
+      expect(result.Licenses[0].Edition).toBe("Enterprise");
+      expect(result.dataErrors).toHaveLength(1);
+      expect(result.dataErrors[0]).toMatchObject({
+        level: "Data Error",
+        section: "Licenses",
+        rowIndex: 0,
+        field: "_row",
+      });
     });
   });
 });

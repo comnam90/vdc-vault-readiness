@@ -14,7 +14,14 @@ export function normalizeHealthcheck(
   const dataErrors: DataError[] = [];
 
   const jobInfo = asArray(raw.jobInfo).flatMap((job, rowIndex) => {
-    const jobName = normalizeString(job.JobName);
+    if (!isRecord(job)) {
+      dataErrors.push(
+        buildError("jobInfo", rowIndex, "_row", "Invalid row: not an object"),
+      );
+      return [];
+    }
+
+    const jobName = normalizeString(job.JobName as string | null | undefined);
     if (!jobName) {
       dataErrors.push(
         buildError("jobInfo", rowIndex, "JobName", "Missing required JobName"),
@@ -22,7 +29,7 @@ export function normalizeHealthcheck(
       return [];
     }
 
-    const jobType = normalizeString(job.JobType);
+    const jobType = normalizeString(job.JobType as string | null | undefined);
     if (!jobType) {
       dataErrors.push(
         buildError("jobInfo", rowIndex, "JobType", "Missing required JobType"),
@@ -30,7 +37,7 @@ export function normalizeHealthcheck(
       return [];
     }
 
-    const repoName = normalizeString(job.RepoName);
+    const repoName = normalizeString(job.RepoName as string | null | undefined);
     if (!repoName) {
       dataErrors.push(
         buildError(
@@ -43,7 +50,7 @@ export function normalizeHealthcheck(
       return [];
     }
 
-    const encrypted = parseBoolean(job.Encrypted);
+    const encrypted = parseBoolean(job.Encrypted as string | null | undefined);
     if (encrypted === null) {
       dataErrors.push(
         buildError(
@@ -67,7 +74,21 @@ export function normalizeHealthcheck(
   });
 
   const backupServer = asArray(raw.backupServer).flatMap((server, rowIndex) => {
-    const version = normalizeString(server.Version);
+    if (!isRecord(server)) {
+      dataErrors.push(
+        buildError(
+          "backupServer",
+          rowIndex,
+          "_row",
+          "Invalid row: not an object",
+        ),
+      );
+      return [];
+    }
+
+    const version = normalizeString(
+      server.Version as string | null | undefined,
+    );
     if (!version) {
       dataErrors.push(
         buildError(
@@ -80,7 +101,7 @@ export function normalizeHealthcheck(
       return [];
     }
 
-    const name = normalizeString(server.Name);
+    const name = normalizeString(server.Name as string | null | undefined);
     if (!name) {
       dataErrors.push(
         buildError("backupServer", rowIndex, "Name", "Missing required Name"),
@@ -98,8 +119,20 @@ export function normalizeHealthcheck(
 
   const securitySummary = asArray(raw.securitySummary).flatMap(
     (summary, rowIndex) => {
+      if (!isRecord(summary)) {
+        dataErrors.push(
+          buildError(
+            "securitySummary",
+            rowIndex,
+            "_row",
+            "Invalid row: not an object",
+          ),
+        );
+        return [];
+      }
+
       const backupFileEncrypted = parseBoolean(
-        summary.BackupFileEncryptionEnabled,
+        summary.BackupFileEncryptionEnabled as string | null | undefined,
       );
       if (backupFileEncrypted === null) {
         dataErrors.push(
@@ -114,7 +147,7 @@ export function normalizeHealthcheck(
       }
 
       const configBackupEncrypted = parseBoolean(
-        summary.ConfigBackupEncryptionEnabled,
+        summary.ConfigBackupEncryptionEnabled as string | null | undefined,
       );
       if (configBackupEncrypted === null) {
         dataErrors.push(
@@ -138,7 +171,16 @@ export function normalizeHealthcheck(
   );
 
   const Licenses = asArray(raw.Licenses).flatMap((license, rowIndex) => {
-    const edition = normalizeString(license.Edition);
+    if (!isRecord(license)) {
+      dataErrors.push(
+        buildError("Licenses", rowIndex, "_row", "Invalid row: not an object"),
+      );
+      return [];
+    }
+
+    const edition = normalizeString(
+      license.Edition as string | null | undefined,
+    );
     if (!edition) {
       dataErrors.push(
         buildError("Licenses", rowIndex, "Edition", "Missing required Edition"),
@@ -146,7 +188,7 @@ export function normalizeHealthcheck(
       return [];
     }
 
-    const status = normalizeString(license.Status);
+    const status = normalizeString(license.Status as string | null | undefined);
     if (!status) {
       dataErrors.push(
         buildError("Licenses", rowIndex, "Status", "Missing required Status"),
@@ -214,4 +256,8 @@ function buildError(
     field,
     reason,
   };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
