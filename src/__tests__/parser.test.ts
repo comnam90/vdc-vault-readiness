@@ -69,7 +69,29 @@ describe("zipSection", () => {
 
       const result = zipSection(section);
 
-      expect(result).toEqual([{}]);
+      expect(result).toEqual([]);
+    });
+
+    it("should return empty array when Headers is null", () => {
+      const section = {
+        Headers: null as unknown as string[],
+        Rows: [["value1", "value2"]],
+      };
+
+      const result = zipSection(section);
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return empty array when Headers is undefined", () => {
+      const section = {
+        Headers: undefined as unknown as string[],
+        Rows: [["value1", "value2"]],
+      };
+
+      const result = zipSection(section);
+
+      expect(result).toEqual([]);
     });
 
     it("should return empty array when section is null", () => {
@@ -134,6 +156,33 @@ describe("zipSection", () => {
 
       expect(result[0].Enabled).toBe("True");
       expect(typeof result[0].Enabled).toBe("string");
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should handle empty string as header name", () => {
+      const section = {
+        Headers: ["Name", "", "Status"],
+        Rows: [["Job A", "middle", "Active"]],
+      };
+
+      const result = zipSection(section);
+
+      expect(result).toEqual([
+        { Name: "Job A", "": "middle", Status: "Active" },
+      ]);
+    });
+
+    it("should overwrite with later value when duplicate headers exist", () => {
+      const section = {
+        Headers: ["Name", "Name", "Status"],
+        Rows: [["First", "Second", "Active"]],
+      };
+
+      const result = zipSection(section);
+
+      // Later value overwrites earlier value for duplicate keys
+      expect(result).toEqual([{ Name: "Second", Status: "Active" }]);
     });
   });
 });

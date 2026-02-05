@@ -31,6 +31,10 @@ export function zipSection(
     return [];
   }
 
+  if (!Headers || Headers.length === 0) {
+    return [];
+  }
+
   return Rows.map((row) => {
     const obj: Record<string, string | null | undefined> = {};
 
