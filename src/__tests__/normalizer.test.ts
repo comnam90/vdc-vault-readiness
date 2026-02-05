@@ -281,8 +281,8 @@ describe("normalizeHealthcheck", () => {
       Licenses: [
         {
           Edition: "Enterprise",
-          Status: null as string | null,
-        } as any,
+          Status: "",
+        },
         {
           Edition: "Standard",
           Status: "Active",
@@ -310,9 +310,9 @@ describe("normalizeHealthcheck", () => {
       jobInfo: [],
       Licenses: [
         {
-          Edition: null as string | null,
+          Edition: "",
           Status: "Active",
-        } as any,
+        },
         {
           Edition: "Enterprise",
           Status: "Active",
@@ -330,6 +330,36 @@ describe("normalizeHealthcheck", () => {
       section: "Licenses",
       rowIndex: 0,
       field: "Edition",
+    });
+  });
+
+  it("drops securitySummary entry missing ConfigBackupEncryptionEnabled and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [
+        {
+          BackupFileEncryptionEnabled: "True",
+          ConfigBackupEncryptionEnabled: null as string | null,
+        },
+        {
+          BackupFileEncryptionEnabled: "False",
+          ConfigBackupEncryptionEnabled: "True",
+        },
+      ],
+      jobInfo: [],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.securitySummary).toHaveLength(1);
+    expect(result.securitySummary[0].BackupFileEncryptionEnabled).toBe(false);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "securitySummary",
+      rowIndex: 0,
+      field: "ConfigBackupEncryptionEnabled",
     });
   });
 });
