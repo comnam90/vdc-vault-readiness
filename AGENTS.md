@@ -8,9 +8,9 @@
 
 Client-side SPA validating Veeam VBR environments against VDC Vault requirements. Parses Healthcheck JSON locally, runs pre-flight checks. React 19 + Vite 7.3 + TypeScript 5.9 + Tailwind 4.1 + shadcn 3.8.
 
-## STATUS: SCAFFOLDED
+## STATUS: TDD READY
 
-Vite scaffold complete. App.tsx is default template (needs replacement). Empty directories ready: `src/components/`, `src/__tests__/`.
+Vite scaffold complete with Vitest configured. App.tsx is default template (needs replacement). Test infrastructure ready in `src/__tests__/`.
 
 ## STRUCTURE
 
@@ -20,7 +20,7 @@ Vite scaffold complete. App.tsx is default template (needs replacement). Empty d
 ├── VDCVAULT-CHEETSHEET.md        # Domain knowledge, Vault limitations
 ├── veeam-healthcheck.example.json # Sample input (1863 lines, 30 jobs)
 ├── package.json                  # Dependencies locked per PRD
-├── vite.config.ts                # React + Tailwind plugins, @ alias
+├── vite.config.ts                # React + Tailwind + Vitest config, @ alias
 ├── tsconfig.json                 # References app/node configs
 ├── eslint.config.js              # TS + React Hooks + React Refresh
 ├── components.json               # shadcn/ui config (new-york style)
@@ -30,7 +30,9 @@ Vite scaffold complete. App.tsx is default template (needs replacement). Empty d
     ├── index.css                 # Tailwind + shadcn theme vars
     ├── lib/utils.ts              # cn() class merger
     ├── components/               # Empty, ready
-    └── __tests__/                # Empty, TDD ready
+    └── __tests__/
+        ├── setup.ts              # jest-dom matchers
+        └── smoke.test.ts         # Setup verification (delete when real tests exist)
 ```
 
 ## WHERE TO LOOK
@@ -111,9 +113,10 @@ npm run dev          # Vite dev server (HMR)
 npm run build        # tsc -b && vite build
 npm run lint         # eslint .
 npm run preview      # Preview production build
+npm run test         # Vitest watch mode
+npm run test:run     # Single test run
+npm run test:coverage # With coverage report
 ```
-
-**Missing:** Test runner not yet installed. Add vitest when implementing TDD.
 
 ## ENGINEERING STANDARDS (NON-NEGOTIABLE)
 
@@ -150,7 +153,7 @@ Format: `type(scope): description`
 
 ## NEXT STEPS
 
-1. Install vitest + @testing-library/react
+1. ~~Install vitest + @testing-library/react~~ ✅ Done
 2. Create first failing test: `src/__tests__/parser.test.ts`
 3. Implement `zipSection()` in `src/lib/parser.ts`
 4. Replace App.tsx with Dashboard layout
