@@ -1,73 +1,123 @@
-# React + TypeScript + Vite
+# VDC Vault Readiness Analyzer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A client-side web application that validates whether a Veeam Backup & Replication (VBR) environment is ready to integrate with Veeam Data Cloud (VDC) Vault.
 
-Currently, two official plugins are available:
+Upload a Veeam Healthcheck JSON file and get instant pre-flight checks for encryption requirements, version compatibility, and workload support.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## React Compiler
+- **Local Processing**: All data stays in your browser. No uploads to external servers.
+- **Version Validation**: Checks VBR version meets 12.1.2+ requirement
+- **Encryption Audit**: Identifies unencrypted jobs that would block Vault integration
+- **Workload Analysis**: Flags unsupported workloads (AWS Backup, standalone agents)
+- **Actionable Results**: Clear pass/fail/warning indicators with remediation guidance
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+| Technology     | Version | Purpose           |
+| -------------- | ------- | ----------------- |
+| React          | 19.x    | UI framework      |
+| Vite           | 7.3.1   | Build tool        |
+| TypeScript     | 5.9.3   | Language          |
+| Tailwind CSS   | 4.1.18  | Styling           |
+| shadcn/ui      | 3.8.3   | Component library |
+| TanStack Table | 8.21.3  | Data grid         |
+| Recharts       | 3.7.0   | Visualization     |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Quick Start
 
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
+```bash
+# Install dependencies
+npm install
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+# Start development server
+npm run dev
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+# Run tests
+npm run test
+
+# Build for production
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Usage
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
+1. Export a Healthcheck JSON from your VBR environment
+2. Open the app in your browser
+3. Upload or drag-and-drop the JSON file
+4. Review the readiness report and address any blockers
 
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+## Validation Rules
+
+| Check             | Severity | Requirement                           |
+| ----------------- | -------- | ------------------------------------- |
+| VBR Version       | Blocker  | Must be 12.1.2 or higher              |
+| Job Encryption    | Blocker  | All jobs must have encryption enabled |
+| AWS Workloads     | Blocker  | Cannot target Vault directly          |
+| Config Encryption | Warning  | Global encryption should be enabled   |
+| Agent Jobs        | Warning  | Require Gateway Server configuration  |
+| Community Edition | Info     | SOBR limitations apply                |
+
+## Project Structure
+
 ```
+├── src/
+│   ├── components/      # React components
+│   ├── lib/             # Utilities and validation logic
+│   ├── types/           # TypeScript interfaces
+│   └── __tests__/       # Test files
+├── PRD.md               # Product requirements
+├── VDCVAULT-CHEETSHEET.md # Domain knowledge
+├── CONTRIBUTING.md      # Contribution guide
+└── AGENTS.md            # Engineering standards
+```
+
+## Documentation
+
+| Document                                           | Description                                |
+| -------------------------------------------------- | ------------------------------------------ |
+| [PRD.md](./PRD.md)                                 | Functional requirements and specifications |
+| [VDCVAULT-CHEETSHEET.md](./VDCVAULT-CHEETSHEET.md) | VDC Vault limitations and gotchas          |
+| [CONTRIBUTING.md](./CONTRIBUTING.md)               | How to contribute (humans & AI agents)     |
+| [AGENTS.md](./AGENTS.md)                           | Engineering standards and protocols        |
+
+## Development
+
+This project uses **Test-Driven Development**. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full workflow.
+
+```bash
+# Watch mode for development
+npm run test
+
+# Single test run
+npm run test:run
+
+# With coverage
+npm run test:coverage
+
+# Lint check
+npm run lint
+```
+
+## Deployment
+
+Built for static hosting on Cloudflare Pages. The production build outputs to `dist/`.
+
+```bash
+npm run build
+npm run preview  # Local preview of production build
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines covering:
+
+- Branch and commit conventions
+- TDD requirements
+- Code standards
+- Pull request process
+- AI agent protocols
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.

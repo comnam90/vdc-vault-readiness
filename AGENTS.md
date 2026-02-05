@@ -151,6 +151,57 @@ Format: `type(scope): description`
 - **DRY:** If logic repeats twice, extract to `src/lib/`.
 - **YAGNI:** No "future proofing" beyond current PRD.
 
+## AGENT CAPABILITIES (MANDATORY PROTOCOLS)
+
+### 1. Skill Loading (ALWAYS check before implementation)
+
+Before starting ANY non-trivial task, agents MUST evaluate applicable skills:
+
+| Task Type       | Required Skills                                   |
+| --------------- | ------------------------------------------------- |
+| New feature     | `brainstorming`, `test-driven-development`        |
+| Bug fix         | `systematic-debugging`, `test-driven-development` |
+| UI work         | `frontend-ui-ux`, `web-design-guidelines`         |
+| Completing work | `verification-before-completion`                  |
+| Git operations  | `git-master`                                      |
+
+**Protocol:** Use `/skill [skill-name]` or include in `delegate_task(load_skills=[...])` calls.
+
+### 2. External Verification (NEVER trust training data)
+
+This project uses **bleeding-edge versions**. Training data is stale.
+
+| Technology   | Verify Via                                                   | Trigger              |
+| ------------ | ------------------------------------------------------------ | -------------------- |
+| React 19     | `context7_query-docs(libraryId="/facebook/react")`           | Any React API usage  |
+| Vite 7.x     | `context7_query-docs(libraryId="/vitejs/vite")`              | Vite config, plugins |
+| Tailwind 4.x | `context7_query-docs(libraryId="/tailwindlabs/tailwindcss")` | New utility classes  |
+| shadcn/ui    | `context7_resolve-library-id` → `context7_query-docs`        | Component patterns   |
+| Vitest       | `context7_query-docs(libraryId="/vitest-dev/vitest")`        | Test setup, matchers |
+
+**Fallback:** If Context7 lacks coverage, use `websearch_web_search_exa` or `google_search`.
+
+**ANTI-PATTERN:** Implementing React 19, Tailwind 4, or Vite 7 patterns from memory → **BLOCKED**.
+
+### 3. Authority Hierarchy (Conflict Resolution)
+
+When instructions conflict, follow this precedence:
+
+1. **PRD.md** — Functional requirements (authoritative)
+2. **VDCVAULT-CHEETSHEET.md** — Domain constraints & red flags
+3. **package.json** — Locked versions (non-negotiable)
+4. **Official Docs (via Context7)** — API correctness
+5. **This file** — Conventions & quick reference
+
+### 4. Verification Checkpoint (Before "Done")
+
+No task is complete without:
+
+- [ ] `lsp_diagnostics` clean on changed files
+- [ ] `npm run test:run` passes (or note pre-existing failures)
+- [ ] `npm run build` succeeds
+- [ ] Context7 or web search confirms API usage is current
+
 ## NEXT STEPS
 
 1. ~~Install vitest + @testing-library/react~~ ✅ Done
