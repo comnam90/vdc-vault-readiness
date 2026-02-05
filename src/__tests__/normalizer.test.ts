@@ -128,7 +128,7 @@ describe("normalizeHealthcheck", () => {
     const raw: ParsedHealthcheckSections = {
       backupServer: [
         {
-          Version: null as string | null,
+          Version: null,
           Name: "ServerA",
         },
         {
@@ -159,7 +159,7 @@ describe("normalizeHealthcheck", () => {
       backupServer: [
         {
           Version: "13.0.1.1071",
-          Name: null as string | null,
+          Name: null,
         },
         {
           Version: "13.0.1.1071",
@@ -249,7 +249,7 @@ describe("normalizeHealthcheck", () => {
       backupServer: [],
       securitySummary: [
         {
-          BackupFileEncryptionEnabled: null as string | null,
+          BackupFileEncryptionEnabled: null,
           ConfigBackupEncryptionEnabled: "True",
         },
         {
@@ -339,7 +339,7 @@ describe("normalizeHealthcheck", () => {
       securitySummary: [
         {
           BackupFileEncryptionEnabled: "True",
-          ConfigBackupEncryptionEnabled: null as string | null,
+          ConfigBackupEncryptionEnabled: null,
         },
         {
           BackupFileEncryptionEnabled: "False",
