@@ -106,7 +106,7 @@ describe("normalizeHealthcheck", () => {
       ],
     };
 
-    const result = normalizeHealthcheck(raw as ParsedHealthcheckSections);
+    const result = normalizeHealthcheck(raw);
 
     expect(result).toEqual({
       backupServer: [],
