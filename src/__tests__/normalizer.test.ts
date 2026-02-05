@@ -414,4 +414,33 @@ describe("normalizeHealthcheck", () => {
       field: "Encrypted",
     });
   });
+
+  it("trims and lowercases jobInfo Encrypted boolean", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Job A",
+          JobType: "Backup",
+          Encrypted: " TRUE ",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "Job B",
+          JobType: "Backup",
+          Encrypted: " false ",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(2);
+    expect(result.jobInfo[0].Encrypted).toBe(true);
+    expect(result.jobInfo[1].Encrypted).toBe(false);
+    expect(result.dataErrors).toHaveLength(0);
+  });
 });
