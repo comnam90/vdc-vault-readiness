@@ -362,4 +362,56 @@ describe("normalizeHealthcheck", () => {
       field: "ConfigBackupEncryptionEnabled",
     });
   });
+
+  it("trims and lowercases boolean strings", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [
+        {
+          BackupFileEncryptionEnabled: " TRUE ",
+          ConfigBackupEncryptionEnabled: "false",
+        },
+      ],
+      jobInfo: [],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.securitySummary[0].BackupFileEncryptionEnabled).toBe(true);
+    expect(result.securitySummary[0].ConfigBackupEncryptionEnabled).toBe(false);
+  });
+
+  it("drops jobs with invalid boolean values", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Job A",
+          JobType: "Backup",
+          Encrypted: "yes",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "Job B",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(1);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "jobInfo",
+      rowIndex: 0,
+      field: "Encrypted",
+    });
+  });
 });
