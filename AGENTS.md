@@ -8,9 +8,9 @@
 
 Client-side SPA validating Veeam VBR environments against VDC Vault requirements. Parses Healthcheck JSON locally, runs pre-flight checks. React 19 + Vite 7.3 + TypeScript 5.9 + Tailwind 4.1 + shadcn 3.8.
 
-## STATUS: TDD READY
+## STATUS: PARSER COMPLETE
 
-Vite scaffold complete with Vitest configured. App.tsx is default template (needs replacement). Test infrastructure ready in `src/__tests__/`.
+Vite scaffold complete with Vitest configured. `zipSection()` utility implemented with full test coverage (17 tests). App.tsx is default template (needs replacement).
 
 ## STRUCTURE
 
@@ -28,11 +28,14 @@ Vite scaffold complete with Vitest configured. App.tsx is default template (need
     ├── main.tsx                  # React 19 entry (StrictMode)
     ├── App.tsx                   # ⚠️ Default template, replace
     ├── index.css                 # Tailwind + shadcn theme vars
-    ├── lib/utils.ts              # cn() class merger
+    ├── lib/
+    │   ├── utils.ts              # cn() class merger
+    │   └── parser.ts             # zipSection() Headers/Rows normalizer
     ├── components/               # Empty, ready
     └── __tests__/
         ├── setup.ts              # jest-dom matchers
-        └── smoke.test.ts         # Setup verification (delete when real tests exist)
+        ├── smoke.test.ts         # Setup verification
+        └── parser.test.ts        # zipSection tests (17 cases)
 ```
 
 ## WHERE TO LOOK
@@ -205,7 +208,7 @@ No task is complete without:
 ## NEXT STEPS
 
 1. ~~Install vitest + @testing-library/react~~ ✅ Done
-2. Create first failing test: `src/__tests__/parser.test.ts`
-3. Implement `zipSection()` in `src/lib/parser.ts`
+2. ~~Create first failing test: `src/__tests__/parser.test.ts`~~ ✅ Done
+3. ~~Implement `zipSection()` in `src/lib/parser.ts`~~ ✅ Done
 4. Replace App.tsx with Dashboard layout
 5. Build validation rules per PRD §4
