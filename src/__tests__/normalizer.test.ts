@@ -443,4 +443,208 @@ describe("normalizeHealthcheck", () => {
     expect(result.jobInfo[1].Encrypted).toBe(false);
     expect(result.dataErrors).toHaveLength(0);
   });
+
+  it("drops jobs missing required JobType and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Job A",
+          JobType: null,
+          Encrypted: "True",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "Job B",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(1);
+    expect(result.jobInfo[0].JobName).toBe("Job B");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "jobInfo",
+      rowIndex: 0,
+      field: "JobType",
+    });
+  });
+
+  it("drops jobs missing required RepoName and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Job A",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: null,
+        },
+        {
+          JobName: "Job B",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(1);
+    expect(result.jobInfo[0].JobName).toBe("Job B");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "jobInfo",
+      rowIndex: 0,
+      field: "RepoName",
+    });
+  });
+
+  it("drops jobs missing required Encrypted and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Job A",
+          JobType: "Backup",
+          Encrypted: null,
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "Job B",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(1);
+    expect(result.jobInfo[0].JobName).toBe("Job B");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "jobInfo",
+      rowIndex: 0,
+      field: "Encrypted",
+    });
+  });
+
+  it("drops jobs with blank JobType and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Job A",
+          JobType: "",
+          Encrypted: "True",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "Job B",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(1);
+    expect(result.jobInfo[0].JobName).toBe("Job B");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "jobInfo",
+      rowIndex: 0,
+      field: "JobType",
+    });
+  });
+
+  it("drops jobs with blank RepoName and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Job A",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "   ",
+        },
+        {
+          JobName: "Job B",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(1);
+    expect(result.jobInfo[0].JobName).toBe("Job B");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "jobInfo",
+      rowIndex: 0,
+      field: "RepoName",
+    });
+  });
+
+  it("drops jobs with blank Encrypted and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Job A",
+          JobType: "Backup",
+          Encrypted: "",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "Job B",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(1);
+    expect(result.jobInfo[0].JobName).toBe("Job B");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "jobInfo",
+      rowIndex: 0,
+      field: "Encrypted",
+    });
+  });
 });
