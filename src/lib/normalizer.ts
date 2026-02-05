@@ -13,7 +13,7 @@ export function normalizeHealthcheck(
 ): NormalizedDataset {
   const dataErrors: DataError[] = [];
 
-  const jobInfo = (raw.jobInfo ?? []).flatMap((job, rowIndex) => {
+  const jobInfo = asArray(raw.jobInfo).flatMap((job, rowIndex) => {
     const jobName = normalizeString(job.JobName);
     if (!jobName) {
       dataErrors.push(
@@ -66,7 +66,7 @@ export function normalizeHealthcheck(
     return [safeJob];
   });
 
-  const backupServer = (raw.backupServer ?? []).flatMap((server, rowIndex) => {
+  const backupServer = asArray(raw.backupServer).flatMap((server, rowIndex) => {
     const version = normalizeString(server.Version);
     if (!version) {
       dataErrors.push(
@@ -96,7 +96,7 @@ export function normalizeHealthcheck(
     return [safeServer];
   });
 
-  const securitySummary = (raw.securitySummary ?? []).flatMap(
+  const securitySummary = asArray(raw.securitySummary).flatMap(
     (summary, rowIndex) => {
       const backupFileEncrypted = parseBoolean(
         summary.BackupFileEncryptionEnabled,
@@ -137,7 +137,7 @@ export function normalizeHealthcheck(
     },
   );
 
-  const Licenses = (raw.Licenses ?? []).flatMap((license, rowIndex) => {
+  const Licenses = asArray(raw.Licenses).flatMap((license, rowIndex) => {
     const edition = normalizeString(license.Edition);
     if (!edition) {
       dataErrors.push(
@@ -195,6 +195,10 @@ function parseBoolean(value: string | null | undefined): boolean | null {
   }
 
   return null;
+}
+
+function asArray<T>(value: T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value : [];
 }
 
 function buildError(

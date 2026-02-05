@@ -124,6 +124,22 @@ describe("normalizeHealthcheck", () => {
     });
   });
 
+  it("defaults non-array sections to empty arrays", () => {
+    const raw: Partial<ParsedHealthcheckSections> = JSON.parse(
+      '{"jobInfo":{},"backupServer":"nope","securitySummary":0,"Licenses":{}}',
+    );
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result).toEqual({
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [],
+      Licenses: [],
+      dataErrors: [],
+    });
+  });
+
   it("drops backupServer entry missing Version field and logs data error", () => {
     const raw: ParsedHealthcheckSections = {
       backupServer: [
