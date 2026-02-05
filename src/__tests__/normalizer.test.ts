@@ -123,4 +123,213 @@ describe("normalizeHealthcheck", () => {
       dataErrors: [],
     });
   });
+
+  it("drops backupServer entry missing Version field and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [
+        {
+          Version: null as string | null,
+          Name: "ServerA",
+        },
+        {
+          Version: "13.0.1.1071",
+          Name: "ServerB",
+        },
+      ],
+      securitySummary: [],
+      jobInfo: [],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.backupServer).toHaveLength(1);
+    expect(result.backupServer[0].Name).toBe("ServerB");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "backupServer",
+      rowIndex: 0,
+      field: "Version",
+    });
+  });
+
+  it("drops backupServer entry missing Name field and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [
+        {
+          Version: "13.0.1.1071",
+          Name: null as string | null,
+        },
+        {
+          Version: "13.0.1.1071",
+          Name: "ServerB",
+        },
+      ],
+      securitySummary: [],
+      jobInfo: [],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.backupServer).toHaveLength(1);
+    expect(result.backupServer[0].Name).toBe("ServerB");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "backupServer",
+      rowIndex: 0,
+      field: "Name",
+    });
+  });
+
+  it("drops securitySummary entry with invalid BackupFileEncryptionEnabled and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [
+        {
+          BackupFileEncryptionEnabled: "InvalidValue",
+          ConfigBackupEncryptionEnabled: "True",
+        },
+        {
+          BackupFileEncryptionEnabled: "True",
+          ConfigBackupEncryptionEnabled: "False",
+        },
+      ],
+      jobInfo: [],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.securitySummary).toHaveLength(1);
+    expect(result.securitySummary[0].BackupFileEncryptionEnabled).toBe(true);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "securitySummary",
+      rowIndex: 0,
+      field: "BackupFileEncryptionEnabled",
+    });
+  });
+
+  it("drops securitySummary entry with invalid ConfigBackupEncryptionEnabled and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [
+        {
+          BackupFileEncryptionEnabled: "True",
+          ConfigBackupEncryptionEnabled: "MaybeTrue",
+        },
+        {
+          BackupFileEncryptionEnabled: "False",
+          ConfigBackupEncryptionEnabled: "True",
+        },
+      ],
+      jobInfo: [],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.securitySummary).toHaveLength(1);
+    expect(result.securitySummary[0].ConfigBackupEncryptionEnabled).toBe(true);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "securitySummary",
+      rowIndex: 0,
+      field: "ConfigBackupEncryptionEnabled",
+    });
+  });
+
+  it("drops securitySummary entry with missing BackupFileEncryptionEnabled and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [
+        {
+          BackupFileEncryptionEnabled: null as string | null,
+          ConfigBackupEncryptionEnabled: "True",
+        },
+        {
+          BackupFileEncryptionEnabled: "True",
+          ConfigBackupEncryptionEnabled: "False",
+        },
+      ],
+      jobInfo: [],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.securitySummary).toHaveLength(1);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "securitySummary",
+      rowIndex: 0,
+      field: "BackupFileEncryptionEnabled",
+    });
+  });
+
+  it("drops Licenses entry missing Status field and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [],
+      Licenses: [
+        {
+          Edition: "Enterprise",
+          Status: null as string | null,
+        } as any,
+        {
+          Edition: "Standard",
+          Status: "Active",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.Licenses).toHaveLength(1);
+    expect(result.Licenses[0].Edition).toBe("Standard");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "Licenses",
+      rowIndex: 0,
+      field: "Status",
+    });
+  });
+
+  it("drops Licenses entry missing Edition field and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [],
+      Licenses: [
+        {
+          Edition: null as string | null,
+          Status: "Active",
+        } as any,
+        {
+          Edition: "Enterprise",
+          Status: "Active",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.Licenses).toHaveLength(1);
+    expect(result.Licenses[0].Edition).toBe("Enterprise");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "Licenses",
+      rowIndex: 0,
+      field: "Edition",
+    });
+  });
 });
