@@ -476,6 +476,8 @@ describe("normalizeHealthcheck", () => {
       rowIndex: 0,
       field: "JobType",
     });
+    expect(result.dataErrors[0].reason).toBeTruthy();
+    expect(typeof result.dataErrors[0].reason).toBe("string");
   });
 
   it("drops jobs missing required RepoName and logs data error", () => {
@@ -645,6 +647,40 @@ describe("normalizeHealthcheck", () => {
       section: "jobInfo",
       rowIndex: 0,
       field: "Encrypted",
+    });
+  });
+
+  it("drops jobs with blank JobName and logs data error", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "Job B",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(1);
+    expect(result.jobInfo[0].JobName).toBe("Job B");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "jobInfo",
+      rowIndex: 0,
+      field: "JobName",
     });
   });
 });
