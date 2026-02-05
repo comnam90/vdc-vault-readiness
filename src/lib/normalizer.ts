@@ -9,7 +9,7 @@ import type {
 } from "@/types/domain";
 
 export function normalizeHealthcheck(
-  raw: ParsedHealthcheckSections,
+  raw: Partial<ParsedHealthcheckSections>,
 ): NormalizedDataset {
   const dataErrors: DataError[] = [];
 

@@ -93,4 +93,34 @@ describe("normalizeHealthcheck", () => {
       dataErrors: [],
     });
   });
+
+  it("handles missing sections by defaulting to empty arrays", () => {
+    const raw: Partial<ParsedHealthcheckSections> = {
+      jobInfo: [
+        {
+          JobName: "Job A",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "Repo1",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw as ParsedHealthcheckSections);
+
+    expect(result).toEqual({
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Job A",
+          JobType: "Backup",
+          Encrypted: true,
+          RepoName: "Repo1",
+        },
+      ],
+      Licenses: [],
+      dataErrors: [],
+    });
+  });
 });
