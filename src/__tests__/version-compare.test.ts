@@ -22,4 +22,29 @@ describe("isVersionAtLeast", () => {
     expect(isVersionAtLeast("13.0", "12.1.2")).toBe(true);
     expect(isVersionAtLeast("11.5", "12.1.2")).toBe(false);
   });
+
+  it("handles single number version", () => {
+    expect(isVersionAtLeast("12", "12.1.2")).toBe(false);
+    expect(isVersionAtLeast("13", "12.1.2")).toBe(true);
+  });
+
+  it("handles non-numeric characters in version parts", () => {
+    expect(isVersionAtLeast("12.a.2", "12.1.2")).toBe(false);
+    expect(isVersionAtLeast("12.1.b", "12.1.2")).toBe(false);
+    expect(isVersionAtLeast("abc.def.ghi", "12.1.2")).toBe(false);
+  });
+
+  it("handles empty string", () => {
+    expect(isVersionAtLeast("", "12.1.2")).toBe(false);
+  });
+
+  it("handles version with extra parts (4+ segments)", () => {
+    expect(isVersionAtLeast("12.1.2.100.200", "12.1.2")).toBe(true);
+    expect(isVersionAtLeast("12.1.1.500", "12.1.2")).toBe(false);
+  });
+
+  it("handles whitespace in version string", () => {
+    expect(isVersionAtLeast("12.1. 2", "12.1.2")).toBe(true);
+    expect(isVersionAtLeast(" 12.1.2", "12.1.2")).toBe(true);
+  });
 });
