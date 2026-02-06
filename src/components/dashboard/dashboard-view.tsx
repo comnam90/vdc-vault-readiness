@@ -29,9 +29,25 @@ export function DashboardView({
   validations,
   onReset,
 }: DashboardViewProps) {
-  const version = data.backupServer[0]?.Version ?? "Unknown";
+  const backupServers = data.backupServer ?? [];
+  const knownVersions = backupServers
+    .map((server) => server?.Version)
+    .filter((v): v is string => Boolean(v));
+
+  const version =
+    knownVersions.length > 0
+      ? knownVersions.reduce((oldest, current) =>
+          isVersionAtLeast(oldest, current) ? current : oldest,
+        )
+      : "Unknown";
+
   const versionOk =
-    version !== "Unknown" && isVersionAtLeast(version, MINIMUM_VBR_VERSION);
+    knownVersions.length > 0 &&
+    backupServers.every(
+      (server) =>
+        !!server?.Version &&
+        isVersionAtLeast(server.Version, MINIMUM_VBR_VERSION),
+    );
   const totalJobs = data.jobInfo.length;
   const hasFail = validations.some((v) => v.status === "fail");
   const hasBlockers = validations.some(
@@ -71,7 +87,7 @@ export function DashboardView({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {versionOk
                 ? `Meets ${MINIMUM_VBR_VERSION}+ requirement`
                 : `Requires ${MINIMUM_VBR_VERSION}+`}
@@ -85,7 +101,7 @@ export function DashboardView({
             <CardTitle className="text-xl">{totalJobs}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {data.jobInfo.filter((j) => j.Encrypted).length} encrypted,{" "}
               {data.jobInfo.filter((j) => !j.Encrypted).length} unencrypted
             </p>
@@ -98,7 +114,7 @@ export function DashboardView({
             <CardTitle className="flex items-center gap-2 text-xl">
               {hasFail ? (
                 <>
-                  <XCircle className="size-5 text-destructive" />
+                  <XCircle className="text-destructive size-5" />
                   <span className="text-destructive">Action Required</span>
                 </>
               ) : (
@@ -110,7 +126,7 @@ export function DashboardView({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {validations.filter((v) => v.status === "pass").length} of{" "}
               {validations.length} checks passed
             </p>
@@ -134,7 +150,7 @@ export function DashboardView({
                 <CheckCircle2 className="size-6 text-green-600" />
                 <div>
                   <p className="font-medium">All checks passed</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Your environment is ready for VDC Vault.
                   </p>
                 </div>
