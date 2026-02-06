@@ -1,0 +1,78 @@
+import { useCallback, useRef, useState } from "react";
+import { UploadCloud } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface FileUploadProps {
+  onFileSelected: (file: File) => void;
+}
+
+export function FileUpload({ onFileSelected }: FileUploadProps) {
+  const [isDragOver, setIsDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        onFileSelected(file);
+      }
+    },
+    [onFileSelected],
+  );
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setIsDragOver(false);
+  }, []);
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        onFileSelected(file);
+      }
+    },
+    [onFileSelected],
+  );
+
+  const handleClick = useCallback(() => {
+    inputRef.current?.click();
+  }, []);
+
+  return (
+    <div
+      data-testid="drop-zone"
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onClick={handleClick}
+      className={cn(
+        "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center transition-colors",
+        isDragOver
+          ? "border-primary bg-primary/5"
+          : "border-muted-foreground/25 hover:border-muted-foreground/50",
+      )}
+    >
+      <UploadCloud className="mb-4 size-12 text-muted-foreground" />
+      <p className="mb-1 text-lg font-medium">
+        Drop Veeam Healthcheck JSON here
+      </p>
+      <p className="text-sm text-muted-foreground">
+        or click to <span className="font-medium text-primary">browse</span>
+      </p>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".json"
+        onChange={handleChange}
+        className="hidden"
+      />
+    </div>
+  );
+}
