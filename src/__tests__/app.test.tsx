@@ -2,18 +2,21 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import App from "@/App";
 import type { AnalysisStatus } from "@/hooks/use-analysis";
+import type { NormalizedDataset } from "@/types/domain";
+import type { ValidationResult } from "@/types/validation";
 
 const mockAnalyzeFile = vi.fn();
 const mockReset = vi.fn();
 
 let mockStatus: AnalysisStatus = "idle";
 let mockError: string | null = null;
-let mockValidations: { ruleId: string }[] | null = null;
+let mockData: NormalizedDataset | null = null;
+let mockValidations: ValidationResult[] | null = null;
 
 vi.mock("@/hooks/use-analysis", () => ({
   useAnalysis: () => ({
     status: mockStatus,
-    data: null,
+    data: mockData,
     validations: mockValidations,
     error: mockError,
     analyzeFile: mockAnalyzeFile,
@@ -21,11 +24,48 @@ vi.mock("@/hooks/use-analysis", () => ({
   }),
 }));
 
+const MOCK_DATA: NormalizedDataset = {
+  backupServer: [{ Version: "13.0.1.1071", Name: "VBR-01" }],
+  securitySummary: [
+    { BackupFileEncryptionEnabled: true, ConfigBackupEncryptionEnabled: true },
+  ],
+  jobInfo: [
+    { JobName: "Job A", JobType: "VMware Backup", Encrypted: true, RepoName: "Repo" },
+  ],
+  Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
+  dataErrors: [],
+};
+
+const MOCK_VALIDATIONS: ValidationResult[] = [
+  {
+    ruleId: "vbr-version",
+    title: "VBR Version Compatibility",
+    status: "pass",
+    message: "All VBR servers meet the minimum version.",
+    affectedItems: [],
+  },
+  {
+    ruleId: "job-encryption",
+    title: "Job Encryption Audit",
+    status: "pass",
+    message: "All jobs encrypted.",
+    affectedItems: [],
+  },
+  {
+    ruleId: "global-encryption",
+    title: "Global Encryption Configuration",
+    status: "pass",
+    message: "Global encryption enabled.",
+    affectedItems: [],
+  },
+];
+
 describe("App", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockStatus = "idle";
     mockError = null;
+    mockData = null;
     mockValidations = null;
   });
 
@@ -48,7 +88,9 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByText(/invalid json: bad file/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /try again/i }),
+    ).toBeInTheDocument();
   });
 
   it("calls reset when Try Again button is clicked in error state", () => {
@@ -60,25 +102,25 @@ describe("App", () => {
     expect(mockReset).toHaveBeenCalledOnce();
   });
 
-  it("renders success state with validation count", () => {
+  it("renders DashboardView in success state", () => {
     mockStatus = "success";
-    mockValidations = [
-      { ruleId: "vbr-version" },
-      { ruleId: "global-encryption" },
-      { ruleId: "job-encryption" },
-    ];
+    mockData = MOCK_DATA;
+    mockValidations = MOCK_VALIDATIONS;
     render(<App />);
 
-    expect(screen.getByText(/analysis complete/i)).toBeInTheDocument();
-    expect(screen.getByText(/3 validation rules ran/i)).toBeInTheDocument();
+    // DashboardView renders the title, summary cards, and Scan Complete badge
+    expect(screen.getByText("VDC Vault Readiness")).toBeInTheDocument();
+    expect(screen.getByText("Scan Complete")).toBeInTheDocument();
+    expect(screen.getByText("13.0.1.1071")).toBeInTheDocument();
   });
 
-  it("calls reset when Upload Another button is clicked in success state", () => {
+  it("calls reset when Upload New button is clicked in success state", () => {
     mockStatus = "success";
-    mockValidations = [{ ruleId: "vbr-version" }];
+    mockData = MOCK_DATA;
+    mockValidations = MOCK_VALIDATIONS;
     render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: /upload another/i }));
+    fireEvent.click(screen.getByRole("button", { name: /upload new/i }));
     expect(mockReset).toHaveBeenCalledOnce();
   });
 

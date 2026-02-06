@@ -1,0 +1,99 @@
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { JobTable } from "@/components/dashboard/job-table";
+import type { SafeJob } from "@/types/domain";
+
+const MOCK_JOBS: SafeJob[] = [
+  { JobName: "VM Backup Daily", JobType: "VMware Backup", Encrypted: true, RepoName: "LinuxHardened" },
+  { JobName: "SQL Agent Backup", JobType: "Agent Backup", Encrypted: false, RepoName: "WinLocal" },
+  { JobName: "File Backup Weekly", JobType: "File Backup", Encrypted: true, RepoName: "VeeamVault" },
+  { JobName: "Tape Job", JobType: "Tape Backup", Encrypted: false, RepoName: "DDBoost" },
+  { JobName: "Replica Job", JobType: "VMware Replica", Encrypted: true, RepoName: "LinuxHardened" },
+];
+
+function createManyJobs(count: number): SafeJob[] {
+  return Array.from({ length: count }, (_, i) => ({
+    JobName: `Job ${String(i + 1).padStart(3, "0")}`,
+    JobType: "VMware Backup",
+    Encrypted: i % 2 === 0,
+    RepoName: "Repo",
+  }));
+}
+
+describe("JobTable", () => {
+  it("renders all job rows", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+
+    expect(screen.getByText("VM Backup Daily")).toBeInTheDocument();
+    expect(screen.getByText("SQL Agent Backup")).toBeInTheDocument();
+    expect(screen.getByText("File Backup Weekly")).toBeInTheDocument();
+  });
+
+  it("renders column headers", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+
+    expect(screen.getByText("Job Name")).toBeInTheDocument();
+    expect(screen.getByText("Type")).toBeInTheDocument();
+    expect(screen.getByText("Repository")).toBeInTheDocument();
+    expect(screen.getByText("Encrypted")).toBeInTheDocument();
+  });
+
+  it("shows encrypted badges correctly", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+
+    const yesBadges = screen.getAllByText("Yes");
+    const noBadges = screen.getAllByText("No");
+
+    expect(yesBadges.length).toBe(3);
+    expect(noBadges.length).toBe(2);
+  });
+
+  it("filters jobs by name using search input", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+
+    const searchInput = screen.getByPlaceholderText(/search jobs/i);
+    fireEvent.change(searchInput, { target: { value: "SQL" } });
+
+    expect(screen.getByText("SQL Agent Backup")).toBeInTheDocument();
+    expect(screen.queryByText("VM Backup Daily")).not.toBeInTheDocument();
+  });
+
+  it("shows empty state when filter matches nothing", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+
+    const searchInput = screen.getByPlaceholderText(/search jobs/i);
+    fireEvent.change(searchInput, { target: { value: "nonexistent" } });
+
+    expect(screen.getByText(/no jobs found/i)).toBeInTheDocument();
+  });
+
+  it("paginates when more than 10 rows", () => {
+    const manyJobs = createManyJobs(25);
+    render(<JobTable jobs={manyJobs} />);
+
+    // First page should show 10 rows
+    expect(screen.getByText("Job 001")).toBeInTheDocument();
+    expect(screen.getByText("Job 010")).toBeInTheDocument();
+    expect(screen.queryByText("Job 011")).not.toBeInTheDocument();
+
+    // Page info
+    expect(screen.getByText(/page 1 of 3/i)).toBeInTheDocument();
+  });
+
+  it("navigates to next page", () => {
+    const manyJobs = createManyJobs(25);
+    render(<JobTable jobs={manyJobs} />);
+
+    const nextButton = screen.getByRole("button", { name: /next/i });
+    fireEvent.click(nextButton);
+
+    expect(screen.getByText("Job 011")).toBeInTheDocument();
+    expect(screen.queryByText("Job 001")).not.toBeInTheDocument();
+    expect(screen.getByText(/page 2 of 3/i)).toBeInTheDocument();
+  });
+
+  it("renders empty table for no jobs", () => {
+    render(<JobTable jobs={[]} />);
+    expect(screen.getByText(/no jobs found/i)).toBeInTheDocument();
+  });
+});

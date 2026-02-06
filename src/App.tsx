@@ -1,11 +1,13 @@
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useAnalysis } from "@/hooks/use-analysis";
 import { FileUpload } from "@/components/dashboard/file-upload";
+import { DashboardView } from "@/components/dashboard/dashboard-view";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 function App() {
-  const { status, validations, error, analyzeFile, reset } = useAnalysis();
+  const { status, data, validations, error, analyzeFile, reset } =
+    useAnalysis();
 
   if (status === "processing") {
     return (
@@ -39,19 +41,9 @@ function App() {
     );
   }
 
-  if (status === "success") {
+  if (status === "success" && data && validations) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-8">
-        <div className="space-y-4 text-center">
-          <h2 className="text-2xl font-bold text-green-600">
-            Analysis Complete!
-          </h2>
-          <p className="text-muted-foreground">
-            {validations?.length} validation rules ran.
-          </p>
-          <Button onClick={reset}>Upload Another</Button>
-        </div>
-      </div>
+      <DashboardView data={data} validations={validations} onReset={reset} />
     );
   }
 
