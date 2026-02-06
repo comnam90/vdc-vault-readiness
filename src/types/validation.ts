@@ -1,4 +1,4 @@
-export type ValidationStatus = "pass" | "fail" | "warning";
+export type ValidationStatus = "pass" | "fail" | "warning" | "info";
 
 export interface ValidationResult {
   ruleId: string;
