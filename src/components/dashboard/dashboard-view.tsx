@@ -1,6 +1,7 @@
 import { CheckCircle2, XCircle, Upload } from "lucide-react";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
+import { MINIMUM_VBR_VERSION } from "@/lib/constants";
 import { isVersionAtLeast } from "@/lib/version-compare";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,20 +18,16 @@ import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
 import { cn } from "@/lib/utils";
 
-const MINIMUM_VBR_VERSION = "12.1.2";
-
 interface DashboardViewProps {
   data: NormalizedDataset;
   validations: ValidationResult[];
   onReset: () => void;
-  defaultTab?: string;
 }
 
 export function DashboardView({
   data,
   validations,
   onReset,
-  defaultTab = "overview",
 }: DashboardViewProps) {
   const version = data.backupServer[0]?.Version ?? "Unknown";
   const versionOk =
@@ -122,7 +119,7 @@ export function DashboardView({
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue={defaultTab}>
+      <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="jobs">Job Details</TabsTrigger>

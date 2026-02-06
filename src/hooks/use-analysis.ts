@@ -19,6 +19,10 @@ const INITIAL_STATE: AnalysisState = {
   error: null,
 };
 
+function errorState(error: string): AnalysisState {
+  return { status: "error", data: null, validations: null, error };
+}
+
 function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -34,6 +38,7 @@ export function useAnalysis() {
 
   const analyzeFile = useCallback(async (file: File) => {
     const currentRequestId = ++requestIdRef.current;
+    const isStale = () => requestIdRef.current !== currentRequestId;
 
     setState({
       status: "processing",
@@ -44,40 +49,35 @@ export function useAnalysis() {
 
     try {
       const text = await readFileAsText(file);
-
-      if (requestIdRef.current !== currentRequestId) return;
+      if (isStale()) return;
 
       let json: unknown;
       try {
         json = JSON.parse(text);
       } catch {
-        if (requestIdRef.current !== currentRequestId) return;
-        setState({
-          status: "error",
-          data: null,
-          validations: null,
-          error: "Invalid JSON: The file does not contain valid JSON. Please check the file and try again.",
-        });
+        if (isStale()) return;
+        setState(
+          errorState(
+            "Invalid JSON: The file does not contain valid JSON. Please check the file and try again.",
+          ),
+        );
         return;
       }
 
       if (typeof json !== "object" || json === null || !("Sections" in json)) {
-        if (requestIdRef.current !== currentRequestId) return;
-        setState({
-          status: "error",
-          data: null,
-          validations: null,
-          error:
+        if (isStale()) return;
+        setState(
+          errorState(
             "Invalid Veeam Healthcheck export: The uploaded JSON does not have the expected structure. Please upload a Veeam Healthcheck export file.",
-        });
+          ),
+        );
         return;
       }
 
       const result = analyzeHealthcheck(
         json as Parameters<typeof analyzeHealthcheck>[0],
       );
-
-      if (requestIdRef.current !== currentRequestId) return;
+      if (isStale()) return;
 
       setState({
         status: "success",
@@ -86,16 +86,10 @@ export function useAnalysis() {
         error: null,
       });
     } catch (err) {
-      if (requestIdRef.current !== currentRequestId) return;
-
+      if (isStale()) return;
       const message =
         err instanceof Error ? err.message : "An unexpected error occurred.";
-      setState({
-        status: "error",
-        data: null,
-        validations: null,
-        error: message,
-      });
+      setState(errorState(message));
     }
   }, []);
 

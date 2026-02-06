@@ -130,20 +130,6 @@ describe("DashboardView", () => {
     expect(screen.getByText("Job Encryption Audit")).toBeInTheDocument();
   });
 
-  it("renders job table in the Job Details tab", () => {
-    render(
-      <DashboardView
-        data={MOCK_DATA}
-        validations={MIXED_VALIDATIONS}
-        onReset={vi.fn()}
-        defaultTab="jobs"
-      />,
-    );
-
-    expect(screen.getByPlaceholderText(/search jobs/i)).toBeInTheDocument();
-    expect(screen.getByText("Job A")).toBeInTheDocument();
-  });
-
   it("shows Scan Complete badge in the header", () => {
     render(
       <DashboardView data={MOCK_DATA} validations={MIXED_VALIDATIONS} onReset={vi.fn()} />,
