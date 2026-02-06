@@ -13,6 +13,7 @@ export function validateHealthcheck(
     validateJobEncryption(data),
     validateAwsWorkload(data),
     validateAgentWorkload(data),
+    validateLicenseEdition(data),
   ];
 }
 
@@ -155,6 +156,32 @@ function validateAgentWorkload(data: NormalizedDataset): ValidationResult {
     title: "Agent Workload Configuration",
     status: "pass",
     message: "No agent workloads detected.",
+    affectedItems: [],
+  };
+}
+
+function validateLicenseEdition(data: NormalizedDataset): ValidationResult {
+  const affectedLicenses = data.Licenses.filter((license) => {
+    const edition = license.Edition.trim().toLowerCase();
+    return edition.includes("community") || edition.includes("free");
+  });
+
+  if (affectedLicenses.length > 0) {
+    return {
+      ruleId: "license-edition",
+      title: "License/Edition Notes",
+      status: "info",
+      message:
+        "Community Edition detected. Ensure you are aware of SOBR limitations when designing your Vault strategy.",
+      affectedItems: affectedLicenses.map((license) => license.Edition),
+    };
+  }
+
+  return {
+    ruleId: "license-edition",
+    title: "License/Edition Notes",
+    status: "pass",
+    message: "No Community or Free editions detected.",
     affectedItems: [],
   };
 }

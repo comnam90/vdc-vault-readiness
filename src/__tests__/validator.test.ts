@@ -538,8 +538,96 @@ describe("validateHealthcheck", () => {
     });
   });
 
+  describe("Rule 6: License/Edition Check", () => {
+    it("reports info when Community edition is detected", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [],
+        Licenses: [{ Edition: "Community", Status: "Active" }],
+        dataErrors: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const licenseCheck = results.find((r) => r.ruleId === "license-edition");
+
+      expect(licenseCheck).toBeDefined();
+      expect(licenseCheck?.status).toBe("info");
+      expect(licenseCheck?.title).toBe("License/Edition Notes");
+      expect(licenseCheck?.message).toContain("SOBR limitations");
+      expect(licenseCheck?.affectedItems).toContain("Community");
+    });
+
+    it("reports info when Free edition is detected", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [],
+        Licenses: [{ Edition: "Free", Status: "Active" }],
+        dataErrors: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const licenseCheck = results.find((r) => r.ruleId === "license-edition");
+
+      expect(licenseCheck?.status).toBe("info");
+      expect(licenseCheck?.affectedItems).toContain("Free");
+    });
+
+    it("passes when no Community or Free editions are present", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [],
+        Licenses: [{ Edition: "Enterprise", Status: "Active" }],
+        dataErrors: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const licenseCheck = results.find((r) => r.ruleId === "license-edition");
+
+      expect(licenseCheck?.status).toBe("pass");
+      expect(licenseCheck?.affectedItems).toHaveLength(0);
+    });
+
+    it("passes with empty Licenses array", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [],
+        Licenses: [],
+        dataErrors: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const licenseCheck = results.find((r) => r.ruleId === "license-edition");
+
+      expect(licenseCheck?.status).toBe("pass");
+    });
+  });
+
   describe("All Rules Integration", () => {
-    it("returns results for all 5 rules", () => {
+    it("returns results for all 6 rules", () => {
       const data: NormalizedDataset = {
         backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
         securitySummary: [
@@ -562,12 +650,13 @@ describe("validateHealthcheck", () => {
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(5);
+      expect(results).toHaveLength(6);
       expect(results.map((r) => r.ruleId)).toContain("vbr-version");
       expect(results.map((r) => r.ruleId)).toContain("global-encryption");
       expect(results.map((r) => r.ruleId)).toContain("job-encryption");
       expect(results.map((r) => r.ruleId)).toContain("aws-workload");
       expect(results.map((r) => r.ruleId)).toContain("agent-workload");
+      expect(results.map((r) => r.ruleId)).toContain("license-edition");
     });
 
     it("handles empty dataset gracefully", () => {
@@ -581,7 +670,7 @@ describe("validateHealthcheck", () => {
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(5);
+      expect(results).toHaveLength(6);
       // Version check should fail with empty backupServer
       const versionCheck = results.find((r) => r.ruleId === "vbr-version");
       expect(versionCheck?.status).toBe("fail");
