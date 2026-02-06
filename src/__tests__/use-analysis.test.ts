@@ -151,6 +151,33 @@ describe("useAnalysis", () => {
     expect(result.current.error).toMatch(/invalid json/i);
   });
 
+  it("rejects valid JSON that is not a Veeam Healthcheck export", async () => {
+    const { result } = renderHook(() => useAnalysis());
+
+    const cases = [
+      '"just a string"',
+      "42",
+      "[1, 2, 3]",
+      '{"notSections": true}',
+    ];
+
+    for (const content of cases) {
+      const file = createMockFile(content);
+      await act(async () => {
+        await result.current.analyzeFile(file);
+      });
+
+      expect(result.current.status).toBe("error");
+      expect(result.current.error).toMatch(/invalid veeam healthcheck export/i);
+      expect(mockAnalyzeHealthcheck).not.toHaveBeenCalled();
+
+      act(() => {
+        result.current.reset();
+      });
+      vi.clearAllMocks();
+    }
+  });
+
   it("discards a stale result when a second file is analyzed before the first finishes", async () => {
     // Both calls use the same mock result — the test verifies that only
     // the latest invocation commits state (the stale first call bails out

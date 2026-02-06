@@ -61,6 +61,18 @@ export function useAnalysis() {
         return;
       }
 
+      if (typeof json !== "object" || json === null || !("Sections" in json)) {
+        if (requestIdRef.current !== currentRequestId) return;
+        setState({
+          status: "error",
+          data: null,
+          validations: null,
+          error:
+            "Invalid Veeam Healthcheck export: The uploaded JSON does not have the expected structure. Please upload a Veeam Healthcheck export file.",
+        });
+        return;
+      }
+
       const result = analyzeHealthcheck(
         json as Parameters<typeof analyzeHealthcheck>[0],
       );
