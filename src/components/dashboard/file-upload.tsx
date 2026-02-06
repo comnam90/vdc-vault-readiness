@@ -37,6 +37,8 @@ export function FileUpload({ onFileSelected }: FileUploadProps) {
       if (file) {
         onFileSelected(file);
       }
+      // Clear the input so selecting the same file again will still trigger a change event
+      e.target.value = "";
     },
     [onFileSelected],
   );
@@ -72,12 +74,12 @@ export function FileUpload({ onFileSelected }: FileUploadProps) {
           : "border-muted-foreground/25 hover:border-muted-foreground/50",
       )}
     >
-      <UploadCloud className="mb-4 size-12 text-muted-foreground" />
+      <UploadCloud className="text-muted-foreground mb-4 size-12" />
       <p className="mb-1 text-lg font-medium">
         Drop Veeam Healthcheck JSON here
       </p>
-      <p className="text-sm text-muted-foreground">
-        or click to <span className="font-medium text-primary">browse</span>
+      <p className="text-muted-foreground text-sm">
+        or click to <span className="text-primary font-medium">browse</span>
       </p>
       <input
         ref={inputRef}
