@@ -1,4 +1,4 @@
-import type { ParsedHealthcheckSections } from "@/types/healthcheck";
+import type { NormalizerInput } from "@/types/healthcheck";
 import type {
   DataError,
   NormalizedDataset,
@@ -9,7 +9,7 @@ import type {
 } from "@/types/domain";
 
 export function normalizeHealthcheck(
-  raw: Partial<ParsedHealthcheckSections>,
+  raw: Partial<NormalizerInput>,
 ): NormalizedDataset {
   const dataErrors: DataError[] = [];
 
