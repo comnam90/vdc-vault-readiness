@@ -35,7 +35,8 @@ describe("JobTable", () => {
     expect(screen.getByText("Job Name")).toBeInTheDocument();
     expect(screen.getByText("Type")).toBeInTheDocument();
     expect(screen.getByText("Repository")).toBeInTheDocument();
-    expect(screen.getByText("Encrypted")).toBeInTheDocument();
+    // "Encrypted" appears in both the column header and sr-only status labels
+    expect(screen.getByRole("columnheader", { name: /encrypted/i })).toBeInTheDocument();
   });
 
   it("shows encrypted badges correctly", () => {
@@ -95,5 +96,22 @@ describe("JobTable", () => {
   it("renders empty table for no jobs", () => {
     render(<JobTable jobs={[]} />);
     expect(screen.getByText(/no jobs found/i)).toBeInTheDocument();
+  });
+
+  it("provides accessible labels for status icons", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+
+    const encryptedLabels = screen.getAllByText("Encrypted", { selector: ".sr-only" });
+    const notEncryptedLabels = screen.getAllByText("Not encrypted", { selector: ".sr-only" });
+
+    expect(encryptedLabels.length).toBe(3);
+    expect(notEncryptedLabels.length).toBe(2);
+  });
+
+  it("has an accessible Status column header", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+
+    expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(screen.getByText("Status")).toHaveClass("sr-only");
   });
 });

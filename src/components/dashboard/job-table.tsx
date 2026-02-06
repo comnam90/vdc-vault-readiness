@@ -28,12 +28,18 @@ const columnHelper = createColumnHelper<SafeJob>();
 const columns = [
   columnHelper.display({
     id: "status",
-    header: "",
+    header: () => <span className="sr-only">Status</span>,
     cell: ({ row }) =>
       row.original.Encrypted ? (
-        <CheckCircle2 className="size-4 text-green-600" />
+        <>
+          <CheckCircle2 className="size-4 text-green-600" aria-hidden="true" />
+          <span className="sr-only">Encrypted</span>
+        </>
       ) : (
-        <LockKeyhole className="size-4 text-destructive" />
+        <>
+          <LockKeyhole className="size-4 text-destructive" aria-hidden="true" />
+          <span className="sr-only">Not encrypted</span>
+        </>
       ),
     size: 40,
   }),
