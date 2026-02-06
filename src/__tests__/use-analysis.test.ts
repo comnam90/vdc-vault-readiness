@@ -150,4 +150,26 @@ describe("useAnalysis", () => {
     expect(result.current.status).toBe("error");
     expect(result.current.error).toMatch(/invalid json/i);
   });
+
+  it("discards a stale result when a second file is analyzed before the first finishes", async () => {
+    // Both calls use the same mock result — the test verifies that only
+    // the latest invocation commits state (the stale first call bails out
+    // at the requestId guard after its await, never reaching the pipeline).
+    const { result } = renderHook(() => useAnalysis());
+
+    const firstFile = createMockFile(VALID_JSON, "first.json");
+    const secondFile = createMockFile(VALID_JSON, "second.json");
+
+    await act(async () => {
+      const first = result.current.analyzeFile(firstFile);
+      const second = result.current.analyzeFile(secondFile);
+      await Promise.all([first, second]);
+    });
+
+    // Only one call should have reached the pipeline (the second one).
+    // The first is discarded by the requestId guard.
+    expect(mockAnalyzeHealthcheck).toHaveBeenCalledTimes(1);
+    expect(result.current.status).toBe("success");
+    expect(result.current.data).toEqual(MOCK_ANALYSIS_RESULT.data);
+  });
 });

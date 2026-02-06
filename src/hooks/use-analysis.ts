@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 import { analyzeHealthcheck } from "@/lib/pipeline";
@@ -30,8 +30,11 @@ function readFileAsText(file: File): Promise<string> {
 
 export function useAnalysis() {
   const [state, setState] = useState<AnalysisState>(INITIAL_STATE);
+  const requestIdRef = useRef(0);
 
   const analyzeFile = useCallback(async (file: File) => {
+    const currentRequestId = ++requestIdRef.current;
+
     setState({
       status: "processing",
       data: null,
@@ -42,10 +45,13 @@ export function useAnalysis() {
     try {
       const text = await readFileAsText(file);
 
+      if (requestIdRef.current !== currentRequestId) return;
+
       let json: unknown;
       try {
         json = JSON.parse(text);
       } catch {
+        if (requestIdRef.current !== currentRequestId) return;
         setState({
           status: "error",
           data: null,
@@ -55,7 +61,12 @@ export function useAnalysis() {
         return;
       }
 
-      const result = analyzeHealthcheck(json as Parameters<typeof analyzeHealthcheck>[0]);
+      const result = analyzeHealthcheck(
+        json as Parameters<typeof analyzeHealthcheck>[0],
+      );
+
+      if (requestIdRef.current !== currentRequestId) return;
+
       setState({
         status: "success",
         data: result.data,
@@ -63,6 +74,8 @@ export function useAnalysis() {
         error: null,
       });
     } catch (err) {
+      if (requestIdRef.current !== currentRequestId) return;
+
       const message =
         err instanceof Error ? err.message : "An unexpected error occurred.";
       setState({
@@ -75,6 +88,7 @@ export function useAnalysis() {
   }, []);
 
   const reset = useCallback(() => {
+    requestIdRef.current++;
     setState(INITIAL_STATE);
   }, []);
 
