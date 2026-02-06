@@ -9,7 +9,7 @@ import {
   createColumnHelper,
   type SortingState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, CheckCircle2, LockKeyhole } from "lucide-react";
+import { ArrowUpDown, LockKeyhole, LockKeyholeOpen } from "lucide-react";
 import type { SafeJob } from "@/types/domain";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,12 +32,15 @@ const columns = [
     cell: ({ row }) =>
       row.original.Encrypted ? (
         <>
-          <CheckCircle2 className="size-4 text-green-600" aria-hidden="true" />
+          <LockKeyhole className="size-4 text-green-600" aria-hidden="true" />
           <span className="sr-only">Encrypted</span>
         </>
       ) : (
         <>
-          <LockKeyhole className="size-4 text-destructive" aria-hidden="true" />
+          <LockKeyholeOpen
+            className="text-destructive size-4"
+            aria-hidden="true"
+          />
           <span className="sr-only">Not encrypted</span>
         </>
       ),
@@ -60,7 +63,10 @@ const columns = [
     header: "Encrypted",
     cell: (info) =>
       info.getValue() ? (
-        <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
+        <Badge
+          variant="outline"
+          className="border-green-200 bg-green-50 text-green-700"
+        >
           Yes
         </Badge>
       ) : (
@@ -118,11 +124,17 @@ export function JobTable({ jobs }: JobTableProps) {
                         className="flex items-center gap-1"
                         onClick={header.column.getToggleSortingHandler()}
                       >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                         <ArrowUpDown className="size-3" />
                       </button>
                     ) : (
-                      flexRender(header.column.columnDef.header, header.getContext())
+                      flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )
                     )}
                   </TableHead>
                 ))}
@@ -135,14 +147,20 @@ export function JobTable({ jobs }: JobTableProps) {
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-muted-foreground h-24 text-center"
+                >
                   No jobs found.
                 </TableCell>
               </TableRow>
@@ -152,8 +170,9 @@ export function JobTable({ jobs }: JobTableProps) {
       </div>
       {table.getPageCount() > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          <p className="text-muted-foreground text-sm">
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount()}
           </p>
           <div className="flex gap-2">
             <Button
