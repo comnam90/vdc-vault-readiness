@@ -76,4 +76,34 @@ describe("FileUpload", () => {
       screen.getByText(/browse/i),
     ).toBeInTheDocument();
   });
+
+  it("is keyboard-focusable with role=button", () => {
+    render(<FileUpload onFileSelected={vi.fn()} />);
+
+    const dropZone = screen.getByTestId("drop-zone");
+    expect(dropZone).toHaveAttribute("role", "button");
+    expect(dropZone).toHaveAttribute("tabindex", "0");
+  });
+
+  it("opens file dialog on Enter key", () => {
+    render(<FileUpload onFileSelected={vi.fn()} />);
+
+    const dropZone = screen.getByTestId("drop-zone");
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const clickSpy = vi.spyOn(input, "click");
+
+    fireEvent.keyDown(dropZone, { key: "Enter" });
+    expect(clickSpy).toHaveBeenCalled();
+  });
+
+  it("opens file dialog on Space key", () => {
+    render(<FileUpload onFileSelected={vi.fn()} />);
+
+    const dropZone = screen.getByTestId("drop-zone");
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const clickSpy = vi.spyOn(input, "click");
+
+    fireEvent.keyDown(dropZone, { key: " " });
+    expect(clickSpy).toHaveBeenCalled();
+  });
 });

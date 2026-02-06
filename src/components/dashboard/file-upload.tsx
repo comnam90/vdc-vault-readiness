@@ -45,13 +45,26 @@ export function FileUpload({ onFileSelected }: FileUploadProps) {
     inputRef.current?.click();
   }, []);
 
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        handleClick();
+      }
+    },
+    [handleClick],
+  );
+
   return (
     <div
       data-testid="drop-zone"
+      role="button"
+      tabIndex={0}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       className={cn(
         "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center transition-colors",
         isDragOver
