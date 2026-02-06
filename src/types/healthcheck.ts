@@ -25,16 +25,19 @@ export interface JobInfo {
   JobType: HealthcheckRowValue;
   Encrypted: HealthcheckRowValue;
   RepoName: HealthcheckRowValue;
+  [key: string]: HealthcheckRowValue;
 }
 
 export interface BackupServer {
   Version: HealthcheckRowValue;
   Name: HealthcheckRowValue;
+  [key: string]: HealthcheckRowValue;
 }
 
 export interface SecuritySummary {
   BackupFileEncryptionEnabled: HealthcheckRowValue;
   ConfigBackupEncryptionEnabled: HealthcheckRowValue;
+  [key: string]: HealthcheckRowValue;
 }
 
 export interface License {
@@ -53,3 +56,17 @@ export interface HealthcheckSectionMap {
 export type ParsedHealthcheckSections = {
   [K in keyof HealthcheckSectionMap]: HealthcheckSectionMap[K][];
 };
+
+/**
+ * Loose input type for the normalizer.
+ *
+ * Accepts both typed interfaces (from unit tests using BackupServer[] etc.)
+ * and raw Records (from zipSection output in the pipeline).
+ * The normalizer validates every field defensively, so this is safe.
+ */
+export interface NormalizerInput {
+  backupServer?: Record<string, HealthcheckRowValue>[];
+  securitySummary?: Record<string, HealthcheckRowValue>[];
+  jobInfo?: Record<string, HealthcheckRowValue>[];
+  Licenses?: Record<string, HealthcheckRowValue>[];
+}
