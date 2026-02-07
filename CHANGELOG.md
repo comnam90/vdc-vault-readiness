@@ -1,0 +1,29 @@
+# Changelog
+
+## 1.0.0 (2026-02-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* None - initial scaffolding
+
+### Features
+
+* **normalizer:** ensure validation only sees complete, typed healthcheck data ([8df6e1f](https://github.com/comnam90/vdc-vault-readiness/commit/8df6e1f225610fd76a5ae6bf5637a34b95d41bd2))
+* **parser:** add zipSection parser utility ([#1](https://github.com/comnam90/vdc-vault-readiness/issues/1)) ([4ad9ba0](https://github.com/comnam90/vdc-vault-readiness/commit/4ad9ba052b70252dc0a7b90bb9c6aa0b75aa9ba0))
+* **pipeline:** add orchestration function and integration tests ([#2](https://github.com/comnam90/vdc-vault-readiness/issues/2)) ([ae9fe5a](https://github.com/comnam90/vdc-vault-readiness/commit/ae9fe5a3912361031135dcb05063d7cf468f53ff))
+* scaffold React 19 + Vite 7.3 + TypeScript project ([7ca1c31](https://github.com/comnam90/vdc-vault-readiness/commit/7ca1c31ecc2de298f0506788e009ecbe8b669760))
+* **types:** add healthcheck section interfaces ([d67094c](https://github.com/comnam90/vdc-vault-readiness/commit/d67094c28e25699b73601edaefd6b0fc8bd57671))
+* **types:** allow info validation status ([392c136](https://github.com/comnam90/vdc-vault-readiness/commit/392c13602e4a2dcc68ab20555341efbeaa51abd4))
+* **ui:** add complete dashboard UI with file upload, analysis pipeline, and job explorer ([#3](https://github.com/comnam90/vdc-vault-readiness/issues/3)) ([4320d68](https://github.com/comnam90/vdc-vault-readiness/commit/4320d6829feb1eccda4ce40488856b205eafa36d))
+* **validation:** add version comparison utility ([d7d5214](https://github.com/comnam90/vdc-vault-readiness/commit/d7d5214f6989e5997343db9da03692076e75f23c))
+* **validation:** define ValidationResult output types ([c0cd1e8](https://github.com/comnam90/vdc-vault-readiness/commit/c0cd1e831041affe1358cb39031752510e0ed192))
+* **validation:** flag community/free editions for SOBR limits ([ab88b62](https://github.com/comnam90/vdc-vault-readiness/commit/ab88b6284a49e63f4e0c7e1cf499f5dc3f5186c6))
+* **validation:** implement validation engine with 5 rules ([2102520](https://github.com/comnam90/vdc-vault-readiness/commit/21025207151bfbbdb1d9a64dbdf6179bb87de0ea))
+
+
+### Bug Fixes
+
+* **normalizer:** allow missing sections to default ([d830147](https://github.com/comnam90/vdc-vault-readiness/commit/d83014724b747ef0c3c6750c95204146305bcd43))
+* **normalizer:** guard non-array sections ([67f6789](https://github.com/comnam90/vdc-vault-readiness/commit/67f67894b3987b95b779d0de27a65d0420cef62b))
+* **normalizer:** guard null/undefined array elements ([3e15572](https://github.com/comnam90/vdc-vault-readiness/commit/3e155723c26daf173786955a29f6cf1b83222c73))
