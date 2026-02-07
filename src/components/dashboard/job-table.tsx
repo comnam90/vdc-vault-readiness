@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { ArrowUpDown, LockKeyhole, LockKeyholeOpen } from "lucide-react";
 import type { SafeJob } from "@/types/domain";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,13 +33,13 @@ const columns = [
     cell: ({ row }) =>
       row.original.Encrypted ? (
         <>
-          <LockKeyhole className="size-4 text-green-600" aria-hidden="true" />
+          <LockKeyhole className="text-primary size-5" aria-hidden="true" />
           <span className="sr-only">Encrypted</span>
         </>
       ) : (
         <>
           <LockKeyholeOpen
-            className="text-destructive size-4"
+            className="text-destructive size-5"
             aria-hidden="true"
           />
           <span className="sr-only">Not encrypted</span>
@@ -65,12 +66,17 @@ const columns = [
       info.getValue() ? (
         <Badge
           variant="outline"
-          className="border-green-200 bg-green-50 text-green-700"
+          className="border-primary/30 bg-primary/5 text-primary"
         >
           Yes
         </Badge>
       ) : (
-        <Badge variant="destructive">No</Badge>
+        <Badge
+          variant="outline"
+          className="border-destructive/30 bg-destructive/5 text-destructive"
+        >
+          No
+        </Badge>
       ),
   }),
 ];
@@ -113,11 +119,14 @@ export function JobTable({ jobs }: JobTableProps) {
       />
       <div className="rounded-md border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted/50">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    className="text-muted-foreground text-xs font-semibold tracking-wide uppercase"
+                  >
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <button
                         type="button"
@@ -144,7 +153,13 @@ export function JobTable({ jobs }: JobTableProps) {
           <TableBody>
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className={cn(
+                    "hover:bg-muted/30 transition-colors",
+                    !row.original.Encrypted && "bg-destructive/5",
+                  )}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(

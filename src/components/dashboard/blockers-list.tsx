@@ -1,6 +1,6 @@
-import { AlertCircle, AlertTriangle } from "lucide-react";
+import { CircleX, TriangleAlert } from "lucide-react";
 import type { ValidationResult } from "@/types/validation";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface BlockersListProps {
@@ -26,37 +26,70 @@ export function BlockersList({ validations }: BlockersListProps) {
         const visibleItems = blocker.affectedItems.slice(0, MAX_VISIBLE_ITEMS);
 
         return (
-          <Alert
+          <div
             key={blocker.ruleId}
-            variant={isFail ? "destructive" : "default"}
+            role="alert"
             className={cn(
-              !isFail && "border-yellow-500 text-yellow-700",
+              "rounded-lg border-l-4 p-4",
+              isFail
+                ? "border-l-destructive/30 bg-destructive/5"
+                : "border-l-warning/30 bg-warning/5",
             )}
           >
-            {isFail ? (
-              <AlertCircle className="size-4" />
-            ) : (
-              <AlertTriangle className="size-4" />
-            )}
-            <AlertTitle data-testid="blocker-title">
-              {blocker.title}
-            </AlertTitle>
-            <AlertDescription>
-              <p>{blocker.message}</p>
-              {visibleItems.length > 0 && (
-                <ul className="mt-2 list-inside list-disc space-y-0.5">
-                  {visibleItems.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                  {remaining > 0 && (
-                    <li className="text-muted-foreground">
-                      and {remaining} more
-                    </li>
-                  )}
-                </ul>
+            <div className="flex items-start gap-3">
+              {isFail ? (
+                <CircleX
+                  className="text-destructive mt-0.5 size-5 shrink-0"
+                  aria-hidden="true"
+                />
+              ) : (
+                <TriangleAlert
+                  className="text-warning mt-0.5 size-5 shrink-0"
+                  aria-hidden="true"
+                />
               )}
-            </AlertDescription>
-          </Alert>
+              <div className="flex-1 space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <h3
+                    data-testid="blocker-title"
+                    className="text-sm font-bold tracking-wide uppercase"
+                  >
+                    {blocker.title}
+                  </h3>
+                  {isFail ? (
+                    <Badge
+                      variant="destructive"
+                      className="text-[10px] tracking-wider uppercase"
+                    >
+                      Blocker
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="border-warning text-warning text-[10px] tracking-wider uppercase"
+                    >
+                      Warning
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-muted-foreground text-sm">
+                  {blocker.message}
+                </p>
+                {visibleItems.length > 0 && (
+                  <ul className="mt-2 list-inside list-disc space-y-0.5 text-sm">
+                    {visibleItems.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                    {remaining > 0 && (
+                      <li className="text-muted-foreground">
+                        and {remaining} more
+                      </li>
+                    )}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
         );
       })}
     </div>

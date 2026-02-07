@@ -12,6 +12,8 @@ let mockStatus: AnalysisStatus = "idle";
 let mockError: string | null = null;
 let mockData: NormalizedDataset | null = null;
 let mockValidations: ValidationResult[] | null = null;
+let mockCompletedSteps: string[] = [];
+let mockCurrentStep: string | null = null;
 
 vi.mock("@/hooks/use-analysis", () => ({
   useAnalysis: () => ({
@@ -19,6 +21,8 @@ vi.mock("@/hooks/use-analysis", () => ({
     data: mockData,
     validations: mockValidations,
     error: mockError,
+    completedSteps: mockCompletedSteps,
+    currentStep: mockCurrentStep,
     analyzeFile: mockAnalyzeFile,
     reset: mockReset,
   }),
@@ -30,7 +34,12 @@ const MOCK_DATA: NormalizedDataset = {
     { BackupFileEncryptionEnabled: true, ConfigBackupEncryptionEnabled: true },
   ],
   jobInfo: [
-    { JobName: "Job A", JobType: "VMware Backup", Encrypted: true, RepoName: "Repo" },
+    {
+      JobName: "Job A",
+      JobType: "VMware Backup",
+      Encrypted: true,
+      RepoName: "Repo",
+    },
   ],
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
   dataErrors: [],
@@ -67,6 +76,8 @@ describe("App", () => {
     mockError = null;
     mockData = null;
     mockValidations = null;
+    mockCompletedSteps = [];
+    mockCurrentStep = null;
   });
 
   it("renders file upload in idle state", () => {
@@ -76,10 +87,12 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders loading state when processing", () => {
+  it("renders checklist loader when processing", () => {
     mockStatus = "processing";
+    mockCurrentStep = "parse";
     render(<App />);
-    expect(screen.getByText(/analyzing/i)).toBeInTheDocument();
+    expect(screen.getByTestId("checklist-loader")).toBeInTheDocument();
+    expect(screen.getByText("Parse healthcheck data...")).toBeInTheDocument();
   });
 
   it("renders error state with message and try again button", () => {
