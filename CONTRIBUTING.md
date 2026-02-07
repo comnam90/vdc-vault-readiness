@@ -47,24 +47,32 @@ npm run dev       # Start dev server
 
 ## Development Workflow
 
-### 1. Branch Strategy (Gitflow)
+### 1. Branch Strategy (GitHub Flow)
+
+We use **GitHub Flow**: short-lived feature branches off `main`, merged back via Pull Request.
 
 | Branch      | Purpose                              |
 | ----------- | ------------------------------------ |
-| `main`      | Production-ready code                |
-| `develop`   | Integration branch                   |
+| `main`      | Production-ready, always deployable  |
 | `feature/*` | New features (`feature/json-parser`) |
 | `fix/*`     | Bug fixes (`fix/encryption-check`)   |
 
 ```bash
 # Start new feature
-git checkout develop
-git pull origin develop
+git checkout main
+git pull origin main
 git checkout -b feature/your-feature-name
 
 # Start bug fix
+git checkout main
+git pull origin main
 git checkout -b fix/issue-description
 ```
+
+**Rules:**
+
+- All Pull Requests target `main`.
+- Delete branches after merging.
 
 ### 2. Test-Driven Development (Mandatory)
 
@@ -123,8 +131,8 @@ Format: `type(scope): description`
 
 | Type       | Use Case                                |
 | ---------- | --------------------------------------- |
-| `feat`     | New feature                             |
-| `fix`      | Bug fix                                 |
+| `feat`     | New feature (triggers minor release)    |
+| `fix`      | Bug fix (triggers patch release)        |
 | `test`     | Adding/updating tests                   |
 | `refactor` | Code restructuring (no behavior change) |
 | `docs`     | Documentation only                      |
@@ -139,9 +147,29 @@ test(rules): add coverage for AWS workload detection
 refactor(validator): extract version parsing to utility
 ```
 
-**Commitlint is configured** - commits not matching this format will be rejected.
+**Commitlint is enforced** via a `commit-msg` hook (powered by [husky](https://typicode.github.io/husky/)). Commits not matching the `type(scope): description` format will be rejected locally before they ever reach the remote.
 
-### 4. Pull Request Process
+The `pre-commit` hook also runs `lint-staged` to auto-format staged files with Prettier.
+
+### 4. Automated Releases (Release Please)
+
+This project uses [Release Please](https://github.com/googleapis/release-please) to automate versioning and changelogs.
+
+**How it works:**
+
+1. You merge a PR with `feat:` or `fix:` commits into `main`.
+2. Release Please automatically opens (or updates) a **Release PR** that bumps the version in `package.json` and updates `CHANGELOG.md`.
+3. When the Release PR is merged, a GitHub Release is created and tagged.
+
+**You don't need to manually bump versions or write changelogs.** Just write good commit messages.
+
+| Commit type                        | Release effect     |
+| ---------------------------------- | ------------------ |
+| `fix(scope): ...`                  | Patch version bump |
+| `feat(scope): ...`                 | Minor version bump |
+| `feat!: ...` or `BREAKING CHANGE:` | Major version bump |
+
+### 5. Pull Request Process
 
 1. **Ensure all checks pass:**
 
@@ -164,6 +192,8 @@ refactor(validator): extract version parsing to utility
    - All CI checks must pass
    - At least one approval required
    - No unresolved conversations
+
+5. **After merge:** Delete the feature branch. Release Please handles the rest.
 
 ---
 

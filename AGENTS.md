@@ -68,21 +68,21 @@ Full end-to-end pipeline operational: JSON upload → normalize → validate →
 
 ## WHERE TO LOOK
 
-| Need              | Location                       | Notes                                                                |
-| ----------------- | ------------------------------ | -------------------------------------------------------------------- |
-| Tech stack        | PRD.md §2                      | Strict versions: Vite 7.3.1, TS 5.9.3, Tailwind 4.1.18, shadcn 3.8.3 |
-| Validation rules  | PRD.md §4                      | 6 rules: VBR version, encryption, job audit, AWS, agents, license    |
-| UI spec           | PRD.md §5                      | Dashboard + Job Explorer table                                       |
-| Vault limitations | VDCVAULT-CHEETSHEET.md         | Red flags, edition diffs, workload matrix                            |
-| Architecture      | ARCHITECTURE.md                | Data flow, component hierarchy, design decisions                     |
-| Input format      | veeam-healthcheck.example.json | Headers/Rows → needs `zipSection()`                                  |
-| Domain types      | src/types/                     | healthcheck.ts (raw), domain.ts (normalized), validation.ts (results)|
-| Data pipeline     | src/lib/pipeline.ts            | Orchestrates normalize → validate flow                               |
-| Validation impl   | src/lib/validator.ts           | All 6 rules, imports MINIMUM_VBR_VERSION from constants              |
-| State management  | src/hooks/use-analysis.ts      | State machine hook with race condition guard                         |
-| Dashboard UI      | src/components/dashboard/      | 4 components: file-upload, dashboard-view, blockers-list, job-table  |
-| Path aliases      | tsconfig.json                  | `@/*` → `./src/*`                                                    |
-| Theme vars        | src/index.css                  | oklch colors, radius tokens                                          |
+| Need              | Location                       | Notes                                                                 |
+| ----------------- | ------------------------------ | --------------------------------------------------------------------- |
+| Tech stack        | PRD.md §2                      | Strict versions: Vite 7.3.1, TS 5.9.3, Tailwind 4.1.18, shadcn 3.8.3  |
+| Validation rules  | PRD.md §4                      | 6 rules: VBR version, encryption, job audit, AWS, agents, license     |
+| UI spec           | PRD.md §5                      | Dashboard + Job Explorer table                                        |
+| Vault limitations | VDCVAULT-CHEETSHEET.md         | Red flags, edition diffs, workload matrix                             |
+| Architecture      | ARCHITECTURE.md                | Data flow, component hierarchy, design decisions                      |
+| Input format      | veeam-healthcheck.example.json | Headers/Rows → needs `zipSection()`                                   |
+| Domain types      | src/types/                     | healthcheck.ts (raw), domain.ts (normalized), validation.ts (results) |
+| Data pipeline     | src/lib/pipeline.ts            | Orchestrates normalize → validate flow                                |
+| Validation impl   | src/lib/validator.ts           | All 6 rules, imports MINIMUM_VBR_VERSION from constants               |
+| State management  | src/hooks/use-analysis.ts      | State machine hook with race condition guard                          |
+| Dashboard UI      | src/components/dashboard/      | 4 components: file-upload, dashboard-view, blockers-list, job-table   |
+| Path aliases      | tsconfig.json                  | `@/*` → `./src/*`                                                     |
+| Theme vars        | src/index.css                  | oklch colors, radius tokens                                           |
 
 ## INPUT DATA FORMAT
 
@@ -171,12 +171,17 @@ Strict **Red-Green-Refactor** cycle:
 
 **Constraint:** No implementation code without corresponding failing test.
 
-### 2. Git Strategy (Gitflow)
+### 2. Git Strategy (GitHub Flow)
 
-- **main**: Production-ready
-- **develop**: Integration branch
-- **feature/**: New work (`feature/json-parser`)
-- **fix/**: Bug fixes (`fix/encryption-check`)
+- **main**: Production-ready, always deployable
+- **feature/**: New work (`feature/json-parser`), branched from `main`
+- **fix/**: Bug fixes (`fix/encryption-check`), branched from `main`
+
+**Rules:**
+
+- All Pull Requests target `main`.
+- Strict adherence to Conventional Commits (`feat:`, `fix:`) is required to trigger releases via Release Please.
+- Delete branches after merging.
 
 ### 3. Commit Strategy (Conventional Commits)
 
