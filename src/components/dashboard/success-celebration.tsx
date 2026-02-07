@@ -1,11 +1,15 @@
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface SuccessCelebrationProps {
   checksCount: number;
   onViewDetails: () => void;
 }
+
+const STAGGER_FADE =
+  "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards";
 
 export function SuccessCelebration({
   checksCount,
@@ -13,7 +17,7 @@ export function SuccessCelebration({
 }: SuccessCelebrationProps) {
   return (
     <Card
-      className="motion-safe:animate-in motion-safe:fade-in fill-mode-backwards text-center duration-500"
+      className={cn(STAGGER_FADE, "text-center duration-500")}
       role="status"
     >
       <CardContent className="flex flex-col items-center gap-4 py-8">
@@ -25,11 +29,21 @@ export function SuccessCelebration({
           <span className="sr-only">Validation successful</span>
         </div>
 
-        <h2 className="motion-safe:animate-in motion-safe:fade-in fill-mode-backwards text-2xl font-semibold delay-200 duration-300">
+        <h2
+          className={cn(
+            STAGGER_FADE,
+            "text-2xl font-semibold delay-200 duration-300",
+          )}
+        >
           All Systems Ready
         </h2>
 
-        <p className="motion-safe:animate-in motion-safe:fade-in fill-mode-backwards text-muted-foreground delay-300 duration-300">
+        <p
+          className={cn(
+            STAGGER_FADE,
+            "text-muted-foreground delay-300 duration-300",
+          )}
+        >
           Your Veeam environment is fully compatible with VDC Vault.
           <br />
           All {checksCount} validation checks passed successfully.

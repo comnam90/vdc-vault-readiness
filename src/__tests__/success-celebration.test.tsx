@@ -63,13 +63,6 @@ describe("SuccessCelebration", () => {
 
       expect(screen.getByText(/validation successful/i)).toBeInTheDocument();
     });
-
-    it("renders success checkmark icon", () => {
-      render(<SuccessCelebration checksCount={6} onViewDetails={vi.fn()} />);
-
-      // The checkmark should be accessible (aria-hidden with sr-only label)
-      expect(screen.getByText(/validation successful/i)).toBeInTheDocument();
-    });
   });
 
   describe("animation classes", () => {

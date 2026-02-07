@@ -5,43 +5,7 @@ import { BlockersList } from "@/components/dashboard/blockers-list";
 import { FileUpload } from "@/components/dashboard/file-upload";
 import { SuccessCelebration } from "@/components/dashboard/success-celebration";
 import { ChecklistLoader } from "@/components/dashboard/checklist-loader";
-import type { NormalizedDataset } from "@/types/domain";
-import type { ValidationResult } from "@/types/validation";
-
-const MOCK_DATA: NormalizedDataset = {
-  backupServer: [{ Version: "13.0.1.1071", Name: "VBR-01" }],
-  securitySummary: [
-    { BackupFileEncryptionEnabled: true, ConfigBackupEncryptionEnabled: true },
-  ],
-  jobInfo: [
-    {
-      JobName: "Job A",
-      JobType: "VMware Backup",
-      Encrypted: true,
-      RepoName: "LinuxHardened",
-    },
-  ],
-  Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
-  dataErrors: [],
-};
-
-const ALL_PASS_VALIDATIONS: ValidationResult[] = [
-  {
-    ruleId: "vbr-version",
-    title: "VBR Version Compatibility",
-    status: "pass",
-    message: "All VBR servers meet the minimum version.",
-    affectedItems: [],
-  },
-];
-
-const FAIL_RESULT: ValidationResult = {
-  ruleId: "job-encryption",
-  title: "Job Encryption Audit",
-  status: "fail",
-  message: "Unencrypted jobs detected.",
-  affectedItems: ["Job B"],
-};
+import { MOCK_DATA, ALL_PASS_VALIDATIONS, FAIL_RESULT } from "./fixtures";
 
 describe("prefers-reduced-motion accessibility", () => {
   describe("DashboardView", () => {
