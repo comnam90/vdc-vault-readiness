@@ -4,11 +4,36 @@ import { JobTable } from "@/components/dashboard/job-table";
 import type { SafeJob } from "@/types/domain";
 
 const MOCK_JOBS: SafeJob[] = [
-  { JobName: "VM Backup Daily", JobType: "VMware Backup", Encrypted: true, RepoName: "LinuxHardened" },
-  { JobName: "SQL Agent Backup", JobType: "Agent Backup", Encrypted: false, RepoName: "WinLocal" },
-  { JobName: "File Backup Weekly", JobType: "File Backup", Encrypted: true, RepoName: "VeeamVault" },
-  { JobName: "Tape Job", JobType: "Tape Backup", Encrypted: false, RepoName: "DDBoost" },
-  { JobName: "Replica Job", JobType: "VMware Replica", Encrypted: true, RepoName: "LinuxHardened" },
+  {
+    JobName: "VM Backup Daily",
+    JobType: "VMware Backup",
+    Encrypted: true,
+    RepoName: "LinuxHardened",
+  },
+  {
+    JobName: "SQL Agent Backup",
+    JobType: "Agent Backup",
+    Encrypted: false,
+    RepoName: "WinLocal",
+  },
+  {
+    JobName: "File Backup Weekly",
+    JobType: "File Backup",
+    Encrypted: true,
+    RepoName: "VeeamVault",
+  },
+  {
+    JobName: "Tape Job",
+    JobType: "Tape Backup",
+    Encrypted: false,
+    RepoName: "DDBoost",
+  },
+  {
+    JobName: "Replica Job",
+    JobType: "VMware Replica",
+    Encrypted: true,
+    RepoName: "LinuxHardened",
+  },
 ];
 
 function createManyJobs(count: number): SafeJob[] {
@@ -36,7 +61,9 @@ describe("JobTable", () => {
     expect(screen.getByText("Type")).toBeInTheDocument();
     expect(screen.getByText("Repository")).toBeInTheDocument();
     // "Encrypted" appears in both the column header and sr-only status labels
-    expect(screen.getByRole("columnheader", { name: /encrypted/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: /encrypted/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows encrypted badges correctly", () => {
@@ -101,8 +128,12 @@ describe("JobTable", () => {
   it("provides accessible labels for status icons", () => {
     render(<JobTable jobs={MOCK_JOBS} />);
 
-    const encryptedLabels = screen.getAllByText("Encrypted", { selector: ".sr-only" });
-    const notEncryptedLabels = screen.getAllByText("Not encrypted", { selector: ".sr-only" });
+    const encryptedLabels = screen.getAllByText("Encrypted", {
+      selector: ".sr-only",
+    });
+    const notEncryptedLabels = screen.getAllByText("Not encrypted", {
+      selector: ".sr-only",
+    });
 
     expect(encryptedLabels.length).toBe(3);
     expect(notEncryptedLabels.length).toBe(2);
@@ -113,5 +144,23 @@ describe("JobTable", () => {
 
     expect(screen.getByText("Status")).toBeInTheDocument();
     expect(screen.getByText("Status")).toHaveClass("sr-only");
+  });
+
+  it("highlights unencrypted job rows with destructive background", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+
+    // Find rows by job name, then check the parent row element
+    const sqlAgentCell = screen.getByText("SQL Agent Backup");
+    const sqlAgentRow = sqlAgentCell.closest("tr");
+    expect(sqlAgentRow).toHaveClass("bg-destructive/5");
+
+    const tapeJobCell = screen.getByText("Tape Job");
+    const tapeJobRow = tapeJobCell.closest("tr");
+    expect(tapeJobRow).toHaveClass("bg-destructive/5");
+
+    // Encrypted rows should NOT have destructive background
+    const vmBackupCell = screen.getByText("VM Backup Daily");
+    const vmBackupRow = vmBackupCell.closest("tr");
+    expect(vmBackupRow).not.toHaveClass("bg-destructive/5");
   });
 });

@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { ArrowUpDown, LockKeyhole, LockKeyholeOpen } from "lucide-react";
 import type { SafeJob } from "@/types/domain";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,7 +155,10 @@ export function JobTable({ jobs }: JobTableProps) {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="hover:bg-muted/30 transition-colors"
+                  className={cn(
+                    "hover:bg-muted/30 transition-colors",
+                    !row.original.Encrypted && "bg-destructive/5",
+                  )}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
