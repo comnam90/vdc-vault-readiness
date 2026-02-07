@@ -55,7 +55,7 @@ export function DashboardView({
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="animate-in fade-in slide-in-from-bottom-4 mx-auto max-w-5xl space-y-6 p-6 duration-500">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -76,7 +76,7 @@ export function DashboardView({
       <div className="grid gap-4 sm:grid-cols-3">
         <Card
           className={cn(
-            "border-b-2 shadow-sm transition-shadow hover:shadow-md",
+            "animate-in fade-in border-b-2 shadow-sm transition-shadow duration-300 hover:shadow-md",
             versionOk ? "border-b-primary" : "border-b-destructive",
           )}
         >
@@ -102,7 +102,7 @@ export function DashboardView({
           </CardContent>
         </Card>
 
-        <Card className="border-b-muted-foreground border-b-2 shadow-sm transition-shadow hover:shadow-md">
+        <Card className="animate-in fade-in border-b-muted-foreground border-b-2 shadow-sm transition-shadow delay-100 duration-300 hover:shadow-md">
           <CardHeader className="pb-2">
             <CardDescription className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
               Total Jobs
@@ -121,7 +121,7 @@ export function DashboardView({
 
         <Card
           className={cn(
-            "border-b-2 shadow-sm transition-shadow hover:shadow-md",
+            "animate-in fade-in border-b-2 shadow-sm transition-shadow delay-200 duration-300 hover:shadow-md",
             hasFail ? "border-b-destructive" : "border-b-primary",
           )}
         >

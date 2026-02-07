@@ -73,7 +73,7 @@ export function ChecklistLoader({
                 )}
                 <span
                   className={cn(
-                    "text-sm",
+                    "font-mono text-sm",
                     isCompleted && "text-foreground",
                     isCurrent && "text-foreground font-medium",
                     !isCompleted && !isCurrent && "text-muted-foreground",

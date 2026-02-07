@@ -30,9 +30,9 @@ export function BlockersList({ validations }: BlockersListProps) {
             key={blocker.ruleId}
             role="alert"
             className={cn(
-              "rounded-lg border-l-4 p-4",
+              "animate-in fade-in rounded-lg border-l-4 p-4 duration-300",
               isFail
-                ? "border-l-destructive/30 bg-destructive/5"
+                ? "border-l-destructive/30 bg-destructive/5 animate-pulse [animation-duration:600ms] [animation-iteration-count:1]"
                 : "border-l-warning/30 bg-warning/5",
             )}
           >

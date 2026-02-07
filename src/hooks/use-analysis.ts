@@ -24,7 +24,7 @@ const INITIAL_STATE: AnalysisState = {
   currentStep: null,
 };
 
-const DEFAULT_STEP_DELAY = 80;
+const DEFAULT_STEP_DELAY = 400;
 
 function errorState(error: string): AnalysisState {
   return {

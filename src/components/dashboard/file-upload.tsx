@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { UploadCloud } from "lucide-react";
+import { FileJson, UploadCloud } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FileUploadProps {
@@ -68,13 +68,34 @@ export function FileUpload({ onFileSelected }: FileUploadProps) {
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center transition-colors",
+        "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 p-12 text-center transition-all duration-150",
         isDragOver
-          ? "border-primary bg-primary/5"
-          : "border-muted-foreground/25 hover:border-muted-foreground/50",
+          ? "border-primary bg-primary/5 border-solid"
+          : "border-muted-foreground/40 hover:border-muted-foreground/60 border-dashed",
       )}
     >
-      <UploadCloud className="text-muted-foreground mb-4 size-12" />
+      {/* Layered icon composition */}
+      <div className="relative mb-4">
+        <FileJson
+          className={cn(
+            "size-14 transition-colors duration-150",
+            isDragOver ? "text-primary" : "text-muted-foreground/60",
+          )}
+        />
+        <div
+          className={cn(
+            "bg-background absolute -top-2 -right-2 rounded-full p-1 transition-transform duration-150",
+            isDragOver && "-translate-y-1",
+          )}
+        >
+          <UploadCloud
+            className={cn(
+              "size-5 transition-colors duration-150",
+              isDragOver ? "text-primary" : "text-muted-foreground",
+            )}
+          />
+        </div>
+      </div>
       <p className="mb-1 text-lg font-medium">
         Drop Veeam Healthcheck JSON here
       </p>
