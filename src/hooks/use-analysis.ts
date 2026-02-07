@@ -24,7 +24,7 @@ const INITIAL_STATE: AnalysisState = {
   currentStep: null,
 };
 
-const STEP_DELAY = 80;
+const DEFAULT_STEP_DELAY = 80;
 
 function errorState(error: string): AnalysisState {
   return {
@@ -46,91 +46,125 @@ function readFileAsText(file: File): Promise<string> {
   });
 }
 
-function tick(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, STEP_DELAY));
+function tick(ms: number, signal: AbortSignal): Promise<void> {
+  if (ms <= 0) return Promise.resolve();
+  return new Promise((resolve) => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+    const id = setTimeout(resolve, ms);
+    signal.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(id);
+        resolve();
+      },
+      { once: true },
+    );
+  });
 }
 
-export function useAnalysis() {
+interface UseAnalysisOptions {
+  stepDelay?: number;
+}
+
+export function useAnalysis({
+  stepDelay = DEFAULT_STEP_DELAY,
+}: UseAnalysisOptions = {}) {
   const [state, setState] = useState<AnalysisState>(INITIAL_STATE);
   const requestIdRef = useRef(0);
+  const abortRef = useRef<AbortController>(new AbortController());
 
-  const analyzeFile = useCallback(async (file: File) => {
-    const currentRequestId = ++requestIdRef.current;
-    const isStale = () => requestIdRef.current !== currentRequestId;
+  const analyzeFile = useCallback(
+    async (file: File) => {
+      abortRef.current.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    setState({
-      status: "processing",
-      data: null,
-      validations: null,
-      error: null,
-      completedSteps: [],
-      currentStep: PIPELINE_STEPS[0].id,
-    });
-
-    try {
-      const text = await readFileAsText(file);
-      if (isStale()) return;
-
-      let json: unknown;
-      try {
-        json = JSON.parse(text);
-      } catch {
-        if (isStale()) return;
-        setState(
-          errorState(
-            "Invalid JSON: The file does not contain valid JSON. Please check the file and try again.",
-          ),
-        );
-        return;
-      }
-
-      if (typeof json !== "object" || json === null || !("Sections" in json)) {
-        if (isStale()) return;
-        setState(
-          errorState(
-            "Invalid Veeam Healthcheck export: The uploaded JSON does not have the expected structure. Please upload a Veeam Healthcheck export file.",
-          ),
-        );
-        return;
-      }
-
-      const result = analyzeHealthcheck(
-        json as Parameters<typeof analyzeHealthcheck>[0],
-      );
-      if (isStale()) return;
-
-      // Parse step complete. Tick through validation steps.
-      for (let i = 1; i <= PIPELINE_STEPS.length; i++) {
-        const completed = PIPELINE_STEPS.slice(0, i).map((s) => s.id);
-        const next = i < PIPELINE_STEPS.length ? PIPELINE_STEPS[i].id : null;
-
-        setState((prev) => ({
-          ...prev,
-          completedSteps: completed,
-          currentStep: next,
-        }));
-
-        await tick();
-        if (isStale()) return;
-      }
+      const currentRequestId = ++requestIdRef.current;
+      const isStale = () => requestIdRef.current !== currentRequestId;
 
       setState({
-        status: "success",
-        data: result.data,
-        validations: result.validations,
+        status: "processing",
+        data: null,
+        validations: null,
         error: null,
-        completedSteps: PIPELINE_STEPS.map((s) => s.id),
-        currentStep: null,
+        completedSteps: [],
+        currentStep: PIPELINE_STEPS[0].id,
       });
-    } catch (err) {
-      if (isStale()) return;
-      const message =
-        err instanceof Error ? err.message : "An unexpected error occurred.";
-      setState(errorState(message));
-    }
-  }, []);
+
+      try {
+        const text = await readFileAsText(file);
+        if (isStale()) return;
+
+        let json: unknown;
+        try {
+          json = JSON.parse(text);
+        } catch {
+          if (isStale()) return;
+          setState(
+            errorState(
+              "Invalid JSON: The file does not contain valid JSON. Please check the file and try again.",
+            ),
+          );
+          return;
+        }
+
+        if (
+          typeof json !== "object" ||
+          json === null ||
+          !("Sections" in json)
+        ) {
+          if (isStale()) return;
+          setState(
+            errorState(
+              "Invalid Veeam Healthcheck export: The uploaded JSON does not have the expected structure. Please upload a Veeam Healthcheck export file.",
+            ),
+          );
+          return;
+        }
+
+        const result = analyzeHealthcheck(
+          json as Parameters<typeof analyzeHealthcheck>[0],
+        );
+        if (isStale()) return;
+
+        // Parse step complete. Tick through validation steps.
+        for (let i = 1; i <= PIPELINE_STEPS.length; i++) {
+          const completed = PIPELINE_STEPS.slice(0, i).map((s) => s.id);
+          const next = i < PIPELINE_STEPS.length ? PIPELINE_STEPS[i].id : null;
+
+          setState((prev) => ({
+            ...prev,
+            completedSteps: completed,
+            currentStep: next,
+          }));
+
+          await tick(stepDelay, controller.signal);
+          if (isStale()) return;
+        }
+
+        setState({
+          status: "success",
+          data: result.data,
+          validations: result.validations,
+          error: null,
+          completedSteps: PIPELINE_STEPS.map((s) => s.id),
+          currentStep: null,
+        });
+      } catch (err) {
+        if (isStale()) return;
+        const message =
+          err instanceof Error ? err.message : "An unexpected error occurred.";
+        setState(errorState(message));
+      }
+    },
+    [stepDelay],
+  );
 
   const reset = useCallback(() => {
+    abortRef.current.abort();
     requestIdRef.current++;
     setState(INITIAL_STATE);
   }, []);

@@ -50,7 +50,7 @@ describe("useAnalysis", () => {
   });
 
   it("starts in idle state", () => {
-    const { result } = renderHook(() => useAnalysis());
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
 
     expect(result.current.status).toBe("idle");
     expect(result.current.data).toBeNull();
@@ -61,7 +61,7 @@ describe("useAnalysis", () => {
   });
 
   it("transitions to processing when analyzeFile is called", async () => {
-    const { result } = renderHook(() => useAnalysis());
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
     const file = createMockFile(VALID_JSON);
 
     // We can't easily capture the intermediate 'processing' state
@@ -75,7 +75,7 @@ describe("useAnalysis", () => {
   });
 
   it("sets success state with data and validations on valid JSON", async () => {
-    const { result } = renderHook(() => useAnalysis());
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
     const file = createMockFile(VALID_JSON);
 
     await act(async () => {
@@ -92,7 +92,7 @@ describe("useAnalysis", () => {
   });
 
   it("completes all pipeline steps on success", async () => {
-    const { result } = renderHook(() => useAnalysis());
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
     const file = createMockFile(VALID_JSON);
 
     await act(async () => {
@@ -106,7 +106,7 @@ describe("useAnalysis", () => {
   });
 
   it("sets error state on invalid JSON", async () => {
-    const { result } = renderHook(() => useAnalysis());
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
     const file = createMockFile("not valid json {{{");
 
     await act(async () => {
@@ -124,7 +124,7 @@ describe("useAnalysis", () => {
       throw new Error("Missing Sections key");
     });
 
-    const { result } = renderHook(() => useAnalysis());
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
     const file = createMockFile(VALID_JSON);
 
     await act(async () => {
@@ -138,7 +138,7 @@ describe("useAnalysis", () => {
   });
 
   it("resets to idle state", async () => {
-    const { result } = renderHook(() => useAnalysis());
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
     const file = createMockFile(VALID_JSON);
 
     await act(async () => {
@@ -159,7 +159,7 @@ describe("useAnalysis", () => {
   });
 
   it("handles empty file", async () => {
-    const { result } = renderHook(() => useAnalysis());
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
     const file = createMockFile("");
 
     await act(async () => {
@@ -171,7 +171,7 @@ describe("useAnalysis", () => {
   });
 
   it("rejects valid JSON that is not a Veeam Healthcheck export", async () => {
-    const { result } = renderHook(() => useAnalysis());
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
 
     const cases = [
       '"just a string"',
@@ -201,7 +201,7 @@ describe("useAnalysis", () => {
     // Both calls use the same mock result — the test verifies that only
     // the latest invocation commits state (the stale first call bails out
     // at the requestId guard after its await, never reaching the pipeline).
-    const { result } = renderHook(() => useAnalysis());
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
 
     const firstFile = createMockFile(VALID_JSON, "first.json");
     const secondFile = createMockFile(VALID_JSON, "second.json");
