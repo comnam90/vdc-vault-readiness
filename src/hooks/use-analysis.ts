@@ -53,15 +53,18 @@ function tick(ms: number, signal: AbortSignal): Promise<void> {
       resolve();
       return;
     }
-    const id = setTimeout(resolve, ms);
-    signal.addEventListener(
-      "abort",
-      () => {
-        clearTimeout(id);
-        resolve();
-      },
-      { once: true },
-    );
+
+    const onAbort = () => {
+      clearTimeout(id);
+      resolve();
+    };
+
+    const id = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+
+    signal.addEventListener("abort", onAbort, { once: true });
   });
 }
 
