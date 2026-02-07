@@ -60,4 +60,12 @@ describe("ChecklistLoader", () => {
     render(<ChecklistLoader completedSteps={[]} currentStep="parse" />);
     expect(screen.getByTestId("checklist-loader")).toBeInTheDocument();
   });
+
+  it("applies entrance animation to container", () => {
+    render(<ChecklistLoader completedSteps={[]} currentStep="parse" />);
+
+    const container = screen.getByTestId("checklist-loader");
+    expect(container.className).toMatch(/animate-in/);
+    expect(container.className).toMatch(/fade-in/);
+  });
 });

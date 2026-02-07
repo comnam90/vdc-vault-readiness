@@ -221,6 +221,23 @@ describe("DashboardView", () => {
     expect(screen.getByText("Scan Complete")).toBeInTheDocument();
   });
 
+  it("staggers summary cards with 50ms delay per spec", () => {
+    const { container } = render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    const cards = container.querySelectorAll("[data-slot='card']");
+    expect(cards.length).toBe(3);
+    // First card: no delay, second: delay-50, third: delay-100
+    expect(cards[0].className).not.toMatch(/delay-/);
+    expect(cards[1].className).toMatch(/delay-50/);
+    expect(cards[2].className).toMatch(/delay-100/);
+  });
+
   describe("multiple backup servers", () => {
     it("displays oldest version when multiple servers have mixed versions", () => {
       render(

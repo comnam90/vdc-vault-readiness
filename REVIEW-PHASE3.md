@@ -5,20 +5,20 @@
 
 ## Build & Test Status (post-fixes)
 
-- **Tests:** 167/167 pass (14 test files — 6 new `delay.test.ts` tests)
+- **Tests:** 176/176 pass (14 test files)
 - **Build:** `tsc -b && vite build` succeeds cleanly
 - **Lint:** 0 errors, 1 pre-existing warning (TanStack `useReactTable` memoization)
 
 ## Sprint 3 Acceptance Criteria
 
-| Criterion                                   | Status         | Notes                                                                                                                                                 |
-| ------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Page elements animate on entrance           | **Partial**    | Dashboard + cards stagger correctly. Blockers lack per-item stagger (spec: 100ms each).                                                               |
-| File upload drag/hover feedback             | **Done**       | Layered icon composition, border solid/dashed toggle, color transitions on drag.                                                                      |
-| Success state feels like achievement        | **Missing**    | Spec §5.5 calls for checkmark draw + scale pulse + staggered text. No success animation added.                                                        |
-| Animations respect `prefers-reduced-motion` | **Missing**    | No `motion-reduce:` / `motion-safe:` Tailwind classes or `@media` rules. Design Decision #7 says "Add Later" but Acceptance Criterion #8 requires it. |
-| Dark mode polished and usable               | **Unverified** | CSS tokens set up in Sprint 1 but no Sprint 3 QA adjustments visible.                                                                                 |
-| Button press feedback (scale)               | **Missing**    | Sprint 3 P3 task. `button.tsx` not modified. Spec: `scale(0.98)` on press.                                                                            |
+| Criterion                                   | Status         | Notes                                                                                                                                                                                                              |
+| ------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Page elements animate on entrance           | **Done**       | All states animate: idle (fade+rise), error (fade+rise), processing (fade), dashboard (fade+rise), cards (50ms stagger), blockers (100ms stagger), job table (fade). `fill-mode-backwards` prevents stagger flash. |
+| File upload drag/hover feedback             | **Done**       | Layered icon composition, border solid/dashed toggle, color transitions on drag.                                                                                                                                   |
+| Success state feels like achievement        | **Missing**    | Spec §5.5 calls for checkmark draw + scale pulse + staggered text. No success animation added.                                                                                                                     |
+| Animations respect `prefers-reduced-motion` | **Missing**    | No `motion-reduce:` / `motion-safe:` Tailwind classes or `@media` rules. Design Decision #7 says "Add Later" but Acceptance Criterion #8 requires it.                                                              |
+| Dark mode polished and usable               | **Unverified** | CSS tokens set up in Sprint 1 but no Sprint 3 QA adjustments visible.                                                                                                                                              |
+| Button press feedback (scale)               | **Missing**    | Sprint 3 P3 task. `button.tsx` not modified. Spec: `scale(0.98)` on press.                                                                                                                                         |
 
 **Coverage: ~60-70% of Sprint 3 scope.**
 

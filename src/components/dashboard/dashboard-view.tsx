@@ -19,7 +19,7 @@ import { JobTable } from "./job-table";
 import { cn } from "@/lib/utils";
 
 const SUMMARY_CARD =
-  "animate-in fade-in border-b-2 shadow-sm transition-shadow duration-300 hover:shadow-md";
+  "animate-in fade-in fill-mode-backwards border-b-2 shadow-sm transition-shadow duration-300 hover:shadow-md";
 const CARD_LABEL =
   "text-muted-foreground text-xs font-semibold tracking-wide uppercase";
 
@@ -108,7 +108,7 @@ export function DashboardView({
         </Card>
 
         <Card
-          className={cn(SUMMARY_CARD, "border-b-muted-foreground delay-100")}
+          className={cn(SUMMARY_CARD, "border-b-muted-foreground delay-50")}
         >
           <CardHeader className="pb-2">
             <CardDescription className={CARD_LABEL}>Total Jobs</CardDescription>
@@ -127,7 +127,7 @@ export function DashboardView({
         <Card
           className={cn(
             SUMMARY_CARD,
-            "delay-200",
+            "delay-100",
             hasFail ? "border-b-destructive" : "border-b-primary",
           )}
         >

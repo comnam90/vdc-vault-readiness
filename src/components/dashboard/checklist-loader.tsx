@@ -21,7 +21,7 @@ export function ChecklistLoader({
 
   return (
     <div
-      className="flex min-h-screen items-center justify-center p-8"
+      className="animate-in fade-in flex min-h-screen items-center justify-center p-8 duration-400"
       data-testid="checklist-loader"
     >
       <div className="w-full max-w-sm space-y-6">

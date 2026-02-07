@@ -51,7 +51,10 @@ export function BlockersList({ validations }: BlockersListProps) {
         return (
           <Alert
             key={blocker.ruleId}
-            className={cn("animate-in fade-in duration-300", sev.alertClass)}
+            className={cn(
+              "animate-in fade-in fill-mode-backwards duration-300",
+              sev.alertClass,
+            )}
             style={{ animationDelay: `${index * STAGGER_DELAY_MS}ms` }}
           >
             <sev.Icon className={sev.iconClass} />
