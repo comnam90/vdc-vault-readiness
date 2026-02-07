@@ -238,6 +238,32 @@ describe("DashboardView", () => {
     expect(cards[2].className).toMatch(/delay-100/);
   });
 
+  it("shows all checks passed celebration message when no blockers", () => {
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={ALL_PASS_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("All Systems Ready")).toBeInTheDocument();
+  });
+
+  it("shows compatibility message when all checks pass", () => {
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={ALL_PASS_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText(/fully compatible with VDC Vault/i),
+    ).toBeInTheDocument();
+  });
+
   describe("multiple backup servers", () => {
     it("displays oldest version when multiple servers have mixed versions", () => {
       render(

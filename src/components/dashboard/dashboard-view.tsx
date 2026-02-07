@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CheckCircle2, XCircle, Upload } from "lucide-react";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
@@ -16,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
+import { SuccessCelebration } from "./success-celebration";
 import { cn } from "@/lib/utils";
 
 const SUMMARY_CARD =
@@ -34,6 +36,7 @@ export function DashboardView({
   validations,
   onReset,
 }: DashboardViewProps) {
+  const [activeTab, setActiveTab] = useState("overview");
   const backupServers = data.backupServer ?? [];
   const knownVersions = backupServers
     .map((server) => server?.Version)
@@ -157,7 +160,7 @@ export function DashboardView({
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="overview">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="jobs">Job Details</TabsTrigger>
@@ -167,17 +170,10 @@ export function DashboardView({
           {hasBlockers ? (
             <BlockersList validations={validations} />
           ) : (
-            <Card>
-              <CardContent className="flex items-center gap-3 py-6">
-                <CheckCircle2 className="text-primary size-6" />
-                <div>
-                  <p className="font-medium">All checks passed</p>
-                  <p className="text-muted-foreground text-sm">
-                    Your environment is ready for VDC Vault.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <SuccessCelebration
+              checksCount={validations.length}
+              onViewDetails={() => setActiveTab("jobs")}
+            />
           )}
         </TabsContent>
 
