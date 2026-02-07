@@ -9,7 +9,7 @@ import {
   createColumnHelper,
   type SortingState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, CircleCheck, LockKeyholeOpen } from "lucide-react";
+import { ArrowUpDown, LockKeyhole, LockKeyholeOpen } from "lucide-react";
 import type { SafeJob } from "@/types/domain";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ const columns = [
     cell: ({ row }) =>
       row.original.Encrypted ? (
         <>
-          <CircleCheck className="text-primary size-5" aria-hidden="true" />
+          <LockKeyhole className="text-primary size-5" aria-hidden="true" />
           <span className="sr-only">Encrypted</span>
         </>
       ) : (

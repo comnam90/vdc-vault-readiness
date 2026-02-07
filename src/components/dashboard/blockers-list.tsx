@@ -31,8 +31,8 @@ export function BlockersList({ validations }: BlockersListProps) {
             className={cn(
               "rounded-lg border-l-4 p-4",
               isFail
-                ? "border-l-destructive bg-destructive/5"
-                : "border-l-warning bg-warning/5",
+                ? "border-l-destructive/30 bg-destructive/5"
+                : "border-l-warning/30 bg-warning/5",
             )}
           >
             <div className="flex items-start gap-3">

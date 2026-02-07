@@ -76,7 +76,7 @@ export function DashboardView({
       <div className="grid gap-4 sm:grid-cols-3">
         <Card
           className={cn(
-            "border-b-[3px] shadow-sm transition-shadow hover:shadow-md",
+            "border-b-2 shadow-sm transition-shadow hover:shadow-md",
             versionOk ? "border-b-primary" : "border-b-destructive",
           )}
         >
@@ -102,7 +102,7 @@ export function DashboardView({
           </CardContent>
         </Card>
 
-        <Card className="border-b-muted-foreground border-b-[3px] shadow-sm transition-shadow hover:shadow-md">
+        <Card className="border-b-muted-foreground border-b-2 shadow-sm transition-shadow hover:shadow-md">
           <CardHeader className="pb-2">
             <CardDescription className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
               Total Jobs
@@ -121,7 +121,7 @@ export function DashboardView({
 
         <Card
           className={cn(
-            "border-b-[3px] shadow-sm transition-shadow hover:shadow-md",
+            "border-b-2 shadow-sm transition-shadow hover:shadow-md",
             hasFail ? "border-b-destructive" : "border-b-primary",
           )}
         >
