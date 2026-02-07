@@ -49,22 +49,38 @@ function readFileAsText(file: File): Promise<string> {
 function tick(ms: number, signal: AbortSignal): Promise<void> {
   if (ms <= 0) return Promise.resolve();
   return new Promise((resolve) => {
+    let settled = false;
+    const idHolder: { current: ReturnType<typeof setTimeout> | undefined } = {
+      current: undefined,
+    };
+
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+
+    const onAbort = () => {
+      if (idHolder.current !== undefined) {
+        clearTimeout(idHolder.current);
+      }
+      signal.removeEventListener("abort", onAbort);
+      finish();
+    };
+
+    signal.addEventListener("abort", onAbort, { once: true });
+
     if (signal.aborted) {
+      signal.removeEventListener("abort", onAbort);
+      settled = true;
       resolve();
       return;
     }
 
-    const onAbort = () => {
-      clearTimeout(id);
-      resolve();
-    };
-
-    const id = setTimeout(() => {
+    idHolder.current = setTimeout(() => {
       signal.removeEventListener("abort", onAbort);
-      resolve();
+      finish();
     }, ms);
-
-    signal.addEventListener("abort", onAbort, { once: true });
   });
 }
 
