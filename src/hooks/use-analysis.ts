@@ -112,7 +112,13 @@ export function useAnalysis({
         );
         if (isStale()) return;
 
-        // Parse step complete. Tick through validation steps.
+        // KNOWN DEVIATION from DESIGN-SYSTEM.md Decision #4:
+        // The pipeline runs synchronously above, then we walk through
+        // PIPELINE_STEPS with artificial delays for visual feedback.
+        // True step-by-step progress would require refactoring
+        // analyzeHealthcheck() into an async iterator, which is out of
+        // scope for Sprint 3. The checklist still shows real step labels
+        // and accurate completion — only the timing is presentational.
         for (let i = 1; i <= PIPELINE_STEPS.length; i++) {
           const completed = PIPELINE_STEPS.slice(0, i).map((s) => s.id);
           const next = i < PIPELINE_STEPS.length ? PIPELINE_STEPS[i].id : null;

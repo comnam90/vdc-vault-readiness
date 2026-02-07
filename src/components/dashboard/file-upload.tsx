@@ -68,10 +68,10 @@ export function FileUpload({ onFileSelected }: FileUploadProps) {
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 p-12 text-center transition-all duration-150",
+        "group/upload flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 p-12 text-center transition-all duration-150",
         isDragOver
           ? "border-primary bg-primary/5 border-solid"
-          : "border-muted-foreground/40 hover:border-muted-foreground/60 border-dashed",
+          : "border-muted-foreground/40 hover:border-muted-foreground/60 hover:bg-muted/50 border-dashed hover:border-solid",
       )}
     >
       {/* Layered icon composition */}
@@ -83,8 +83,9 @@ export function FileUpload({ onFileSelected }: FileUploadProps) {
           )}
         />
         <div
+          data-testid="upload-icon-wrapper"
           className={cn(
-            "bg-background absolute -top-2 -right-2 rounded-full p-1 transition-transform duration-150",
+            "bg-background absolute -top-2 -right-2 rounded-full p-1 transition-transform duration-150 group-hover/upload:-translate-y-1",
             isDragOver && "-translate-y-1",
           )}
         >

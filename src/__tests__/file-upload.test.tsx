@@ -72,9 +72,7 @@ describe("FileUpload", () => {
   it("renders browse button text", () => {
     render(<FileUpload onFileSelected={vi.fn()} />);
 
-    expect(
-      screen.getByText(/browse/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/browse/i)).toBeInTheDocument();
   });
 
   it("is keyboard-focusable with role=button", () => {
@@ -89,7 +87,9 @@ describe("FileUpload", () => {
     render(<FileUpload onFileSelected={vi.fn()} />);
 
     const dropZone = screen.getByTestId("drop-zone");
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const input = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
     const clickSpy = vi.spyOn(input, "click");
 
     fireEvent.keyDown(dropZone, { key: "Enter" });
@@ -100,10 +100,31 @@ describe("FileUpload", () => {
     render(<FileUpload onFileSelected={vi.fn()} />);
 
     const dropZone = screen.getByTestId("drop-zone");
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const input = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
     const clickSpy = vi.spyOn(input, "click");
 
     fireEvent.keyDown(dropZone, { key: " " });
     expect(clickSpy).toHaveBeenCalled();
+  });
+
+  it("has hover classes for background tint and border solidification", () => {
+    render(<FileUpload onFileSelected={vi.fn()} />);
+
+    const dropZone = screen.getByTestId("drop-zone");
+    // When not dragging, hover classes should be present in the class list
+    expect(dropZone.className).toMatch(/hover:bg-muted\/50/);
+    expect(dropZone.className).toMatch(/hover:border-solid/);
+  });
+
+  it("has hover class for icon rise animation", () => {
+    render(<FileUpload onFileSelected={vi.fn()} />);
+
+    const uploadIcon = screen
+      .getByTestId("drop-zone")
+      .querySelector("[data-testid='upload-icon-wrapper']");
+    expect(uploadIcon).not.toBeNull();
+    expect(uploadIcon!.className).toMatch(/group-hover\//);
   });
 });
