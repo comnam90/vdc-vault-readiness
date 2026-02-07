@@ -258,7 +258,7 @@ describe("DashboardView", () => {
 
       expect(screen.getByText("12.2.0.500")).toBeInTheDocument();
       const versionCard = screen.getByText("12.2.0.500");
-      expect(versionCard).toHaveClass("text-green-600");
+      expect(versionCard).toHaveClass("text-primary");
     });
   });
 });

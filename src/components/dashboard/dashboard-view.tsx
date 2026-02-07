@@ -74,13 +74,20 @@ export function DashboardView({
 
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
+        <Card
+          className={cn(
+            "border-b-[3px] shadow-sm transition-shadow hover:shadow-md",
+            versionOk ? "border-b-primary" : "border-b-destructive",
+          )}
+        >
           <CardHeader className="pb-2">
-            <CardDescription>VBR Version</CardDescription>
+            <CardDescription className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+              VBR Version
+            </CardDescription>
             <CardTitle
               className={cn(
-                "text-xl",
-                versionOk ? "text-green-600" : "text-destructive",
+                "font-mono text-2xl font-semibold",
+                versionOk ? "text-primary" : "text-destructive",
               )}
             >
               {version}
@@ -95,10 +102,14 @@ export function DashboardView({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-b-muted-foreground border-b-[3px] shadow-sm transition-shadow hover:shadow-md">
           <CardHeader className="pb-2">
-            <CardDescription>Total Jobs</CardDescription>
-            <CardTitle className="text-xl">{totalJobs}</CardTitle>
+            <CardDescription className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+              Total Jobs
+            </CardDescription>
+            <CardTitle className="font-mono text-2xl font-semibold">
+              {totalJobs}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground text-xs">
@@ -108,10 +119,17 @@ export function DashboardView({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card
+          className={cn(
+            "border-b-[3px] shadow-sm transition-shadow hover:shadow-md",
+            hasFail ? "border-b-destructive" : "border-b-primary",
+          )}
+        >
           <CardHeader className="pb-2">
-            <CardDescription>Readiness</CardDescription>
-            <CardTitle className="flex items-center gap-2 text-xl">
+            <CardDescription className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+              Readiness
+            </CardDescription>
+            <CardTitle className="flex items-center gap-2 text-2xl font-semibold">
               {hasFail ? (
                 <>
                   <XCircle className="text-destructive size-5" />
@@ -119,8 +137,8 @@ export function DashboardView({
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="size-5 text-green-600" />
-                  <span className="text-green-600">Ready</span>
+                  <CheckCircle2 className="text-primary size-5" />
+                  <span className="text-primary">Ready</span>
                 </>
               )}
             </CardTitle>
@@ -147,7 +165,7 @@ export function DashboardView({
           ) : (
             <Card>
               <CardContent className="flex items-center gap-3 py-6">
-                <CheckCircle2 className="size-6 text-green-600" />
+                <CheckCircle2 className="text-primary size-6" />
                 <div>
                   <p className="font-medium">All checks passed</p>
                   <p className="text-muted-foreground text-sm">
