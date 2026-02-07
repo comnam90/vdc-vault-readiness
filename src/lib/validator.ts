@@ -1,8 +1,7 @@
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
+import { MINIMUM_VBR_VERSION } from "./constants";
 import { isVersionAtLeast } from "./version-compare";
-
-const MINIMUM_VBR_VERSION = "12.1.2";
 
 export function validateHealthcheck(
   data: NormalizedDataset,

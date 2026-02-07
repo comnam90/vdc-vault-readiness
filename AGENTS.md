@@ -8,9 +8,9 @@
 
 Client-side SPA validating Veeam VBR environments against VDC Vault requirements. Parses Healthcheck JSON locally, runs pre-flight checks. React 19 + Vite 7.3 + TypeScript 5.9 + Tailwind 4.1 + shadcn 3.8.
 
-## STATUS: PARSER COMPLETE
+## STATUS: MVP COMPLETE
 
-Vite scaffold complete with Vitest configured. `zipSection()` utility implemented with full test coverage (17 tests). App.tsx is default template (needs replacement).
+Full end-to-end pipeline operational: JSON upload → normalize → validate → dashboard. 152 tests across 12 test files. All 6 PRD validation rules implemented. Accessibility reviewed (keyboard nav, screen reader labels).
 
 ## STRUCTURE
 
@@ -18,6 +18,7 @@ Vite scaffold complete with Vitest configured. `zipSection()` utility implemente
 ./
 ├── PRD.md                        # Tech spec (START HERE)
 ├── VDCVAULT-CHEETSHEET.md        # Domain knowledge, Vault limitations
+├── ARCHITECTURE.md               # Data flow, component hierarchy, decisions
 ├── veeam-healthcheck.example.json # Sample input (1863 lines, 30 jobs)
 ├── package.json                  # Dependencies locked per PRD
 ├── vite.config.ts                # React + Tailwind + Vitest config, @ alias
@@ -26,16 +27,43 @@ Vite scaffold complete with Vitest configured. `zipSection()` utility implemente
 ├── components.json               # shadcn/ui config (new-york style)
 └── src/
     ├── main.tsx                  # React 19 entry (StrictMode)
-    ├── App.tsx                   # ⚠️ Default template, replace
+    ├── App.tsx                   # State-machine UI (idle/processing/success/error)
     ├── index.css                 # Tailwind + shadcn theme vars
+    ├── types/
+    │   ├── healthcheck.ts        # Raw JSON shape types
+    │   ├── domain.ts             # NormalizedDataset, SafeJob
+    │   └── validation.ts         # ValidationResult, RuleId
     ├── lib/
     │   ├── utils.ts              # cn() class merger
-    │   └── parser.ts             # zipSection() Headers/Rows normalizer
-    ├── components/               # Empty, ready
-    └── __tests__/
+    │   ├── constants.ts          # Shared constants (MINIMUM_VBR_VERSION)
+    │   ├── parser.ts             # zipSection() Headers/Rows normalizer
+    │   ├── normalizer.ts         # Raw JSON → NormalizedDataset
+    │   ├── validator.ts          # 6 validation rules per PRD §4
+    │   ├── version-compare.ts    # Semantic version comparison
+    │   └── pipeline.ts           # analyzeHealthcheck() orchestrator
+    ├── hooks/
+    │   └── use-analysis.ts       # State machine hook (idle/processing/success/error)
+    ├── components/
+    │   ├── ui/                   # 9 shadcn primitives (card, button, badge, etc.)
+    │   └── dashboard/
+    │       ├── file-upload.tsx    # Drag-drop zone (a11y: keyboard accessible)
+    │       ├── dashboard-view.tsx # Summary cards + tabs (overview/jobs)
+    │       ├── blockers-list.tsx  # Fail/warning alerts sorted by severity
+    │       └── job-table.tsx      # TanStack table with search, sort, pagination
+    └── __tests__/                # 12 test files, 152 tests
         ├── setup.ts              # jest-dom matchers
         ├── smoke.test.ts         # Setup verification
-        └── parser.test.ts        # zipSection tests (17 cases)
+        ├── parser.test.ts        # zipSection tests
+        ├── normalizer.test.ts    # Normalization pipeline tests
+        ├── validator.test.ts     # Validation rule tests
+        ├── version-compare.test.ts # Version parsing tests
+        ├── pipeline.test.ts      # End-to-end pipeline tests
+        ├── use-analysis.test.ts  # Hook state machine + race condition tests
+        ├── app.test.tsx          # App component integration tests
+        ├── file-upload.test.tsx  # Upload + drag-drop + keyboard a11y tests
+        ├── dashboard-view.test.tsx # Dashboard rendering + summary cards tests
+        ├── blockers-list.test.tsx # Blocker display + severity sorting tests
+        └── job-table.test.tsx    # Table rendering + search + pagination + a11y tests
 ```
 
 ## WHERE TO LOOK
@@ -46,7 +74,13 @@ Vite scaffold complete with Vitest configured. `zipSection()` utility implemente
 | Validation rules  | PRD.md §4                      | 6 rules: VBR version, encryption, job audit, AWS, agents, license    |
 | UI spec           | PRD.md §5                      | Dashboard + Job Explorer table                                       |
 | Vault limitations | VDCVAULT-CHEETSHEET.md         | Red flags, edition diffs, workload matrix                            |
+| Architecture      | ARCHITECTURE.md                | Data flow, component hierarchy, design decisions                     |
 | Input format      | veeam-healthcheck.example.json | Headers/Rows → needs `zipSection()`                                  |
+| Domain types      | src/types/                     | healthcheck.ts (raw), domain.ts (normalized), validation.ts (results)|
+| Data pipeline     | src/lib/pipeline.ts            | Orchestrates normalize → validate flow                               |
+| Validation impl   | src/lib/validator.ts           | All 6 rules, imports MINIMUM_VBR_VERSION from constants              |
+| State management  | src/hooks/use-analysis.ts      | State machine hook with race condition guard                         |
+| Dashboard UI      | src/components/dashboard/      | 4 components: file-upload, dashboard-view, blockers-list, job-table  |
 | Path aliases      | tsconfig.json                  | `@/*` → `./src/*`                                                    |
 | Theme vars        | src/index.css                  | oklch colors, radius tokens                                          |
 
@@ -76,9 +110,13 @@ Must normalize to: `[{ "Name": "Job A", "Encrypted": "False" }]`
 ## CONVENTIONS
 
 - **Data transform**: `zipSection(section)` normalizes Headers/Rows → objects
+- **Pipeline**: `analyzeHealthcheck()` in `pipeline.ts` orchestrates normalize → validate
+- **State hook**: `useAnalysis()` manages idle/processing/success/error with race condition guard
+- **Shared constants**: `src/lib/constants.ts` for values used across modules (e.g., `MINIMUM_VBR_VERSION`)
 - **Hosting**: Cloudflare Pages (static, client-side only)
-- **Imports**: Use `@/lib/...` not `../lib/...`
+- **Imports**: Use `@/lib/...` not `../lib/...`; relative imports only within same directory
 - **Styling**: `cn()` from `@/lib/utils` for class merging
+- **Accessibility**: Drop-zones use `role="button"` + `tabIndex={0}` + keyboard handlers; icons use `aria-hidden` with `sr-only` text labels
 
 ## ANTI-PATTERNS (FORBIDDEN)
 
@@ -210,5 +248,21 @@ No task is complete without:
 1. ~~Install vitest + @testing-library/react~~ ✅ Done
 2. ~~Create first failing test: `src/__tests__/parser.test.ts`~~ ✅ Done
 3. ~~Implement `zipSection()` in `src/lib/parser.ts`~~ ✅ Done
-4. Replace App.tsx with Dashboard layout
-5. Build validation rules per PRD §4
+4. ~~Build types: `healthcheck.ts`, `domain.ts`, `validation.ts`~~ ✅ Done
+5. ~~Build normalizer: raw JSON → `NormalizedDataset`~~ ✅ Done
+6. ~~Build validator: 6 rules per PRD §4~~ ✅ Done
+7. ~~Build pipeline: `analyzeHealthcheck()` orchestrator~~ ✅ Done
+8. ~~Install shadcn components (card, button, badge, table, alert, input, scroll-area, separator, tabs)~~ ✅ Done
+9. ~~Create `useAnalysis` hook with state machine~~ ✅ Done
+10. ~~Create FileUpload component with drag-and-drop~~ ✅ Done
+11. ~~Replace App.tsx with state-based rendering~~ ✅ Done
+12. ~~Build DashboardView with summary cards + tabs~~ ✅ Done
+13. ~~Build JobTable with search, sort, pagination~~ ✅ Done
+14. ~~Build BlockersList with severity sorting~~ ✅ Done
+15. ~~Fix race condition guard in useAnalysis~~ ✅ Done (PR review)
+16. ~~Add JSON shape guard before pipeline~~ ✅ Done (PR review)
+17. ~~DRY/YAGNI refactor (shared constants, error helpers)~~ ✅ Done
+18. ~~Accessibility fixes (keyboard nav, screen reader labels)~~ ✅ Done (PR review)
+19. Merge PR to develop
+20. Polish: loading states, error recovery UX, mobile responsiveness
+21. Cloudflare Pages deployment configuration
