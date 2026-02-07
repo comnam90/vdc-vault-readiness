@@ -28,6 +28,7 @@ export function BlockersList({ validations }: BlockersListProps) {
         return (
           <div
             key={blocker.ruleId}
+            role="alert"
             className={cn(
               "rounded-lg border-l-4 p-4",
               isFail

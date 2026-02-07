@@ -5,6 +5,15 @@ export interface PipelineStep {
   label: string;
 }
 
+/**
+ * UI-facing pipeline steps displayed in the ChecklistLoader component.
+ *
+ * NOTE: These are presentation-layer steps for user feedback, NOT a 1:1 mapping
+ * to validation rule IDs. For example, "encryption" represents both the
+ * "global-encryption" and "job-encryption" validation rules from a user's perspective.
+ *
+ * For actual validation rule IDs, see src/lib/validator.ts.
+ */
 export const PIPELINE_STEPS: PipelineStep[] = [
   { id: "parse", label: "Parse healthcheck data" },
   { id: "vbr-version", label: "Validate VBR version" },

@@ -16,7 +16,7 @@ export function ChecklistLoader({
   const progress = Math.round((completedCount / totalSteps) * 100);
 
   const currentLabel = currentStep
-    ? `${PIPELINE_STEPS.find((s) => s.id === currentStep)?.label}...`
+    ? `${PIPELINE_STEPS.find((s) => s.id === currentStep)?.label ?? "Processing"}...`
     : "Finalizing...";
 
   return (
