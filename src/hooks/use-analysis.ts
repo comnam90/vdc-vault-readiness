@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 import { analyzeHealthcheck } from "@/lib/pipeline";
+import { PIPELINE_STEPS } from "@/lib/constants";
 
 export type AnalysisStatus = "idle" | "processing" | "success" | "error";
 
@@ -10,6 +11,8 @@ interface AnalysisState {
   data: NormalizedDataset | null;
   validations: ValidationResult[] | null;
   error: string | null;
+  completedSteps: string[];
+  currentStep: string | null;
 }
 
 const INITIAL_STATE: AnalysisState = {
@@ -17,10 +20,21 @@ const INITIAL_STATE: AnalysisState = {
   data: null,
   validations: null,
   error: null,
+  completedSteps: [],
+  currentStep: null,
 };
 
+const STEP_DELAY = 80;
+
 function errorState(error: string): AnalysisState {
-  return { status: "error", data: null, validations: null, error };
+  return {
+    status: "error",
+    data: null,
+    validations: null,
+    error,
+    completedSteps: [],
+    currentStep: null,
+  };
 }
 
 function readFileAsText(file: File): Promise<string> {
@@ -30,6 +44,10 @@ function readFileAsText(file: File): Promise<string> {
     reader.onerror = () => reject(new Error("Failed to read file."));
     reader.readAsText(file);
   });
+}
+
+function tick(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, STEP_DELAY));
 }
 
 export function useAnalysis() {
@@ -45,6 +63,8 @@ export function useAnalysis() {
       data: null,
       validations: null,
       error: null,
+      completedSteps: [],
+      currentStep: PIPELINE_STEPS[0].id,
     });
 
     try {
@@ -79,11 +99,28 @@ export function useAnalysis() {
       );
       if (isStale()) return;
 
+      // Parse step complete. Tick through validation steps.
+      for (let i = 1; i <= PIPELINE_STEPS.length; i++) {
+        const completed = PIPELINE_STEPS.slice(0, i).map((s) => s.id);
+        const next = i < PIPELINE_STEPS.length ? PIPELINE_STEPS[i].id : null;
+
+        setState((prev) => ({
+          ...prev,
+          completedSteps: completed,
+          currentStep: next,
+        }));
+
+        await tick();
+        if (isStale()) return;
+      }
+
       setState({
         status: "success",
         data: result.data,
         validations: result.validations,
         error: null,
+        completedSteps: PIPELINE_STEPS.map((s) => s.id),
+        currentStep: null,
       });
     } catch (err) {
       if (isStale()) return;
@@ -103,6 +140,8 @@ export function useAnalysis() {
     data: state.data,
     validations: state.validations,
     error: state.error,
+    completedSteps: state.completedSteps,
+    currentStep: state.currentStep,
     analyzeFile,
     reset,
   };

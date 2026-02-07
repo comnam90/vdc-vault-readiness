@@ -1,6 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useAnalysis } from "@/hooks/use-analysis";
+import { PIPELINE_STEPS } from "@/lib/constants";
 
 vi.mock("@/lib/pipeline", () => ({
   analyzeHealthcheck: vi.fn(),
@@ -55,6 +56,8 @@ describe("useAnalysis", () => {
     expect(result.current.data).toBeNull();
     expect(result.current.validations).toBeNull();
     expect(result.current.error).toBeNull();
+    expect(result.current.completedSteps).toEqual([]);
+    expect(result.current.currentStep).toBeNull();
   });
 
   it("transitions to processing when analyzeFile is called", async () => {
@@ -86,6 +89,20 @@ describe("useAnalysis", () => {
     );
     expect(result.current.error).toBeNull();
     expect(mockAnalyzeHealthcheck).toHaveBeenCalledOnce();
+  });
+
+  it("completes all pipeline steps on success", async () => {
+    const { result } = renderHook(() => useAnalysis());
+    const file = createMockFile(VALID_JSON);
+
+    await act(async () => {
+      await result.current.analyzeFile(file);
+    });
+
+    expect(result.current.completedSteps).toEqual(
+      PIPELINE_STEPS.map((s) => s.id),
+    );
+    expect(result.current.currentStep).toBeNull();
   });
 
   it("sets error state on invalid JSON", async () => {
@@ -137,6 +154,8 @@ describe("useAnalysis", () => {
     expect(result.current.data).toBeNull();
     expect(result.current.validations).toBeNull();
     expect(result.current.error).toBeNull();
+    expect(result.current.completedSteps).toEqual([]);
+    expect(result.current.currentStep).toBeNull();
   });
 
   it("handles empty file", async () => {

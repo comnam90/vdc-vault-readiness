@@ -1,24 +1,29 @@
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useAnalysis } from "@/hooks/use-analysis";
 import { FileUpload } from "@/components/dashboard/file-upload";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
+import { ChecklistLoader } from "@/components/dashboard/checklist-loader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 function App() {
-  const { status, data, validations, error, analyzeFile, reset } =
-    useAnalysis();
+  const {
+    status,
+    data,
+    validations,
+    error,
+    completedSteps,
+    currentStep,
+    analyzeFile,
+    reset,
+  } = useAnalysis();
 
   if (status === "processing") {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-          <p className="text-lg font-medium text-muted-foreground">
-            Analyzing...
-          </p>
-        </div>
-      </div>
+      <ChecklistLoader
+        completedSteps={completedSteps}
+        currentStep={currentStep}
+      />
     );
   }
 
@@ -54,7 +59,7 @@ function App() {
           <h1 className="text-3xl font-bold tracking-tight">
             VDC Vault Readiness
           </h1>
-          <p className="mt-2 text-muted-foreground">
+          <p className="text-muted-foreground mt-2">
             Upload your Veeam Healthcheck JSON to validate Vault compatibility
           </p>
         </div>
