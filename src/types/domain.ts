@@ -35,3 +35,8 @@ export interface NormalizedDataset {
   Licenses: SafeLicense[];
   dataErrors: DataError[];
 }
+
+export interface PipelineStep {
+  id: string;
+  label: string;
+}

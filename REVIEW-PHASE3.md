@@ -3,9 +3,9 @@
 **Branch:** `feature/phase3-motion-interaction` (3 commits)
 **Reviewed against:** `DESIGN-SYSTEM.md` Sprint 3 + DRY/SOLID/KISS/YAGNI
 
-## Build & Test Status
+## Build & Test Status (post-fixes)
 
-- **Tests:** 161/161 pass (13 test files)
+- **Tests:** 167/167 pass (14 test files — 6 new `delay.test.ts` tests)
 - **Build:** `tsc -b && vite build` succeeds cleanly
 - **Lint:** 0 errors, 1 pre-existing warning (TanStack `useReactTable` memoization)
 
@@ -34,13 +34,19 @@ Each summary card repeats:
 
 Only the stagger delay and border color differ. Extract a shared base string constant.
 
+**Resolved:** Extracted `SUMMARY_CARD` and `CARD_LABEL` constants in `dashboard-view.tsx`.
+
 ### 2. Duplicated badge rendering (`blockers-list.tsx:59-72`)
 
 Fail/warning badges are structurally identical except variant, colors, and label. Could consolidate with a mapping object.
 
+**Resolved:** Created `SEVERITY` config object in `blockers-list.tsx` mapping fail/warning to icon, colors, badge variant, and label.
+
 ### 3. Repeated `CardDescription` label style (`dashboard-view.tsx:84, 107, 129`)
 
 `"text-muted-foreground text-xs font-semibold tracking-wide uppercase"` is duplicated 3 times. This appears to be the standard card label style per the design system and should be a constant.
+
+**Resolved:** Consolidated into the `CARD_LABEL` constant (see issue #1 fix).
 
 ## SOLID Issues
 
@@ -48,9 +54,13 @@ Fail/warning badges are structurally identical except variant, colors, and label
 
 The `tick()` function is a 37-line general-purpose abort-aware delay. It belongs in `src/lib/` (e.g., `delay.ts`) for independent testing and reuse. Currently it is buried in a hook file.
 
+**Resolved:** Extracted to `src/lib/delay.ts` with 6 dedicated tests in `src/__tests__/delay.test.ts`.
+
 ### 5. SRP: `PipelineStep` interface in `constants.ts` (`constants.ts:3-6`)
 
 Type definitions belong in `src/types/` per project convention. `PipelineStep` should live in `src/types/domain.ts` or `src/types/pipeline.ts`, with only the runtime `PIPELINE_STEPS` array remaining in `constants.ts`.
+
+**Resolved:** Moved `PipelineStep` interface to `src/types/domain.ts`. `constants.ts` now imports it.
 
 ## KISS Issues
 
@@ -83,11 +93,15 @@ animate-pulse [animation-duration:600ms] [animation-iteration-count:1]
 
 Using `animate-pulse` and overriding both its duration and iteration count fights the framework. Define a custom `@keyframes attention-pulse` in `index.css` instead. Current approach is fragile if Tailwind changes `animate-pulse` keyframes.
 
+**Resolved:** Added `@keyframes attention-pulse` and `@utility animate-attention-pulse` in `index.css`. `blockers-list.tsx` now uses `animate-attention-pulse` instead of the override pattern.
+
 ## YAGNI Issues
 
 ### 8. Unused `info-muted` token (`index.css`)
 
 `--info-muted` and `--color-info-muted` are defined in both light/dark mode but never referenced in any component.
+
+**Resolved:** Removed `--info-muted` from `:root`, `.dark`, and `@theme inline` blocks in `index.css`.
 
 ### 9. Eagerly initialized `AbortController` (`use-analysis.ts:96`)
 
@@ -96,6 +110,8 @@ const abortRef = useRef<AbortController>(new AbortController());
 ```
 
 Creates an unused controller on mount. Could be `useRef<AbortController | null>(null)` with a null check.
+
+**Resolved:** Changed to `useRef<AbortController | null>(null)` with optional chaining (`?.abort()`) in `analyzeFile` and `reset`.
 
 ## Additional Concerns
 
@@ -120,7 +136,7 @@ Design Decision #4: "Display actual validation progress, not fake progress bars.
 - **Good:** `checklist-loader.test.tsx` — 7 tests covering progress, labels, accessibility
 - **Good:** `use-analysis.test.ts` — Uses `{ stepDelay: 0 }` to avoid timing flakes
 - **Good:** `job-table.test.tsx` — Tests unencrypted row highlighting
-- **Gap:** No test for `tick()` function (abort, zero-delay, already-aborted)
+- ~~**Gap:** No test for `tick()` function (abort, zero-delay, already-aborted)~~ **Resolved:** 6 tests in `delay.test.ts`
 - **Gap:** No test verifying card stagger delay behavior
 
 ## Recommendation

@@ -45,7 +45,6 @@
   --warning-muted: oklch(0.95 0.05 55);
   --info: var(--electric-azure);
   --info-foreground: oklch(0.98 0 0);
-  --info-muted: oklch(0.95 0.05 265);
 
   /* Chart Colors */
   --chart-1: var(--viridis);
@@ -87,7 +86,6 @@
   --success-muted: oklch(0.22 0.08 155);
   --warning-foreground: oklch(0.15 0 0);
   --warning-muted: oklch(0.22 0.08 55);
-  --info-muted: oklch(0.22 0.08 265);
 
   /* Sidebar — Dark Mode */
   --sidebar: oklch(0.20 0 0);
@@ -138,7 +136,6 @@
   --color-warning-muted: var(--warning-muted);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
-  --color-info-muted: var(--info-muted);
 
   /* Chart Colors */
   --color-chart-1: var(--chart-1);
@@ -170,4 +167,19 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
+}
+
+/* One-shot attention pulse for blocker alerts */
+@keyframes attention-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@utility animate-attention-pulse {
+  animation: attention-pulse 600ms ease-out 1;
 }

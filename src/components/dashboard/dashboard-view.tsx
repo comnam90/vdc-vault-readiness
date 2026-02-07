@@ -18,6 +18,11 @@ import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
 import { cn } from "@/lib/utils";
 
+const SUMMARY_CARD =
+  "animate-in fade-in border-b-2 shadow-sm transition-shadow duration-300 hover:shadow-md";
+const CARD_LABEL =
+  "text-muted-foreground text-xs font-semibold tracking-wide uppercase";
+
 interface DashboardViewProps {
   data: NormalizedDataset;
   validations: ValidationResult[];
@@ -76,12 +81,12 @@ export function DashboardView({
       <div className="grid gap-4 sm:grid-cols-3">
         <Card
           className={cn(
-            "animate-in fade-in border-b-2 shadow-sm transition-shadow duration-300 hover:shadow-md",
+            SUMMARY_CARD,
             versionOk ? "border-b-primary" : "border-b-destructive",
           )}
         >
           <CardHeader className="pb-2">
-            <CardDescription className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+            <CardDescription className={CARD_LABEL}>
               VBR Version
             </CardDescription>
             <CardTitle
@@ -102,11 +107,11 @@ export function DashboardView({
           </CardContent>
         </Card>
 
-        <Card className="animate-in fade-in border-b-muted-foreground border-b-2 shadow-sm transition-shadow delay-100 duration-300 hover:shadow-md">
+        <Card
+          className={cn(SUMMARY_CARD, "border-b-muted-foreground delay-100")}
+        >
           <CardHeader className="pb-2">
-            <CardDescription className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-              Total Jobs
-            </CardDescription>
+            <CardDescription className={CARD_LABEL}>Total Jobs</CardDescription>
             <CardTitle className="font-mono text-2xl font-semibold">
               {totalJobs}
             </CardTitle>
@@ -121,14 +126,13 @@ export function DashboardView({
 
         <Card
           className={cn(
-            "animate-in fade-in border-b-2 shadow-sm transition-shadow delay-200 duration-300 hover:shadow-md",
+            SUMMARY_CARD,
+            "delay-200",
             hasFail ? "border-b-destructive" : "border-b-primary",
           )}
         >
           <CardHeader className="pb-2">
-            <CardDescription className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-              Readiness
-            </CardDescription>
+            <CardDescription className={CARD_LABEL}>Readiness</CardDescription>
             <CardTitle className="flex items-center gap-2 text-2xl font-semibold">
               {hasFail ? (
                 <>

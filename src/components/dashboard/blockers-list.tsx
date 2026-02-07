@@ -9,6 +9,25 @@ interface BlockersListProps {
 
 const MAX_VISIBLE_ITEMS = 5;
 
+const SEVERITY = {
+  fail: {
+    border: "border-l-destructive/30 bg-destructive/5",
+    Icon: CircleX,
+    iconColor: "text-destructive",
+    badgeVariant: "destructive" as const,
+    badgeClass: "",
+    badgeLabel: "Blocker",
+  },
+  warning: {
+    border: "border-l-warning/30 bg-warning/5",
+    Icon: TriangleAlert,
+    iconColor: "text-warning",
+    badgeVariant: "outline" as const,
+    badgeClass: "border-warning text-warning",
+    badgeLabel: "Warning",
+  },
+};
+
 export function BlockersList({ validations }: BlockersListProps) {
   const blockers = validations
     .filter((v) => v.status === "fail" || v.status === "warning")
@@ -22,6 +41,7 @@ export function BlockersList({ validations }: BlockersListProps) {
     <div data-testid="blockers-list" className="space-y-3">
       {blockers.map((blocker) => {
         const isFail = blocker.status === "fail";
+        const sev = SEVERITY[isFail ? "fail" : "warning"];
         const remaining = blocker.affectedItems.length - MAX_VISIBLE_ITEMS;
         const visibleItems = blocker.affectedItems.slice(0, MAX_VISIBLE_ITEMS);
 
@@ -31,23 +51,15 @@ export function BlockersList({ validations }: BlockersListProps) {
             role="alert"
             className={cn(
               "animate-in fade-in rounded-lg border-l-4 p-4 duration-300",
-              isFail
-                ? "border-l-destructive/30 bg-destructive/5 animate-pulse [animation-duration:600ms] [animation-iteration-count:1]"
-                : "border-l-warning/30 bg-warning/5",
+              sev.border,
+              isFail && "animate-attention-pulse",
             )}
           >
             <div className="flex items-start gap-3">
-              {isFail ? (
-                <CircleX
-                  className="text-destructive mt-0.5 size-5 shrink-0"
-                  aria-hidden="true"
-                />
-              ) : (
-                <TriangleAlert
-                  className="text-warning mt-0.5 size-5 shrink-0"
-                  aria-hidden="true"
-                />
-              )}
+              <sev.Icon
+                className={cn("mt-0.5 size-5 shrink-0", sev.iconColor)}
+                aria-hidden="true"
+              />
               <div className="flex-1 space-y-1.5">
                 <div className="flex items-center gap-2">
                   <h3
@@ -56,21 +68,15 @@ export function BlockersList({ validations }: BlockersListProps) {
                   >
                     {blocker.title}
                   </h3>
-                  {isFail ? (
-                    <Badge
-                      variant="destructive"
-                      className="text-[10px] tracking-wider uppercase"
-                    >
-                      Blocker
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className="border-warning text-warning text-[10px] tracking-wider uppercase"
-                    >
-                      Warning
-                    </Badge>
-                  )}
+                  <Badge
+                    variant={sev.badgeVariant}
+                    className={cn(
+                      "text-[10px] tracking-wider uppercase",
+                      sev.badgeClass,
+                    )}
+                  >
+                    {sev.badgeLabel}
+                  </Badge>
                 </div>
                 <p className="text-muted-foreground text-sm">
                   {blocker.message}
