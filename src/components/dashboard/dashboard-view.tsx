@@ -21,7 +21,7 @@ import { SuccessCelebration } from "./success-celebration";
 import { cn } from "@/lib/utils";
 
 const SUMMARY_CARD =
-  "animate-in fade-in fill-mode-backwards border-b-2 shadow-sm transition-shadow duration-300 hover:shadow-md";
+  "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards border-b-2 shadow-sm transition-shadow duration-300 hover:shadow-md";
 const CARD_LABEL =
   "text-muted-foreground text-xs font-semibold tracking-wide uppercase";
 
@@ -63,7 +63,7 @@ export function DashboardView({
   );
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 mx-auto max-w-5xl space-y-6 p-6 duration-500">
+    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 mx-auto max-w-5xl space-y-6 p-6 duration-500">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

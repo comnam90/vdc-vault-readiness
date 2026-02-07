@@ -85,8 +85,8 @@ export function FileUpload({ onFileSelected }: FileUploadProps) {
         <div
           data-testid="upload-icon-wrapper"
           className={cn(
-            "bg-background absolute -top-2 -right-2 rounded-full p-1 transition-transform duration-150 group-hover/upload:-translate-y-1",
-            isDragOver && "-translate-y-1",
+            "bg-background absolute -top-2 -right-2 rounded-full p-1 transition-transform duration-150 motion-safe:group-hover/upload:-translate-y-1",
+            isDragOver && "motion-safe:-translate-y-1",
           )}
         >
           <UploadCloud

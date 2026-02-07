@@ -14,7 +14,7 @@ const STAGGER_DELAY_MS = 100;
 const SEVERITY = {
   fail: {
     alertClass:
-      "border-l-4 border-l-destructive/30 bg-destructive/5 animate-attention-pulse",
+      "border-l-4 border-l-destructive/30 bg-destructive/5 motion-safe:animate-attention-pulse",
     Icon: CircleX,
     iconClass: "text-destructive !size-5",
     badgeVariant: "destructive" as const,
@@ -52,7 +52,7 @@ export function BlockersList({ validations }: BlockersListProps) {
           <Alert
             key={blocker.ruleId}
             className={cn(
-              "animate-in fade-in fill-mode-backwards duration-300",
+              "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards duration-300",
               sev.alertClass,
             )}
             style={{ animationDelay: `${index * STAGGER_DELAY_MS}ms` }}

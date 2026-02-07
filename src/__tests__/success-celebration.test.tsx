@@ -79,7 +79,7 @@ describe("SuccessCelebration", () => {
       );
 
       const card = container.querySelector("[data-slot='card']");
-      expect(card).toHaveClass("animate-in", "fade-in");
+      expect(card).toHaveClass("motion-safe:animate-in", "motion-safe:fade-in");
     });
 
     it("applies checkmark draw animation class to icon container", () => {
@@ -90,7 +90,7 @@ describe("SuccessCelebration", () => {
       const iconContainer = container.querySelector(
         "[data-testid='success-icon-container']",
       );
-      expect(iconContainer).toHaveClass("animate-success-ring");
+      expect(iconContainer).toHaveClass("motion-safe:animate-success-ring");
     });
 
     it("applies staggered fade-in to heading with delay after icon", () => {
@@ -99,7 +99,10 @@ describe("SuccessCelebration", () => {
       const heading = screen.getByRole("heading", {
         name: /all systems ready/i,
       });
-      expect(heading).toHaveClass("animate-in", "fade-in");
+      expect(heading).toHaveClass(
+        "motion-safe:animate-in",
+        "motion-safe:fade-in",
+      );
       expect(heading.className).toMatch(/delay-/);
     });
 
@@ -107,14 +110,20 @@ describe("SuccessCelebration", () => {
       render(<SuccessCelebration checksCount={6} onViewDetails={vi.fn()} />);
 
       const description = screen.getByText(/fully compatible with VDC Vault/i);
-      expect(description).toHaveClass("animate-in", "fade-in");
+      expect(description).toHaveClass(
+        "motion-safe:animate-in",
+        "motion-safe:fade-in",
+      );
     });
 
     it("applies slide-up animation to button", () => {
       render(<SuccessCelebration checksCount={6} onViewDetails={vi.fn()} />);
 
       const button = screen.getByRole("button", { name: /view job details/i });
-      expect(button).toHaveClass("animate-in", "slide-in-from-bottom-2");
+      expect(button).toHaveClass(
+        "motion-safe:animate-in",
+        "motion-safe:slide-in-from-bottom-2",
+      );
     });
 
     it("uses fill-mode-backwards to prevent stagger flash", () => {

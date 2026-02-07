@@ -201,3 +201,12 @@
 @utility animate-success-ring {
   animation: success-ring 400ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-success-ring,
+  .motion-safe\:animate-success-ring,
+  .animate-attention-pulse,
+  .motion-safe\:animate-attention-pulse {
+    animation: none;
+  }
+}

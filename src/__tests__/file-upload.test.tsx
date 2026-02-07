@@ -125,6 +125,6 @@ describe("FileUpload", () => {
       .getByTestId("drop-zone")
       .querySelector("[data-testid='upload-icon-wrapper']");
     expect(uploadIcon).not.toBeNull();
-    expect(uploadIcon!.className).toMatch(/group-hover\//);
+    expect(uploadIcon!.className).toMatch(/motion-safe:group-hover\//);
   });
 });
