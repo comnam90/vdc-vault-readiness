@@ -57,7 +57,7 @@ export function BlockersList({ validations }: BlockersListProps) {
             )}
             style={{ animationDelay: `${index * STAGGER_DELAY_MS}ms` }}
           >
-            <sev.Icon className={sev.iconClass} />
+            <sev.Icon className={sev.iconClass} aria-hidden="true" />
             <AlertTitle data-testid="blocker-title">
               <span className="text-sm font-bold tracking-wide uppercase">
                 {blocker.title}
