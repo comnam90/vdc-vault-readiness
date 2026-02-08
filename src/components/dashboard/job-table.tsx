@@ -110,7 +110,7 @@ export function JobTable({ jobs }: JobTableProps) {
   });
 
   return (
-    <div className="animate-in fade-in space-y-4 duration-300">
+    <div className="motion-safe:animate-in motion-safe:fade-in space-y-4 duration-300">
       <Input
         placeholder="Search jobs..."
         value={globalFilter}
