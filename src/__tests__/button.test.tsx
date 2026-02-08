@@ -19,6 +19,6 @@ describe("Button", () => {
     render(<Button>Timed</Button>);
     const button = screen.getByRole("button", { name: /timed/i });
     expect(button.className).toMatch(/duration-150/);
-    expect(button.className).toMatch(/ease-\[--ease-out\]/);
+    expect(button.className).toMatch(/ease-\[var\(--ease-out\)\]/);
   });
 });
