@@ -2,36 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import type { NormalizedDataset } from "@/types/domain";
-import type { ValidationResult } from "@/types/validation";
-
-const MOCK_DATA: NormalizedDataset = {
-  backupServer: [{ Version: "13.0.1.1071", Name: "VBR-01" }],
-  securitySummary: [
-    { BackupFileEncryptionEnabled: true, ConfigBackupEncryptionEnabled: true },
-  ],
-  jobInfo: [
-    {
-      JobName: "Job A",
-      JobType: "VMware Backup",
-      Encrypted: true,
-      RepoName: "LinuxHardened",
-    },
-    {
-      JobName: "Job B",
-      JobType: "Agent Backup",
-      Encrypted: false,
-      RepoName: "WinLocal",
-    },
-    {
-      JobName: "Job C",
-      JobType: "File Backup",
-      Encrypted: true,
-      RepoName: "VeeamVault",
-    },
-  ],
-  Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
-  dataErrors: [],
-};
+import { MOCK_DATA, ALL_PASS_VALIDATIONS, MIXED_VALIDATIONS } from "./fixtures";
 
 // Multiple servers: first passes (13.0.1), second fails (11.0.0)
 const MULTI_SERVER_MIXED_DATA: NormalizedDataset = {
@@ -60,47 +31,6 @@ const MULTI_SERVER_ALL_PASS_DATA: NormalizedDataset = {
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
   dataErrors: [],
 };
-
-const MIXED_VALIDATIONS: ValidationResult[] = [
-  {
-    ruleId: "vbr-version",
-    title: "VBR Version Compatibility",
-    status: "pass",
-    message: "All VBR servers meet the minimum version.",
-    affectedItems: [],
-  },
-  {
-    ruleId: "job-encryption",
-    title: "Job Encryption Audit",
-    status: "fail",
-    message: "Unencrypted jobs found.",
-    affectedItems: ["Job B"],
-  },
-  {
-    ruleId: "agent-workload",
-    title: "Agent Workload Configuration",
-    status: "warning",
-    message: "Agent workloads detected.",
-    affectedItems: ["Job B"],
-  },
-];
-
-const ALL_PASS_VALIDATIONS: ValidationResult[] = [
-  {
-    ruleId: "vbr-version",
-    title: "VBR Version Compatibility",
-    status: "pass",
-    message: "All VBR servers meet the minimum version.",
-    affectedItems: [],
-  },
-  {
-    ruleId: "job-encryption",
-    title: "Job Encryption Audit",
-    status: "pass",
-    message: "All jobs encrypted.",
-    affectedItems: [],
-  },
-];
 
 describe("DashboardView", () => {
   it("renders the header with title and Upload New button", () => {
@@ -219,6 +149,64 @@ describe("DashboardView", () => {
     );
 
     expect(screen.getByText("Scan Complete")).toBeInTheDocument();
+  });
+
+  it("staggers summary cards with 100ms delay per §5.2 spec", () => {
+    const { container } = render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    const cards = container.querySelectorAll("[data-slot='card']");
+    expect(cards.length).toBe(3);
+    // First card: no delay, second: delay-100, third: delay-200
+    expect(cards[0].className).not.toMatch(/delay-/);
+    expect(cards[1].className).toMatch(/delay-100/);
+    expect(cards[2].className).toMatch(/delay-200/);
+  });
+
+  it("uses 400ms duration and 8px rise for entrance animation per §4", () => {
+    const { container } = render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    const mainContainer = container.firstChild as HTMLElement;
+    expect(mainContainer.className).toMatch(/duration-400/);
+    expect(mainContainer.className).toMatch(/slide-in-from-bottom-2/);
+    expect(mainContainer.className).not.toMatch(/slide-in-from-bottom-4/);
+  });
+
+  it("shows all checks passed celebration message when no blockers", () => {
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={ALL_PASS_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("All Systems Ready")).toBeInTheDocument();
+  });
+
+  it("shows compatibility message when all checks pass", () => {
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={ALL_PASS_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText(/fully compatible with VDC Vault/i),
+    ).toBeInTheDocument();
   });
 
   describe("multiple backup servers", () => {

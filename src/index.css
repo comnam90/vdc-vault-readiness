@@ -1,10 +1,19 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
   --radius: 0.625rem;
+
+  /* Motion Tokens (§4) */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-emphasis: 600ms;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* Veeam 2025 Brand Palette */
   --viridis: oklch(0.75 0.22 155);
@@ -65,33 +74,35 @@
   --sidebar-ring: var(--electric-azure);
 }
 
-.dark {
-  /* Veeam 2025 Brand Palette — Dark Mode */
-  --viridis: oklch(0.80 0.24 155);
-  --fog: oklch(0.20 0 0);
-  --dark-mineral: oklch(0.92 0 0);
-  --french-grey: oklch(0.35 0.01 280);
-  --ignis: oklch(0.68 0.24 25);
-  --suma: oklch(0.78 0.21 55);
-  --electric-azure: oklch(0.60 0.28 265);
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Veeam 2025 Brand Palette — Dark Mode */
+    --viridis: oklch(0.8 0.24 155);
+    --fog: oklch(0.2 0 0);
+    --dark-mineral: oklch(0.92 0 0);
+    --french-grey: oklch(0.6 0.01 280);
+    --ignis: oklch(0.68 0.24 25);
+    --suma: oklch(0.78 0.21 55);
+    --electric-azure: oklch(0.6 0.28 265);
 
-  /* Overrides for dark backgrounds */
-  --background: oklch(0.15 0 0);
-  --card: oklch(0.20 0 0);
-  --popover: oklch(0.20 0 0);
-  --primary-foreground: oklch(0.15 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+    /* Overrides for dark backgrounds */
+    --background: oklch(0.15 0 0);
+    --card: oklch(0.2 0 0);
+    --popover: oklch(0.2 0 0);
+    --primary-foreground: oklch(0.15 0 0);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
 
-  /* Extended Semantic — Dark Mode */
-  --success-muted: oklch(0.22 0.08 155);
-  --warning-foreground: oklch(0.15 0 0);
-  --warning-muted: oklch(0.22 0.08 55);
-  --info-muted: oklch(0.22 0.08 265);
+    /* Extended Semantic — Dark Mode */
+    --success-muted: oklch(0.22 0.08 155);
+    --warning-foreground: oklch(0.15 0 0);
+    --warning-muted: oklch(0.22 0.08 55);
+    --info-muted: oklch(0.22 0.08 265);
 
-  /* Sidebar — Dark Mode */
-  --sidebar: oklch(0.20 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+    /* Sidebar — Dark Mode */
+    --sidebar: oklch(0.2 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+  }
 }
 
 @theme inline {
@@ -171,3 +182,72 @@
     text-rendering: optimizeLegibility;
   }
 }
+
+/* One-shot attention pulse for blocker alerts */
+@keyframes attention-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@utility animate-attention-pulse {
+  animation: attention-pulse 600ms ease-out 1;
+}
+
+@keyframes success-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@utility animate-success-ring {
+  animation: success-ring var(--duration-emphasis) var(--ease-spring) forwards;
+}
+
+/* Subtle pulse for drag-over state */
+@keyframes drag-pulse {
+  0%,
+  100% {
+    background-color: oklch(from var(--primary) l c h / 5%);
+  }
+  50% {
+    background-color: oklch(from var(--primary) l c h / 10%);
+  }
+}
+
+@utility animate-drag-pulse {
+  animation: drag-pulse 1200ms var(--ease-in-out) infinite;
+}
+
+/* Error shake for invalid uploads */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-2px);
+  }
+  40%,
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@utility animate-shake {
+  animation: shake 300ms var(--ease-out) 1;
+}
+

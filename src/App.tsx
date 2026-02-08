@@ -30,7 +30,7 @@ function App() {
   if (status === "error") {
     return (
       <div className="flex min-h-screen items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-4">
+        <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 w-full max-w-md space-y-4 duration-400 ease-[var(--ease-out)]">
           <Alert variant="destructive">
             <AlertCircle className="size-4" />
             <AlertTitle>Analysis Failed</AlertTitle>
@@ -54,7 +54,7 @@ function App() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-8">
-      <div className="w-full max-w-lg">
+      <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 w-full max-w-lg duration-400 ease-[var(--ease-out)]">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold tracking-tight">
             VDC Vault Readiness

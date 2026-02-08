@@ -218,4 +218,112 @@ describe("useAnalysis", () => {
     expect(result.current.status).toBe("success");
     expect(result.current.data).toEqual(MOCK_ANALYSIS_RESULT.data);
   });
+
+  it("handles non-Error thrown from pipeline (line 145-147 else branch)", async () => {
+    // The catch block has: err instanceof Error ? err.message : "An unexpected error occurred."
+    // This tests the else branch by throwing a non-Error value.
+    mockAnalyzeHealthcheck.mockImplementation(() => {
+      throw "string error, not an Error object";
+    });
+
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
+    const file = createMockFile(VALID_JSON);
+
+    await act(async () => {
+      await result.current.analyzeFile(file);
+    });
+
+    expect(result.current.status).toBe("error");
+    expect(result.current.error).toBe("An unexpected error occurred.");
+    expect(result.current.data).toBeNull();
+    expect(result.current.validations).toBeNull();
+  });
+
+  it("stale check after analyzeHealthcheck prevents step loop from running", async () => {
+    // To hit isStale() at line 113, the first call must get past readFileAsText
+    // and analyzeHealthcheck, then become stale before entering the step loop.
+    // We achieve this by having analyzeHealthcheck trigger a second analyzeFile call.
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
+    const secondFile = createMockFile(VALID_JSON, "second.json");
+
+    let callCount = 0;
+    mockAnalyzeHealthcheck.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        // During the first call's analyzeHealthcheck, fire a second analysis.
+        // This increments requestIdRef, making the first call stale at line 113.
+        result.current.analyzeFile(secondFile);
+      }
+      return MOCK_ANALYSIS_RESULT;
+    });
+
+    const firstFile = createMockFile(VALID_JSON, "first.json");
+
+    await act(async () => {
+      await result.current.analyzeFile(firstFile);
+      // Allow the second call (triggered inside mock) to complete
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    expect(mockAnalyzeHealthcheck).toHaveBeenCalledTimes(2);
+    expect(result.current.status).toBe("success");
+    expect(result.current.data).toEqual(MOCK_ANALYSIS_RESULT.data);
+  });
+
+  it("stale check during step animation loop aborts the first call", async () => {
+    // To hit isStale() at line 133, the first call must enter the step loop,
+    // then become stale mid-loop. We use a non-zero stepDelay so there's time
+    // between loop iterations, and fire the second call after a short delay.
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 100 }));
+
+    const firstFile = createMockFile(VALID_JSON, "first.json");
+    const secondFile = createMockFile(VALID_JSON, "second.json");
+
+    await act(async () => {
+      const firstPromise = result.current.analyzeFile(firstFile);
+      // Wait just enough for the first call to enter the step loop
+      // (past readFileAsText + analyzeHealthcheck), then fire the second
+      await new Promise((r) => setTimeout(r, 50));
+      const secondPromise = result.current.analyzeFile(secondFile);
+      await Promise.all([firstPromise, secondPromise]);
+    });
+
+    // The second call should complete with all steps
+    expect(result.current.status).toBe("success");
+    expect(result.current.completedSteps).toEqual(
+      PIPELINE_STEPS.map((s) => s.id),
+    );
+    expect(result.current.currentStep).toBeNull();
+  });
+
+  it("stale check in catch block prevents error state from stale call", async () => {
+    // To hit isStale() at line 145, the first call must throw in the try block
+    // after readFileAsText, but the call must be stale before the catch runs.
+    // We achieve this by having analyzeHealthcheck throw AND trigger a second call.
+    const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
+    const secondFile = createMockFile(VALID_JSON, "second.json");
+
+    let callCount = 0;
+    mockAnalyzeHealthcheck.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        // Trigger second call to make this one stale, then throw
+        result.current.analyzeFile(secondFile);
+        throw new Error("This error should be discarded");
+      }
+      return MOCK_ANALYSIS_RESULT;
+    });
+
+    const firstFile = createMockFile(VALID_JSON, "first.json");
+
+    await act(async () => {
+      await result.current.analyzeFile(firstFile);
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    // The first call's error should be discarded (stale), second call succeeds
+    expect(result.current.status).toBe("success");
+    expect(result.current.error).toBeNull();
+    expect(mockAnalyzeHealthcheck).toHaveBeenCalledTimes(2);
+  });
 });

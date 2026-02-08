@@ -40,20 +40,26 @@ describe("BlockersList", () => {
     render(<BlockersList validations={[FAIL_RESULT, PASS_RESULT]} />);
 
     expect(screen.getByText("Job Encryption Audit")).toBeInTheDocument();
-    expect(screen.getByText("Vault requires source-side encryption.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Vault requires source-side encryption."),
+    ).toBeInTheDocument();
   });
 
   it("renders warning validations", () => {
     render(<BlockersList validations={[WARNING_RESULT, PASS_RESULT]} />);
 
-    expect(screen.getByText("Agent Workload Configuration")).toBeInTheDocument();
+    expect(
+      screen.getByText("Agent Workload Configuration"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Agent workloads detected.")).toBeInTheDocument();
   });
 
   it("does not render pass or info validations", () => {
     render(<BlockersList validations={[PASS_RESULT, INFO_RESULT]} />);
 
-    expect(screen.queryByText("VBR Version Compatibility")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("VBR Version Compatibility"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("License/Edition Notes")).not.toBeInTheDocument();
   });
 
@@ -86,11 +92,29 @@ describe("BlockersList", () => {
     expect(screen.getByText(/and 2 more/i)).toBeInTheDocument();
   });
 
-  it("renders nothing when all validations pass", () => {
-    const { container } = render(
-      <BlockersList validations={[PASS_RESULT]} />,
-    );
+  it("uses shadcn Alert primitive with data-slot attribute", () => {
+    render(<BlockersList validations={[FAIL_RESULT, WARNING_RESULT]} />);
 
-    expect(container.querySelector("[data-testid='blockers-list']")?.children.length ?? 0).toBe(0);
+    const alerts = screen.getAllByRole("alert");
+    for (const alert of alerts) {
+      expect(alert).toHaveAttribute("data-slot", "alert");
+    }
+  });
+
+  it("applies stagger animation delay to each blocker", () => {
+    render(<BlockersList validations={[FAIL_RESULT, WARNING_RESULT]} />);
+
+    const alerts = screen.getAllByRole("alert");
+    expect(alerts[0].style.animationDelay).toBe("0ms");
+    expect(alerts[1].style.animationDelay).toBe("100ms");
+  });
+
+  it("renders nothing when all validations pass", () => {
+    const { container } = render(<BlockersList validations={[PASS_RESULT]} />);
+
+    expect(
+      container.querySelector("[data-testid='blockers-list']")?.children
+        .length ?? 0,
+    ).toBe(0);
   });
 });

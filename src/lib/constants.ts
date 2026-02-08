@@ -1,9 +1,6 @@
-export const MINIMUM_VBR_VERSION = "12.1.2";
+import type { PipelineStep } from "@/types/domain";
 
-export interface PipelineStep {
-  id: string;
-  label: string;
-}
+export const MINIMUM_VBR_VERSION = "12.1.2";
 
 /**
  * UI-facing pipeline steps displayed in the ChecklistLoader component.

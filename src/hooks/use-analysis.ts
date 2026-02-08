@@ -3,6 +3,7 @@ import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 import { analyzeHealthcheck } from "@/lib/pipeline";
 import { PIPELINE_STEPS } from "@/lib/constants";
+import { tick } from "@/lib/delay";
 
 export type AnalysisStatus = "idle" | "processing" | "success" | "error";
 
@@ -46,44 +47,6 @@ function readFileAsText(file: File): Promise<string> {
   });
 }
 
-function tick(ms: number, signal: AbortSignal): Promise<void> {
-  if (ms <= 0) return Promise.resolve();
-  return new Promise((resolve) => {
-    let settled = false;
-    const idHolder: { current: ReturnType<typeof setTimeout> | undefined } = {
-      current: undefined,
-    };
-
-    const finish = () => {
-      if (settled) return;
-      settled = true;
-      resolve();
-    };
-
-    const onAbort = () => {
-      if (idHolder.current !== undefined) {
-        clearTimeout(idHolder.current);
-      }
-      signal.removeEventListener("abort", onAbort);
-      finish();
-    };
-
-    signal.addEventListener("abort", onAbort, { once: true });
-
-    if (signal.aborted) {
-      signal.removeEventListener("abort", onAbort);
-      settled = true;
-      resolve();
-      return;
-    }
-
-    idHolder.current = setTimeout(() => {
-      signal.removeEventListener("abort", onAbort);
-      finish();
-    }, ms);
-  });
-}
-
 interface UseAnalysisOptions {
   stepDelay?: number;
 }
@@ -93,11 +56,11 @@ export function useAnalysis({
 }: UseAnalysisOptions = {}) {
   const [state, setState] = useState<AnalysisState>(INITIAL_STATE);
   const requestIdRef = useRef(0);
-  const abortRef = useRef<AbortController>(new AbortController());
+  const abortRef = useRef<AbortController | null>(null);
 
   const analyzeFile = useCallback(
     async (file: File) => {
-      abortRef.current.abort();
+      abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
 
@@ -149,7 +112,13 @@ export function useAnalysis({
         );
         if (isStale()) return;
 
-        // Parse step complete. Tick through validation steps.
+        // KNOWN DEVIATION from DESIGN-SYSTEM.md Decision #4:
+        // The pipeline runs synchronously above, then we walk through
+        // PIPELINE_STEPS with artificial delays for visual feedback.
+        // True step-by-step progress would require refactoring
+        // analyzeHealthcheck() into an async iterator, which is out of
+        // scope for Sprint 3. The checklist still shows real step labels
+        // and accurate completion — only the timing is presentational.
         for (let i = 1; i <= PIPELINE_STEPS.length; i++) {
           const completed = PIPELINE_STEPS.slice(0, i).map((s) => s.id);
           const next = i < PIPELINE_STEPS.length ? PIPELINE_STEPS[i].id : null;
@@ -183,7 +152,7 @@ export function useAnalysis({
   );
 
   const reset = useCallback(() => {
-    abortRef.current.abort();
+    abortRef.current?.abort();
     requestIdRef.current++;
     setState(INITIAL_STATE);
   }, []);

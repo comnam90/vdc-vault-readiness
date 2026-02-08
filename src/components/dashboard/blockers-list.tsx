@@ -1,5 +1,6 @@
 import { CircleX, TriangleAlert } from "lucide-react";
 import type { ValidationResult } from "@/types/validation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +9,27 @@ interface BlockersListProps {
 }
 
 const MAX_VISIBLE_ITEMS = 5;
+const STAGGER_DELAY_MS = 100;
+
+const SEVERITY = {
+  fail: {
+    alertClass:
+      "border-l-4 border-l-destructive/30 bg-destructive/5 motion-safe:animate-attention-pulse",
+    Icon: CircleX,
+    iconClass: "text-destructive !size-5",
+    badgeVariant: "destructive" as const,
+    badgeClass: "",
+    badgeLabel: "Blocker",
+  },
+  warning: {
+    alertClass: "border-l-4 border-l-warning/30 bg-warning/5",
+    Icon: TriangleAlert,
+    iconClass: "text-warning !size-5",
+    badgeVariant: "outline" as const,
+    badgeClass: "border-warning text-warning",
+    badgeLabel: "Warning",
+  },
+};
 
 export function BlockersList({ validations }: BlockersListProps) {
   const blockers = validations
@@ -20,76 +42,52 @@ export function BlockersList({ validations }: BlockersListProps) {
 
   return (
     <div data-testid="blockers-list" className="space-y-3">
-      {blockers.map((blocker) => {
+      {blockers.map((blocker, index) => {
         const isFail = blocker.status === "fail";
+        const sev = SEVERITY[isFail ? "fail" : "warning"];
         const remaining = blocker.affectedItems.length - MAX_VISIBLE_ITEMS;
         const visibleItems = blocker.affectedItems.slice(0, MAX_VISIBLE_ITEMS);
 
         return (
-          <div
+          <Alert
             key={blocker.ruleId}
-            role="alert"
             className={cn(
-              "animate-in fade-in rounded-lg border-l-4 p-4 duration-300",
-              isFail
-                ? "border-l-destructive/30 bg-destructive/5 animate-pulse [animation-duration:600ms] [animation-iteration-count:1]"
-                : "border-l-warning/30 bg-warning/5",
+              "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards duration-300",
+              sev.alertClass,
             )}
+            style={{ animationDelay: `${index * STAGGER_DELAY_MS}ms` }}
           >
-            <div className="flex items-start gap-3">
-              {isFail ? (
-                <CircleX
-                  className="text-destructive mt-0.5 size-5 shrink-0"
-                  aria-hidden="true"
-                />
-              ) : (
-                <TriangleAlert
-                  className="text-warning mt-0.5 size-5 shrink-0"
-                  aria-hidden="true"
-                />
-              )}
-              <div className="flex-1 space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <h3
-                    data-testid="blocker-title"
-                    className="text-sm font-bold tracking-wide uppercase"
-                  >
-                    {blocker.title}
-                  </h3>
-                  {isFail ? (
-                    <Badge
-                      variant="destructive"
-                      className="text-[10px] tracking-wider uppercase"
-                    >
-                      Blocker
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className="border-warning text-warning text-[10px] tracking-wider uppercase"
-                    >
-                      Warning
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-muted-foreground text-sm">
-                  {blocker.message}
-                </p>
-                {visibleItems.length > 0 && (
-                  <ul className="mt-2 list-inside list-disc space-y-0.5 text-sm">
-                    {visibleItems.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                    {remaining > 0 && (
-                      <li className="text-muted-foreground">
-                        and {remaining} more
-                      </li>
-                    )}
-                  </ul>
+            <sev.Icon className={sev.iconClass} aria-hidden="true" />
+            <AlertTitle data-testid="blocker-title">
+              <span className="text-sm font-bold tracking-wide uppercase">
+                {blocker.title}
+              </span>
+              <Badge
+                variant={sev.badgeVariant}
+                className={cn(
+                  "ml-2 align-middle text-[10px] tracking-wider uppercase",
+                  sev.badgeClass,
                 )}
-              </div>
-            </div>
-          </div>
+              >
+                {sev.badgeLabel}
+              </Badge>
+            </AlertTitle>
+            <AlertDescription>
+              <p>{blocker.message}</p>
+              {visibleItems.length > 0 && (
+                <ul className="mt-2 list-inside list-disc space-y-0.5">
+                  {visibleItems.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                  {remaining > 0 && (
+                    <li className="text-muted-foreground">
+                      and {remaining} more
+                    </li>
+                  )}
+                </ul>
+              )}
+            </AlertDescription>
+          </Alert>
         );
       })}
     </div>
