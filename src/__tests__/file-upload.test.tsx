@@ -127,4 +127,45 @@ describe("FileUpload", () => {
     expect(uploadIcon).not.toBeNull();
     expect(uploadIcon!.className).toMatch(/motion-safe:group-hover\//);
   });
+
+  describe("error state", () => {
+    it("shows destructive border when error prop is set", () => {
+      render(<FileUpload onFileSelected={vi.fn()} error="Invalid JSON file" />);
+
+      const dropZone = screen.getByTestId("drop-zone");
+      expect(dropZone.className).toMatch(/border-destructive/);
+    });
+
+    it("applies shake animation when error prop is set", () => {
+      render(<FileUpload onFileSelected={vi.fn()} error="Invalid JSON file" />);
+
+      const dropZone = screen.getByTestId("drop-zone");
+      expect(dropZone.className).toMatch(/motion-safe:animate-shake/);
+    });
+
+    it("displays the error message text", () => {
+      render(<FileUpload onFileSelected={vi.fn()} error="Invalid JSON file" />);
+
+      expect(screen.getByText("Invalid JSON file")).toBeInTheDocument();
+    });
+
+    it("does not show error message when error prop is absent", () => {
+      render(<FileUpload onFileSelected={vi.fn()} />);
+
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("drag-over state", () => {
+    it("applies pulse animation on drag over", () => {
+      render(<FileUpload onFileSelected={vi.fn()} />);
+
+      const dropZone = screen.getByTestId("drop-zone");
+      fireEvent.dragOver(dropZone, {
+        dataTransfer: { types: ["Files"] },
+      });
+
+      expect(dropZone.className).toMatch(/motion-safe:animate-drag-pulse/);
+    });
+  });
 });

@@ -4,6 +4,17 @@
 :root {
   --radius: 0.625rem;
 
+  /* Motion Tokens (§4) */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-emphasis: 600ms;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
   /* Veeam 2025 Brand Palette */
   --viridis: oklch(0.75 0.22 155);
   --fog: oklch(0.95 0 0);
@@ -186,11 +197,11 @@
 
 @keyframes success-ring {
   0% {
-    transform: scale(0.8);
+    transform: scale(1);
     opacity: 0;
   }
   50% {
-    transform: scale(1.05);
+    transform: scale(1.02);
   }
   100% {
     transform: scale(1);
@@ -199,6 +210,41 @@
 }
 
 @utility animate-success-ring {
-  animation: success-ring 400ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: success-ring var(--duration-emphasis) var(--ease-spring) forwards;
+}
+
+/* Subtle pulse for drag-over state */
+@keyframes drag-pulse {
+  0%,
+  100% {
+    background-color: oklch(from var(--primary) l c h / 5%);
+  }
+  50% {
+    background-color: oklch(from var(--primary) l c h / 10%);
+  }
+}
+
+@utility animate-drag-pulse {
+  animation: drag-pulse 1200ms var(--ease-in-out) infinite;
+}
+
+/* Error shake for invalid uploads */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-2px);
+  }
+  40%,
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@utility animate-shake {
+  animation: shake 300ms var(--ease-out) 1;
 }
 

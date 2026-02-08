@@ -66,13 +66,14 @@ describe("SuccessCelebration", () => {
   });
 
   describe("animation classes", () => {
-    it("applies fade-in animation to the card container", () => {
+    it("applies fade-in animation to the card container with 200ms per §5.5", () => {
       const { container } = render(
         <SuccessCelebration checksCount={6} onViewDetails={vi.fn()} />,
       );
 
       const card = container.querySelector("[data-slot='card']");
       expect(card).toHaveClass("motion-safe:animate-in", "motion-safe:fade-in");
+      expect(card).toHaveClass("duration-200");
     });
 
     it("applies checkmark draw animation class to icon container", () => {

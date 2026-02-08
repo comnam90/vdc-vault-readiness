@@ -17,7 +17,7 @@ export function SuccessCelebration({
 }: SuccessCelebrationProps) {
   return (
     <Card
-      className={cn(STAGGER_FADE, "text-center duration-500")}
+      className={cn(STAGGER_FADE, "text-center duration-200")}
       role="status"
     >
       <CardContent className="flex flex-col items-center gap-4 py-8">

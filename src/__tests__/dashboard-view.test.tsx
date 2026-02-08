@@ -151,7 +151,7 @@ describe("DashboardView", () => {
     expect(screen.getByText("Scan Complete")).toBeInTheDocument();
   });
 
-  it("staggers summary cards with 50ms delay per spec", () => {
+  it("staggers summary cards with 100ms delay per §5.2 spec", () => {
     const { container } = render(
       <DashboardView
         data={MOCK_DATA}
@@ -162,10 +162,25 @@ describe("DashboardView", () => {
 
     const cards = container.querySelectorAll("[data-slot='card']");
     expect(cards.length).toBe(3);
-    // First card: no delay, second: delay-50, third: delay-100
+    // First card: no delay, second: delay-100, third: delay-200
     expect(cards[0].className).not.toMatch(/delay-/);
-    expect(cards[1].className).toMatch(/delay-50/);
-    expect(cards[2].className).toMatch(/delay-100/);
+    expect(cards[1].className).toMatch(/delay-100/);
+    expect(cards[2].className).toMatch(/delay-200/);
+  });
+
+  it("uses 400ms duration and 8px rise for entrance animation per §4", () => {
+    const { container } = render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    const mainContainer = container.firstChild as HTMLElement;
+    expect(mainContainer.className).toMatch(/duration-400/);
+    expect(mainContainer.className).toMatch(/slide-in-from-bottom-2/);
+    expect(mainContainer.className).not.toMatch(/slide-in-from-bottom-4/);
   });
 
   it("shows all checks passed celebration message when no blockers", () => {
