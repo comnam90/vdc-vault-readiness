@@ -219,7 +219,7 @@ describe("useAnalysis", () => {
     expect(result.current.data).toEqual(MOCK_ANALYSIS_RESULT.data);
   });
 
-  it("handles non-Error thrown from pipeline (line 145-147 else branch)", async () => {
+  it("handles non-Error thrown from pipeline by using the generic error message", async () => {
     // The catch block has: err instanceof Error ? err.message : "An unexpected error occurred."
     // This tests the else branch by throwing a non-Error value.
     mockAnalyzeHealthcheck.mockImplementation(() => {
@@ -240,9 +240,9 @@ describe("useAnalysis", () => {
   });
 
   it("stale check after analyzeHealthcheck prevents step loop from running", async () => {
-    // To hit isStale() at line 113, the first call must get past readFileAsText
-    // and analyzeHealthcheck, then become stale before entering the step loop.
-    // We achieve this by having analyzeHealthcheck trigger a second analyzeFile call.
+    // The first call must get past readFileAsText and analyzeHealthcheck,
+    // then become stale before entering the step loop. We achieve this by
+    // having analyzeHealthcheck trigger a second analyzeFile call.
     const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
     const secondFile = createMockFile(VALID_JSON, "second.json");
 
@@ -271,9 +271,9 @@ describe("useAnalysis", () => {
   });
 
   it("stale check during step animation loop aborts the first call", async () => {
-    // To hit isStale() at line 133, the first call must enter the step loop,
-    // then become stale mid-loop. We use a non-zero stepDelay so there's time
-    // between loop iterations, and fire the second call after a short delay.
+    // The first call must enter the step loop, then become stale mid-loop.
+    // We use a non-zero stepDelay so there's time between loop iterations,
+    // and fire the second call after a short delay.
     const { result } = renderHook(() => useAnalysis({ stepDelay: 100 }));
 
     const firstFile = createMockFile(VALID_JSON, "first.json");
@@ -297,9 +297,9 @@ describe("useAnalysis", () => {
   });
 
   it("stale check in catch block prevents error state from stale call", async () => {
-    // To hit isStale() at line 145, the first call must throw in the try block
-    // after readFileAsText, but the call must be stale before the catch runs.
-    // We achieve this by having analyzeHealthcheck throw AND trigger a second call.
+    // The first call must throw in the try block after readFileAsText, but
+    // the call must be stale before the catch runs. We achieve this by
+    // having analyzeHealthcheck throw AND trigger a second call.
     const { result } = renderHook(() => useAnalysis({ stepDelay: 0 }));
     const secondFile = createMockFile(VALID_JSON, "second.json");
 

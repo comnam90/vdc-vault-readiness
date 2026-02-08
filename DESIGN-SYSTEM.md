@@ -213,11 +213,11 @@ Motion should feel **deliberate and swift**. This is a professional tool—anima
 | ---------------------- | --------------------------------------------------- | --------- | ----------- |
 | **Page load**          | Fade in + subtle rise (8px)                         | 400ms     | ease-out    |
 | **State transition**   | Cross-fade                                          | 250ms     | ease-in-out |
-| **Card entrance**      | Stagger fade-in (50ms delay each)                   | 300ms     | ease-out    |
+| **Card entrance**      | Stagger fade-in (100ms delay each)                  | 300ms     | ease-out    |
 | **Success result**     | Scale pulse (1.0 → 1.02 → 1.0) ~~+ checkmark draw~~ | 600ms     | spring      |
 | **Failure result**     | Shake (subtle, 2px horizontal)                      | 300ms     | ease-out    |
 | **Button hover**       | Background color shift                              | 150ms     | ease-out    |
-| **Button press**       | Scale down to 0.98                                  | 100ms     | ease-out    |
+| **Button press**       | Scale down to 0.98                                  | 150ms     | ease-out    |
 | **Focus ring**         | Ring expansion                                      | 150ms     | ease-out    |
 | **Dropdown/Modal**     | Fade + scale from 0.95                              | 200ms     | ease-out    |
 | **Loading spinner**    | Continuous rotation                                 | 1000ms    | linear      |

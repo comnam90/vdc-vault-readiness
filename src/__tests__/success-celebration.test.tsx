@@ -76,7 +76,7 @@ describe("SuccessCelebration", () => {
       expect(card).toHaveClass("duration-200");
     });
 
-    it("applies checkmark draw animation class to icon container", () => {
+    it("applies success ring animation class to icon container", () => {
       const { container } = render(
         <SuccessCelebration checksCount={6} onViewDetails={vi.fn()} />,
       );
