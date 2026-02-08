@@ -74,6 +74,18 @@ describe("tick", () => {
     expect(resolved).toBe(true);
   });
 
+  it("removes abort listener when timeout resolves normally", async () => {
+    const controller = new AbortController();
+    const removeSpy = vi.spyOn(controller.signal, "removeEventListener");
+
+    const promise = tick(100, controller.signal);
+    vi.advanceTimersByTime(100);
+    await promise;
+
+    expect(removeSpy).toHaveBeenCalledWith("abort", expect.any(Function));
+    removeSpy.mockRestore();
+  });
+
   it("clears timeout when aborted", async () => {
     const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
     const controller = new AbortController();
