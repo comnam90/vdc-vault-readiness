@@ -115,7 +115,7 @@ export function FileUpload({ onFileSelected, error }: FileUploadProps) {
           role="alert"
           className="text-destructive mt-3 flex items-center gap-1.5 text-sm"
         >
-          <AlertCircle className="size-4 shrink-0" />
+          <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
           <span>{error}</span>
         </div>
       )}
