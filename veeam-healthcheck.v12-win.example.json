@@ -1,0 +1,1415 @@
+{
+  "cProtectedWorkloads": null,
+  "Licenses": [
+    {
+      "LicensedTo": "Item_0",
+      "Edition": "EnterprisePlus",
+      "Status": "Valid",
+      "Type": "Rental",
+      "LicensedInstances": "1040",
+      "UsedInstances": "44",
+      "NewInstances": "0",
+      "RentalInstances": "0",
+      "LicensedSockets": "0",
+      "UsedSockets": "0",
+      "LicensedNas": "0",
+      "UsedNas": "0",
+      "ExpirationDate": "30/09/2026 12:00:00 am",
+      "SupportExpirationDate": "",
+      "CloudConnect": "Disabled"
+    }
+  ],
+  "LicenseSummary": null,
+  "Sections": {
+    "backupServer": {
+      "SectionName": "backupServer",
+      "Headers": [
+        "Name",
+        "Version",
+        "DbType",
+        "DbHost",
+        "ConfigBackupEnabled",
+        "ConfigBackupLastResult",
+        "ConfigBackupEncryption",
+        "ConfigBackupTarget"
+      ],
+      "Rows": [
+        [
+          "Server_1",
+          "12.3.2.3617",
+          "PG SQL",
+          "Server_3",
+          "True",
+          "Success",
+          "True",
+          "Repository_2"
+        ]
+      ],
+      "Summary": null
+    },
+    "securitySummary": {
+      "SectionName": "securitySummary",
+      "Headers": [
+        "ImmutabilityEnabled",
+        "TrafficEncryptionEnabled",
+        "BackupFileEncryptionEnabled",
+        "ConfigBackupEncryptionEnabled",
+        "MFAEnabled"
+      ],
+      "Rows": [
+        [
+          "True",
+          "True",
+          "True",
+          "True",
+          "False"
+        ]
+      ],
+      "Summary": null
+    },
+    "serverSummary": {
+      "SectionName": "serverSummary",
+      "Headers": [
+        "ServerType",
+        "Count"
+      ],
+      "Rows": [
+        [
+          "ESXi",
+          "4"
+        ],
+        [
+          "ExternalInfrastructureServer",
+          "3"
+        ],
+        [
+          "HvCluster",
+          "1"
+        ],
+        [
+          "HvServer",
+          "1"
+        ],
+        [
+          "Linux",
+          "1"
+        ],
+        [
+          "VC",
+          "1"
+        ],
+        [
+          "Windows",
+          "1"
+        ]
+      ],
+      "Summary": null
+    },
+    "jobSummary": {
+      "SectionName": "jobSummary",
+      "Headers": [
+        "JobType",
+        "Count"
+      ],
+      "Rows": [
+        [
+          "Agent Backup",
+          "1"
+        ],
+        [
+          "Backup",
+          "3"
+        ],
+        [
+          "Backup Copy",
+          "3"
+        ],
+        [
+          "EpAgentBackup",
+          "1"
+        ],
+        [
+          "Replica",
+          "1"
+        ],
+        [
+          "Total Jobs",
+          "9"
+        ]
+      ],
+      "Summary": null
+    },
+    "missingJobs": {
+      "SectionName": "missingJobs",
+      "Headers": [
+        "MissingJobType"
+      ],
+      "Rows": [
+        [
+          "Catalyst Copy"
+        ],
+        [
+          "CDP"
+        ],
+        [
+          "File Backup"
+        ],
+        [
+          "File Backup - Copy"
+        ],
+        [
+          "Kasten"
+        ],
+        [
+          "Plugin"
+        ],
+        [
+          "SureBackup"
+        ],
+        [
+          "Tape"
+        ],
+        [
+          "Unmanaged Agent"
+        ],
+        [
+          "VB365"
+        ]
+      ],
+      "Summary": null
+    },
+    "protectedWorkloads": {
+      "SectionName": "protectedWorkloads",
+      "Headers": [
+        "WorkloadType",
+        "Total",
+        "Protected",
+        "Unprotected",
+        "Duplicates"
+      ],
+      "Rows": [
+        [
+          "VMware",
+          "34",
+          "0",
+          "34",
+          "1"
+        ],
+        [
+          "Hyper-V",
+          "11",
+          "3",
+          "8",
+          "1"
+        ],
+        [
+          "Physical",
+          "1",
+          "0",
+          "1",
+          "N/A"
+        ],
+        [
+          "PhysicalVMsProtected",
+          "0",
+          "N/A",
+          "N/A",
+          "N/A"
+        ]
+      ],
+      "Summary": null
+    },
+    "managedServers": {
+      "SectionName": "managedServers",
+      "Headers": [
+        "Name",
+        "Cores",
+        "Ram",
+        "Type",
+        "OsInfo",
+        "ApiVersion",
+        "ProtectedVms",
+        "NotProtectedVms",
+        "TotalVms",
+        "IsProxy",
+        "IsRepo",
+        "IsWan",
+        "IsUnavailable"
+      ],
+      "Rows": [
+        [
+          "Server_6",
+          "4",
+          "191",
+          "ESXi",
+          "VMware ESXi 8.0.3 build-24414501",
+          "V803",
+          "0",
+          "0",
+          "0",
+          "False",
+          "False",
+          "False",
+          ""
+        ],
+        [
+          "Server_7",
+          "4",
+          "192",
+          "ESXi",
+          "VMware ESXi 8.0.3 build-24414501",
+          "V803",
+          "0",
+          "0",
+          "0",
+          "False",
+          "False",
+          "False",
+          ""
+        ],
+        [
+          "Server_8",
+          "6",
+          "48",
+          "ESXi",
+          "VMware ESXi 8.0.2 build-23305546",
+          "V802",
+          "0",
+          "0",
+          "0",
+          "False",
+          "False",
+          "False",
+          ""
+        ],
+        [
+          "Server_9",
+          "24",
+          "512",
+          "ESXi",
+          "VMware ESXi 8.0.3 build-24022510",
+          "V803",
+          "0",
+          "0",
+          "0",
+          "False",
+          "False",
+          "False",
+          ""
+        ],
+        [
+          "Server_10",
+          "0",
+          "0",
+          "ExternalInfrastructureServer",
+          "",
+          "",
+          "0",
+          "0",
+          "0",
+          "False",
+          "False",
+          "False",
+          ""
+        ],
+        [
+          "Server_11",
+          "0",
+          "0",
+          "ExternalInfrastructureServer",
+          "",
+          "",
+          "0",
+          "0",
+          "0",
+          "False",
+          "False",
+          "False",
+          ""
+        ],
+        [
+          "Server_12",
+          "0",
+          "0",
+          "ExternalInfrastructureServer",
+          "",
+          "",
+          "0",
+          "0",
+          "0",
+          "False",
+          "False",
+          "False",
+          ""
+        ],
+        [
+          "Server_5",
+          "0",
+          "0",
+          "HvCluster",
+          "",
+          "",
+          "0",
+          "0",
+          "0",
+          "False",
+          "False",
+          "False",
+          ""
+        ],
+        [
+          "Server_13",
+          "24",
+          "512",
+          "HvServer",
+          "Microsoft Windows Server 2025 Datacenter 64-bit (10.0.26100 build:26100)",
+          "",
+          "0",
+          "0",
+          "0",
+          "False",
+          "False",
+          "False",
+          ""
+        ],
+        [
+          "Server_14",
+          "6",
+          "8",
+          "Linux",
+          "",
+          "",
+          "0",
+          "0",
+          "0",
+          "False",
+          "True",
+          "False",
+          ""
+        ],
+        [
+          "Server_15",
+          "1",
+          "0",
+          "VC",
+          "VMware vCenter Server 8.0.3 build-24322831",
+          "V803",
+          "0",
+          "34",
+          "34",
+          "False",
+          "False",
+          "False",
+          ""
+        ],
+        [
+          "Server_1",
+          "4",
+          "16",
+          "Windows",
+          "",
+          "",
+          "0",
+          "0",
+          "0",
+          "True",
+          "True",
+          "False",
+          ""
+        ]
+      ],
+      "Summary": null
+    },
+    "regKeys": {
+      "SectionName": "regKeys",
+      "Headers": [
+        "Key",
+        "Value"
+      ],
+      "Rows": [
+        [
+          "AzureArchiveFreezingUnSupportedRegions",
+          "austriaeast\u003Cbr\u003Ebrazilsoutheast\u003Cbr\u003Echilecentral\u003Cbr\u003Echinaeast\u003Cbr\u003Echinaeast3\u003Cbr\u003Echinanorth\u003Cbr\u003Echinanorth3\u003Cbr\u003Egermanynorth\u003Cbr\u003Ewestindia\u003Cbr\u003Eindonesiacentral\u003Cbr\u003Eisraelcentral\u003Cbr\u003Emalaysiawest\u003Cbr\u003Emexicocentral\u003Cbr\u003Enewzealandnorth\u003Cbr\u003Enorwaywest\u003Cbr\u003Epolandcentral\u003Cbr\u003Eqatarcentral\u003Cbr\u003Espaincentral\u003Cbr\u003Etaiwannorth\u003Cbr\u003Euaecentral"
+        ],
+        [
+          "ProviderInfo",
+          "VmVlYW1TYWx0ZWRQcm90ZWN0aW9ujFEiZz8px06L/5s\u002B6XXlfwEAAADQjJ3fARXREYx6AMBPwpfrAQAAAOOwxGGV3WdJpT3fiZfFdO4EAAAAAgAAAAAAEGYAAAABAAAgAAAAlxxQ9l5jGKMPkspxd5B/T131moTRaRX1xYiW9iWuFRMAAAAADoAAAAACAAAgAAAAVXzi/J4gA1Xxpfpd8IbhTe2K8QGZbXi45nwomiLCgOAQAAAAmjSvKDDV2BfLn20bq7zxdkAAAAA4RhORyXlzD3V41Sw8I9tsCeDafhklLLl9bdGi//V9PzvhpE350SWRJbz5ja5dlM5brjae\u002BDoRH//KOqQJXNzk"
+        ],
+        [
+          "ProviderCredentialsId",
+          "1602e833-a87c-4f2f-810d-5ab76a71aa61"
+        ],
+        [
+          "ProviderId",
+          "9ca50360-46f3-4bf8-a236-e1eb37d4cb85"
+        ],
+        [
+          "HighestDetectedVMCVersion",
+          "8.0.3.0"
+        ],
+        [
+          "VNXBlockNaviSECCliPath",
+          "D:\\Program Files\\Veeam\\Backup and Replication\\Backup\\EMC Navisphere CLI\\NaviSECCli.exe"
+        ],
+        [
+          "VNXeUemcliPath",
+          "D:\\Program Files\\Veeam\\Backup and Replication\\Backup\\EMC Unisphere CLI\\3.0.1\\uemcli.exe"
+        ],
+        [
+          "EntraIdSqlHostName",
+          "localhost"
+        ],
+        [
+          "EntraIdSqlHostPort",
+          "5432"
+        ],
+        [
+          "EntraIdSqlUserName",
+          "postgres"
+        ],
+        [
+          "CorePath",
+          "D:\\Program Files\\Veeam\\Backup and Replication\\Backup\\"
+        ],
+        [
+          "EntraIdSqlPassword",
+          ""
+        ],
+        [
+          "EntraIdSqlServiceName",
+          "postgresql-x64-15"
+        ],
+        [
+          "VaultServerRegistrationCustomSupportID",
+          "03532579"
+        ]
+      ],
+      "Summary": null
+    },
+    "proxies": {
+      "SectionName": "proxies",
+      "Headers": [
+        "Name",
+        "Type",
+        "Tasks",
+        "Cores",
+        "Ram",
+        "IsOnHost",
+        "TransportMode",
+        "NetBufferSize",
+        "MaxConcurrentJobs",
+        "Host",
+        "IsHvOffload"
+      ],
+      "Rows": [
+        [
+          "Server_1",
+          "2",
+          "4",
+          "16",
+          "File",
+          "",
+          "",
+          "",
+          "",
+          "Server_1",
+          ""
+        ],
+        [
+          "Server_16",
+          "2",
+          "4",
+          "16",
+          "Vi",
+          "True",
+          "",
+          "",
+          "",
+          "Server_1",
+          "False"
+        ]
+      ],
+      "Summary": null
+    },
+    "sobr": {
+      "SectionName": "sobr",
+      "Headers": [
+        "Name",
+        "ExtentCount",
+        "JobCount",
+        "PolicyType",
+        "EnableCapacityTier",
+        "CapacityTierCopy",
+        "CapacityTierMove",
+        "ArchiveTierEnabled",
+        "UsePerVMFiles",
+        "CapTierType",
+        "ImmutableEnabled",
+        "ImmutablePeriod",
+        "SizeLimitEnabled",
+        "SizeLimit"
+      ],
+      "Rows": [
+        [
+          "SOBR_17",
+          "1",
+          "3",
+          "DataLocality",
+          "False",
+          "False",
+          "False",
+          "False",
+          "True",
+          null,
+          "False",
+          null,
+          "False",
+          null
+        ],
+        [
+          "SOBR_18",
+          "1",
+          "1",
+          "DataLocality",
+          "True",
+          "True",
+          "True",
+          "False",
+          "True",
+          "DataCloudVault",
+          "False",
+          "7",
+          "True",
+          "1024"
+        ]
+      ],
+      "Summary": null
+    },
+    "extents": {
+      "SectionName": "extents",
+      "Headers": [
+        "Name",
+        "SobrName",
+        "MaxTasks",
+        "Cores",
+        "Ram",
+        "IsAutoGate",
+        "Host",
+        "Path",
+        "FreeSpace",
+        "TotalSpace",
+        "FreeSpacePercent",
+        "IsDecompress",
+        "AlignBlocks",
+        "IsRotatedDrives",
+        "IsImmutabilitySupported",
+        "Type"
+      ],
+      "Rows": [
+        [
+          "Repository_19",
+          "SOBR_17",
+          "12",
+          "6",
+          "8",
+          "False",
+          "Server_14",
+          "Path_20",
+          "0.83",
+          "1.00",
+          "82.8",
+          "False",
+          "False",
+          "False",
+          "True",
+          "Hardened"
+        ],
+        [
+          "Repository_21",
+          "SOBR_18",
+          "4",
+          "0",
+          "0",
+          "True",
+          "",
+          "Path_22",
+          "2.18",
+          "2.53",
+          "86.2",
+          "False",
+          "False",
+          "False",
+          "False",
+          "SMB"
+        ]
+      ],
+      "Summary": null
+    },
+    "repos": {
+      "SectionName": "repos",
+      "Headers": [
+        "Name",
+        "JobCount",
+        "MaxTasks",
+        "Cores",
+        "Ram",
+        "IsAutoGate",
+        "Host",
+        "Path",
+        "FreeSpace",
+        "TotalSpace",
+        "FreeSpacePercent",
+        "IsPerVmBackupFiles",
+        "IsDecompress",
+        "AlignBlocks",
+        "IsRotatedDrives",
+        "IsImmutabilitySupported",
+        "Type"
+      ],
+      "Rows": [
+        [
+          "Repository_23",
+          "0",
+          "0",
+          "0",
+          "0",
+          "True",
+          "",
+          "",
+          "1",
+          "1",
+          "100",
+          "True",
+          "False",
+          "False",
+          "False",
+          "True",
+          "AmazonS3"
+        ],
+        [
+          "Repository_2",
+          "1",
+          "4",
+          "4",
+          "16",
+          "False",
+          "Server_1",
+          "Path_24",
+          "0.10",
+          "0.12",
+          "78.6",
+          "True",
+          "False",
+          "True",
+          "False",
+          "False",
+          "WinLocal"
+        ],
+        [
+          "Repository_25",
+          "1",
+          "-1",
+          "0",
+          "0",
+          "False",
+          "",
+          "",
+          "0.46",
+          "0.49",
+          "94.8",
+          "True",
+          "False",
+          "True",
+          "False",
+          "False",
+          "Cloud"
+        ],
+        [
+          "Repository_26",
+          "1",
+          "0",
+          "0",
+          "0",
+          "True",
+          "",
+          "",
+          "0.92",
+          "1",
+          "92.2",
+          "True",
+          "False",
+          "False",
+          "False",
+          "True",
+          "VeeamVault"
+        ],
+        [
+          "Repository_27",
+          "1",
+          "0",
+          "0",
+          "0",
+          "True",
+          "",
+          "",
+          "0.96",
+          "1",
+          "95.7",
+          "True",
+          "False",
+          "False",
+          "False",
+          "True",
+          "VeeamVault"
+        ]
+      ],
+      "Summary": null
+    },
+    "jobConcurrency": {
+      "SectionName": "jobConcurrency",
+      "Headers": [
+        "TimeWindow",
+        "Values"
+      ],
+      "Rows": [
+        [
+          "0",
+          "2,2,2,2,4,,2"
+        ],
+        [
+          "1",
+          ",,,,,,"
+        ],
+        [
+          "2",
+          ",,,,,,"
+        ],
+        [
+          "3",
+          "2,2,2,1,4,,2"
+        ],
+        [
+          "4",
+          "1,1,1,,2,,1"
+        ],
+        [
+          "5",
+          "1,1,1,,2,,1"
+        ],
+        [
+          "6",
+          "2,2,2,1,4,,2"
+        ],
+        [
+          "7",
+          "1,1,1,,2,,1"
+        ],
+        [
+          "8",
+          "1,1,1,,2,,1"
+        ],
+        [
+          "9",
+          "2,2,2,1,4,,2"
+        ],
+        [
+          "10",
+          "1,1,1,,2,,1"
+        ],
+        [
+          "11",
+          "1,1,1,,2,,1"
+        ],
+        [
+          "12",
+          "2,2,2,1,4,,2"
+        ],
+        [
+          "13",
+          "1,1,1,,2,,1"
+        ],
+        [
+          "14",
+          "1,1,1,,2,,1"
+        ],
+        [
+          "15",
+          "2,3,2,,4,,2"
+        ],
+        [
+          "16",
+          "1,1,1,,2,,1"
+        ],
+        [
+          "17",
+          "1,1,1,,2,,1"
+        ],
+        [
+          "18",
+          "2,3,2,,4,,2"
+        ],
+        [
+          "19",
+          "1,1,1,,2,,1"
+        ],
+        [
+          "20",
+          "1,1,1,,2,,1"
+        ],
+        [
+          "21",
+          "2,3,2,,4,,2"
+        ],
+        [
+          "22",
+          "2,3,2,,4,,2"
+        ],
+        [
+          "23",
+          "2,3,2,,4,,2"
+        ]
+      ],
+      "Summary": null
+    },
+    "taskConcurrency": {
+      "SectionName": "taskConcurrency",
+      "Headers": [
+        "TimeWindow",
+        "Values"
+      ],
+      "Rows": [
+        [
+          "0",
+          "2,2,2,2,4,,2"
+        ],
+        [
+          "1",
+          ",,,,,,1"
+        ],
+        [
+          "2",
+          ",,,,,,"
+        ],
+        [
+          "3",
+          "4,4,5,2,8,,4"
+        ],
+        [
+          "4",
+          "3,3,3,,6,,3"
+        ],
+        [
+          "5",
+          "3,3,3,,6,,3"
+        ],
+        [
+          "6",
+          "5,4,4,1,8,,4"
+        ],
+        [
+          "7",
+          "3,3,3,,6,,3"
+        ],
+        [
+          "8",
+          "3,3,3,,6,,3"
+        ],
+        [
+          "9",
+          "5,5,5,1,10,,5"
+        ],
+        [
+          "10",
+          "3,3,3,,6,,3"
+        ],
+        [
+          "11",
+          "3,3,3,,6,,3"
+        ],
+        [
+          "12",
+          "4,4,4,1,8,,4"
+        ],
+        [
+          "13",
+          "3,3,3,,6,,3"
+        ],
+        [
+          "14",
+          "3,3,3,,6,,3"
+        ],
+        [
+          "15",
+          "4,6,4,,8,,5"
+        ],
+        [
+          "16",
+          "3,3,3,,6,,3"
+        ],
+        [
+          "17",
+          "3,3,3,,7,,3"
+        ],
+        [
+          "18",
+          "5,5,4,,8,,4"
+        ],
+        [
+          "19",
+          "3,3,3,,6,,3"
+        ],
+        [
+          "20",
+          "4,5,4,,8,,4"
+        ],
+        [
+          "21",
+          "5,8,5,,10,,5"
+        ],
+        [
+          "22",
+          "4,5,4,,8,,4"
+        ],
+        [
+          "23",
+          "5,7,5,,9,,5"
+        ]
+      ],
+      "Summary": null
+    },
+    "jobSessionSummaryByJob": {
+      "SectionName": "jobSessionSummaryByJob",
+      "Headers": [
+        "JobName",
+        "ItemCount",
+        "MinJobTime",
+        "MaxJobTime",
+        "AvgJobTime",
+        "SessionCount",
+        "Fails",
+        "Retries",
+        "SuccessRate",
+        "AvgBackupSize",
+        "MaxBackupSize",
+        "AvgDataSize",
+        "MaxDataSize",
+        "AvgChangeRate",
+        "WaitCount",
+        "MaxWait",
+        "AvgWait",
+        "JobTypes"
+      ],
+      "Rows": [
+        [
+          "Job_28",
+          "1",
+          "00.00:01:02",
+          "00.00:06:54",
+          "00.00:01:32",
+          "59",
+          "0",
+          "0",
+          "100",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "Hyper-V Backup"
+        ],
+        [
+          "Job_29",
+          "1",
+          "00.00:01:18",
+          "00.00:19:56",
+          "00.00:03:00",
+          "56",
+          "0",
+          "0",
+          "100",
+          "0.0003",
+          "0.0014",
+          "0.0009",
+          "0.0026",
+          "1.96",
+          "24",
+          "00.00:00:31",
+          "00.00:00:25",
+          "Hyper-V Backup"
+        ],
+        [
+          "Job_30",
+          "1",
+          "00.00:00:14",
+          "00.00:00:21",
+          "00.00:00:16",
+          "28",
+          "28",
+          "21",
+          "75",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "Hyper-V Backup"
+        ],
+        [
+          "Job_31",
+          "1",
+          "00.00:04:21",
+          "00.00:05:48",
+          "00.00:04:36",
+          "7",
+          "0",
+          "0",
+          "100",
+          "0.0009",
+          "0.0014",
+          "0.0024",
+          "0.0031",
+          "77.42",
+          "0",
+          "0",
+          "0",
+          "Hyper-V Backup"
+        ],
+        [
+          "Job_32",
+          "1",
+          "00.00:02:03",
+          "00.00:02:41",
+          "00.00:02:21",
+          "7",
+          "0",
+          "0",
+          "100",
+          "0.0009",
+          "0.0014",
+          "0.0024",
+          "0.0031",
+          "11.48",
+          "2",
+          "00.00:00:05",
+          "00.00:00:05",
+          "Hyper-V Backup"
+        ],
+        [
+          "Job_33",
+          "1",
+          "00.00:04:37",
+          "00.00:05:13",
+          "00.00:04:53",
+          "7",
+          "0",
+          "0",
+          "100",
+          "0.0037",
+          "0.0046",
+          "0.0133",
+          "0.0165",
+          "45.55",
+          "5",
+          "00.00:00:30",
+          "00.00:00:22",
+          "Hyper-V Backup"
+        ],
+        [
+          "Job_34",
+          "1",
+          "00.00:00:15",
+          "00.00:00:26",
+          "00.00:00:20",
+          "7",
+          "0",
+          "0",
+          "100",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "Agent Backup"
+        ],
+        [
+          "Job_35",
+          "1",
+          "00.00:02:58",
+          "00.00:03:25",
+          "00.00:03:05",
+          "7",
+          "0",
+          "0",
+          "100",
+          "0.0002",
+          "0.0006",
+          "0.0006",
+          "0.0016",
+          "37.5",
+          "0",
+          "0",
+          "0",
+          "Agent Backup"
+        ],
+        [
+          "Job_36",
+          "3",
+          "00.23:59:24",
+          "01.00:00:26",
+          "00.23:59:59",
+          "18",
+          "0",
+          "0",
+          "100",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "Endpoint Backup"
+        ],
+        [
+          "Job_37",
+          "1",
+          "00.00:00:19",
+          "00.00:07:01",
+          "00.00:03:04",
+          "6",
+          "0",
+          "0",
+          "100",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "Hyper-V Backup"
+        ],
+        [
+          "Job_38",
+          "1",
+          "00.00:00:28",
+          "00.00:00:28",
+          "00.00:00:28",
+          "1",
+          "1",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0",
+          "Hyper-V Backup"
+        ],
+        [
+          "Total",
+          "13",
+          null,
+          null,
+          null,
+          "203",
+          "29",
+          "21",
+          "96.06",
+          "0.01",
+          "0.01",
+          "0.02",
+          "0.03",
+          "72.86",
+          "0",
+          null,
+          null,
+          null
+        ]
+      ],
+      "Summary": null
+    },
+    "jobInfo": {
+      "SectionName": "jobInfo",
+      "Headers": [
+        "JobName",
+        "RepoName",
+        "SourceSizeGB",
+        "OnDiskGB",
+        "RetentionScheme",
+        "RetainDays",
+        "Encrypted",
+        "JobType",
+        "CompressionLevel",
+        "BlockSize",
+        "GfsEnabled",
+        "GfsDetails",
+        "ActiveFullEnabled",
+        "SyntheticFullEnabled",
+        "BackupChainType",
+        "IndexingEnabled"
+      ],
+      "Rows": [
+        [
+          "Job_39",
+          "Repository_25",
+          "25.46",
+          "25.4729052633047",
+          "Days",
+          "7",
+          "True",
+          "Backup Copy",
+          "-1",
+          "Automatic",
+          "False",
+          "",
+          "False",
+          "False",
+          "Forward Incremental",
+          "False"
+        ],
+        [
+          "Job_33",
+          "SOBR_17",
+          "29.92",
+          "113.436737060547",
+          "Days",
+          "7",
+          "False",
+          "Backup",
+          "Optimal",
+          "1 MB",
+          "True",
+          "Weekly:4,Monthly:2",
+          "False",
+          "True",
+          "Forward Incremental",
+          "True"
+        ],
+        [
+          "Job_42",
+          "SOBR_17",
+          "0",
+          "18.7060775756836",
+          "Days",
+          "7",
+          "True",
+          "EpAgentBackup",
+          "Optimal",
+          "1 MB",
+          "False",
+          "",
+          "False",
+          "True",
+          "Forward Incremental",
+          "True"
+        ],
+        [
+          "Job_30",
+          "Repository_2",
+          "25.46",
+          "0",
+          "Points",
+          "7",
+          "False",
+          "Replica",
+          "Optimal",
+          "512 KB",
+          "False",
+          "",
+          "False",
+          "True",
+          "Forward Incremental",
+          "False"
+        ],
+        [
+          "Job_40",
+          "Repository_27",
+          "5.24",
+          "0",
+          "Days",
+          "7",
+          "True",
+          "Backup Copy",
+          "-1",
+          "Automatic",
+          "False",
+          "",
+          "False",
+          "False",
+          "Forward Incremental",
+          "False"
+        ],
+        [
+          "Job_29",
+          "SOBR_18",
+          "46.97",
+          "335.439479827881",
+          "Days",
+          "7",
+          "False",
+          "Backup",
+          "Optimal",
+          "1 MB",
+          "True",
+          "Weekly:1",
+          "False",
+          "True",
+          "Forward Incremental",
+          "False"
+        ],
+        [
+          "Job_32",
+          "SOBR_17",
+          "21.44",
+          "77.5186653137207",
+          "Days",
+          "7",
+          "True",
+          "Backup",
+          "Optimal",
+          "1 MB",
+          "True",
+          "Weekly:4,Monthly:1",
+          "False",
+          "True",
+          "Forward Incremental",
+          "True"
+        ],
+        [
+          "Job_41",
+          "Repository_26",
+          "44.27",
+          "51.709678247571",
+          "Days",
+          "7",
+          "True",
+          "Backup Copy",
+          "-1",
+          "Automatic",
+          "True",
+          "Weekly:1",
+          "False",
+          "True",
+          "Forward Incremental",
+          "False"
+        ]
+      ],
+      "Summary": null
+    }
+  }
+}

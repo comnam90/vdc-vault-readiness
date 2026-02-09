@@ -44,7 +44,7 @@ describe("prefers-reduced-motion accessibility", () => {
 
   describe("BlockersList", () => {
     it("uses motion-safe prefix for alert animations", () => {
-      render(<BlockersList validations={[FAIL_RESULT]} />);
+      render(<BlockersList blockers={[FAIL_RESULT]} />);
 
       const alert = screen.getByRole("alert");
       expect(alert.className).toMatch(/motion-safe:animate-in/);
@@ -52,7 +52,7 @@ describe("prefers-reduced-motion accessibility", () => {
     });
 
     it("uses motion-safe prefix for attention-pulse animation", () => {
-      render(<BlockersList validations={[FAIL_RESULT]} />);
+      render(<BlockersList blockers={[FAIL_RESULT]} />);
 
       const alert = screen.getByRole("alert");
       expect(alert.className).toMatch(/motion-safe:animate-attention-pulse/);

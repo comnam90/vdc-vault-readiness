@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle, Upload } from "lucide-react";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 import { MINIMUM_VBR_VERSION } from "@/lib/constants";
+import { getBlockerValidations } from "@/lib/validation-selectors";
 import { isVersionAtLeast } from "@/lib/version-compare";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
+import { PassingChecksList } from "./passing-checks-list";
 import { SuccessCelebration } from "./success-celebration";
 import { cn } from "@/lib/utils";
 
@@ -58,9 +60,8 @@ export function DashboardView({
     );
   const totalJobs = data.jobInfo.length;
   const hasFail = validations.some((v) => v.status === "fail");
-  const hasBlockers = validations.some(
-    (v) => v.status === "fail" || v.status === "warning",
-  );
+  const blockers = getBlockerValidations(validations);
+  const hasBlockers = blockers.length > 0;
 
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto max-w-5xl space-y-6 p-6 duration-400 ease-[var(--ease-out)]">
@@ -166,9 +167,15 @@ export function DashboardView({
           <TabsTrigger value="jobs">Job Details</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4 space-y-4">
+        <TabsContent value="overview" className="mt-4 space-y-6">
           {hasBlockers ? (
-            <BlockersList validations={validations} />
+            <>
+              <BlockersList blockers={blockers} />
+              <PassingChecksList
+                validations={validations}
+                blockerCount={blockers.length}
+              />
+            </>
           ) : (
             <SuccessCelebration
               checksCount={validations.length}

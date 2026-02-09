@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import type { NormalizedDataset } from "@/types/domain";
 import { MOCK_DATA, ALL_PASS_VALIDATIONS, MIXED_VALIDATIONS } from "./fixtures";
+import { getBlockerCount } from "@/lib/validation-selectors";
 
 // Multiple servers: first passes (13.0.1), second fails (11.0.0)
 const MULTI_SERVER_MIXED_DATA: NormalizedDataset = {
@@ -207,6 +208,75 @@ describe("DashboardView", () => {
     expect(
       screen.getByText(/fully compatible with VDC Vault/i),
     ).toBeInTheDocument();
+  });
+
+  it("shows passing checks below blockers when there are mixed results", () => {
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    // Blockers should be present
+    expect(screen.getByTestId("blockers-list")).toBeInTheDocument();
+    // Passing checks should also be present
+    expect(screen.getByTestId("passing-checks")).toBeInTheDocument();
+    expect(screen.getByText("VBR Version Compatibility")).toBeInTheDocument();
+  });
+
+  it("renders passing checks section after blockers section in DOM order", () => {
+    const { container } = render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    const blockersList = container.querySelector(
+      "[data-testid='blockers-list']",
+    );
+    const passingChecks = container.querySelector(
+      "[data-testid='passing-checks']",
+    );
+    expect(blockersList).toBeInTheDocument();
+    expect(passingChecks).toBeInTheDocument();
+
+    // Passing checks should come after blockers in DOM order
+    const result = blockersList!.compareDocumentPosition(passingChecks!);
+    expect(result & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("uses blocker count from selectors for passing checks delay", () => {
+    const { container } = render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    const alerts = container
+      .querySelector("[data-testid='passing-checks']")
+      ?.querySelectorAll<HTMLElement>("[data-slot='alert']");
+
+    const blockerCount = getBlockerCount(MIXED_VALIDATIONS);
+    expect(alerts?.[0].style.animationDelay).toBe(`${blockerCount * 100}ms`);
+  });
+
+  it("does not show passing checks section when all checks pass (celebration shown instead)", () => {
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={ALL_PASS_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("All Systems Ready")).toBeInTheDocument();
+    expect(screen.queryByTestId("passing-checks")).not.toBeInTheDocument();
   });
 
   describe("multiple backup servers", () => {
