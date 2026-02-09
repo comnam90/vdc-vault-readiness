@@ -1318,5 +1318,64 @@ describe("normalizeHealthcheck", () => {
       expect(result.jobSessionSummary[0].AvgChangeRate).toBeNull();
       expect(result.dataErrors).toHaveLength(0);
     });
+
+    it("filters out 'Total' summary rows to prevent double-counting", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const sessionData = [
+        {
+          JobName: "Job_53",
+          MaxDataSize: "0.0065",
+          AvgChangeRate: "66.15",
+        },
+        {
+          JobName: "Total",
+          MaxDataSize: "0.0065",
+          AvgChangeRate: "33.08",
+        },
+      ];
+
+      const result = normalizeHealthcheck(raw, sessionData);
+
+      expect(result.jobSessionSummary).toHaveLength(1);
+      expect(result.jobSessionSummary[0].JobName).toBe("Job_53");
+    });
+
+    it("filters 'Total' summary rows case-insensitively", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const sessionData = [
+        {
+          JobName: "Job_53",
+          MaxDataSize: "0.0065",
+          AvgChangeRate: "66.15",
+        },
+        {
+          JobName: "total",
+          MaxDataSize: "0.0130",
+          AvgChangeRate: "50.00",
+        },
+        {
+          JobName: "TOTAL",
+          MaxDataSize: "0.0130",
+          AvgChangeRate: "50.00",
+        },
+      ];
+
+      const result = normalizeHealthcheck(raw, sessionData);
+
+      expect(result.jobSessionSummary).toHaveLength(1);
+      expect(result.jobSessionSummary[0].JobName).toBe("Job_53");
+    });
   });
 });

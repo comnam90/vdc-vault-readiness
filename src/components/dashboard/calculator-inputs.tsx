@@ -122,7 +122,7 @@ export function CalculatorInputs({ data }: CalculatorInputsProps) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <ExternalLink className="mr-2 size-4" />
+            <ExternalLink className="mr-2 size-4" aria-hidden="true" />
             Open VDC Vault Calculator
           </a>
         </Button>

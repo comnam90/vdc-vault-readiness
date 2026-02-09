@@ -7,7 +7,7 @@ import type {
 import type { CalculatorSummary } from "@/types/calculator";
 
 describe("Domain Types - SafeJob extension", () => {
-  it("SafeJob accepts RetainDays as optional number | null field", () => {
+  it("SafeJob accepts RetainDays as number | null field", () => {
     const job: SafeJob = {
       JobName: "Test Job",
       JobType: "Backup",
@@ -31,7 +31,7 @@ describe("Domain Types - SafeJob extension", () => {
     expect(job.RetainDays).toBeNull();
   });
 
-  it("SafeJob accepts GfsDetails as optional string | null field", () => {
+  it("SafeJob accepts GfsDetails as string | null field", () => {
     const job: SafeJob = {
       JobName: "Test Job",
       JobType: "Backup",

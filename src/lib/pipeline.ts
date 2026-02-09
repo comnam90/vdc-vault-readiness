@@ -14,7 +14,7 @@ export interface AnalysisResult {
  * Full analysis pipeline: raw JSON → zip sections → normalize → validate.
  *
  * Licenses are passed through directly (they're already objects at the top level).
- * Sections (backupServer, securitySummary, jobInfo) use Headers/Rows and need zipping.
+ * Sections (backupServer, securitySummary, jobInfo, jobSessionSummaryByJob) use Headers/Rows and need zipping.
  */
 export function analyzeHealthcheck(raw: HealthcheckRoot): AnalysisResult {
   const sections = raw.Sections ?? {};

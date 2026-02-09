@@ -339,6 +339,11 @@ function normalizeJobSessions(
       return [];
     }
 
+    // Skip summary rows (e.g., "Total") to avoid double-counting in aggregations
+    if (jobName.toLowerCase() === "total") {
+      return [];
+    }
+
     const safeSession: SafeJobSession = {
       JobName: jobName,
       MaxDataSize: parseNumeric(

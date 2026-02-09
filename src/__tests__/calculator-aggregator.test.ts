@@ -49,10 +49,10 @@ describe("calculateTotalSourceDataTB", () => {
     expect(calculateTotalSourceDataTB(sessions)).toBeCloseTo(0.0147, 4);
   });
 
-  it("skips undefined MaxDataSize values", () => {
+  it("skips default null MaxDataSize from helper", () => {
     const sessions: SafeJobSession[] = [
       makeSession({ MaxDataSize: 0.0065 }),
-      makeSession({}), // MaxDataSize undefined
+      makeSession({}), // uses default MaxDataSize: null
     ];
     expect(calculateTotalSourceDataTB(sessions)).toBeCloseTo(0.0065, 4);
   });
@@ -151,10 +151,10 @@ describe("getMaxRetentionDays", () => {
     expect(getMaxRetentionDays(jobs)).toBe(14);
   });
 
-  it("skips undefined RetainDays", () => {
+  it("skips default null RetainDays from helper", () => {
     const jobs: SafeJob[] = [
       makeJob({ RetainDays: 7 }),
-      makeJob({}), // RetainDays undefined
+      makeJob({}), // uses default RetainDays: null
     ];
     expect(getMaxRetentionDays(jobs)).toBe(7);
   });
