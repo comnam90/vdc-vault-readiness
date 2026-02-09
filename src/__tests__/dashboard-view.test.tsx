@@ -209,6 +209,58 @@ describe("DashboardView", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows passing checks below blockers when there are mixed results", () => {
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    // Blockers should be present
+    expect(screen.getByTestId("blockers-list")).toBeInTheDocument();
+    // Passing checks should also be present
+    expect(screen.getByTestId("passing-checks")).toBeInTheDocument();
+    expect(screen.getByText("VBR Version Compatibility")).toBeInTheDocument();
+  });
+
+  it("renders passing checks section after blockers section in DOM order", () => {
+    const { container } = render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    const blockersList = container.querySelector(
+      "[data-testid='blockers-list']",
+    );
+    const passingChecks = container.querySelector(
+      "[data-testid='passing-checks']",
+    );
+    expect(blockersList).toBeInTheDocument();
+    expect(passingChecks).toBeInTheDocument();
+
+    // Passing checks should come after blockers in DOM order
+    const result = blockersList!.compareDocumentPosition(passingChecks!);
+    expect(result & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("does not show passing checks section when all checks pass (celebration shown instead)", () => {
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={ALL_PASS_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("All Systems Ready")).toBeInTheDocument();
+    expect(screen.queryByTestId("passing-checks")).not.toBeInTheDocument();
+  });
+
   describe("multiple backup servers", () => {
     it("displays oldest version when multiple servers have mixed versions", () => {
       render(

@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
+import { PassingChecksList } from "./passing-checks-list";
 import { SuccessCelebration } from "./success-celebration";
 import { cn } from "@/lib/utils";
 
@@ -166,9 +167,19 @@ export function DashboardView({
           <TabsTrigger value="jobs">Job Details</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4 space-y-4">
+        <TabsContent value="overview" className="mt-4 space-y-6">
           {hasBlockers ? (
-            <BlockersList validations={validations} />
+            <>
+              <BlockersList validations={validations} />
+              <PassingChecksList
+                validations={validations}
+                blockerCount={
+                  validations.filter(
+                    (v) => v.status === "fail" || v.status === "warning",
+                  ).length
+                }
+              />
+            </>
           ) : (
             <SuccessCelebration
               checksCount={validations.length}
