@@ -30,6 +30,7 @@ dashboard/
 - **Stagger pattern**: `fill-mode-backwards` + inline `animationDelay` style or Tailwind `delay-*` utilities
 - **Custom animations**: `animate-attention-pulse` (blockers), `animate-success-ring` (celebration icon), `animate-drag-pulse` (drag-over), `animate-shake` (error) — defined in `src/index.css` as `@utility` rules
 - **Icons**: lucide-react only. `aria-hidden="true"` on all icons, paired with `sr-only` text when semantic
+- **shadcn/ui first**: Check the shadcn/ui registry for a suitable component before creating a custom one
 - **Severity config**: `blockers-list.tsx` uses a SEVERITY lookup object for fail/warning styling — extend here for new statuses
 - **Affected items**: Truncated at `MAX_VISIBLE_ITEMS` (5) with "+ N more" overflow
 - **Relative imports**: Within dashboard/ only. Cross-directory uses `@/` alias
