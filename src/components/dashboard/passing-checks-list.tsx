@@ -2,6 +2,7 @@ import { CheckCircle2 } from "lucide-react";
 import type { ValidationResult } from "@/types/validation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { getPassingValidations } from "@/lib/validation-selectors";
 import { cn } from "@/lib/utils";
 
 interface PassingChecksListProps {
@@ -15,7 +16,7 @@ export function PassingChecksList({
   validations,
   blockerCount = 0,
 }: PassingChecksListProps) {
-  const passing = validations.filter((v) => v.status === "pass");
+  const passing = getPassingValidations(validations);
 
   if (passing.length === 0) {
     return null;
