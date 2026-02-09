@@ -21,7 +21,7 @@ export function ChecklistLoader({
 
   return (
     <div
-      className="flex min-h-screen items-center justify-center p-8"
+      className="motion-safe:animate-in motion-safe:fade-in flex min-h-screen items-center justify-center p-8 duration-400"
       data-testid="checklist-loader"
     >
       <div className="w-full max-w-sm space-y-6">
@@ -62,7 +62,7 @@ export function ChecklistLoader({
                   />
                 ) : isCurrent ? (
                   <Loader2
-                    className="text-primary size-5 shrink-0 animate-spin"
+                    className="text-primary size-5 shrink-0 motion-safe:animate-spin"
                     aria-hidden="true"
                   />
                 ) : (
@@ -73,7 +73,7 @@ export function ChecklistLoader({
                 )}
                 <span
                   className={cn(
-                    "text-sm",
+                    "font-mono text-sm",
                     isCompleted && "text-foreground",
                     isCurrent && "text-foreground font-medium",
                     !isCompleted && !isCurrent && "text-muted-foreground",

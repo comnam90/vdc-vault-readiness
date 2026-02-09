@@ -1,1 +1,11 @@
+# Ensure every AGENTS.md has a CLAUDE.md symlink
+git diff --cached --name-only --diff-filter=ACM | grep 'AGENTS\.md$' | while read -r agents_file; do
+  dir=$(dirname "$agents_file")
+  claude_file="$dir/CLAUDE.md"
+  if [ ! -L "$claude_file" ]; then
+    ln -s AGENTS.md "$claude_file"
+    git add "$claude_file"
+  fi
+done
+
 npx lint-staged

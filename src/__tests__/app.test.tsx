@@ -137,6 +137,29 @@ describe("App", () => {
     expect(mockReset).toHaveBeenCalledOnce();
   });
 
+  it("applies entrance animation to idle state container", () => {
+    render(<App />);
+
+    const wrapper = screen
+      .getByTestId("drop-zone")
+      .closest("[class*='animate-in']");
+    expect(wrapper).not.toBeNull();
+    expect(wrapper!.className).toMatch(/fade-in/);
+    expect(wrapper!.className).toMatch(/slide-in-from-bottom/);
+  });
+
+  it("applies entrance animation to error state container", () => {
+    mockStatus = "error";
+    mockError = "Something went wrong";
+    render(<App />);
+
+    const alert = screen.getByRole("alert");
+    const wrapper = alert.closest("[class*='animate-in']");
+    expect(wrapper).not.toBeNull();
+    expect(wrapper!.className).toMatch(/fade-in/);
+    expect(wrapper!.className).toMatch(/slide-in-from-bottom/);
+  });
+
   it("calls analyzeFile when a file is dropped", async () => {
     render(<App />);
 

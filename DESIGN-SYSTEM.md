@@ -209,19 +209,21 @@ Motion should feel **deliberate and swift**. This is a professional tool—anima
 
 ### Animation Catalog
 
-| Trigger                | Animation                                       | Duration  | Easing      |
-| ---------------------- | ----------------------------------------------- | --------- | ----------- |
-| **Page load**          | Fade in + subtle rise (8px)                     | 400ms     | ease-out    |
-| **State transition**   | Cross-fade                                      | 250ms     | ease-in-out |
-| **Card entrance**      | Stagger fade-in (50ms delay each)               | 300ms     | ease-out    |
-| **Success result**     | Scale pulse (1.0 → 1.02 → 1.0) + checkmark draw | 600ms     | spring      |
-| **Failure result**     | Shake (subtle, 2px horizontal)                  | 300ms     | ease-out    |
-| **Button hover**       | Background color shift                          | 150ms     | ease-out    |
-| **Button press**       | Scale down to 0.98                              | 100ms     | ease-out    |
-| **Focus ring**         | Ring expansion                                  | 150ms     | ease-out    |
-| **Dropdown/Modal**     | Fade + scale from 0.95                          | 200ms     | ease-out    |
-| **Loading spinner**    | Continuous rotation                             | 1000ms    | linear      |
-| **Progress indicator** | Width transition (chunky steps)                 | Per chunk | ease-out    |
+| Trigger                | Animation                                           | Duration  | Easing      |
+| ---------------------- | --------------------------------------------------- | --------- | ----------- |
+| **Page load**          | Fade in + subtle rise (8px)                         | 400ms     | ease-out    |
+| **State transition**   | Cross-fade                                          | 250ms     | ease-in-out |
+| **Card entrance**      | Stagger fade-in (100ms delay each)                  | 300ms     | ease-out    |
+| **Success result**     | Scale pulse (1.0 → 1.02 → 1.0) ~~+ checkmark draw~~ | 600ms     | spring      |
+| **Failure result**     | Shake (subtle, 2px horizontal)                      | 300ms     | ease-out    |
+| **Button hover**       | Background color shift                              | 150ms     | ease-out    |
+| **Button press**       | Scale down to 0.98                                  | 150ms     | ease-out    |
+| **Focus ring**         | Ring expansion                                      | 150ms     | ease-out    |
+| **Dropdown/Modal**     | Fade + scale from 0.95                              | 200ms     | ease-out    |
+| **Loading spinner**    | Continuous rotation                                 | 1000ms    | linear      |
+| **Progress indicator** | Width transition (chunky steps)                     | Per chunk | ease-out    |
+
+> **Decision:** Checkmark draw animation not implemented. A custom SVG stroke animation would break Lucide icon consistency across the app for marginal visual gain. KISS: the static `CheckCircle2` icon inside the pulsing ring is sufficient. See §5.5.
 
 ### Loading State Redesign
 
@@ -460,7 +462,7 @@ BLOCKERS
 **Animation Sequence:**
 
 1. Card fades in (200ms)
-2. Checkmark draws/animates in (400ms, spring easing)
+2. ~~Checkmark draws/animates in (400ms, spring easing)~~ — Not implemented (KISS: static Lucide `CheckCircle2` used for icon consistency)
 3. Success ring pulses once outward (300ms)
 4. Text fades in (200ms, staggered)
 5. Button slides up (200ms)
@@ -669,14 +671,14 @@ Compressed from 5 phases into 3 focused sprints for faster production delivery.
 
 **Goal:** Add micro-interactions and refine the upload experience.
 
-| Task                                                    | File(s)                                   | Priority |
-| ------------------------------------------------------- | ----------------------------------------- | -------- |
-| Add entrance animations (fade + rise) on page load      | Components                                | P1       |
-| Implement stagger effects on card grid and blocker list | `dashboard-view.tsx`, `blockers-list.tsx` | P2       |
-| Refine drag-and-drop zone with enhanced states          | `file-upload.tsx`                         | P1       |
-| Add success celebration animation (checkmark draw)      | `dashboard-view.tsx`                      | P2       |
-| Add button press feedback (scale)                       | `button.tsx`                              | P3       |
-| Final dark mode QA and adjustments                      | All                                       | P1       |
+| Task                                                                                     | File(s)                                   | Priority |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------- | -------- |
+| Add entrance animations (fade + rise) on page load                                       | Components                                | P1       |
+| Implement stagger effects on card grid and blocker list                                  | `dashboard-view.tsx`, `blockers-list.tsx` | P2       |
+| Refine drag-and-drop zone with enhanced states                                           | `file-upload.tsx`                         | P1       |
+| ~~Add success celebration animation (checkmark draw)~~ (skipped — KISS/icon consistency) | `dashboard-view.tsx`                      | P2       |
+| Add button press feedback (scale)                                                        | `button.tsx`                              | P3       |
+| Final dark mode QA and adjustments                                                       | All                                       | P1       |
 
 **Estimated effort:** 5-7 hours
 

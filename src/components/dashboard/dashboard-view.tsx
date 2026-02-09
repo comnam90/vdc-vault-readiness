@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CheckCircle2, XCircle, Upload } from "lucide-react";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
@@ -16,7 +17,13 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
+import { SuccessCelebration } from "./success-celebration";
 import { cn } from "@/lib/utils";
+
+const SUMMARY_CARD =
+  "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards ease-[var(--ease-out)] border-b-2 shadow-sm transition-shadow duration-300 hover:shadow-md";
+const CARD_LABEL =
+  "text-muted-foreground text-xs font-semibold tracking-wide uppercase";
 
 interface DashboardViewProps {
   data: NormalizedDataset;
@@ -29,6 +36,7 @@ export function DashboardView({
   validations,
   onReset,
 }: DashboardViewProps) {
+  const [activeTab, setActiveTab] = useState("overview");
   const backupServers = data.backupServer ?? [];
   const knownVersions = backupServers
     .map((server) => server?.Version)
@@ -55,7 +63,7 @@ export function DashboardView({
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto max-w-5xl space-y-6 p-6 duration-400 ease-[var(--ease-out)]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -76,12 +84,12 @@ export function DashboardView({
       <div className="grid gap-4 sm:grid-cols-3">
         <Card
           className={cn(
-            "border-b-2 shadow-sm transition-shadow hover:shadow-md",
+            SUMMARY_CARD,
             versionOk ? "border-b-primary" : "border-b-destructive",
           )}
         >
           <CardHeader className="pb-2">
-            <CardDescription className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+            <CardDescription className={CARD_LABEL}>
               VBR Version
             </CardDescription>
             <CardTitle
@@ -102,11 +110,11 @@ export function DashboardView({
           </CardContent>
         </Card>
 
-        <Card className="border-b-muted-foreground border-b-2 shadow-sm transition-shadow hover:shadow-md">
+        <Card
+          className={cn(SUMMARY_CARD, "border-b-muted-foreground delay-100")}
+        >
           <CardHeader className="pb-2">
-            <CardDescription className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-              Total Jobs
-            </CardDescription>
+            <CardDescription className={CARD_LABEL}>Total Jobs</CardDescription>
             <CardTitle className="font-mono text-2xl font-semibold">
               {totalJobs}
             </CardTitle>
@@ -121,14 +129,13 @@ export function DashboardView({
 
         <Card
           className={cn(
-            "border-b-2 shadow-sm transition-shadow hover:shadow-md",
+            SUMMARY_CARD,
+            "delay-200",
             hasFail ? "border-b-destructive" : "border-b-primary",
           )}
         >
           <CardHeader className="pb-2">
-            <CardDescription className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-              Readiness
-            </CardDescription>
+            <CardDescription className={CARD_LABEL}>Readiness</CardDescription>
             <CardTitle className="flex items-center gap-2 text-2xl font-semibold">
               {hasFail ? (
                 <>
@@ -153,7 +160,7 @@ export function DashboardView({
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="overview">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="jobs">Job Details</TabsTrigger>
@@ -163,17 +170,10 @@ export function DashboardView({
           {hasBlockers ? (
             <BlockersList validations={validations} />
           ) : (
-            <Card>
-              <CardContent className="flex items-center gap-3 py-6">
-                <CheckCircle2 className="text-primary size-6" />
-                <div>
-                  <p className="font-medium">All checks passed</p>
-                  <p className="text-muted-foreground text-sm">
-                    Your environment is ready for VDC Vault.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <SuccessCelebration
+              checksCount={validations.length}
+              onViewDetails={() => setActiveTab("jobs")}
+            />
           )}
         </TabsContent>
 

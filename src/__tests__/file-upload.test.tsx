@@ -72,9 +72,7 @@ describe("FileUpload", () => {
   it("renders browse button text", () => {
     render(<FileUpload onFileSelected={vi.fn()} />);
 
-    expect(
-      screen.getByText(/browse/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/browse/i)).toBeInTheDocument();
   });
 
   it("is keyboard-focusable with role=button", () => {
@@ -89,7 +87,9 @@ describe("FileUpload", () => {
     render(<FileUpload onFileSelected={vi.fn()} />);
 
     const dropZone = screen.getByTestId("drop-zone");
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const input = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
     const clickSpy = vi.spyOn(input, "click");
 
     fireEvent.keyDown(dropZone, { key: "Enter" });
@@ -100,10 +100,72 @@ describe("FileUpload", () => {
     render(<FileUpload onFileSelected={vi.fn()} />);
 
     const dropZone = screen.getByTestId("drop-zone");
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const input = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
     const clickSpy = vi.spyOn(input, "click");
 
     fireEvent.keyDown(dropZone, { key: " " });
     expect(clickSpy).toHaveBeenCalled();
+  });
+
+  it("has hover classes for background tint and border solidification", () => {
+    render(<FileUpload onFileSelected={vi.fn()} />);
+
+    const dropZone = screen.getByTestId("drop-zone");
+    // When not dragging, hover classes should be present in the class list
+    expect(dropZone.className).toMatch(/hover:bg-muted\/50/);
+    expect(dropZone.className).toMatch(/hover:border-solid/);
+  });
+
+  it("has hover class for icon rise animation", () => {
+    render(<FileUpload onFileSelected={vi.fn()} />);
+
+    const uploadIcon = screen
+      .getByTestId("drop-zone")
+      .querySelector("[data-testid='upload-icon-wrapper']");
+    expect(uploadIcon).not.toBeNull();
+    expect(uploadIcon!.className).toMatch(/motion-safe:group-hover\//);
+  });
+
+  describe("error state", () => {
+    it("shows destructive border when error prop is set", () => {
+      render(<FileUpload onFileSelected={vi.fn()} error="Invalid JSON file" />);
+
+      const dropZone = screen.getByTestId("drop-zone");
+      expect(dropZone.className).toMatch(/border-destructive/);
+    });
+
+    it("applies shake animation when error prop is set", () => {
+      render(<FileUpload onFileSelected={vi.fn()} error="Invalid JSON file" />);
+
+      const dropZone = screen.getByTestId("drop-zone");
+      expect(dropZone.className).toMatch(/motion-safe:animate-shake/);
+    });
+
+    it("displays the error message text", () => {
+      render(<FileUpload onFileSelected={vi.fn()} error="Invalid JSON file" />);
+
+      expect(screen.getByText("Invalid JSON file")).toBeInTheDocument();
+    });
+
+    it("does not show error message when error prop is absent", () => {
+      render(<FileUpload onFileSelected={vi.fn()} />);
+
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("drag-over state", () => {
+    it("applies pulse animation on drag over", () => {
+      render(<FileUpload onFileSelected={vi.fn()} />);
+
+      const dropZone = screen.getByTestId("drop-zone");
+      fireEvent.dragOver(dropZone, {
+        dataTransfer: { types: ["Files"] },
+      });
+
+      expect(dropZone.className).toMatch(/motion-safe:animate-drag-pulse/);
+    });
   });
 });

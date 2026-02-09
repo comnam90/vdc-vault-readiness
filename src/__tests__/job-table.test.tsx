@@ -146,6 +146,15 @@ describe("JobTable", () => {
     expect(screen.getByText("Status")).toHaveClass("sr-only");
   });
 
+  it("applies entrance animation to table wrapper", () => {
+    const { container } = render(<JobTable jobs={MOCK_JOBS} />);
+
+    const wrapper = container.firstElementChild;
+    expect(wrapper).not.toBeNull();
+    expect(wrapper!.className).toMatch(/animate-in/);
+    expect(wrapper!.className).toMatch(/fade-in/);
+  });
+
   it("highlights unencrypted job rows with destructive background", () => {
     render(<JobTable jobs={MOCK_JOBS} />);
 
