@@ -19,25 +19,9 @@ const WARNING_RESULT: ValidationResult = {
   affectedItems: ["Agent Job 1"],
 };
 
-const PASS_RESULT: ValidationResult = {
-  ruleId: "vbr-version",
-  title: "VBR Version Compatibility",
-  status: "pass",
-  message: "All VBR servers meet the minimum version.",
-  affectedItems: [],
-};
-
-const INFO_RESULT: ValidationResult = {
-  ruleId: "license-edition",
-  title: "License/Edition Notes",
-  status: "info",
-  message: "Community Edition detected.",
-  affectedItems: ["Community"],
-};
-
 describe("BlockersList", () => {
   it("renders fail validations as destructive alerts", () => {
-    render(<BlockersList validations={[FAIL_RESULT, PASS_RESULT]} />);
+    render(<BlockersList blockers={[FAIL_RESULT]} />);
 
     expect(screen.getByText("Job Encryption Audit")).toBeInTheDocument();
     expect(
@@ -46,7 +30,7 @@ describe("BlockersList", () => {
   });
 
   it("renders warning validations", () => {
-    render(<BlockersList validations={[WARNING_RESULT, PASS_RESULT]} />);
+    render(<BlockersList blockers={[WARNING_RESULT]} />);
 
     expect(
       screen.getByText("Agent Workload Configuration"),
@@ -55,7 +39,7 @@ describe("BlockersList", () => {
   });
 
   it("does not render pass or info validations", () => {
-    render(<BlockersList validations={[PASS_RESULT, INFO_RESULT]} />);
+    render(<BlockersList blockers={[]} />);
 
     expect(
       screen.queryByText("VBR Version Compatibility"),
@@ -64,7 +48,7 @@ describe("BlockersList", () => {
   });
 
   it("sorts fail items before warnings", () => {
-    render(<BlockersList validations={[WARNING_RESULT, FAIL_RESULT]} />);
+    render(<BlockersList blockers={[FAIL_RESULT, WARNING_RESULT]} />);
 
     const titles = screen.getAllByTestId("blocker-title");
     expect(titles[0]).toHaveTextContent("Job Encryption Audit");
@@ -72,7 +56,7 @@ describe("BlockersList", () => {
   });
 
   it("renders affected items as a list", () => {
-    render(<BlockersList validations={[FAIL_RESULT]} />);
+    render(<BlockersList blockers={[FAIL_RESULT]} />);
 
     expect(screen.getByText("Job A")).toBeInTheDocument();
     expect(screen.getByText("Job B")).toBeInTheDocument();
@@ -84,7 +68,7 @@ describe("BlockersList", () => {
       ...FAIL_RESULT,
       affectedItems: ["A", "B", "C", "D", "E", "F", "G"],
     };
-    render(<BlockersList validations={[manyItems]} />);
+    render(<BlockersList blockers={[manyItems]} />);
 
     expect(screen.getByText("A")).toBeInTheDocument();
     expect(screen.getByText("E")).toBeInTheDocument();
@@ -93,7 +77,7 @@ describe("BlockersList", () => {
   });
 
   it("uses shadcn Alert primitive with data-slot attribute", () => {
-    render(<BlockersList validations={[FAIL_RESULT, WARNING_RESULT]} />);
+    render(<BlockersList blockers={[FAIL_RESULT, WARNING_RESULT]} />);
 
     const alerts = screen.getAllByRole("alert");
     for (const alert of alerts) {
@@ -102,7 +86,7 @@ describe("BlockersList", () => {
   });
 
   it("applies stagger animation delay to each blocker", () => {
-    render(<BlockersList validations={[FAIL_RESULT, WARNING_RESULT]} />);
+    render(<BlockersList blockers={[FAIL_RESULT, WARNING_RESULT]} />);
 
     const alerts = screen.getAllByRole("alert");
     expect(alerts[0].style.animationDelay).toBe("0ms");
@@ -110,7 +94,7 @@ describe("BlockersList", () => {
   });
 
   it("renders nothing when all validations pass", () => {
-    const { container } = render(<BlockersList validations={[PASS_RESULT]} />);
+    const { container } = render(<BlockersList blockers={[]} />);
 
     expect(
       container.querySelector("[data-testid='blockers-list']")?.children

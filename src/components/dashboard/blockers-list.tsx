@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface BlockersListProps {
-  validations: ValidationResult[];
+  blockers: ValidationResult[];
 }
 
 const MAX_VISIBLE_ITEMS = 5;
@@ -31,15 +31,7 @@ const SEVERITY = {
   },
 };
 
-export function BlockersList({ validations }: BlockersListProps) {
-  const blockers = validations
-    .filter((v) => v.status === "fail" || v.status === "warning")
-    .sort((a, b) => {
-      if (a.status === "fail" && b.status !== "fail") return -1;
-      if (a.status !== "fail" && b.status === "fail") return 1;
-      return 0;
-    });
-
+export function BlockersList({ blockers }: BlockersListProps) {
   return (
     <div data-testid="blockers-list" className="space-y-3">
       {blockers.map((blocker, index) => {
