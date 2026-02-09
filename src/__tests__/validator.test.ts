@@ -16,6 +16,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -38,6 +39,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -62,6 +64,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -84,6 +87,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -107,6 +111,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -133,6 +138,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -155,6 +161,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -172,6 +179,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -209,6 +217,7 @@ describe("validateHealthcheck", () => {
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -246,6 +255,7 @@ describe("validateHealthcheck", () => {
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -293,6 +303,7 @@ describe("validateHealthcheck", () => {
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -318,6 +329,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -355,6 +367,7 @@ describe("validateHealthcheck", () => {
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -390,6 +403,7 @@ describe("validateHealthcheck", () => {
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -422,6 +436,7 @@ describe("validateHealthcheck", () => {
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -452,6 +467,7 @@ describe("validateHealthcheck", () => {
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -481,6 +497,7 @@ describe("validateHealthcheck", () => {
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -525,6 +542,7 @@ describe("validateHealthcheck", () => {
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -551,6 +569,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [{ Edition: "Community", Status: "Active" }],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -575,6 +594,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [{ Edition: "Free", Status: "Active" }],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -596,6 +616,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [{ Edition: "Enterprise", Status: "Active" }],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -617,6 +638,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -646,6 +668,7 @@ describe("validateHealthcheck", () => {
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -666,6 +689,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);

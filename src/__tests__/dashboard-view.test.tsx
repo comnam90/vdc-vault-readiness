@@ -17,6 +17,7 @@ const MULTI_SERVER_MIXED_DATA: NormalizedDataset = {
   jobInfo: [],
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
   dataErrors: [],
+  jobSessionSummary: [],
 };
 
 // Multiple servers: all pass minimum version
@@ -31,6 +32,7 @@ const MULTI_SERVER_ALL_PASS_DATA: NormalizedDataset = {
   jobInfo: [],
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
   dataErrors: [],
+  jobSessionSummary: [],
 };
 
 describe("DashboardView", () => {

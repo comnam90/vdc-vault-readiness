@@ -96,6 +96,7 @@ describe("normalizeHealthcheck", () => {
       securitySummary: [],
       jobInfo: [],
       Licenses: [],
+      jobSessionSummary: [],
       dataErrors: [],
     });
   });
@@ -126,6 +127,7 @@ describe("normalizeHealthcheck", () => {
         },
       ],
       Licenses: [],
+      jobSessionSummary: [],
       dataErrors: [],
     });
   });
@@ -142,6 +144,7 @@ describe("normalizeHealthcheck", () => {
       securitySummary: [],
       jobInfo: [],
       Licenses: [],
+      jobSessionSummary: [],
       dataErrors: [],
     });
   });

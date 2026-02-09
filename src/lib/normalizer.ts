@@ -209,6 +209,7 @@ export function normalizeHealthcheck(
     securitySummary,
     jobInfo,
     Licenses,
+    jobSessionSummary: [],
     dataErrors,
   };
 }
