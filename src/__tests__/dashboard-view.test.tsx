@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import type { NormalizedDataset } from "@/types/domain";
@@ -127,6 +127,26 @@ describe("DashboardView", () => {
     expect(
       screen.getByRole("tab", { name: /job details/i }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /sizing/i })).toBeInTheDocument();
+  });
+
+  it("shows CalculatorInputs when Sizing tab is clicked", async () => {
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    const sizingTab = screen.getByRole("tab", { name: /sizing/i });
+
+    await act(async () => {
+      fireEvent.mouseDown(sizingTab);
+      fireEvent.click(sizingTab);
+    });
+
+    expect(await screen.findByText("Calculator Inputs")).toBeInTheDocument();
   });
 
   it("shows blockers in the overview tab by default", () => {
