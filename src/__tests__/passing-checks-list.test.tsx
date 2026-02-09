@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { PassingChecksList } from "@/components/dashboard/passing-checks-list";
 import type { ValidationResult } from "@/types/validation";
+import { getBlockerCount } from "@/lib/validation-selectors";
 
 const PASS_VBR: ValidationResult = {
   ruleId: "vbr-version",
@@ -114,15 +115,19 @@ describe("PassingChecksList", () => {
     render(
       <PassingChecksList
         validations={[PASS_VBR, PASS_ENCRYPTION]}
-        blockerCount={3}
+        blockerCount={getBlockerCount([
+          FAIL_RESULT,
+          WARNING_RESULT,
+          INFO_RESULT,
+        ])}
       />,
     );
 
     const items = screen
       .getByTestId("passing-checks")
       .querySelectorAll<HTMLElement>("[data-slot='alert']");
-    expect(items[0].style.animationDelay).toBe("300ms");
-    expect(items[1].style.animationDelay).toBe("400ms");
+    expect(items[0].style.animationDelay).toBe("200ms");
+    expect(items[1].style.animationDelay).toBe("300ms");
   });
 
   it("uses the CheckCircle2 icon with primary color styling", () => {
