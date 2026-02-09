@@ -4,12 +4,16 @@ import type {
   NormalizedDataset,
   SafeBackupServer,
   SafeJob,
+  SafeJobSession,
   SafeLicense,
   SafeSecuritySummary,
 } from "@/types/domain";
 
+type SessionRecord = Record<string, string | null | undefined>;
+
 export function normalizeHealthcheck(
   raw: Partial<NormalizerInput>,
+  sessionData?: SessionRecord[],
 ): NormalizedDataset {
   const dataErrors: DataError[] = [];
 
@@ -68,6 +72,14 @@ export function normalizeHealthcheck(
       JobType: jobType,
       Encrypted: encrypted,
       RepoName: repoName,
+      RetainDays: parseNumeric(
+        job.RetainDays as string | null | undefined,
+        "jobInfo",
+        rowIndex,
+        "RetainDays",
+        dataErrors,
+      ),
+      GfsDetails: normalizeString(job.GfsDetails as string | null | undefined),
     };
 
     return [safeJob];
@@ -209,7 +221,7 @@ export function normalizeHealthcheck(
     securitySummary,
     jobInfo,
     Licenses,
-    jobSessionSummary: [],
+    jobSessionSummary: normalizeJobSessions(asArray(sessionData), dataErrors),
     dataErrors,
   };
 }
@@ -261,4 +273,90 @@ function buildError(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseNumeric(
+  value: string | null | undefined,
+  section: DataError["section"],
+  rowIndex: number,
+  field: string,
+  dataErrors: DataError[],
+): number | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  const parsed = Number(trimmed);
+  if (Number.isNaN(parsed)) {
+    dataErrors.push(
+      buildError(
+        section,
+        rowIndex,
+        field,
+        `Invalid numeric value: "${trimmed}"`,
+      ),
+    );
+    return null;
+  }
+
+  return parsed;
+}
+
+function normalizeJobSessions(
+  sessionData: SessionRecord[],
+  dataErrors: DataError[],
+): SafeJobSession[] {
+  return sessionData.flatMap((record, rowIndex) => {
+    if (!isRecord(record)) {
+      dataErrors.push(
+        buildError(
+          "jobSessionSummaryByJob",
+          rowIndex,
+          "_row",
+          "Invalid row: not an object",
+        ),
+      );
+      return [];
+    }
+
+    const jobName = normalizeString(
+      record.JobName as string | null | undefined,
+    );
+    if (!jobName) {
+      dataErrors.push(
+        buildError(
+          "jobSessionSummaryByJob",
+          rowIndex,
+          "JobName",
+          "Missing required JobName",
+        ),
+      );
+      return [];
+    }
+
+    const safeSession: SafeJobSession = {
+      JobName: jobName,
+      MaxDataSize: parseNumeric(
+        record.MaxDataSize as string | null | undefined,
+        "jobSessionSummaryByJob",
+        rowIndex,
+        "MaxDataSize",
+        dataErrors,
+      ),
+      AvgChangeRate: parseNumeric(
+        record.AvgChangeRate as string | null | undefined,
+        "jobSessionSummaryByJob",
+        rowIndex,
+        "AvgChangeRate",
+        dataErrors,
+      ),
+    };
+
+    return [safeSession];
+  });
 }

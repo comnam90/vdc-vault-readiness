@@ -57,6 +57,40 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(typeof firstJob.Encrypted).toBe("boolean");
     });
 
+    it("extracts RetainDays from jobInfo", () => {
+      const firstJob = result.data.jobInfo[0];
+      expect(firstJob).toHaveProperty("RetainDays");
+      expect(typeof firstJob.RetainDays).toBe("number");
+      expect(firstJob.RetainDays).toBeGreaterThan(0);
+    });
+
+    it("extracts GfsDetails from jobInfo", () => {
+      // Most jobs in sample data have empty GfsDetails
+      const jobsWithGfs = result.data.jobInfo.filter(
+        (j) => j.GfsDetails !== null,
+      );
+      const jobsWithoutGfs = result.data.jobInfo.filter(
+        (j) => j.GfsDetails === null,
+      );
+      // Sample data has 2 jobs with GFS enabled
+      expect(jobsWithGfs.length).toBeGreaterThan(0);
+      expect(jobsWithoutGfs.length).toBeGreaterThan(0);
+    });
+
+    it("parses jobSessionSummaryByJob into jobSessionSummary", () => {
+      expect(result.data.jobSessionSummary.length).toBeGreaterThan(0);
+      const firstSession = result.data.jobSessionSummary[0];
+      expect(firstSession).toHaveProperty("JobName");
+      expect(firstSession).toHaveProperty("MaxDataSize");
+      expect(firstSession).toHaveProperty("AvgChangeRate");
+    });
+
+    it("parses MaxDataSize and AvgChangeRate as numbers", () => {
+      const firstSession = result.data.jobSessionSummary[0];
+      expect(typeof firstSession.MaxDataSize).toBe("number");
+      expect(typeof firstSession.AvgChangeRate).toBe("number");
+    });
+
     it("parses Licenses directly (not from Headers/Rows)", () => {
       expect(result.data.Licenses).toHaveLength(1);
       expect(result.data.Licenses[0].Edition).toBe("EnterprisePlus");

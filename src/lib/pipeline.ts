@@ -26,7 +26,8 @@ export function analyzeHealthcheck(raw: HealthcheckRoot): AnalysisResult {
     Licenses: Array.isArray(raw.Licenses) ? raw.Licenses : [],
   };
 
-  const data = normalizeHealthcheck(parsed);
+  const sessionData = zipSection(sections.jobSessionSummaryByJob);
+  const data = normalizeHealthcheck(parsed, sessionData);
   const validations = validateHealthcheck(data);
 
   return { data, validations };

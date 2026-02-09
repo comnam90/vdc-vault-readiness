@@ -30,7 +30,12 @@ export interface SafeJobSession {
 
 export type DataError = {
   level: "Data Error";
-  section: "backupServer" | "securitySummary" | "jobInfo" | "Licenses";
+  section:
+    | "backupServer"
+    | "securitySummary"
+    | "jobInfo"
+    | "Licenses"
+    | "jobSessionSummaryByJob";
   rowIndex: number;
   field: string;
   reason: string;
