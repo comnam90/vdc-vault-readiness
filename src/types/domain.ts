@@ -3,8 +3,8 @@ export interface SafeJob {
   JobType: string;
   Encrypted: boolean;
   RepoName: string;
-  RetainDays?: number | null;
-  GfsDetails?: string | null;
+  RetainDays: number | null;
+  GfsDetails: string | null;
 }
 
 export interface SafeBackupServer {
@@ -24,8 +24,8 @@ export interface SafeLicense {
 
 export interface SafeJobSession {
   JobName: string;
-  MaxDataSize?: number | null;
-  AvgChangeRate?: number | null;
+  MaxDataSize: number | null;
+  AvgChangeRate: number | null;
 }
 
 export type DataError = {

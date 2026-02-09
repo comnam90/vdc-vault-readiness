@@ -14,6 +14,7 @@ describe("Domain Types - SafeJob extension", () => {
       Encrypted: true,
       RepoName: "Repo1",
       RetainDays: 30,
+      GfsDetails: null,
     };
     expect(job.RetainDays).toBe(30);
   });
@@ -25,6 +26,7 @@ describe("Domain Types - SafeJob extension", () => {
       Encrypted: true,
       RepoName: "Repo1",
       RetainDays: null,
+      GfsDetails: null,
     };
     expect(job.RetainDays).toBeNull();
   });
@@ -35,6 +37,7 @@ describe("Domain Types - SafeJob extension", () => {
       JobType: "Backup",
       Encrypted: true,
       RepoName: "Repo1",
+      RetainDays: null,
       GfsDetails: "Weekly: 4, Monthly: 12, Yearly: 5",
     };
     expect(job.GfsDetails).toBe("Weekly: 4, Monthly: 12, Yearly: 5");
@@ -46,6 +49,7 @@ describe("Domain Types - SafeJob extension", () => {
       JobType: "Backup",
       Encrypted: true,
       RepoName: "Repo1",
+      RetainDays: null,
       GfsDetails: null,
     };
     expect(job.GfsDetails).toBeNull();
@@ -66,14 +70,16 @@ describe("Domain Types - SafeJob extension", () => {
     expect(job.RepoName).toBe("Repo1");
   });
 
-  it("SafeJob fields are optional", () => {
+  it("SafeJob fields are no longer optional - must provide RetainDays and GfsDetails", () => {
     const job: SafeJob = {
       JobName: "Test Job",
       JobType: "Backup",
       Encrypted: true,
       RepoName: "Repo1",
+      RetainDays: null,
+      GfsDetails: null,
     };
-    // Should compile without RetainDays and GfsDetails
+    // All fields are now required, can accept null
     expect(job).toBeDefined();
   });
 });
@@ -204,6 +210,8 @@ describe("Domain Types - NormalizedDataset extension", () => {
           JobType: "Backup",
           Encrypted: true,
           RepoName: "Repo1",
+          RetainDays: null,
+          GfsDetails: null,
         },
       ],
       Licenses: [{ Edition: "Enterprise", Status: "Active" }],

@@ -11,7 +11,12 @@ import {
 } from "@/lib/calculator-aggregator";
 
 function makeSession(overrides: Partial<SafeJobSession> = {}): SafeJobSession {
-  return { JobName: "TestJob", ...overrides };
+  return {
+    JobName: "TestJob",
+    MaxDataSize: null,
+    AvgChangeRate: null,
+    ...overrides,
+  };
 }
 
 function makeJob(overrides: Partial<SafeJob> = {}): SafeJob {
@@ -20,6 +25,8 @@ function makeJob(overrides: Partial<SafeJob> = {}): SafeJob {
     JobType: "VMware Backup",
     Encrypted: true,
     RepoName: "LinuxHardened",
+    RetainDays: null,
+    GfsDetails: null,
     ...overrides,
   };
 }

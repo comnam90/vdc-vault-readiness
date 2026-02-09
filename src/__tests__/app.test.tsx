@@ -39,6 +39,8 @@ const MOCK_DATA: NormalizedDataset = {
       JobType: "VMware Backup",
       Encrypted: true,
       RepoName: "Repo",
+      RetainDays: null,
+      GfsDetails: null,
     },
   ],
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
