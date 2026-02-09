@@ -47,12 +47,12 @@ describe("BlockersList", () => {
     expect(screen.queryByText("License/Edition Notes")).not.toBeInTheDocument();
   });
 
-  it("sorts fail items before warnings", () => {
-    render(<BlockersList blockers={[FAIL_RESULT, WARNING_RESULT]} />);
+  it("renders blockers in the provided order", () => {
+    render(<BlockersList blockers={[WARNING_RESULT, FAIL_RESULT]} />);
 
     const titles = screen.getAllByTestId("blocker-title");
-    expect(titles[0]).toHaveTextContent("Job Encryption Audit");
-    expect(titles[1]).toHaveTextContent("Agent Workload Configuration");
+    expect(titles[0]).toHaveTextContent("Agent Workload Configuration");
+    expect(titles[1]).toHaveTextContent("Job Encryption Audit");
   });
 
   it("renders affected items as a list", () => {
