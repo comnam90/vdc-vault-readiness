@@ -27,54 +27,64 @@ function makeJob(overrides: Partial<SafeJob> = {}): SafeJob {
     RepoName: "LinuxHardened",
     RetainDays: null,
     GfsDetails: null,
+    SourceSizeGB: null,
     ...overrides,
   };
 }
 
 describe("calculateTotalSourceDataTB", () => {
-  it("sums MaxDataSize values across sessions", () => {
-    const sessions: SafeJobSession[] = [
-      makeSession({ MaxDataSize: 0.0065 }),
-      makeSession({ MaxDataSize: 0.0082 }),
+  it("sums SourceSizeGB values and converts to TB (divide by 1024)", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ SourceSizeGB: 512 }),
+      makeJob({ SourceSizeGB: 512 }),
     ];
-    expect(calculateTotalSourceDataTB(sessions)).toBeCloseTo(0.0147, 4);
+    expect(calculateTotalSourceDataTB(jobs)).toBeCloseTo(1.0, 4);
   });
 
-  it("skips null MaxDataSize values", () => {
-    const sessions: SafeJobSession[] = [
-      makeSession({ MaxDataSize: 0.0065 }),
-      makeSession({ MaxDataSize: null }),
-      makeSession({ MaxDataSize: 0.0082 }),
+  it("skips null SourceSizeGB values", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ SourceSizeGB: 1024 }),
+      makeJob({ SourceSizeGB: null }),
+      makeJob({ SourceSizeGB: 1024 }),
     ];
-    expect(calculateTotalSourceDataTB(sessions)).toBeCloseTo(0.0147, 4);
+    expect(calculateTotalSourceDataTB(jobs)).toBeCloseTo(2.0, 4);
   });
 
-  it("skips default null MaxDataSize from helper", () => {
-    const sessions: SafeJobSession[] = [
-      makeSession({ MaxDataSize: 0.0065 }),
-      makeSession({}), // uses default MaxDataSize: null
+  it("skips default null SourceSizeGB from helper", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ SourceSizeGB: 1024 }),
+      makeJob({}), // uses default SourceSizeGB: null
     ];
-    expect(calculateTotalSourceDataTB(sessions)).toBeCloseTo(0.0065, 4);
+    expect(calculateTotalSourceDataTB(jobs)).toBeCloseTo(1.0, 4);
   });
 
   it("returns null for empty array", () => {
     expect(calculateTotalSourceDataTB([])).toBeNull();
   });
 
-  it("returns null when all MaxDataSize values are null", () => {
-    const sessions: SafeJobSession[] = [
-      makeSession({ MaxDataSize: null }),
-      makeSession({ MaxDataSize: null }),
+  it("returns null when all SourceSizeGB values are null", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ SourceSizeGB: null }),
+      makeJob({ SourceSizeGB: null }),
     ];
-    expect(calculateTotalSourceDataTB(sessions)).toBeNull();
+    expect(calculateTotalSourceDataTB(jobs)).toBeNull();
   });
 
-  it("includes zero MaxDataSize in sum", () => {
-    const sessions: SafeJobSession[] = [
-      makeSession({ MaxDataSize: 0 }),
-      makeSession({ MaxDataSize: 0.01 }),
+  it("includes zero SourceSizeGB in sum", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ SourceSizeGB: 0 }),
+      makeJob({ SourceSizeGB: 10.24 }),
     ];
-    expect(calculateTotalSourceDataTB(sessions)).toBeCloseTo(0.01, 4);
+    expect(calculateTotalSourceDataTB(jobs)).toBeCloseTo(0.01, 4);
+  });
+
+  it("handles fractional GB values correctly", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ SourceSizeGB: 6.656 }),
+      makeJob({ SourceSizeGB: 8.3968 }),
+    ];
+    // (6.656 + 8.3968) / 1024 ≈ 0.0147
+    expect(calculateTotalSourceDataTB(jobs)).toBeCloseTo(0.0147, 4);
   });
 });
 
@@ -334,8 +344,16 @@ describe("aggregateGfsMax", () => {
 describe("buildCalculatorSummary", () => {
   it("returns complete CalculatorSummary from jobs and sessions", () => {
     const jobs: SafeJob[] = [
-      makeJob({ RetainDays: 7, GfsDetails: "Weekly:1,Monthly:1" }),
-      makeJob({ RetainDays: 14, GfsDetails: "Weekly:2,Yearly:1" }),
+      makeJob({
+        RetainDays: 7,
+        GfsDetails: "Weekly:1,Monthly:1",
+        SourceSizeGB: 6.656,
+      }),
+      makeJob({
+        RetainDays: 14,
+        GfsDetails: "Weekly:2,Yearly:1",
+        SourceSizeGB: 8.3968,
+      }),
     ];
     const sessions: SafeJobSession[] = [
       makeSession({ MaxDataSize: 0.0065, AvgChangeRate: 66.15 }),
@@ -344,6 +362,7 @@ describe("buildCalculatorSummary", () => {
 
     const result = buildCalculatorSummary(jobs, sessions);
 
+    // (6.656 + 8.3968) / 1024 ≈ 0.0147
     expect(result.totalSourceDataTB).toBeCloseTo(0.0147, 4);
     expect(result.weightedAvgChangeRate).toBeCloseTo(
       (0.0065 * 66.15 + 0.0082 * 1.43) / (0.0065 + 0.0082),

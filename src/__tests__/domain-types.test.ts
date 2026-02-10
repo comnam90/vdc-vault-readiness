@@ -15,6 +15,7 @@ describe("Domain Types - SafeJob extension", () => {
       RepoName: "Repo1",
       RetainDays: 30,
       GfsDetails: null,
+      SourceSizeGB: null,
     };
     expect(job.RetainDays).toBe(30);
   });
@@ -27,6 +28,7 @@ describe("Domain Types - SafeJob extension", () => {
       RepoName: "Repo1",
       RetainDays: null,
       GfsDetails: null,
+      SourceSizeGB: null,
     };
     expect(job.RetainDays).toBeNull();
   });
@@ -39,6 +41,7 @@ describe("Domain Types - SafeJob extension", () => {
       RepoName: "Repo1",
       RetainDays: null,
       GfsDetails: "Weekly: 4, Monthly: 12, Yearly: 5",
+      SourceSizeGB: null,
     };
     expect(job.GfsDetails).toBe("Weekly: 4, Monthly: 12, Yearly: 5");
   });
@@ -51,6 +54,7 @@ describe("Domain Types - SafeJob extension", () => {
       RepoName: "Repo1",
       RetainDays: null,
       GfsDetails: null,
+      SourceSizeGB: null,
     };
     expect(job.GfsDetails).toBeNull();
   });
@@ -63,6 +67,7 @@ describe("Domain Types - SafeJob extension", () => {
       RepoName: "Repo1",
       RetainDays: 30,
       GfsDetails: "Weekly: 4",
+      SourceSizeGB: null,
     };
     expect(job.JobName).toBe("Test Job");
     expect(job.JobType).toBe("Backup");
@@ -78,6 +83,7 @@ describe("Domain Types - SafeJob extension", () => {
       RepoName: "Repo1",
       RetainDays: null,
       GfsDetails: null,
+      SourceSizeGB: null,
     };
     // All fields are now required, can accept null
     expect(job).toBeDefined();
@@ -212,6 +218,7 @@ describe("Domain Types - NormalizedDataset extension", () => {
           RepoName: "Repo1",
           RetainDays: null,
           GfsDetails: null,
+          SourceSizeGB: null,
         },
       ],
       Licenses: [{ Edition: "Enterprise", Status: "Active" }],

@@ -41,6 +41,7 @@ const MOCK_DATA: NormalizedDataset = {
       RepoName: "Repo",
       RetainDays: null,
       GfsDetails: null,
+      SourceSizeGB: null,
     },
   ],
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],

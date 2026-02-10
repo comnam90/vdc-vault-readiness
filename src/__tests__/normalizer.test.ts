@@ -126,6 +126,7 @@ describe("normalizeHealthcheck", () => {
           RepoName: "Repo1",
           RetainDays: null,
           GfsDetails: null,
+          SourceSizeGB: null,
         },
       ],
       Licenses: [],
@@ -1059,6 +1060,145 @@ describe("normalizeHealthcheck", () => {
       const result = normalizeHealthcheck(raw);
 
       expect(result.jobInfo[0].GfsDetails).toBeNull();
+    });
+  });
+
+  describe("SourceSizeGB extraction", () => {
+    it("parses valid numeric SourceSizeGB string to number", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            SourceSizeGB: "12.14",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo).toHaveLength(1);
+      expect(result.jobInfo[0].SourceSizeGB).toBe(12.14);
+    });
+
+    it("parses SourceSizeGB with whitespace", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            SourceSizeGB: " 1024 ",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].SourceSizeGB).toBe(1024);
+    });
+
+    it("defaults SourceSizeGB to null when empty string", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            SourceSizeGB: "",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].SourceSizeGB).toBeNull();
+      expect(result.dataErrors).toHaveLength(0);
+    });
+
+    it("defaults SourceSizeGB to null when missing and logs no error", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].SourceSizeGB).toBeNull();
+      expect(result.dataErrors).toHaveLength(0);
+    });
+
+    it("defaults SourceSizeGB to null and logs DataError for non-numeric value", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            SourceSizeGB: "abc",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo).toHaveLength(1);
+      expect(result.jobInfo[0].SourceSizeGB).toBeNull();
+      expect(result.dataErrors).toHaveLength(1);
+      expect(result.dataErrors[0]).toMatchObject({
+        level: "Data Error",
+        section: "jobInfo",
+        rowIndex: 0,
+        field: "SourceSizeGB",
+      });
+    });
+
+    it("defaults SourceSizeGB to null when null value", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            SourceSizeGB: null,
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].SourceSizeGB).toBeNull();
+      expect(result.dataErrors).toHaveLength(0);
     });
   });
 

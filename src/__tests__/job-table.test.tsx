@@ -11,6 +11,7 @@ const MOCK_JOBS: SafeJob[] = [
     RepoName: "LinuxHardened",
     RetainDays: null,
     GfsDetails: null,
+    SourceSizeGB: null,
   },
   {
     JobName: "SQL Agent Backup",
@@ -19,6 +20,7 @@ const MOCK_JOBS: SafeJob[] = [
     RepoName: "WinLocal",
     RetainDays: null,
     GfsDetails: null,
+    SourceSizeGB: null,
   },
   {
     JobName: "File Backup Weekly",
@@ -27,6 +29,7 @@ const MOCK_JOBS: SafeJob[] = [
     RepoName: "VeeamVault",
     RetainDays: null,
     GfsDetails: null,
+    SourceSizeGB: null,
   },
   {
     JobName: "Tape Job",
@@ -35,6 +38,7 @@ const MOCK_JOBS: SafeJob[] = [
     RepoName: "DDBoost",
     RetainDays: null,
     GfsDetails: null,
+    SourceSizeGB: null,
   },
   {
     JobName: "Replica Job",
@@ -43,6 +47,7 @@ const MOCK_JOBS: SafeJob[] = [
     RepoName: "LinuxHardened",
     RetainDays: null,
     GfsDetails: null,
+    SourceSizeGB: null,
   },
 ];
 
@@ -54,6 +59,7 @@ function createManyJobs(count: number): SafeJob[] {
     RepoName: "Repo",
     RetainDays: null,
     GfsDetails: null,
+    SourceSizeGB: null,
   }));
 }
 

@@ -5,6 +5,7 @@ export interface SafeJob {
   RepoName: string;
   RetainDays: number | null;
   GfsDetails: string | null;
+  SourceSizeGB: number | null;
 }
 
 export interface SafeBackupServer {

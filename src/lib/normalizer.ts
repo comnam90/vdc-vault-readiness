@@ -80,6 +80,13 @@ export function normalizeHealthcheck(
         dataErrors,
       ),
       GfsDetails: normalizeString(job.GfsDetails as string | null | undefined),
+      SourceSizeGB: parseNumeric(
+        job.SourceSizeGB as string | null | undefined,
+        "jobInfo",
+        rowIndex,
+        "SourceSizeGB",
+        dataErrors,
+      ),
     };
 
     return [safeJob];

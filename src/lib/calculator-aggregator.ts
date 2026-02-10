@@ -7,20 +7,18 @@ interface GfsResult {
   yearly: number | null;
 }
 
-export function calculateTotalSourceDataTB(
-  sessions: SafeJobSession[],
-): number | null {
-  let sum = 0;
+export function calculateTotalSourceDataTB(jobs: SafeJob[]): number | null {
+  let sumGB = 0;
   let hasValid = false;
 
-  for (const session of sessions) {
-    if (session.MaxDataSize != null) {
-      sum += session.MaxDataSize;
+  for (const job of jobs) {
+    if (job.SourceSizeGB != null) {
+      sumGB += job.SourceSizeGB;
       hasValid = true;
     }
   }
 
-  return hasValid ? sum : null;
+  return hasValid ? sumGB / 1024 : null;
 }
 
 export function calculateWeightedChangeRate(
@@ -135,7 +133,7 @@ export function buildCalculatorSummary(
   const gfs = aggregateGfsMax(jobs);
 
   return {
-    totalSourceDataTB: calculateTotalSourceDataTB(sessions),
+    totalSourceDataTB: calculateTotalSourceDataTB(jobs),
     weightedAvgChangeRate: calculateWeightedChangeRate(sessions),
     immutabilityDays: 30,
     maxRetentionDays: getMaxRetentionDays(jobs),

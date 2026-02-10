@@ -19,6 +19,7 @@ export const MOCK_DATA: NormalizedDataset = {
       RepoName: "LinuxHardened",
       RetainDays: null,
       GfsDetails: null,
+      SourceSizeGB: null,
     },
     {
       JobName: "Job B",
@@ -27,6 +28,7 @@ export const MOCK_DATA: NormalizedDataset = {
       RepoName: "WinLocal",
       RetainDays: null,
       GfsDetails: null,
+      SourceSizeGB: null,
     },
     {
       JobName: "Job C",
@@ -35,6 +37,7 @@ export const MOCK_DATA: NormalizedDataset = {
       RepoName: "VeeamVault",
       RetainDays: null,
       GfsDetails: null,
+      SourceSizeGB: null,
     },
   ],
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
