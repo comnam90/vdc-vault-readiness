@@ -1,6 +1,6 @@
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
-import { MINIMUM_VBR_VERSION } from "./constants";
+import { MINIMUM_VBR_VERSION, MINIMUM_RETENTION_DAYS } from "./constants";
 import { isVersionAtLeast } from "./version-compare";
 
 export function validateHealthcheck(
@@ -13,6 +13,7 @@ export function validateHealthcheck(
     validateAwsWorkload(data),
     validateAgentWorkload(data),
     validateLicenseEdition(data),
+    validateRetentionPeriod(data),
   ];
 }
 
@@ -181,6 +182,33 @@ function validateLicenseEdition(data: NormalizedDataset): ValidationResult {
     title: "License/Edition Notes",
     status: "pass",
     message: "No Community or Free editions detected.",
+    affectedItems: [],
+  };
+}
+
+function validateRetentionPeriod(data: NormalizedDataset): ValidationResult {
+  const affectedJobs = data.jobInfo.filter(
+    (job) => job.RetainDays !== null && job.RetainDays < MINIMUM_RETENTION_DAYS,
+  );
+
+  if (affectedJobs.length > 0) {
+    return {
+      ruleId: "retention-period",
+      title: "Retention Period",
+      status: "warning",
+      message:
+        "VDC Vault enforces a 30-day minimum retention period. The following jobs have retention set below this minimum and will be subject to the 30-day minimum lock.",
+      affectedItems: affectedJobs.map(
+        (j) => `${j.JobName} (${j.RetainDays} days)`,
+      ),
+    };
+  }
+
+  return {
+    ruleId: "retention-period",
+    title: "Retention Period",
+    status: "pass",
+    message: "All jobs meet the 30-day minimum retention requirement.",
     affectedItems: [],
   };
 }
