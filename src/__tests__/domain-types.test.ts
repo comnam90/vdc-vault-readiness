@@ -237,6 +237,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       weightedAvgChangeRate: 10.0,
       immutabilityDays: 30,
       maxRetentionDays: 365,
+      originalMaxRetentionDays: 365,
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 5,
@@ -250,6 +251,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       weightedAvgChangeRate: 10.0,
       immutabilityDays: 30,
       maxRetentionDays: null,
+      originalMaxRetentionDays: null,
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
@@ -263,6 +265,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       weightedAvgChangeRate: 15.75,
       immutabilityDays: 30,
       maxRetentionDays: 365,
+      originalMaxRetentionDays: 365,
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 5,
@@ -276,6 +279,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       weightedAvgChangeRate: 10.0,
       immutabilityDays: 30,
       maxRetentionDays: 365,
+      originalMaxRetentionDays: 365,
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
@@ -289,6 +293,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       weightedAvgChangeRate: 10.0,
       immutabilityDays: 30,
       maxRetentionDays: 1095,
+      originalMaxRetentionDays: 1095,
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
@@ -302,6 +307,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       weightedAvgChangeRate: 10.0,
       immutabilityDays: 30,
       maxRetentionDays: 365,
+      originalMaxRetentionDays: 365,
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 5,
@@ -317,6 +323,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       weightedAvgChangeRate: null,
       immutabilityDays: 30,
       maxRetentionDays: null,
+      originalMaxRetentionDays: null,
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
@@ -332,11 +339,12 @@ describe("Calculator Types - CalculatorSummary", () => {
       weightedAvgChangeRate: 12.5,
       immutabilityDays: 30,
       maxRetentionDays: 730,
+      originalMaxRetentionDays: 730,
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 7,
     };
     expect(summary).toBeDefined();
-    expect(Object.keys(summary)).toHaveLength(7);
+    expect(Object.keys(summary)).toHaveLength(8);
   });
 });

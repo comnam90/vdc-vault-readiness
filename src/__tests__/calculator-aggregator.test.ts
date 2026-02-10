@@ -402,7 +402,8 @@ describe("buildCalculatorSummary", () => {
       1,
     );
     expect(result.immutabilityDays).toBe(30);
-    expect(result.maxRetentionDays).toBe(14);
+    expect(result.maxRetentionDays).toBe(30);
+    expect(result.originalMaxRetentionDays).toBe(14);
     expect(result.gfsWeekly).toBe(2);
     expect(result.gfsMonthly).toBe(1);
     expect(result.gfsYearly).toBe(1);
@@ -415,7 +416,8 @@ describe("buildCalculatorSummary", () => {
       totalSourceDataTB: null,
       weightedAvgChangeRate: null,
       immutabilityDays: 30,
-      maxRetentionDays: null,
+      maxRetentionDays: 30,
+      originalMaxRetentionDays: null,
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
@@ -432,7 +434,8 @@ describe("buildCalculatorSummary", () => {
     expect(result.totalSourceDataTB).toBeNull();
     expect(result.weightedAvgChangeRate).toBeNull();
     expect(result.immutabilityDays).toBe(30);
-    expect(result.maxRetentionDays).toBe(7);
+    expect(result.maxRetentionDays).toBe(30);
+    expect(result.originalMaxRetentionDays).toBe(7);
     expect(result.gfsWeekly).toBeNull();
     expect(result.gfsMonthly).toBeNull();
     expect(result.gfsYearly).toBeNull();
@@ -444,5 +447,50 @@ describe("buildCalculatorSummary", () => {
       [makeSession({ MaxDataSize: 100 })],
     );
     expect(result.immutabilityDays).toBe(30);
+  });
+
+  describe("buildCalculatorSummary retention floor", () => {
+    it("applies 30-day floor when max retention is 14 days", () => {
+      const jobs: SafeJob[] = [makeJob({ RetainDays: 14 })];
+      const result = buildCalculatorSummary(jobs, []);
+
+      expect(result.maxRetentionDays).toBe(30);
+      expect(result.originalMaxRetentionDays).toBe(14);
+    });
+
+    it("preserves max retention when above 30 days", () => {
+      const jobs: SafeJob[] = [makeJob({ RetainDays: 45 })];
+      const result = buildCalculatorSummary(jobs, []);
+
+      expect(result.maxRetentionDays).toBe(45);
+      expect(result.originalMaxRetentionDays).toBe(45);
+    });
+
+    it("applies 30-day floor when all jobs have null RetainDays", () => {
+      const jobs: SafeJob[] = [
+        makeJob({ RetainDays: null }),
+        makeJob({ RetainDays: null }),
+      ];
+      const result = buildCalculatorSummary(jobs, []);
+
+      expect(result.maxRetentionDays).toBe(30);
+      expect(result.originalMaxRetentionDays).toBeNull();
+    });
+
+    it("applies 30-day floor when max retention is 0 days", () => {
+      const jobs: SafeJob[] = [makeJob({ RetainDays: 0 })];
+      const result = buildCalculatorSummary(jobs, []);
+
+      expect(result.maxRetentionDays).toBe(30);
+      expect(result.originalMaxRetentionDays).toBe(0);
+    });
+
+    it("preserves max retention when exactly 30 days", () => {
+      const jobs: SafeJob[] = [makeJob({ RetainDays: 30 })];
+      const result = buildCalculatorSummary(jobs, []);
+
+      expect(result.maxRetentionDays).toBe(30);
+      expect(result.originalMaxRetentionDays).toBe(30);
+    });
   });
 });

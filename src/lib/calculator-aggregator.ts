@@ -1,5 +1,6 @@
 import type { SafeJob, SafeJobSession } from "@/types/domain";
 import type { CalculatorSummary } from "@/types/calculator";
+import { MINIMUM_RETENTION_DAYS } from "./constants";
 
 interface GfsResult {
   weekly: number | null;
@@ -144,12 +145,17 @@ export function buildCalculatorSummary(
   sessions: SafeJobSession[],
 ): CalculatorSummary {
   const gfs = aggregateGfsMax(jobs);
+  const originalMax = getMaxRetentionDays(jobs);
 
   return {
     totalSourceDataTB: calculateTotalSourceDataTB(jobs),
     weightedAvgChangeRate: calculateWeightedChangeRate(jobs, sessions),
     immutabilityDays: 30,
-    maxRetentionDays: getMaxRetentionDays(jobs),
+    maxRetentionDays:
+      originalMax !== null
+        ? Math.max(originalMax, MINIMUM_RETENTION_DAYS)
+        : MINIMUM_RETENTION_DAYS,
+    originalMaxRetentionDays: originalMax,
     gfsWeekly: gfs.weekly,
     gfsMonthly: gfs.monthly,
     gfsYearly: gfs.yearly,
