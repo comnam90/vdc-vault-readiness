@@ -89,56 +89,88 @@ describe("calculateTotalSourceDataTB", () => {
 });
 
 describe("calculateWeightedChangeRate", () => {
-  it("calculates weighted average by MaxDataSize", () => {
-    const sessions: SafeJobSession[] = [
-      makeSession({ MaxDataSize: 100, AvgChangeRate: 10 }),
-      makeSession({ MaxDataSize: 50, AvgChangeRate: 20 }),
+  it("calculates weighted average by SourceSizeGB, correlating jobs and sessions by JobName", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "JobA", SourceSizeGB: 100 }),
+      makeJob({ JobName: "JobB", SourceSizeGB: 50 }),
     ];
-    // Σ(rate × size) / Σ(size) = (100*10 + 50*20) / (100+50) = 13.33
-    expect(calculateWeightedChangeRate(sessions)).toBeCloseTo(13.33, 1);
+    const sessions: SafeJobSession[] = [
+      makeSession({ JobName: "JobA", AvgChangeRate: 10 }),
+      makeSession({ JobName: "JobB", AvgChangeRate: 20 }),
+    ];
+    // Σ(rate × size) / Σ(size) = (10*100 + 20*50) / (100+50) = 13.33
+    expect(calculateWeightedChangeRate(jobs, sessions)).toBeCloseTo(13.33, 1);
   });
 
-  it("excludes sessions with null MaxDataSize", () => {
-    const sessions: SafeJobSession[] = [
-      makeSession({ MaxDataSize: 100, AvgChangeRate: 10 }),
-      makeSession({ MaxDataSize: null, AvgChangeRate: 50 }),
+  it("excludes jobs with null SourceSizeGB", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "JobA", SourceSizeGB: 100 }),
+      makeJob({ JobName: "JobB", SourceSizeGB: null }),
     ];
-    expect(calculateWeightedChangeRate(sessions)).toBeCloseTo(10, 1);
+    const sessions: SafeJobSession[] = [
+      makeSession({ JobName: "JobA", AvgChangeRate: 10 }),
+      makeSession({ JobName: "JobB", AvgChangeRate: 50 }),
+    ];
+    expect(calculateWeightedChangeRate(jobs, sessions)).toBeCloseTo(10, 1);
   });
 
-  it("excludes sessions with zero MaxDataSize", () => {
-    const sessions: SafeJobSession[] = [
-      makeSession({ MaxDataSize: 100, AvgChangeRate: 10 }),
-      makeSession({ MaxDataSize: 0, AvgChangeRate: 50 }),
+  it("excludes jobs with zero SourceSizeGB", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "JobA", SourceSizeGB: 100 }),
+      makeJob({ JobName: "JobB", SourceSizeGB: 0 }),
     ];
-    expect(calculateWeightedChangeRate(sessions)).toBeCloseTo(10, 1);
+    const sessions: SafeJobSession[] = [
+      makeSession({ JobName: "JobA", AvgChangeRate: 10 }),
+      makeSession({ JobName: "JobB", AvgChangeRate: 50 }),
+    ];
+    expect(calculateWeightedChangeRate(jobs, sessions)).toBeCloseTo(10, 1);
+  });
+
+  it("excludes jobs with no matching session", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "JobA", SourceSizeGB: 100 }),
+      makeJob({ JobName: "JobB", SourceSizeGB: 200 }),
+    ];
+    const sessions: SafeJobSession[] = [
+      makeSession({ JobName: "JobA", AvgChangeRate: 10 }),
+    ];
+    expect(calculateWeightedChangeRate(jobs, sessions)).toBeCloseTo(10, 1);
   });
 
   it("excludes sessions with null AvgChangeRate", () => {
-    const sessions: SafeJobSession[] = [
-      makeSession({ MaxDataSize: 100, AvgChangeRate: 10 }),
-      makeSession({ MaxDataSize: 200, AvgChangeRate: null }),
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "JobA", SourceSizeGB: 100 }),
+      makeJob({ JobName: "JobB", SourceSizeGB: 200 }),
     ];
-    expect(calculateWeightedChangeRate(sessions)).toBeCloseTo(10, 1);
+    const sessions: SafeJobSession[] = [
+      makeSession({ JobName: "JobA", AvgChangeRate: 10 }),
+      makeSession({ JobName: "JobB", AvgChangeRate: null }),
+    ];
+    expect(calculateWeightedChangeRate(jobs, sessions)).toBeCloseTo(10, 1);
   });
 
-  it("returns null for empty array", () => {
-    expect(calculateWeightedChangeRate([])).toBeNull();
+  it("returns null for empty arrays", () => {
+    expect(calculateWeightedChangeRate([], [])).toBeNull();
   });
 
-  it("returns null when all sessions have null data", () => {
-    const sessions: SafeJobSession[] = [
-      makeSession({ MaxDataSize: null, AvgChangeRate: null }),
-      makeSession({ MaxDataSize: null, AvgChangeRate: 20 }),
+  it("returns null when no jobs have valid SourceSizeGB", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "JobA", SourceSizeGB: null }),
+      makeJob({ JobName: "JobB", SourceSizeGB: null }),
     ];
-    expect(calculateWeightedChangeRate(sessions)).toBeNull();
+    const sessions: SafeJobSession[] = [
+      makeSession({ JobName: "JobA", AvgChangeRate: 10 }),
+      makeSession({ JobName: "JobB", AvgChangeRate: 20 }),
+    ];
+    expect(calculateWeightedChangeRate(jobs, sessions)).toBeNull();
   });
 
-  it("handles single valid session", () => {
+  it("handles single valid job-session pair", () => {
+    const jobs: SafeJob[] = [makeJob({ JobName: "JobA", SourceSizeGB: 50 })];
     const sessions: SafeJobSession[] = [
-      makeSession({ MaxDataSize: 50, AvgChangeRate: 25 }),
+      makeSession({ JobName: "JobA", AvgChangeRate: 25 }),
     ];
-    expect(calculateWeightedChangeRate(sessions)).toBeCloseTo(25, 1);
+    expect(calculateWeightedChangeRate(jobs, sessions)).toBeCloseTo(25, 1);
   });
 });
 
@@ -345,27 +377,28 @@ describe("buildCalculatorSummary", () => {
   it("returns complete CalculatorSummary from jobs and sessions", () => {
     const jobs: SafeJob[] = [
       makeJob({
+        JobName: "JobA",
         RetainDays: 7,
         GfsDetails: "Weekly:1,Monthly:1",
         SourceSizeGB: 6.656,
       }),
       makeJob({
+        JobName: "JobB",
         RetainDays: 14,
         GfsDetails: "Weekly:2,Yearly:1",
         SourceSizeGB: 8.3968,
       }),
     ];
     const sessions: SafeJobSession[] = [
-      makeSession({ MaxDataSize: 0.0065, AvgChangeRate: 66.15 }),
-      makeSession({ MaxDataSize: 0.0082, AvgChangeRate: 1.43 }),
+      makeSession({ JobName: "JobA", AvgChangeRate: 66.15 }),
+      makeSession({ JobName: "JobB", AvgChangeRate: 1.43 }),
     ];
 
     const result = buildCalculatorSummary(jobs, sessions);
 
-    // (6.656 + 8.3968) / 1024 ≈ 0.0147
     expect(result.totalSourceDataTB).toBeCloseTo(0.0147, 4);
     expect(result.weightedAvgChangeRate).toBeCloseTo(
-      (0.0065 * 66.15 + 0.0082 * 1.43) / (0.0065 + 0.0082),
+      (6.656 * 66.15 + 8.3968 * 1.43) / (6.656 + 8.3968),
       1,
     );
     expect(result.immutabilityDays).toBe(30);

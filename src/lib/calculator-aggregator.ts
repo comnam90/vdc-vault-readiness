@@ -22,20 +22,33 @@ export function calculateTotalSourceDataTB(jobs: SafeJob[]): number | null {
 }
 
 export function calculateWeightedChangeRate(
+  jobs: SafeJob[],
   sessions: SafeJobSession[],
 ): number | null {
+  const changeRateByJob = new Map<string, number>();
+
+  for (const session of sessions) {
+    if (session.AvgChangeRate != null) {
+      changeRateByJob.set(session.JobName, session.AvgChangeRate);
+    }
+  }
+
   let weightedSum = 0;
   let totalSize = 0;
 
-  for (const session of sessions) {
-    if (
-      session.MaxDataSize != null &&
-      session.MaxDataSize > 0 &&
-      session.AvgChangeRate != null
-    ) {
-      weightedSum += session.AvgChangeRate * session.MaxDataSize;
-      totalSize += session.MaxDataSize;
+  for (const job of jobs) {
+    if (job.SourceSizeGB == null || job.SourceSizeGB <= 0) {
+      continue;
     }
+
+    const changeRate = changeRateByJob.get(job.JobName);
+
+    if (changeRate == null) {
+      continue;
+    }
+
+    weightedSum += changeRate * job.SourceSizeGB;
+    totalSize += job.SourceSizeGB;
   }
 
   return totalSize > 0 ? weightedSum / totalSize : null;
@@ -134,7 +147,7 @@ export function buildCalculatorSummary(
 
   return {
     totalSourceDataTB: calculateTotalSourceDataTB(jobs),
-    weightedAvgChangeRate: calculateWeightedChangeRate(sessions),
+    weightedAvgChangeRate: calculateWeightedChangeRate(jobs, sessions),
     immutabilityDays: 30,
     maxRetentionDays: getMaxRetentionDays(jobs),
     gfsWeekly: gfs.weekly,
