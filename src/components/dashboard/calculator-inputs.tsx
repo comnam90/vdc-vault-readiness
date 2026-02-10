@@ -4,6 +4,7 @@ import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { MINIMUM_RETENTION_DAYS } from "@/lib/constants";
 import {
   Card,
   CardContent,
@@ -96,9 +97,17 @@ export function CalculatorInputs({ data }: CalculatorInputsProps) {
             <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
               Retention
             </p>
-            <p className="font-mono text-2xl font-semibold">
-              {formatDays(summary.maxRetentionDays)}
-            </p>
+            <div className="flex items-baseline gap-2">
+              <p className="font-mono text-2xl font-semibold">
+                {formatDays(summary.maxRetentionDays)}
+              </p>
+              {summary.originalMaxRetentionDays !== null &&
+                summary.originalMaxRetentionDays < MINIMUM_RETENTION_DAYS && (
+                  <span className="text-muted-foreground text-xs">
+                    (current: {summary.originalMaxRetentionDays} days)
+                  </span>
+                )}
+            </div>
           </div>
 
           <div className="space-y-1 sm:col-span-2">

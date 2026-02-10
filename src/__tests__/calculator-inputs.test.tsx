@@ -24,6 +24,7 @@ describe("CalculatorInputs", () => {
       weightedAvgChangeRate: 5.2,
       immutabilityDays: 30,
       maxRetentionDays: 14,
+      originalMaxRetentionDays: 14,
       gfsWeekly: 1,
       gfsMonthly: 1,
       gfsYearly: 1,
@@ -44,6 +45,7 @@ describe("CalculatorInputs", () => {
       weightedAvgChangeRate: 13.333,
       immutabilityDays: 30,
       maxRetentionDays: 14,
+      originalMaxRetentionDays: 14,
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 7,
@@ -76,6 +78,7 @@ describe("CalculatorInputs", () => {
       weightedAvgChangeRate: null,
       immutabilityDays: 30,
       maxRetentionDays: null,
+      originalMaxRetentionDays: null,
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
@@ -95,6 +98,7 @@ describe("CalculatorInputs", () => {
       weightedAvgChangeRate: 5,
       immutabilityDays: 30,
       maxRetentionDays: 14,
+      originalMaxRetentionDays: 14,
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
@@ -120,6 +124,7 @@ describe("CalculatorInputs", () => {
       weightedAvgChangeRate: null,
       immutabilityDays: 30,
       maxRetentionDays: null,
+      originalMaxRetentionDays: null,
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
@@ -129,5 +134,58 @@ describe("CalculatorInputs", () => {
       <CalculatorInputs data={mockData} validations={mockValidations} />,
     );
     expect(container).toBeInTheDocument();
+  });
+
+  it("shows retention floor subtext when original retention is below 30 days", () => {
+    vi.mocked(buildCalculatorSummary).mockReturnValue({
+      totalSourceDataTB: 10,
+      weightedAvgChangeRate: 5,
+      immutabilityDays: 30,
+      maxRetentionDays: 30,
+      originalMaxRetentionDays: 14,
+      gfsWeekly: null,
+      gfsMonthly: null,
+      gfsYearly: null,
+    });
+
+    render(<CalculatorInputs data={mockData} validations={mockValidations} />);
+
+    expect(screen.getAllByText("30 days").length).toBeGreaterThan(0);
+    expect(screen.getByText("(current: 14 days)")).toBeInTheDocument();
+  });
+
+  it("does not show retention floor subtext when original retention is 30 or more days", () => {
+    vi.mocked(buildCalculatorSummary).mockReturnValue({
+      totalSourceDataTB: 10,
+      weightedAvgChangeRate: 5,
+      immutabilityDays: 30,
+      maxRetentionDays: 45,
+      originalMaxRetentionDays: 45,
+      gfsWeekly: null,
+      gfsMonthly: null,
+      gfsYearly: null,
+    });
+
+    render(<CalculatorInputs data={mockData} validations={mockValidations} />);
+
+    expect(screen.getByText("45 days")).toBeInTheDocument();
+    expect(screen.queryByText(/current:/)).not.toBeInTheDocument();
+  });
+
+  it("does not show retention floor subtext when original retention is null", () => {
+    vi.mocked(buildCalculatorSummary).mockReturnValue({
+      totalSourceDataTB: 10,
+      weightedAvgChangeRate: 5,
+      immutabilityDays: 30,
+      maxRetentionDays: 30,
+      originalMaxRetentionDays: null,
+      gfsWeekly: null,
+      gfsMonthly: null,
+      gfsYearly: null,
+    });
+
+    render(<CalculatorInputs data={mockData} validations={mockValidations} />);
+
+    expect(screen.queryByText(/current:/)).not.toBeInTheDocument();
   });
 });
