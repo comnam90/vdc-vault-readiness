@@ -231,7 +231,7 @@ describe("Domain Types - NormalizedDataset extension", () => {
 });
 
 describe("Calculator Types - CalculatorSummary", () => {
-  it("CalculatorSummary has totalSourceDataTB as optional number | null", () => {
+  it("CalculatorSummary has totalSourceDataTB as nullable number", () => {
     const summary: CalculatorSummary = {
       totalSourceDataTB: 100.5,
       weightedAvgChangeRate: 10.0,
@@ -257,7 +257,7 @@ describe("Calculator Types - CalculatorSummary", () => {
     expect(summary.totalSourceDataTB).toBeNull();
   });
 
-  it("CalculatorSummary has weightedAvgChangeRate as optional number | null", () => {
+  it("CalculatorSummary has weightedAvgChangeRate as nullable number", () => {
     const summary: CalculatorSummary = {
       totalSourceDataTB: 100.5,
       weightedAvgChangeRate: 15.75,
@@ -283,7 +283,7 @@ describe("Calculator Types - CalculatorSummary", () => {
     expect(summary.immutabilityDays).toBe(30);
   });
 
-  it("CalculatorSummary has maxRetentionDays as optional number | null", () => {
+  it("CalculatorSummary has maxRetentionDays as nullable number", () => {
     const summary: CalculatorSummary = {
       totalSourceDataTB: 100.5,
       weightedAvgChangeRate: 10.0,
@@ -296,7 +296,7 @@ describe("Calculator Types - CalculatorSummary", () => {
     expect(summary.maxRetentionDays).toBe(1095);
   });
 
-  it("CalculatorSummary has GFS fields as optional number | null", () => {
+  it("CalculatorSummary has GFS fields as nullable number", () => {
     const summary: CalculatorSummary = {
       totalSourceDataTB: 100.5,
       weightedAvgChangeRate: 10.0,
@@ -326,7 +326,7 @@ describe("Calculator Types - CalculatorSummary", () => {
     expect(summary.gfsYearly).toBeNull();
   });
 
-  it("CalculatorSummary has all required and optional fields", () => {
+  it("CalculatorSummary has all required and nullable fields", () => {
     const summary: CalculatorSummary = {
       totalSourceDataTB: 250.0,
       weightedAvgChangeRate: 12.5,

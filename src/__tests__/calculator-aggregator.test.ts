@@ -340,9 +340,9 @@ describe("aggregateGfsMax", () => {
     });
   });
 
-  it("skips jobs with undefined GfsDetails", () => {
+  it("skips default null GfsDetails from helper", () => {
     const jobs: SafeJob[] = [
-      makeJob({}), // GfsDetails undefined
+      makeJob({}), // uses default GfsDetails: null
       makeJob({ GfsDetails: "Yearly:4" }),
     ];
     expect(aggregateGfsMax(jobs)).toEqual({
