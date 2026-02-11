@@ -126,6 +126,15 @@ describe("normalizeHealthcheck", () => {
           RepoName: "Repo1",
           RetainDays: null,
           GfsDetails: null,
+          OnDiskGB: null,
+          RetentionScheme: null,
+          CompressionLevel: null,
+          BlockSize: null,
+          GfsEnabled: null,
+          ActiveFullEnabled: null,
+          SyntheticFullEnabled: null,
+          BackupChainType: null,
+          IndexingEnabled: null,
           SourceSizeGB: null,
         },
       ],
@@ -1226,6 +1235,11 @@ describe("normalizeHealthcheck", () => {
         JobName: "Job_53",
         MaxDataSize: 0.0065,
         AvgChangeRate: 66.15,
+        SuccessRate: null,
+        SessionCount: null,
+        Fails: null,
+        AvgJobTime: null,
+        MaxJobTime: null,
       });
     });
 
@@ -1516,6 +1530,576 @@ describe("normalizeHealthcheck", () => {
 
       expect(result.jobSessionSummary).toHaveLength(1);
       expect(result.jobSessionSummary[0].JobName).toBe("Job_53");
+    });
+  });
+
+  describe("jobInfo new field extraction", () => {
+    it("extracts OnDiskGB as numeric value", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            OnDiskGB: "809.518127441406",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].OnDiskGB).toBeCloseTo(809.518, 2);
+    });
+
+    it("defaults OnDiskGB to null when missing", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].OnDiskGB).toBeNull();
+      expect(result.dataErrors).toHaveLength(0);
+    });
+
+    it("defaults OnDiskGB to null and logs DataError for non-numeric value", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            OnDiskGB: "invalid",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].OnDiskGB).toBeNull();
+      expect(result.dataErrors).toHaveLength(1);
+      expect(result.dataErrors[0]).toMatchObject({
+        section: "jobInfo",
+        field: "OnDiskGB",
+      });
+    });
+
+    it("extracts GfsEnabled as boolean", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            GfsEnabled: "True",
+          },
+          {
+            JobName: "Job B",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo2",
+            GfsEnabled: "False",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].GfsEnabled).toBe(true);
+      expect(result.jobInfo[1].GfsEnabled).toBe(false);
+    });
+
+    it("defaults GfsEnabled to null when missing", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].GfsEnabled).toBeNull();
+    });
+
+    it("extracts RetentionScheme as string", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            RetentionScheme: "Days",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].RetentionScheme).toBe("Days");
+    });
+
+    it("defaults RetentionScheme to null when missing", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].RetentionScheme).toBeNull();
+    });
+
+    it("extracts CompressionLevel as string", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            CompressionLevel: "Optimal",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].CompressionLevel).toBe("Optimal");
+    });
+
+    it("extracts BlockSize as string", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            BlockSize: "1 MB",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].BlockSize).toBe("1 MB");
+    });
+
+    it("extracts ActiveFullEnabled as boolean", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            ActiveFullEnabled: "False",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].ActiveFullEnabled).toBe(false);
+    });
+
+    it("extracts SyntheticFullEnabled as boolean", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            SyntheticFullEnabled: "True",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].SyntheticFullEnabled).toBe(true);
+    });
+
+    it("extracts BackupChainType as string", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            BackupChainType: "Forward Incremental",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].BackupChainType).toBe("Forward Incremental");
+    });
+
+    it("extracts IndexingEnabled as boolean", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            IndexingEnabled: "True",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo[0].IndexingEnabled).toBe(true);
+    });
+
+    it("does not reject row when new optional fields are invalid", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: "True",
+            RepoName: "Repo1",
+            OnDiskGB: "notanumber",
+            GfsEnabled: "maybe",
+            ActiveFullEnabled: "yes",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      // Row is preserved — invalid optional fields default to null
+      expect(result.jobInfo).toHaveLength(1);
+      expect(result.jobInfo[0].JobName).toBe("Job A");
+      expect(result.jobInfo[0].OnDiskGB).toBeNull();
+      expect(result.jobInfo[0].GfsEnabled).toBeNull();
+      expect(result.jobInfo[0].ActiveFullEnabled).toBeNull();
+    });
+
+    it("extracts all new fields together from a complete row", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [
+          {
+            JobName: "Job_58",
+            JobType: "Backup",
+            Encrypted: "False",
+            RepoName: "Repository_46",
+            SourceSizeGB: "12.14",
+            OnDiskGB: "0",
+            RetentionScheme: "Days",
+            RetainDays: "7",
+            CompressionLevel: "Optimal",
+            BlockSize: "1 MB",
+            GfsEnabled: "False",
+            GfsDetails: "",
+            ActiveFullEnabled: "False",
+            SyntheticFullEnabled: "True",
+            BackupChainType: "Forward Incremental",
+            IndexingEnabled: "False",
+          },
+        ],
+        Licenses: [],
+      };
+
+      const result = normalizeHealthcheck(raw);
+
+      expect(result.jobInfo).toHaveLength(1);
+      const job = result.jobInfo[0];
+      expect(job.SourceSizeGB).toBe(12.14);
+      expect(job.OnDiskGB).toBe(0);
+      expect(job.RetentionScheme).toBe("Days");
+      expect(job.RetainDays).toBe(7);
+      expect(job.CompressionLevel).toBe("Optimal");
+      expect(job.BlockSize).toBe("1 MB");
+      expect(job.GfsEnabled).toBe(false);
+      expect(job.GfsDetails).toBeNull();
+      expect(job.ActiveFullEnabled).toBe(false);
+      expect(job.SyntheticFullEnabled).toBe(true);
+      expect(job.BackupChainType).toBe("Forward Incremental");
+      expect(job.IndexingEnabled).toBe(false);
+    });
+  });
+
+  describe("jobSessionSummaryByJob new field extraction", () => {
+    it("extracts SuccessRate as numeric value", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const sessionData = [
+        {
+          JobName: "Job_53",
+          MaxDataSize: "0.0065",
+          AvgChangeRate: "66.15",
+          SuccessRate: "100",
+        },
+      ];
+
+      const result = normalizeHealthcheck(raw, sessionData);
+
+      expect(result.jobSessionSummary[0].SuccessRate).toBe(100);
+    });
+
+    it("defaults SuccessRate to null when missing", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const sessionData = [
+        {
+          JobName: "Job_53",
+          MaxDataSize: "0.0065",
+          AvgChangeRate: "66.15",
+        },
+      ];
+
+      const result = normalizeHealthcheck(raw, sessionData);
+
+      expect(result.jobSessionSummary[0].SuccessRate).toBeNull();
+    });
+
+    it("extracts SessionCount as numeric value", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const sessionData = [
+        {
+          JobName: "Job_53",
+          MaxDataSize: "0.0065",
+          AvgChangeRate: "66.15",
+          SessionCount: "8",
+        },
+      ];
+
+      const result = normalizeHealthcheck(raw, sessionData);
+
+      expect(result.jobSessionSummary[0].SessionCount).toBe(8);
+    });
+
+    it("extracts Fails as numeric value", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const sessionData = [
+        {
+          JobName: "Job_53",
+          MaxDataSize: "0.0065",
+          AvgChangeRate: "66.15",
+          Fails: "1",
+        },
+      ];
+
+      const result = normalizeHealthcheck(raw, sessionData);
+
+      expect(result.jobSessionSummary[0].Fails).toBe(1);
+    });
+
+    it("extracts AvgJobTime as string", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const sessionData = [
+        {
+          JobName: "Job_53",
+          MaxDataSize: "0.0065",
+          AvgChangeRate: "66.15",
+          AvgJobTime: "00.08:01:24",
+        },
+      ];
+
+      const result = normalizeHealthcheck(raw, sessionData);
+
+      expect(result.jobSessionSummary[0].AvgJobTime).toBe("00.08:01:24");
+    });
+
+    it("extracts MaxJobTime as string", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const sessionData = [
+        {
+          JobName: "Job_53",
+          MaxDataSize: "0.0065",
+          AvgChangeRate: "66.15",
+          MaxJobTime: "00.09:23:18",
+        },
+      ];
+
+      const result = normalizeHealthcheck(raw, sessionData);
+
+      expect(result.jobSessionSummary[0].MaxJobTime).toBe("00.09:23:18");
+    });
+
+    it("defaults AvgJobTime and MaxJobTime to null when missing", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const sessionData = [
+        {
+          JobName: "Job_53",
+          MaxDataSize: "0.0065",
+          AvgChangeRate: "66.15",
+        },
+      ];
+
+      const result = normalizeHealthcheck(raw, sessionData);
+
+      expect(result.jobSessionSummary[0].AvgJobTime).toBeNull();
+      expect(result.jobSessionSummary[0].MaxJobTime).toBeNull();
+    });
+
+    it("defaults SessionCount to null and logs DataError for non-numeric value", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const sessionData = [
+        {
+          JobName: "Job_53",
+          MaxDataSize: "0.0065",
+          AvgChangeRate: "66.15",
+          SessionCount: "abc",
+        },
+      ];
+
+      const result = normalizeHealthcheck(raw, sessionData);
+
+      expect(result.jobSessionSummary[0].SessionCount).toBeNull();
+      expect(result.dataErrors.some((e) => e.field === "SessionCount")).toBe(
+        true,
+      );
+    });
+
+    it("extracts all new session fields together from a complete row", () => {
+      const raw: ParsedHealthcheckSections = {
+        backupServer: [],
+        securitySummary: [],
+        jobInfo: [],
+        Licenses: [],
+      };
+
+      const sessionData = [
+        {
+          JobName: "Job_53",
+          MaxDataSize: "0.0065",
+          AvgChangeRate: "66.15",
+          SuccessRate: "100",
+          SessionCount: "8",
+          Fails: "1",
+          AvgJobTime: "00.08:01:24",
+          MaxJobTime: "00.09:23:18",
+        },
+      ];
+
+      const result = normalizeHealthcheck(raw, sessionData);
+
+      const session = result.jobSessionSummary[0];
+      expect(session.SuccessRate).toBe(100);
+      expect(session.SessionCount).toBe(8);
+      expect(session.Fails).toBe(1);
+      expect(session.AvgJobTime).toBe("00.08:01:24");
+      expect(session.MaxJobTime).toBe("00.09:23:18");
     });
   });
 });
