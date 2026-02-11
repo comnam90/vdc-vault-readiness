@@ -16,13 +16,7 @@ import { formatSize, formatPercent } from "@/lib/format-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+import { JobDetailSheet } from "./job-detail-sheet";
 import {
   Table,
   TableBody,
@@ -322,21 +316,13 @@ export function JobTable({ jobs }: JobTableProps) {
         </div>
       )}
 
-      <Sheet
+      <JobDetailSheet
+        job={selectedJob}
         open={selectedJob !== null}
         onOpenChange={(open) => {
           if (!open) setSelectedJob(null);
         }}
-      >
-        <SheetContent side="right">
-          {selectedJob && (
-            <SheetHeader>
-              <SheetTitle>{selectedJob.JobName}</SheetTitle>
-              <SheetDescription>{selectedJob.JobType}</SheetDescription>
-            </SheetHeader>
-          )}
-        </SheetContent>
-      </Sheet>
+      />
     </div>
   );
 }
