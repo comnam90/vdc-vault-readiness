@@ -3,6 +3,9 @@ export interface SafeJob {
   JobType: string;
   Encrypted: boolean;
   RepoName: string;
+  RetainDays: number | null;
+  GfsDetails: string | null;
+  SourceSizeGB: number | null;
 }
 
 export interface SafeBackupServer {
@@ -20,9 +23,20 @@ export interface SafeLicense {
   Status: string;
 }
 
+export interface SafeJobSession {
+  JobName: string;
+  MaxDataSize: number | null;
+  AvgChangeRate: number | null;
+}
+
 export type DataError = {
   level: "Data Error";
-  section: "backupServer" | "securitySummary" | "jobInfo" | "Licenses";
+  section:
+    | "backupServer"
+    | "securitySummary"
+    | "jobInfo"
+    | "Licenses"
+    | "jobSessionSummaryByJob";
   rowIndex: number;
   field: string;
   reason: string;
@@ -33,6 +47,7 @@ export interface NormalizedDataset {
   securitySummary: SafeSecuritySummary[];
   jobInfo: SafeJob[];
   Licenses: SafeLicense[];
+  jobSessionSummary: SafeJobSession[];
   dataErrors: DataError[];
 }
 

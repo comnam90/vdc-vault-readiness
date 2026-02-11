@@ -25,7 +25,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
     it("returns normalized data and validation results", () => {
       expect(result).toHaveProperty("data");
       expect(result).toHaveProperty("validations");
-      expect(result.validations).toHaveLength(6);
+      expect(result.validations).toHaveLength(7);
     });
 
     it("parses the backup server from Headers/Rows", () => {
@@ -55,6 +55,40 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(firstJob).toHaveProperty("Encrypted");
       expect(firstJob).toHaveProperty("RepoName");
       expect(typeof firstJob.Encrypted).toBe("boolean");
+    });
+
+    it("extracts RetainDays from jobInfo", () => {
+      const firstJob = result.data.jobInfo[0];
+      expect(firstJob).toHaveProperty("RetainDays");
+      expect(typeof firstJob.RetainDays).toBe("number");
+      expect(firstJob.RetainDays).toBeGreaterThan(0);
+    });
+
+    it("extracts GfsDetails from jobInfo", () => {
+      // Most jobs in sample data have empty GfsDetails
+      const jobsWithGfs = result.data.jobInfo.filter(
+        (j) => j.GfsDetails !== null,
+      );
+      const jobsWithoutGfs = result.data.jobInfo.filter(
+        (j) => j.GfsDetails === null,
+      );
+      // Sample data has 2 jobs with GFS enabled
+      expect(jobsWithGfs.length).toBeGreaterThan(0);
+      expect(jobsWithoutGfs.length).toBeGreaterThan(0);
+    });
+
+    it("parses jobSessionSummaryByJob into jobSessionSummary", () => {
+      expect(result.data.jobSessionSummary.length).toBeGreaterThan(0);
+      const firstSession = result.data.jobSessionSummary[0];
+      expect(firstSession).toHaveProperty("JobName");
+      expect(firstSession).toHaveProperty("MaxDataSize");
+      expect(firstSession).toHaveProperty("AvgChangeRate");
+    });
+
+    it("parses MaxDataSize and AvgChangeRate as numbers", () => {
+      const firstSession = result.data.jobSessionSummary[0];
+      expect(typeof firstSession.MaxDataSize).toBe("number");
+      expect(typeof firstSession.AvgChangeRate).toBe("number");
     });
 
     it("parses Licenses directly (not from Headers/Rows)", () => {
@@ -118,7 +152,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(result.data.securitySummary).toEqual([]);
       expect(result.data.jobInfo).toEqual([]);
       expect(result.data.Licenses).toEqual([]);
-      expect(result.validations).toHaveLength(6);
+      expect(result.validations).toHaveLength(7);
     });
 
     it("handles missing Sections key gracefully", () => {
@@ -128,7 +162,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
 
       expect(result.data.backupServer).toEqual([]);
       expect(result.data.jobInfo).toEqual([]);
-      expect(result.validations).toHaveLength(6);
+      expect(result.validations).toHaveLength(7);
     });
   });
 

@@ -31,6 +31,7 @@ const MOCK_ANALYSIS_RESULT = {
     jobInfo: [],
     Licenses: [],
     dataErrors: [],
+    jobSessionSummary: [],
   },
   validations: [
     {

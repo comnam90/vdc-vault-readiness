@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CalculatorInputs } from "@/components/dashboard/calculator-inputs";
 import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
 import { PassingChecksList } from "./passing-checks-list";
@@ -165,6 +166,7 @@ export function DashboardView({
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="jobs">Job Details</TabsTrigger>
+          <TabsTrigger value="sizing">Sizing</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-6">
@@ -186,6 +188,10 @@ export function DashboardView({
 
         <TabsContent value="jobs" className="mt-4">
           <JobTable jobs={data.jobInfo} />
+        </TabsContent>
+
+        <TabsContent value="sizing" className="mt-4">
+          <CalculatorInputs data={data} validations={validations} />
         </TabsContent>
       </Tabs>
     </div>

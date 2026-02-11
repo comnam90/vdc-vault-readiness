@@ -1,6 +1,7 @@
 import type { PipelineStep } from "@/types/domain";
 
 export const MINIMUM_VBR_VERSION = "12.1.2";
+export const MINIMUM_RETENTION_DAYS = 30;
 
 /**
  * UI-facing pipeline steps displayed in the ChecklistLoader component.

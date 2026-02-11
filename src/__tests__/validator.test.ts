@@ -16,6 +16,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -38,6 +39,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -62,6 +64,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -84,6 +87,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -107,6 +111,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -133,6 +138,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -155,6 +161,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -172,6 +179,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -199,16 +207,23 @@ describe("validateHealthcheck", () => {
             JobType: "Backup",
             Encrypted: true,
             RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
           {
             JobName: "Job B",
             JobType: "Replica",
             Encrypted: true,
             RepoName: "Repo2",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -236,16 +251,23 @@ describe("validateHealthcheck", () => {
             JobType: "Backup",
             Encrypted: true,
             RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
           {
             JobName: "Job B",
             JobType: "Backup",
             Encrypted: false,
             RepoName: "Repo2",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -277,22 +299,32 @@ describe("validateHealthcheck", () => {
             JobType: "Backup",
             Encrypted: false,
             RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
           {
             JobName: "Job B",
             JobType: "Backup",
             Encrypted: false,
             RepoName: "Repo2",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
           {
             JobName: "Job C",
             JobType: "Backup",
             Encrypted: true,
             RepoName: "Repo3",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -318,6 +350,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -345,16 +378,23 @@ describe("validateHealthcheck", () => {
             JobType: "Backup",
             Encrypted: true,
             RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
           {
             JobName: "Job B",
             JobType: "Replica",
             Encrypted: true,
             RepoName: "Repo2",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -380,16 +420,23 @@ describe("validateHealthcheck", () => {
             JobType: "Backup",
             Encrypted: true,
             RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
           {
             JobName: "AWS Job",
             JobType: "Veeam.Vault.AWS",
             Encrypted: true,
             RepoName: "AWSRepo",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -418,10 +465,14 @@ describe("validateHealthcheck", () => {
             JobType: "veeam.vault.aws",
             Encrypted: true,
             RepoName: "AWSRepo",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -448,10 +499,14 @@ describe("validateHealthcheck", () => {
             JobType: "Backup",
             Encrypted: true,
             RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -477,10 +532,14 @@ describe("validateHealthcheck", () => {
             JobType: "EpAgentBackup",
             Encrypted: true,
             RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -509,22 +568,32 @@ describe("validateHealthcheck", () => {
             JobType: "Agent Backup",
             Encrypted: true,
             RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
           {
             JobName: "Job B",
             JobType: "EpAgentPolicy",
             Encrypted: true,
             RepoName: "Repo2",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
           {
             JobName: "Job C",
             JobType: "agentbackup",
             Encrypted: true,
             RepoName: "Repo3",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -551,6 +620,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [{ Edition: "Community", Status: "Active" }],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -575,6 +645,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [{ Edition: "Free", Status: "Active" }],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -596,6 +667,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [{ Edition: "Enterprise", Status: "Active" }],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -617,6 +689,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
@@ -626,8 +699,8 @@ describe("validateHealthcheck", () => {
     });
   });
 
-  describe("All Rules Integration", () => {
-    it("returns results for all 6 rules", () => {
+  describe("Rule 7: Retention Period Check", () => {
+    it("passes when all jobs have RetainDays >= 30", () => {
       const data: NormalizedDataset = {
         backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
         securitySummary: [
@@ -642,21 +715,284 @@ describe("validateHealthcheck", () => {
             JobType: "Backup",
             Encrypted: true,
             RepoName: "Repo1",
+            RetainDays: 30,
+            GfsDetails: null,
+            SourceSizeGB: null,
+          },
+          {
+            JobName: "Job B",
+            JobType: "Backup",
+            Encrypted: true,
+            RepoName: "Repo2",
+            RetainDays: 90,
+            GfsDetails: null,
+            SourceSizeGB: null,
           },
         ],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const retentionCheck = results.find(
+        (r) => r.ruleId === "retention-period",
+      );
+
+      expect(retentionCheck).toBeDefined();
+      expect(retentionCheck?.status).toBe("pass");
+      expect(retentionCheck?.affectedItems).toHaveLength(0);
+    });
+
+    it("warns when some jobs have RetainDays < 30", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: true,
+            RepoName: "Repo1",
+            RetainDays: 7,
+            GfsDetails: null,
+            SourceSizeGB: null,
+          },
+          {
+            JobName: "Job B",
+            JobType: "Backup",
+            Encrypted: true,
+            RepoName: "Repo2",
+            RetainDays: 14,
+            GfsDetails: null,
+            SourceSizeGB: null,
+          },
+        ],
+        Licenses: [],
+        dataErrors: [],
+        jobSessionSummary: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const retentionCheck = results.find(
+        (r) => r.ruleId === "retention-period",
+      );
+
+      expect(retentionCheck).toBeDefined();
+      expect(retentionCheck?.status).toBe("warning");
+      expect(retentionCheck?.title).toBe("Retention Period");
+      expect(retentionCheck?.message).toContain("30-day minimum");
+      expect(retentionCheck?.affectedItems).toHaveLength(2);
+      expect(retentionCheck?.affectedItems).toContain("Job A (7 days)");
+      expect(retentionCheck?.affectedItems).toContain("Job B (14 days)");
+    });
+
+    it("passes when all jobs have RetainDays: null", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: true,
+            RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+          },
+          {
+            JobName: "Job B",
+            JobType: "Backup",
+            Encrypted: true,
+            RepoName: "Repo2",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+          },
+        ],
+        Licenses: [],
+        dataErrors: [],
+        jobSessionSummary: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const retentionCheck = results.find(
+        (r) => r.ruleId === "retention-period",
+      );
+
+      expect(retentionCheck?.status).toBe("pass");
+      expect(retentionCheck?.affectedItems).toHaveLength(0);
+    });
+
+    it("warns only for jobs with RetainDays < 30, ignoring null values", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: true,
+            RepoName: "Repo1",
+            RetainDays: 7,
+            GfsDetails: null,
+            SourceSizeGB: null,
+          },
+          {
+            JobName: "Job B",
+            JobType: "Backup",
+            Encrypted: true,
+            RepoName: "Repo2",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+          },
+          {
+            JobName: "Job C",
+            JobType: "Backup",
+            Encrypted: true,
+            RepoName: "Repo3",
+            RetainDays: 60,
+            GfsDetails: null,
+            SourceSizeGB: null,
+          },
+        ],
+        Licenses: [],
+        dataErrors: [],
+        jobSessionSummary: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const retentionCheck = results.find(
+        (r) => r.ruleId === "retention-period",
+      );
+
+      expect(retentionCheck?.status).toBe("warning");
+      expect(retentionCheck?.affectedItems).toHaveLength(1);
+      expect(retentionCheck?.affectedItems).toContain("Job A (7 days)");
+    });
+
+    it("passes when jobs have exactly 30 days retention", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: true,
+            RepoName: "Repo1",
+            RetainDays: 30,
+            GfsDetails: null,
+            SourceSizeGB: null,
+          },
+        ],
+        Licenses: [],
+        dataErrors: [],
+        jobSessionSummary: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const retentionCheck = results.find(
+        (r) => r.ruleId === "retention-period",
+      );
+
+      expect(retentionCheck?.status).toBe("pass");
+      expect(retentionCheck?.affectedItems).toHaveLength(0);
+    });
+
+    it("warns when a job has RetainDays: 0", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: true,
+            RepoName: "Repo1",
+            RetainDays: 0,
+            GfsDetails: null,
+            SourceSizeGB: null,
+          },
+        ],
+        Licenses: [],
+        dataErrors: [],
+        jobSessionSummary: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const retentionCheck = results.find(
+        (r) => r.ruleId === "retention-period",
+      );
+
+      expect(retentionCheck?.status).toBe("warning");
+      expect(retentionCheck?.affectedItems).toContain("Job A (0 days)");
+    });
+  });
+
+  describe("All Rules Integration", () => {
+    it("returns results for all 7 rules", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: true,
+            RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+          },
+        ],
+        Licenses: [],
+        dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(6);
+      expect(results).toHaveLength(7);
       expect(results.map((r) => r.ruleId)).toContain("vbr-version");
       expect(results.map((r) => r.ruleId)).toContain("global-encryption");
       expect(results.map((r) => r.ruleId)).toContain("job-encryption");
       expect(results.map((r) => r.ruleId)).toContain("aws-workload");
       expect(results.map((r) => r.ruleId)).toContain("agent-workload");
       expect(results.map((r) => r.ruleId)).toContain("license-edition");
+      expect(results.map((r) => r.ruleId)).toContain("retention-period");
     });
 
     it("handles empty dataset gracefully", () => {
@@ -666,11 +1002,12 @@ describe("validateHealthcheck", () => {
         jobInfo: [],
         Licenses: [],
         dataErrors: [],
+        jobSessionSummary: [],
       };
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(6);
+      expect(results).toHaveLength(7);
       // Version check should fail with empty backupServer
       const versionCheck = results.find((r) => r.ruleId === "vbr-version");
       expect(versionCheck?.status).toBe("fail");

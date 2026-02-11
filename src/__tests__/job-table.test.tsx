@@ -9,30 +9,45 @@ const MOCK_JOBS: SafeJob[] = [
     JobType: "VMware Backup",
     Encrypted: true,
     RepoName: "LinuxHardened",
+    RetainDays: null,
+    GfsDetails: null,
+    SourceSizeGB: null,
   },
   {
     JobName: "SQL Agent Backup",
     JobType: "Agent Backup",
     Encrypted: false,
     RepoName: "WinLocal",
+    RetainDays: null,
+    GfsDetails: null,
+    SourceSizeGB: null,
   },
   {
     JobName: "File Backup Weekly",
     JobType: "File Backup",
     Encrypted: true,
     RepoName: "VeeamVault",
+    RetainDays: null,
+    GfsDetails: null,
+    SourceSizeGB: null,
   },
   {
     JobName: "Tape Job",
     JobType: "Tape Backup",
     Encrypted: false,
     RepoName: "DDBoost",
+    RetainDays: null,
+    GfsDetails: null,
+    SourceSizeGB: null,
   },
   {
     JobName: "Replica Job",
     JobType: "VMware Replica",
     Encrypted: true,
     RepoName: "LinuxHardened",
+    RetainDays: null,
+    GfsDetails: null,
+    SourceSizeGB: null,
   },
 ];
 
@@ -42,6 +57,9 @@ function createManyJobs(count: number): SafeJob[] {
     JobType: "VMware Backup",
     Encrypted: i % 2 === 0,
     RepoName: "Repo",
+    RetainDays: null,
+    GfsDetails: null,
+    SourceSizeGB: null,
   }));
 }
 
