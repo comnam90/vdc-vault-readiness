@@ -1,16 +1,16 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-09
-**Commit:** 4547a24
-**Branch:** feature/phase3-motion-interaction
+**Generated:** 2026-02-11
+**Commit:** 14e61e3
+**Branch:** main
 
 ## OVERVIEW
 
 Client-side SPA validating Veeam VBR environments against VDC Vault requirements. Parses Healthcheck JSON locally, runs pre-flight checks. React 19 + Vite 7.3 + TypeScript 5.9 + Tailwind 4.1 + shadcn 3.8.
 
-## STATUS: MVP COMPLETE + MOTION SYSTEM
+## STATUS: MVP COMPLETE + CALCULATOR
 
-Full pipeline operational: JSON upload → normalize → validate → dashboard. 150+ tests across 19 test files. All 6 PRD validation rules implemented. Phase 3 adds motion/animation system with `prefers-reduced-motion` support, checklist loader, and success celebration.
+Full pipeline operational: JSON upload → normalize → validate → dashboard. 352 tests across 22 test files. 7 validation rules implemented. Motion/animation system with `prefers-reduced-motion` support. Vault sizing calculator aggregates source data, change rates, and retention from job metadata.
 
 ## STRUCTURE
 
@@ -40,8 +40,9 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
     ├── index.css                 # Tailwind 4 + motion tokens + custom @utility animations
     ├── types/
     │   ├── healthcheck.ts        # Raw JSON shape types (HealthcheckRoot)
-    │   ├── domain.ts             # NormalizedDataset, SafeJob, PipelineStep
-    │   └── validation.ts         # ValidationResult, ValidationStatus
+    │   ├── domain.ts             # NormalizedDataset, SafeJob, SafeJobSession, PipelineStep
+    │   ├── validation.ts         # ValidationResult, ValidationStatus
+    │   └── calculator.ts         # CalculatorSummary interface
     ├── lib/                      # → see src/lib/AGENTS.md
     ├── hooks/
     │   └── use-analysis.ts       # State machine hook w/ race condition guard + step progression
@@ -53,23 +54,25 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
 
 ## WHERE TO LOOK
 
-| Need              | Location                       | Notes                                                                                                      |
-| ----------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| Tech stack        | PRD.md §2                      | Strict versions: Vite 7.3.1, TS 5.9.3, Tailwind 4.1.18, shadcn 3.8.3                                       |
-| Validation rules  | PRD.md §4                      | 6 rules: VBR version, encryption, job audit, AWS, agents, license                                          |
-| UI spec           | PRD.md §5                      | Dashboard + Job Explorer table                                                                             |
-| Vault limitations | VDCVAULT-CHEETSHEET.md         | Red flags, edition diffs, workload matrix                                                                  |
-| Architecture      | ARCHITECTURE.md                | Data flow, component hierarchy, design decisions                                                           |
-| Motion/animation  | DESIGN-SYSTEM.md               | Tokens (§4), keyframes, `motion-safe:` prefix, `prefers-reduced-motion`                                    |
-| Contributing      | CONTRIBUTING.md                | Branch, commit, PR, testing, code standards (authoritative for process)                                    |
-| Input format      | veeam-healthcheck.example.json | Headers/Rows → needs `zipSection()`                                                                        |
-| Domain types      | src/types/                     | healthcheck.ts (raw), domain.ts (normalized), validation.ts (results)                                      |
-| Data pipeline     | src/lib/AGENTS.md              | Parser, normalizer, validator, pipeline orchestrator                                                       |
-| State management  | src/hooks/use-analysis.ts      | State machine hook with race condition guard + visual step progression                                     |
-| Dashboard UI      | src/components/dashboard/      | 6 components: file-upload, dashboard-view, blockers-list, job-table, success-celebration, checklist-loader |
-| Path aliases      | tsconfig.json                  | `@/*` → `./src/*`                                                                                          |
-| Theme/motion      | src/index.css                  | oklch colors, Veeam brand palette, motion duration/easing tokens, custom keyframes                         |
-| Test patterns     | src/**tests**/AGENTS.md        | Fixtures, helpers, mocking, a11y testing conventions                                                       |
+| Need               | Location                         | Notes                                                                                                                                              |
+| ------------------ | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tech stack         | PRD.md §2                        | Strict versions: Vite 7.3.1, TS 5.9.3, Tailwind 4.1.18, shadcn 3.8.3                                                                               |
+| Validation rules   | PRD.md §4                        | 7 rules: VBR version, global encryption, job encryption, AWS, agents, license, retention                                                           |
+| UI spec            | PRD.md §5                        | Dashboard + Job Explorer table + Sizing tab                                                                                                        |
+| Vault limitations  | VDCVAULT-CHEETSHEET.md           | Red flags, edition diffs, workload matrix                                                                                                          |
+| Architecture       | ARCHITECTURE.md                  | Data flow, component hierarchy, design decisions                                                                                                   |
+| Motion/animation   | DESIGN-SYSTEM.md                 | Tokens (§4), keyframes, `motion-safe:` prefix, `prefers-reduced-motion`                                                                            |
+| Contributing       | CONTRIBUTING.md                  | Branch, commit, PR, testing, code standards (authoritative for process)                                                                            |
+| Input format       | veeam-healthcheck.example.json   | Headers/Rows → needs `zipSection()`                                                                                                                |
+| Domain types       | src/types/                       | healthcheck.ts (raw), domain.ts (normalized), validation.ts (results), calculator.ts (sizing)                                                      |
+| Data pipeline      | src/lib/AGENTS.md                | Parser, normalizer, validator, calculator, pipeline orchestrator                                                                                   |
+| State management   | src/hooks/use-analysis.ts        | State machine hook with race condition guard + visual step progression                                                                             |
+| Dashboard UI       | src/components/dashboard/        | 8 components: file-upload, dashboard-view, blockers-list, job-table, success-celebration, checklist-loader, passing-checks-list, calculator-inputs |
+| Sizing calculator  | src/lib/calculator-aggregator.ts | Aggregates source TB, change rates, retention, GFS from job data                                                                                   |
+| Validation helpers | src/lib/validation-selectors.ts  | getBlockerValidations(), getPassingValidations(), hasBlockers(), getBlockerCount()                                                                 |
+| Path aliases       | tsconfig.json                    | `@/*` → `./src/*`                                                                                                                                  |
+| Theme/motion       | src/index.css                    | oklch colors, Veeam brand palette, motion duration/easing tokens, custom keyframes                                                                 |
+| Test patterns      | src/**tests**/AGENTS.md          | Fixtures, helpers, mocking, a11y testing conventions                                                                                               |
 
 ## INPUT DATA FORMAT
 
@@ -99,6 +102,7 @@ Must normalize to: `[{ "Name": "Job A", "Encrypted": "False" }]`
 - **Pipeline**: `analyzeHealthcheck()` runs synchronously; visual step progression is presentational only (artificial `tick()` delays)
 - **Hosting**: Cloudflare Pages (static, client-side only)
 - **Git hooks**: Husky pre-commit runs lint-staged (Prettier); commit-msg runs commitlint
+- **Testing**: Query priority `getByRole` → `getByText` → `getByTestId`. No snapshot tests. Factory helpers for unique data, fixtures.ts for shared
 
 ## ANTI-PATTERNS (FORBIDDEN)
 
@@ -226,5 +230,7 @@ Types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`. `feat:` → minor rel
 ## NEXT STEPS
 
 1. ~~MVP pipeline + UI~~ ✅ Done (steps 1-18)
-2. Polish: loading states, error recovery UX, mobile responsiveness
-3. Cloudflare Pages deployment configuration
+2. ~~Motion/animation system~~ ✅ Done (checklist-loader, success-celebration, stagger, reduced-motion)
+3. ~~Vault sizing calculator~~ ✅ Done (calculator-aggregator, calculator-inputs, passing-checks-list)
+4. Polish: loading states, error recovery UX, mobile responsiveness
+5. Cloudflare Pages deployment configuration
