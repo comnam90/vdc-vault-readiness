@@ -1,15 +1,16 @@
 # src/components/dashboard — Dashboard UI
 
-8 components composing the results view. Motion system with stagger animations and `prefers-reduced-motion` support. Three tabs: overview, jobs, sizing.
+9 components composing the results view. Motion system with stagger animations and `prefers-reduced-motion` support. Three tabs: overview, jobs, sizing.
 
 ## STRUCTURE
 
 ```
 dashboard/
 ├── file-upload.tsx          # Drop zone with drag/click/keyboard input + error shake
-├── dashboard-view.tsx       # Main layout: header, summary cards, tabs (overview/jobs/sizing). 199 lines, 18 imports
+├── dashboard-view.tsx       # Main layout: header, summary cards, tabs (overview/jobs/sizing). Memoizes enrichJobs(). 205 lines
 ├── blockers-list.tsx        # Fail/warning alerts with severity ordering + stagger entrance
-├── job-table.tsx            # TanStack Table: search, sort, paginate SafeJob[]. 214 lines
+├── job-table.tsx            # TanStack Table: search, sort, paginate EnrichedJob[]. Row click → sheet. 329 lines
+├── job-detail-sheet.tsx     # Right-side Sheet: storage, protection, config, session sections. 275 lines
 ├── success-celebration.tsx  # All-pass state: ring animation + stagger fade-in
 ├── checklist-loader.tsx     # Processing state: step checklist with progress bar
 ├── passing-checks-list.tsx  # Passing validations with stagger animation + check icons
@@ -22,7 +23,8 @@ dashboard/
 | ---------------------- | ----------------------- | ----------------------------------------------------------------------------- |
 | Add validation display | blockers-list.tsx       | SEVERITY map drives icon/color/badge per status                               |
 | Modify summary cards   | dashboard-view.tsx      | 3 cards: VBR version, total jobs, readiness                                   |
-| Change table columns   | job-table.tsx           | TanStack columnHelper definitions at top of file                              |
+| Change table columns   | job-table.tsx           | TanStack columnHelper definitions at top of file; uses EnrichedJob type       |
+| Job detail drill-down  | job-detail-sheet.tsx    | Controlled Sheet with 4 sections: Storage, Protection, Config, Session        |
 | Adjust processing UX   | checklist-loader.tsx    | Reads PIPELINE_STEPS from @/lib/constants                                     |
 | All-pass celebration   | success-celebration.tsx | Shown when no blockers; has "View Job Details" CTA                            |
 | Show passing checks    | passing-checks-list.tsx | Uses getPassingValidations() from validation-selectors                        |
@@ -38,6 +40,9 @@ dashboard/
 - **shadcn/ui first**: Check the shadcn/ui registry for a suitable component before creating a custom one
 - **Severity config**: `blockers-list.tsx` uses a SEVERITY lookup object for fail/warning styling — extend here for new statuses
 - **Affected items**: Truncated at `MAX_VISIBLE_ITEMS` (5) with "+ N more" overflow
+- **Sheet pattern**: `job-detail-sheet.tsx` is fully controlled (open/onOpenChange from parent). Uses local helper components (PropertyRow, SectionHeading) — not exported
+- **Color coding**: ChangeRate: red >50%, amber 10-50%, default <10%. SuccessRate: red <80%, amber 80-95%, green >95%. Encryption: blue=yes, red=no
+- **Formatters**: job-detail-sheet and job-table use shared formatters from `@/lib/format-utils` (formatSize, formatPercent, formatDuration, formatCompressionRatio)
 - **Relative imports**: Within dashboard/ only. Cross-directory uses `@/` alias
 - **Tabs**: `dashboard-view.tsx` manages tab state with shadcn Tabs component
 
@@ -49,3 +54,4 @@ dashboard/
 | Inline keyframes                 | Use custom `@utility` animations in index.css |
 | Direct prop drilling for onReset | Passed from App → DashboardView only          |
 | Non-lucide icons                 | Consistency — all icons from lucide-react     |
+| Uncontrolled JobDetailSheet      | Must receive open/onOpenChange from parent    |

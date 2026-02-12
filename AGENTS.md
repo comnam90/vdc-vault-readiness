@@ -1,8 +1,8 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-11
-**Commit:** 14e61e3
-**Branch:** main
+**Generated:** 2026-02-12
+**Commit:** da0f3ff
+**Branch:** feature/job-details-smart-columns-sheet
 
 ## OVERVIEW
 
@@ -10,7 +10,7 @@ Client-side SPA validating Veeam VBR environments against VDC Vault requirements
 
 ## STATUS: MVP COMPLETE + CALCULATOR
 
-Full pipeline operational: JSON upload → normalize → validate → dashboard. 352 tests across 22 test files. 7 validation rules implemented. Motion/animation system with `prefers-reduced-motion` support. Vault sizing calculator aggregates source data, change rates, and retention from job metadata.
+Full pipeline operational: JSON upload → normalize → validate → dashboard. 477 tests across 25 test files. 7 validation rules implemented. Motion/animation system with `prefers-reduced-motion` support. Vault sizing calculator aggregates source data, change rates, and retention from job metadata.
 
 ## STRUCTURE
 
@@ -42,37 +42,41 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
     │   ├── healthcheck.ts        # Raw JSON shape types (HealthcheckRoot)
     │   ├── domain.ts             # NormalizedDataset, SafeJob, SafeJobSession, PipelineStep
     │   ├── validation.ts         # ValidationResult, ValidationStatus
-    │   └── calculator.ts         # CalculatorSummary interface
+    │   ├── calculator.ts         # CalculatorSummary interface
+    │   └── enriched-job.ts       # EnrichedJob = SafeJob + sessionData (join type)
     ├── lib/                      # → see src/lib/AGENTS.md
     ├── hooks/
     │   └── use-analysis.ts       # State machine hook w/ race condition guard + step progression
     ├── components/
-    │   ├── ui/                   # 9 shadcn primitives (card, button, badge, etc.)
+    │   ├── ui/                   # 10 shadcn primitives (card, button, badge, sheet, etc.)
     │   └── dashboard/            # → see src/components/dashboard/AGENTS.md
     └── __tests__/                # → see src/__tests__/AGENTS.md
 ```
 
 ## WHERE TO LOOK
 
-| Need               | Location                         | Notes                                                                                                                                              |
-| ------------------ | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tech stack         | PRD.md §2                        | Strict versions: Vite 7.3.1, TS 5.9.3, Tailwind 4.1.18, shadcn 3.8.3                                                                               |
-| Validation rules   | PRD.md §4                        | 7 rules: VBR version, global encryption, job encryption, AWS, agents, license, retention                                                           |
-| UI spec            | PRD.md §5                        | Dashboard + Job Explorer table + Sizing tab                                                                                                        |
-| Vault limitations  | VDCVAULT-CHEETSHEET.md           | Red flags, edition diffs, workload matrix                                                                                                          |
-| Architecture       | ARCHITECTURE.md                  | Data flow, component hierarchy, design decisions                                                                                                   |
-| Motion/animation   | DESIGN-SYSTEM.md                 | Tokens (§4), keyframes, `motion-safe:` prefix, `prefers-reduced-motion`                                                                            |
-| Contributing       | CONTRIBUTING.md                  | Branch, commit, PR, testing, code standards (authoritative for process)                                                                            |
-| Input format       | veeam-healthcheck.example.json   | Headers/Rows → needs `zipSection()`                                                                                                                |
-| Domain types       | src/types/                       | healthcheck.ts (raw), domain.ts (normalized), validation.ts (results), calculator.ts (sizing)                                                      |
-| Data pipeline      | src/lib/AGENTS.md                | Parser, normalizer, validator, calculator, pipeline orchestrator                                                                                   |
-| State management   | src/hooks/use-analysis.ts        | State machine hook with race condition guard + visual step progression                                                                             |
-| Dashboard UI       | src/components/dashboard/        | 8 components: file-upload, dashboard-view, blockers-list, job-table, success-celebration, checklist-loader, passing-checks-list, calculator-inputs |
-| Sizing calculator  | src/lib/calculator-aggregator.ts | Aggregates source TB, change rates, retention, GFS from job data                                                                                   |
-| Validation helpers | src/lib/validation-selectors.ts  | getBlockerValidations(), getPassingValidations(), hasBlockers(), getBlockerCount()                                                                 |
-| Path aliases       | tsconfig.json                    | `@/*` → `./src/*`                                                                                                                                  |
-| Theme/motion       | src/index.css                    | oklch colors, Veeam brand palette, motion duration/easing tokens, custom keyframes                                                                 |
-| Test patterns      | src/**tests**/AGENTS.md          | Fixtures, helpers, mocking, a11y testing conventions                                                                                               |
+| Need               | Location                                      | Notes                                                                                                                                                                |
+| ------------------ | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tech stack         | PRD.md §2                                     | Strict versions: Vite 7.3.1, TS 5.9.3, Tailwind 4.1.18, shadcn 3.8.3                                                                                                 |
+| Validation rules   | PRD.md §4                                     | 7 rules: VBR version, global encryption, job encryption, AWS, agents, license, retention                                                                             |
+| UI spec            | PRD.md §5                                     | Dashboard + Job Explorer table + Sizing tab                                                                                                                          |
+| Vault limitations  | VDCVAULT-CHEETSHEET.md                        | Red flags, edition diffs, workload matrix                                                                                                                            |
+| Architecture       | ARCHITECTURE.md                               | Data flow, component hierarchy, design decisions                                                                                                                     |
+| Motion/animation   | DESIGN-SYSTEM.md                              | Tokens (§4), keyframes, `motion-safe:` prefix, `prefers-reduced-motion`                                                                                              |
+| Contributing       | CONTRIBUTING.md                               | Branch, commit, PR, testing, code standards (authoritative for process)                                                                                              |
+| Input format       | veeam-healthcheck.example.json                | Headers/Rows → needs `zipSection()`                                                                                                                                  |
+| Domain types       | src/types/                                    | healthcheck.ts (raw), domain.ts (normalized), validation.ts (results), calculator.ts (sizing), enriched-job.ts (join)                                                |
+| Data pipeline      | src/lib/AGENTS.md                             | Parser, normalizer, validator, calculator, enrichment, formatters, pipeline orchestrator                                                                             |
+| State management   | src/hooks/use-analysis.ts                     | State machine hook with race condition guard + visual step progression                                                                                               |
+| Dashboard UI       | src/components/dashboard/                     | 9 components: file-upload, dashboard-view, blockers-list, job-table, job-detail-sheet, success-celebration, checklist-loader, passing-checks-list, calculator-inputs |
+| Sizing calculator  | src/lib/calculator-aggregator.ts              | Aggregates source TB, change rates, retention, GFS from job data                                                                                                     |
+| Validation helpers | src/lib/validation-selectors.ts               | getBlockerValidations(), getPassingValidations(), hasBlockers(), getBlockerCount()                                                                                   |
+| Job detail sheet   | src/components/dashboard/job-detail-sheet.tsx | Slide-out Sheet: storage, protection, config, session sections for EnrichedJob                                                                                       |
+| Job enrichment     | src/lib/enrich-jobs.ts                        | enrichJobs() joins SafeJob[] with SafeJobSession[] via Map lookup                                                                                                    |
+| Formatting         | src/lib/format-utils.ts                       | formatSize, formatPercent, formatDuration, formatTB, formatCompressionRatio                                                                                          |
+| Path aliases       | tsconfig.json                                 | `@/*` → `./src/*`                                                                                                                                                    |
+| Theme/motion       | src/index.css                                 | oklch colors, Veeam brand palette, motion duration/easing tokens, custom keyframes                                                                                   |
+| Test patterns      | src/**tests**/AGENTS.md                       | Fixtures, helpers, mocking, a11y testing conventions                                                                                                                 |
 
 ## INPUT DATA FORMAT
 
