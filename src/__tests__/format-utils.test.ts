@@ -4,6 +4,7 @@ import {
   formatPercent,
   formatDuration,
   formatCompressionRatio,
+  formatTB,
 } from "@/lib/format-utils";
 
 describe("formatSize", () => {
@@ -73,6 +74,24 @@ describe("formatDuration", () => {
 
   it("formats zero duration", () => {
     expect(formatDuration("00.00:00:00")).toBe("0m 0s");
+  });
+});
+
+describe("formatTB", () => {
+  it('returns "N/A" for null input', () => {
+    expect(formatTB(null)).toBe("N/A");
+  });
+
+  it("formats zero with 2 decimal places", () => {
+    expect(formatTB(0)).toBe("0.00 TB");
+  });
+
+  it("formats positive values with 2 decimal places", () => {
+    expect(formatTB(1.5)).toBe("1.50 TB");
+  });
+
+  it("formats large values", () => {
+    expect(formatTB(123.456)).toBe("123.46 TB");
   });
 });
 

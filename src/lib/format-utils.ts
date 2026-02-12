@@ -38,6 +38,11 @@ export function formatDuration(str: string | null): string {
   return `${minutes}m ${seconds}s`;
 }
 
+export function formatTB(val: number | null): string {
+  if (val === null) return "N/A";
+  return `${val.toFixed(2)} TB`;
+}
+
 export function formatCompressionRatio(
   sourceGB: number | null,
   diskGB: number | null,
