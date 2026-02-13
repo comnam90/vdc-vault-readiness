@@ -66,21 +66,23 @@
 
 ### `job-encryption` -- Job Encryption Audit
 
-|                       |                                           |
-| --------------------- | ----------------------------------------- |
-| **Status on failure** | `fail`                                    |
-| **Data source**       | `NormalizedDataset.jobInfo` (`SafeJob[]`) |
+|                       |                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| **Status on failure** | `fail`                                                                             |
+| **Data source**       | `NormalizedDataset.jobInfo` (`SafeJob[]`), `NormalizedDataset.sobr` (`SafeSobr[]`) |
+
+**SOBR exemption:** Jobs targeting a SOBR with `EnableCapacityTier=true` are exempt from this check. When a SOBR has a capacity tier, encryption is enforced at the capacity tier level instead (see [`sobr-cap-encryption`](#sobr-cap-encryption----capacity-tier-encryption)). The exemption is implemented by building a `Set<string>` of SOBR names where `EnableCapacityTier=true` and excluding jobs whose `RepoName` is in the set. When `data.sobr` is empty (backward compatible), no exemptions are applied.
 
 **Conditions:**
 
-| Condition                        | Status | Message                                                                                                                                                                                  |
-| -------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Any job has `Encrypted` = false  | `fail` | `Vault requires source-side encryption. You must enable encryption on these jobs or use an encrypted Backup Copy Job. Unencrypted data cannot use Move/Copy Backup to migrate to Vault.` |
-| All jobs have `Encrypted` = true | `pass` | `All jobs have encryption enabled.`                                                                                                                                                      |
+| Condition                                                       | Status | Message                                                                                                                                                                                  |
+| --------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any non-exempt job has `Encrypted` = false                      | `fail` | `Vault requires source-side encryption. You must enable encryption on these jobs or use an encrypted Backup Copy Job. Unencrypted data cannot use Move/Copy Backup to migrate to Vault.` |
+| All non-exempt jobs have `Encrypted` = true (or all are exempt) | `pass` | `All jobs have encryption enabled.`                                                                                                                                                      |
 
-**Affected items:** Job names (`SafeJob.JobName`) of unencrypted jobs.
+**Affected items:** Job names (`SafeJob.JobName`) of non-exempt unencrypted jobs.
 
-**Recommendations:** Enable encryption on each affected job, or create encrypted Backup Copy Jobs. Unencrypted data cannot use Move/Copy Backup to migrate to Vault.
+**Recommendations:** Enable encryption on each affected job, or create encrypted Backup Copy Jobs. Unencrypted data cannot use Move/Copy Backup to migrate to Vault. Jobs targeting SOBRs with a capacity tier are exempt because encryption is enforced at the capacity tier level.
 
 ---
 
@@ -162,6 +164,112 @@
 **Affected items:** `"{JobName} ({RetainDays} days)"` for each affected job.
 
 **Recommendations:** Increase retention to at least 30 days on affected jobs. VDC Vault enforces a 30-day minimum that cannot be disabled -- jobs below this threshold will have the minimum lock applied automatically.
+
+---
+
+### `sobr-cap-encryption` -- Capacity Tier Encryption
+
+|                       |                                                    |
+| --------------------- | -------------------------------------------------- |
+| **Status on failure** | `warning`                                          |
+| **Data source**       | `NormalizedDataset.capExtents` (`SafeCapExtent[]`) |
+
+**Conditions:**
+
+| Condition                                              | Status    | Message                                                                                                                                                            |
+| ------------------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Any cap extent has `EncryptionEnabled` = false         | `warning` | `Capacity tier extents without encryption detected. VDC Vault requires encryption on capacity tier data. Enable encryption on these extents to ensure compliance.` |
+| No cap extents, or all have `EncryptionEnabled` = true | `pass`    | `All capacity tier extents have encryption enabled.`                                                                                                               |
+
+**Affected items:** `"{Name} (SOBR: {SobrName})"` for each unencrypted cap extent.
+
+**Recommendations:** Enable encryption on each affected capacity tier extent. VDC Vault requires all data on the capacity tier to be encrypted. This check complements the [`job-encryption`](#job-encryption----job-encryption-audit) rule -- jobs targeting SOBRs with capacity tiers are exempt from job-level encryption because encryption is enforced here instead.
+
+---
+
+### `sobr-immutability` -- Capacity Tier Immutability
+
+|                       |                                                    |
+| --------------------- | -------------------------------------------------- |
+| **Status on failure** | `warning`                                          |
+| **Data source**       | `NormalizedDataset.capExtents` (`SafeCapExtent[]`) |
+
+**Conditions:**
+
+| Condition                                             | Status    | Message                                                                                                                                                                                                                   |
+| ----------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any cap extent has `ImmutableEnabled` = false         | `warning` | `Capacity tier extents without immutability detected. VDC Vault enforces immutability, which increases effective retention by the immutability period plus block generation period (10 days for Azure, 30 days for AWS).` |
+| No cap extents, or all have `ImmutableEnabled` = true | `pass`    | `All capacity tier extents have immutability enabled.`                                                                                                                                                                    |
+
+**Affected items:** `"{Name} (SOBR: {SobrName})"` for each non-immutable cap extent.
+
+**Recommendations:** Enable immutability on each affected capacity tier extent. VDC Vault enforces immutability which cannot be disabled. Be aware that immutability increases effective retention by the immutability period plus the block generation period (10 days for Azure, 30 days for AWS), which may increase storage costs.
+
+---
+
+### `archive-tier-edition` -- Archive Tier Edition Requirement
+
+|                       |                                                      |
+| --------------------- | ---------------------------------------------------- |
+| **Status on failure** | `warning`                                            |
+| **Data source**       | `NormalizedDataset.archExtents` (`SafeArchExtent[]`) |
+
+**Conditions:**
+
+| Condition                                          | Status    | Message                                                                                                                                                                  |
+| -------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Any arch extent has `ArchiveTierEnabled` = true    | `warning` | `Archive tier is configured. VDC Vault Foundation has a 20% fair usage limit on egress that archiving consumes. Consider VDC Vault Advanced for archive tier workloads.` |
+| No arch extents, or none have `ArchiveTierEnabled` | `pass`    | `No active archive tier configurations detected.`                                                                                                                        |
+
+**Affected items:** `"{Name} (SOBR: {SobrName})"` for each enabled archive extent.
+
+**Recommendations:** Consider upgrading to VDC Vault Advanced if archive tier is in use. VDC Vault Foundation has a 20% fair usage limit on egress, and archiving consumes egress bandwidth. Advanced edition removes this limitation.
+
+---
+
+### `capacity-tier-residency` -- Capacity Tier Residency
+
+|                       |                                                                                                                                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Status on failure** | `warning`                                                                                                                                                                                    |
+| **Data source**       | `NormalizedDataset.sobr` (`SafeSobr[]`), `NormalizedDataset.capExtents` (`SafeCapExtent[]`), `NormalizedDataset.archExtents` (`SafeArchExtent[]`), `NormalizedDataset.jobInfo` (`SafeJob[]`) |
+| **Constants**         | `MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS` = `30`                                                                                                                                                |
+
+**Algorithm:** For each SOBR with `EnableCapacityTier=true`, cross-references cap extents, arch extents, and jobs using a unified formula: `residency = retentionDays - arrivalDay`.
+
+1. **Determine arrivalDay** from cap extents:
+   - If any cap extent has `CopyModeEnabled=true`: `arrivalDay = 0` (data arrives from day 1)
+   - If move-only (`MoveModeEnabled=true`, no copy): `arrivalDay = min(MovePeriodDays)` across extents (`null` treated as `0`)
+2. **Determine immutablePeriod**: `max(ImmutablePeriod)` across cap extents where `ImmutableEnabled=true` (else `0`)
+3. **Normal retention** per job targeting the SOBR:
+   - Skip if `RetainDays` is null or `RetainDays <= arrivalDay` (data never reaches capacity tier)
+   - `retentionResidency = RetainDays - arrivalDay`
+   - If `retentionResidency >= 30`: pass
+   - If `retentionResidency < 30`: check `effectiveResidency = max(retentionResidency, immutablePeriod)` -- if immutability covers the gap, flag with storage cost note; otherwise flag as insufficient
+4. **GFS retention** per job with `GfsEnabled=true` and `GfsDetails`:
+   - Weekly: `days = weekly * 7`, Monthly: `days = monthly * 30`, Yearly: `days = yearly * 365`
+   - Same residency check as normal retention using each GFS period
+5. **Archive tier** if SOBR has `ArchiveTierEnabled=true`:
+   - `effectiveArchiveTrigger = max(RetentionPeriod, immutablePeriod)` (archive can't move immutable data)
+   - `archResidency = effectiveArchiveTrigger - arrivalDay`
+   - If `archResidency < 30`: flag
+
+**Conditions:**
+
+| Condition                                            | Status    | Message                                                                                                    |
+| ---------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------- |
+| Any item has insufficient residency on capacity tier | `warning` | `Data must remain on capacity tier for at least 30 days. The following items have insufficient residency.` |
+| No SOBRs with capacity tier, or all items sufficient | `pass`    | `All capacity tier data meets the 30-day minimum residency requirement.`                                   |
+
+**Affected items:** Descriptive strings per sub-check:
+
+- Normal retention too short: `"{JobName}: normal retention {N} days on capacity (needs 30+)"`
+- Normal retention short but immutability covers gap: `"{JobName}: normal retention {N} days, but immutability extends to {M} days (extra storage cost)"`
+- GFS retention too short: `"{JobName}: GFS {weekly|monthly|yearly} {N} days on capacity (needs 30+)"`
+- GFS retention short but immutability covers gap: `"{JobName}: GFS {label} {N} days, but immutability extends to {M} days (extra storage cost)"`
+- Archive pulls data too early: `"{SobrName}: archive moves data after {N} days on capacity (needs 30+)"`
+
+**Recommendations:** Ensure data remains on the capacity tier for at least 30 days. Options include increasing retention periods, adjusting move policy timing, or enabling immutability (which extends effective residency but incurs additional storage cost). For archive tier, ensure the archive trigger period minus the arrival day is at least 30 days.
 
 ---
 
