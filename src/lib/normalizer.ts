@@ -2,11 +2,14 @@ import type { NormalizerInput } from "@/types/healthcheck";
 import type {
   DataError,
   NormalizedDataset,
+  SafeArchExtent,
   SafeBackupServer,
+  SafeCapExtent,
   SafeJob,
   SafeJobSession,
   SafeLicense,
   SafeSecuritySummary,
+  SafeSobr,
 } from "@/types/domain";
 
 type SessionRecord = Record<string, string | null | undefined>;
@@ -256,6 +259,9 @@ export function normalizeHealthcheck(
     jobInfo,
     Licenses,
     jobSessionSummary: normalizeJobSessions(asArray(sessionData), dataErrors),
+    sobr: normalizeSobr(asArray(raw.sobr), dataErrors),
+    capExtents: normalizeCapExtents(asArray(raw.capextents), dataErrors),
+    archExtents: normalizeArchExtents(asArray(raw.archextents), dataErrors),
     dataErrors,
   };
 }
@@ -424,5 +430,383 @@ function normalizeJobSessions(
     };
 
     return [safeSession];
+  });
+}
+
+type SobrRecord = Record<string, string | null | undefined>;
+
+function normalizeSobr(
+  rows: SobrRecord[],
+  dataErrors: DataError[],
+): SafeSobr[] {
+  return rows.flatMap((row, rowIndex) => {
+    if (!isRecord(row)) {
+      dataErrors.push(
+        buildError("sobr", rowIndex, "_row", "Invalid row: not an object"),
+      );
+      return [];
+    }
+
+    const name = normalizeString(row.Name as string | null | undefined);
+    if (!name) {
+      dataErrors.push(
+        buildError("sobr", rowIndex, "Name", "Missing required Name"),
+      );
+      return [];
+    }
+
+    const enableCapacityTier = parseBoolean(
+      row.EnableCapacityTier as string | null | undefined,
+    );
+    if (enableCapacityTier === null) {
+      dataErrors.push(
+        buildError(
+          "sobr",
+          rowIndex,
+          "EnableCapacityTier",
+          "Missing or invalid EnableCapacityTier value",
+        ),
+      );
+      return [];
+    }
+
+    const capacityTierCopy = parseBoolean(
+      row.CapacityTierCopy as string | null | undefined,
+    );
+    if (capacityTierCopy === null) {
+      dataErrors.push(
+        buildError(
+          "sobr",
+          rowIndex,
+          "CapacityTierCopy",
+          "Missing or invalid CapacityTierCopy value",
+        ),
+      );
+      return [];
+    }
+
+    const capacityTierMove = parseBoolean(
+      row.CapacityTierMove as string | null | undefined,
+    );
+    if (capacityTierMove === null) {
+      dataErrors.push(
+        buildError(
+          "sobr",
+          rowIndex,
+          "CapacityTierMove",
+          "Missing or invalid CapacityTierMove value",
+        ),
+      );
+      return [];
+    }
+
+    const archiveTierEnabled = parseBoolean(
+      row.ArchiveTierEnabled as string | null | undefined,
+    );
+    if (archiveTierEnabled === null) {
+      dataErrors.push(
+        buildError(
+          "sobr",
+          rowIndex,
+          "ArchiveTierEnabled",
+          "Missing or invalid ArchiveTierEnabled value",
+        ),
+      );
+      return [];
+    }
+
+    const immutableEnabled = parseBoolean(
+      row.ImmutableEnabled as string | null | undefined,
+    );
+    if (immutableEnabled === null) {
+      dataErrors.push(
+        buildError(
+          "sobr",
+          rowIndex,
+          "ImmutableEnabled",
+          "Missing or invalid ImmutableEnabled value",
+        ),
+      );
+      return [];
+    }
+
+    const safeSobr: SafeSobr = {
+      Name: name,
+      EnableCapacityTier: enableCapacityTier,
+      CapacityTierCopy: capacityTierCopy,
+      CapacityTierMove: capacityTierMove,
+      ArchiveTierEnabled: archiveTierEnabled,
+      ImmutableEnabled: immutableEnabled,
+      ExtentCount: parseNumeric(
+        row.ExtentCount as string | null | undefined,
+        "sobr",
+        rowIndex,
+        "ExtentCount",
+        dataErrors,
+      ),
+      JobCount: parseNumeric(
+        row.JobCount as string | null | undefined,
+        "sobr",
+        rowIndex,
+        "JobCount",
+        dataErrors,
+      ),
+      PolicyType: normalizeString(row.PolicyType as string | null | undefined),
+      UsePerVMFiles: parseBoolean(
+        row.UsePerVMFiles as string | null | undefined,
+      ),
+      CapTierType: normalizeString(
+        row.CapTierType as string | null | undefined,
+      ),
+      ImmutablePeriod: parseNumeric(
+        row.ImmutablePeriod as string | null | undefined,
+        "sobr",
+        rowIndex,
+        "ImmutablePeriod",
+        dataErrors,
+      ),
+      SizeLimitEnabled: parseBoolean(
+        row.SizeLimitEnabled as string | null | undefined,
+      ),
+      SizeLimit: parseNumeric(
+        row.SizeLimit as string | null | undefined,
+        "sobr",
+        rowIndex,
+        "SizeLimit",
+        dataErrors,
+      ),
+    };
+
+    return [safeSobr];
+  });
+}
+
+type CapExtentRecord = Record<string, string | null | undefined>;
+
+function normalizeCapExtents(
+  rows: CapExtentRecord[],
+  dataErrors: DataError[],
+): SafeCapExtent[] {
+  return rows.flatMap((row, rowIndex) => {
+    if (!isRecord(row)) {
+      dataErrors.push(
+        buildError(
+          "capextents",
+          rowIndex,
+          "_row",
+          "Invalid row: not an object",
+        ),
+      );
+      return [];
+    }
+
+    const name = normalizeString(row.Name as string | null | undefined);
+    if (!name) {
+      dataErrors.push(
+        buildError("capextents", rowIndex, "Name", "Missing required Name"),
+      );
+      return [];
+    }
+
+    const sobrName = normalizeString(row.SobrName as string | null | undefined);
+    if (!sobrName) {
+      dataErrors.push(
+        buildError(
+          "capextents",
+          rowIndex,
+          "SobrName",
+          "Missing required SobrName",
+        ),
+      );
+      return [];
+    }
+
+    const encryptionEnabled = parseBoolean(
+      row.EncryptionEnabled as string | null | undefined,
+    );
+    if (encryptionEnabled === null) {
+      dataErrors.push(
+        buildError(
+          "capextents",
+          rowIndex,
+          "EncryptionEnabled",
+          "Missing or invalid EncryptionEnabled value",
+        ),
+      );
+      return [];
+    }
+
+    const immutableEnabled = parseBoolean(
+      row.ImmutableEnabled as string | null | undefined,
+    );
+    if (immutableEnabled === null) {
+      dataErrors.push(
+        buildError(
+          "capextents",
+          rowIndex,
+          "ImmutableEnabled",
+          "Missing or invalid ImmutableEnabled value",
+        ),
+      );
+      return [];
+    }
+
+    const safeCapExtent: SafeCapExtent = {
+      Name: name,
+      SobrName: sobrName,
+      EncryptionEnabled: encryptionEnabled,
+      ImmutableEnabled: immutableEnabled,
+      Type: normalizeString(row.Type as string | null | undefined),
+      Status: normalizeString(row.Status as string | null | undefined),
+      CopyModeEnabled: parseBoolean(
+        row.CopyModeEnabled as string | null | undefined,
+      ),
+      MoveModeEnabled: parseBoolean(
+        row.MoveModeEnabled as string | null | undefined,
+      ),
+      MovePeriodDays: parseNumeric(
+        row.MovePeriodDays as string | null | undefined,
+        "capextents",
+        rowIndex,
+        "MovePeriodDays",
+        dataErrors,
+      ),
+      ImmutablePeriod: parseNumeric(
+        row.ImmutablePeriod as string | null | undefined,
+        "capextents",
+        rowIndex,
+        "ImmutablePeriod",
+        dataErrors,
+      ),
+      SizeLimitEnabled: parseBoolean(
+        row.SizeLimitEnabled as string | null | undefined,
+      ),
+      SizeLimit: parseNumeric(
+        row.SizeLimit as string | null | undefined,
+        "capextents",
+        rowIndex,
+        "SizeLimit",
+        dataErrors,
+      ),
+    };
+
+    return [safeCapExtent];
+  });
+}
+
+type ArchExtentRecord = Record<string, string | null | undefined>;
+
+function normalizeArchExtents(
+  rows: ArchExtentRecord[],
+  dataErrors: DataError[],
+): SafeArchExtent[] {
+  return rows.flatMap((row, rowIndex) => {
+    if (!isRecord(row)) {
+      dataErrors.push(
+        buildError(
+          "archextents",
+          rowIndex,
+          "_row",
+          "Invalid row: not an object",
+        ),
+      );
+      return [];
+    }
+
+    const sobrName = normalizeString(row.SobrName as string | null | undefined);
+    if (!sobrName) {
+      dataErrors.push(
+        buildError(
+          "archextents",
+          rowIndex,
+          "SobrName",
+          "Missing required SobrName",
+        ),
+      );
+      return [];
+    }
+
+    const name = normalizeString(row.Name as string | null | undefined);
+    if (!name) {
+      dataErrors.push(
+        buildError("archextents", rowIndex, "Name", "Missing required Name"),
+      );
+      return [];
+    }
+
+    const archiveTierEnabled = parseBoolean(
+      row.ArchiveTierEnabled as string | null | undefined,
+    );
+    if (archiveTierEnabled === null) {
+      dataErrors.push(
+        buildError(
+          "archextents",
+          rowIndex,
+          "ArchiveTierEnabled",
+          "Missing or invalid ArchiveTierEnabled value",
+        ),
+      );
+      return [];
+    }
+
+    const encryptionEnabled = parseBoolean(
+      row.EncryptionEnabled as string | null | undefined,
+    );
+    if (encryptionEnabled === null) {
+      dataErrors.push(
+        buildError(
+          "archextents",
+          rowIndex,
+          "EncryptionEnabled",
+          "Missing or invalid EncryptionEnabled value",
+        ),
+      );
+      return [];
+    }
+
+    const immutableEnabled = parseBoolean(
+      row.ImmutableEnabled as string | null | undefined,
+    );
+    if (immutableEnabled === null) {
+      dataErrors.push(
+        buildError(
+          "archextents",
+          rowIndex,
+          "ImmutableEnabled",
+          "Missing or invalid ImmutableEnabled value",
+        ),
+      );
+      return [];
+    }
+
+    const safeArchExtent: SafeArchExtent = {
+      SobrName: sobrName,
+      Name: name,
+      ArchiveTierEnabled: archiveTierEnabled,
+      EncryptionEnabled: encryptionEnabled,
+      ImmutableEnabled: immutableEnabled,
+      RetentionPeriod: parseNumeric(
+        row.RetentionPeriod as string | null | undefined,
+        "archextents",
+        rowIndex,
+        "RetentionPeriod",
+        dataErrors,
+      ),
+      CostOptimizedEnabled: parseBoolean(
+        row.CostOptimizedEnabled as string | null | undefined,
+      ),
+      FullBackupModeEnabled: parseBoolean(
+        row.FullBackupModeEnabled as string | null | undefined,
+      ),
+      ImmutablePeriod: parseNumeric(
+        row.ImmutablePeriod as string | null | undefined,
+        "archextents",
+        rowIndex,
+        "ImmutablePeriod",
+        dataErrors,
+      ),
+    };
+
+    return [safeArchExtent];
   });
 }

@@ -1,0 +1,615 @@
+import { describe, it, expect } from "vitest";
+import { normalizeHealthcheck } from "@/lib/normalizer";
+import type { NormalizerInput } from "@/types/healthcheck";
+
+/** Minimal base input — no SOBR data, for use as spread base. */
+const BASE_INPUT: NormalizerInput = {
+  backupServer: [],
+  securitySummary: [],
+  jobInfo: [],
+  Licenses: [],
+};
+
+describe("normalizeSobr", () => {
+  it("normalizes a valid SOBR row with all required fields", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      sobr: [
+        {
+          Name: "SOBR-01",
+          EnableCapacityTier: "True",
+          CapacityTierCopy: "True",
+          CapacityTierMove: "False",
+          ArchiveTierEnabled: "False",
+          ImmutableEnabled: "True",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.sobr).toHaveLength(1);
+    expect(result.sobr[0]).toMatchObject({
+      Name: "SOBR-01",
+      EnableCapacityTier: true,
+      CapacityTierCopy: true,
+      CapacityTierMove: false,
+      ArchiveTierEnabled: false,
+      ImmutableEnabled: true,
+    });
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
+  it("drops SOBR row missing Name and logs data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      sobr: [
+        {
+          Name: null,
+          EnableCapacityTier: "True",
+          CapacityTierCopy: "True",
+          CapacityTierMove: "False",
+          ArchiveTierEnabled: "False",
+          ImmutableEnabled: "True",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.sobr).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "sobr",
+      rowIndex: 0,
+      field: "Name",
+    });
+  });
+
+  it("drops SOBR row with invalid EnableCapacityTier and logs data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      sobr: [
+        {
+          Name: "SOBR-01",
+          EnableCapacityTier: "maybe",
+          CapacityTierCopy: "True",
+          CapacityTierMove: "False",
+          ArchiveTierEnabled: "False",
+          ImmutableEnabled: "True",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.sobr).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "sobr",
+      field: "EnableCapacityTier",
+    });
+  });
+
+  it("drops SOBR row with invalid CapacityTierCopy and logs data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      sobr: [
+        {
+          Name: "SOBR-01",
+          EnableCapacityTier: "True",
+          CapacityTierCopy: "invalid",
+          CapacityTierMove: "False",
+          ArchiveTierEnabled: "False",
+          ImmutableEnabled: "True",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.sobr).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "sobr",
+      field: "CapacityTierCopy",
+    });
+  });
+
+  it("drops SOBR row with invalid CapacityTierMove and logs data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      sobr: [
+        {
+          Name: "SOBR-01",
+          EnableCapacityTier: "True",
+          CapacityTierCopy: "True",
+          CapacityTierMove: "invalid",
+          ArchiveTierEnabled: "False",
+          ImmutableEnabled: "True",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.sobr).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "sobr",
+      field: "CapacityTierMove",
+    });
+  });
+
+  it("drops SOBR row with invalid ArchiveTierEnabled and logs data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      sobr: [
+        {
+          Name: "SOBR-01",
+          EnableCapacityTier: "True",
+          CapacityTierCopy: "True",
+          CapacityTierMove: "False",
+          ArchiveTierEnabled: "invalid",
+          ImmutableEnabled: "True",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.sobr).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "sobr",
+      field: "ArchiveTierEnabled",
+    });
+  });
+
+  it("drops SOBR row with invalid ImmutableEnabled and logs data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      sobr: [
+        {
+          Name: "SOBR-01",
+          EnableCapacityTier: "True",
+          CapacityTierCopy: "True",
+          CapacityTierMove: "False",
+          ArchiveTierEnabled: "False",
+          ImmutableEnabled: "maybe",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.sobr).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "sobr",
+      field: "ImmutableEnabled",
+    });
+  });
+
+  it("defaults optional fields to null when missing", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      sobr: [
+        {
+          Name: "SOBR-01",
+          EnableCapacityTier: "True",
+          CapacityTierCopy: "False",
+          CapacityTierMove: "True",
+          ArchiveTierEnabled: "False",
+          ImmutableEnabled: "False",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.sobr).toHaveLength(1);
+    expect(result.sobr[0].ExtentCount).toBeNull();
+    expect(result.sobr[0].JobCount).toBeNull();
+    expect(result.sobr[0].PolicyType).toBeNull();
+    expect(result.sobr[0].UsePerVMFiles).toBeNull();
+    expect(result.sobr[0].CapTierType).toBeNull();
+    expect(result.sobr[0].ImmutablePeriod).toBeNull();
+    expect(result.sobr[0].SizeLimitEnabled).toBeNull();
+    expect(result.sobr[0].SizeLimit).toBeNull();
+  });
+
+  it("parses optional numeric and boolean fields", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      sobr: [
+        {
+          Name: "SOBR-01",
+          EnableCapacityTier: "True",
+          CapacityTierCopy: "True",
+          CapacityTierMove: "False",
+          ArchiveTierEnabled: "False",
+          ImmutableEnabled: "True",
+          ExtentCount: "3",
+          JobCount: "10",
+          PolicyType: "DataLocality",
+          UsePerVMFiles: "True",
+          CapTierType: "AzureBlob",
+          ImmutablePeriod: "30",
+          SizeLimitEnabled: "False",
+          SizeLimit: "1024",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.sobr[0].ExtentCount).toBe(3);
+    expect(result.sobr[0].JobCount).toBe(10);
+    expect(result.sobr[0].PolicyType).toBe("DataLocality");
+    expect(result.sobr[0].UsePerVMFiles).toBe(true);
+    expect(result.sobr[0].CapTierType).toBe("AzureBlob");
+    expect(result.sobr[0].ImmutablePeriod).toBe(30);
+    expect(result.sobr[0].SizeLimitEnabled).toBe(false);
+    expect(result.sobr[0].SizeLimit).toBe(1024);
+  });
+
+  it("returns empty array when sobr input is undefined", () => {
+    const raw: NormalizerInput = { ...BASE_INPUT };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.sobr).toEqual([]);
+  });
+});
+
+describe("normalizeCapExtents", () => {
+  it("normalizes a valid cap extent row", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      capextents: [
+        {
+          Name: "AzureBlob-01",
+          SobrName: "SOBR-01",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "True",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.capExtents).toHaveLength(1);
+    expect(result.capExtents[0]).toMatchObject({
+      Name: "AzureBlob-01",
+      SobrName: "SOBR-01",
+      EncryptionEnabled: true,
+      ImmutableEnabled: true,
+    });
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
+  it("drops cap extent row missing Name and logs data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      capextents: [
+        {
+          Name: null,
+          SobrName: "SOBR-01",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "True",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.capExtents).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "capextents",
+      field: "Name",
+    });
+  });
+
+  it("drops cap extent row missing SobrName and logs data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      capextents: [
+        {
+          Name: "AzureBlob-01",
+          SobrName: null,
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "True",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.capExtents).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "capextents",
+      field: "SobrName",
+    });
+  });
+
+  it("drops cap extent row with invalid EncryptionEnabled", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      capextents: [
+        {
+          Name: "AzureBlob-01",
+          SobrName: "SOBR-01",
+          EncryptionEnabled: "invalid",
+          ImmutableEnabled: "True",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.capExtents).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "capextents",
+      field: "EncryptionEnabled",
+    });
+  });
+
+  it("drops cap extent row with invalid ImmutableEnabled", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      capextents: [
+        {
+          Name: "AzureBlob-01",
+          SobrName: "SOBR-01",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "invalid",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.capExtents).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "capextents",
+      field: "ImmutableEnabled",
+    });
+  });
+
+  it("parses optional numeric fields", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      capextents: [
+        {
+          Name: "AzureBlob-01",
+          SobrName: "SOBR-01",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "True",
+          MovePeriodDays: "14",
+          ImmutablePeriod: "30",
+          CopyModeEnabled: "True",
+          MoveModeEnabled: "False",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.capExtents[0].MovePeriodDays).toBe(14);
+    expect(result.capExtents[0].ImmutablePeriod).toBe(30);
+    expect(result.capExtents[0].CopyModeEnabled).toBe(true);
+    expect(result.capExtents[0].MoveModeEnabled).toBe(false);
+  });
+
+  it("returns empty array when capextents input is undefined", () => {
+    const raw: NormalizerInput = { ...BASE_INPUT };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.capExtents).toEqual([]);
+  });
+});
+
+describe("normalizeArchExtents", () => {
+  it("normalizes a valid archive extent row", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      archextents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents).toHaveLength(1);
+    expect(result.archExtents[0]).toMatchObject({
+      SobrName: "SOBR-01",
+      Name: "Archive-01",
+      ArchiveTierEnabled: true,
+      EncryptionEnabled: true,
+      ImmutableEnabled: false,
+    });
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
+  it("drops archive extent row missing SobrName and logs data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      archextents: [
+        {
+          SobrName: null,
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "archextents",
+      field: "SobrName",
+    });
+  });
+
+  it("drops archive extent row missing Name and logs data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      archextents: [
+        {
+          SobrName: "SOBR-01",
+          Name: null,
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "archextents",
+      field: "Name",
+    });
+  });
+
+  it("drops archive extent row with invalid ArchiveTierEnabled", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      archextents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "invalid",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "archextents",
+      field: "ArchiveTierEnabled",
+    });
+  });
+
+  it("drops archive extent row with invalid EncryptionEnabled", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      archextents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "invalid",
+          ImmutableEnabled: "False",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "archextents",
+      field: "EncryptionEnabled",
+    });
+  });
+
+  it("drops archive extent row with invalid ImmutableEnabled", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      archextents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "invalid",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "archextents",
+      field: "ImmutableEnabled",
+    });
+  });
+
+  it("parses RetentionPeriod as numeric value", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      archextents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+          RetentionPeriod: "90",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents[0].RetentionPeriod).toBe(90);
+  });
+
+  it("defaults optional fields to null when missing", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      archextents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents[0].RetentionPeriod).toBeNull();
+    expect(result.archExtents[0].CostOptimizedEnabled).toBeNull();
+    expect(result.archExtents[0].FullBackupModeEnabled).toBeNull();
+    expect(result.archExtents[0].ImmutablePeriod).toBeNull();
+  });
+
+  it("returns empty array when archextents input is undefined", () => {
+    const raw: NormalizerInput = { ...BASE_INPUT };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents).toEqual([]);
+  });
+});

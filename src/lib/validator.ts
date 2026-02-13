@@ -1,7 +1,12 @@
-import type { NormalizedDataset } from "@/types/domain";
+import type { NormalizedDataset, SafeCapExtent } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
-import { MINIMUM_VBR_VERSION, MINIMUM_RETENTION_DAYS } from "./constants";
+import {
+  MINIMUM_VBR_VERSION,
+  MINIMUM_RETENTION_DAYS,
+  MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS,
+} from "./constants";
 import { isVersionAtLeast } from "./version-compare";
+import { parseGfsDetails } from "./calculator-aggregator";
 
 export function validateHealthcheck(
   data: NormalizedDataset,
@@ -14,6 +19,10 @@ export function validateHealthcheck(
     validateAgentWorkload(data),
     validateLicenseEdition(data),
     validateRetentionPeriod(data),
+    validateCapTierEncryption(data),
+    validateSobrImmutability(data),
+    validateArchiveTierEdition(data),
+    validateCapacityTierResidency(data),
   ];
 }
 
@@ -88,7 +97,13 @@ function validateGlobalEncryption(data: NormalizedDataset): ValidationResult {
 }
 
 function validateJobEncryption(data: NormalizedDataset): ValidationResult {
-  const unencryptedJobs = data.jobInfo.filter((job) => !job.Encrypted);
+  const capTierSobrs = new Set(
+    data.sobr.filter((s) => s.EnableCapacityTier).map((s) => s.Name),
+  );
+
+  const unencryptedJobs = data.jobInfo.filter(
+    (job) => !job.Encrypted && !capTierSobrs.has(job.RepoName),
+  );
 
   if (unencryptedJobs.length > 0) {
     return {
@@ -211,4 +226,288 @@ function validateRetentionPeriod(data: NormalizedDataset): ValidationResult {
     message: "All jobs meet the 30-day minimum retention requirement.",
     affectedItems: [],
   };
+}
+
+function validateCapTierEncryption(data: NormalizedDataset): ValidationResult {
+  const unencrypted = data.capExtents.filter((e) => !e.EncryptionEnabled);
+
+  if (unencrypted.length > 0) {
+    return {
+      ruleId: "sobr-cap-encryption",
+      title: "Capacity Tier Encryption",
+      status: "warning",
+      message:
+        "Capacity tier extents without encryption detected. VDC Vault requires encryption on capacity tier data. Enable encryption on these extents to ensure compliance.",
+      affectedItems: unencrypted.map((e) => `${e.Name} (SOBR: ${e.SobrName})`),
+    };
+  }
+
+  return {
+    ruleId: "sobr-cap-encryption",
+    title: "Capacity Tier Encryption",
+    status: "pass",
+    message: "All capacity tier extents have encryption enabled.",
+    affectedItems: [],
+  };
+}
+
+function validateSobrImmutability(data: NormalizedDataset): ValidationResult {
+  const nonImmutable = data.capExtents.filter((e) => !e.ImmutableEnabled);
+
+  if (nonImmutable.length > 0) {
+    return {
+      ruleId: "sobr-immutability",
+      title: "Capacity Tier Immutability",
+      status: "warning",
+      message:
+        "Capacity tier extents without immutability detected. VDC Vault enforces immutability, which increases effective retention by the immutability period plus block generation period (10 days for Azure, 30 days for AWS).",
+      affectedItems: nonImmutable.map((e) => `${e.Name} (SOBR: ${e.SobrName})`),
+    };
+  }
+
+  return {
+    ruleId: "sobr-immutability",
+    title: "Capacity Tier Immutability",
+    status: "pass",
+    message: "All capacity tier extents have immutability enabled.",
+    affectedItems: [],
+  };
+}
+
+function validateArchiveTierEdition(data: NormalizedDataset): ValidationResult {
+  const activeArchives = data.archExtents.filter((e) => e.ArchiveTierEnabled);
+
+  if (activeArchives.length > 0) {
+    return {
+      ruleId: "archive-tier-edition",
+      title: "Archive Tier Edition Requirement",
+      status: "warning",
+      message:
+        "Archive tier is configured. VDC Vault Foundation has a 20% fair usage limit on egress that archiving consumes. Consider VDC Vault Advanced for archive tier workloads.",
+      affectedItems: activeArchives.map(
+        (e) => `${e.Name} (SOBR: ${e.SobrName})`,
+      ),
+    };
+  }
+
+  return {
+    ruleId: "archive-tier-edition",
+    title: "Archive Tier Edition Requirement",
+    status: "pass",
+    message: "No active archive tier configurations detected.",
+    affectedItems: [],
+  };
+}
+
+function validateCapacityTierResidency(
+  data: NormalizedDataset,
+): ValidationResult {
+  const minDays = MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS;
+  const affectedItems: string[] = [];
+
+  const capTierSobrs = data.sobr.filter((s) => s.EnableCapacityTier);
+
+  for (const sobr of capTierSobrs) {
+    const capExtents = data.capExtents.filter((e) => e.SobrName === sobr.Name);
+
+    if (capExtents.length === 0) {
+      continue;
+    }
+
+    const { arrivalDay, immutablePeriod } = resolveCapExtentParams(capExtents);
+
+    // Normal retention checks per job targeting this SOBR
+    const sobrJobs = data.jobInfo.filter((job) => job.RepoName === sobr.Name);
+
+    for (const job of sobrJobs) {
+      checkNormalRetention(
+        job.JobName,
+        job.RetainDays,
+        arrivalDay,
+        immutablePeriod,
+        minDays,
+        affectedItems,
+      );
+      checkGfsRetention(
+        job,
+        arrivalDay,
+        immutablePeriod,
+        minDays,
+        affectedItems,
+      );
+    }
+
+    // Archive tier check
+    if (sobr.ArchiveTierEnabled) {
+      const archExtents = data.archExtents.filter(
+        (e) => e.SobrName === sobr.Name && e.ArchiveTierEnabled,
+      );
+
+      for (const arch of archExtents) {
+        checkArchiveResidency(
+          sobr.Name,
+          arch.RetentionPeriod,
+          arrivalDay,
+          immutablePeriod,
+          minDays,
+          affectedItems,
+        );
+      }
+    }
+  }
+
+  if (affectedItems.length > 0) {
+    return {
+      ruleId: "capacity-tier-residency",
+      title: "Capacity Tier Residency",
+      status: "warning",
+      message: `Data must remain on capacity tier for at least ${minDays} days. The following items have insufficient residency.`,
+      affectedItems,
+    };
+  }
+
+  return {
+    ruleId: "capacity-tier-residency",
+    title: "Capacity Tier Residency",
+    status: "pass",
+    message: `All capacity tier data meets the ${minDays}-day minimum residency requirement.`,
+    affectedItems: [],
+  };
+}
+
+function resolveCapExtentParams(capExtents: SafeCapExtent[]): {
+  arrivalDay: number;
+  immutablePeriod: number;
+} {
+  const hasCopy = capExtents.some((e) => e.CopyModeEnabled === true);
+  let arrivalDay: number;
+
+  if (hasCopy) {
+    arrivalDay = 0;
+  } else {
+    const movePeriods = capExtents
+      .filter((e) => e.MoveModeEnabled === true)
+      .map((e) => e.MovePeriodDays ?? 0);
+    arrivalDay = movePeriods.length > 0 ? Math.min(...movePeriods) : 0;
+  }
+
+  const immutablePeriod = capExtents.reduce((max, e) => {
+    if (e.ImmutableEnabled && e.ImmutablePeriod !== null) {
+      return Math.max(max, e.ImmutablePeriod);
+    }
+    return max;
+  }, 0);
+
+  return { arrivalDay, immutablePeriod };
+}
+
+function checkNormalRetention(
+  jobName: string,
+  retainDays: number | null,
+  arrivalDay: number,
+  immutablePeriod: number,
+  minDays: number,
+  affectedItems: string[],
+): void {
+  if (retainDays === null) {
+    return;
+  }
+
+  if (retainDays <= arrivalDay) {
+    return;
+  }
+
+  const retentionResidency = retainDays - arrivalDay;
+
+  if (retentionResidency >= minDays) {
+    return;
+  }
+
+  const effectiveResidency = Math.max(retentionResidency, immutablePeriod);
+
+  if (effectiveResidency >= minDays) {
+    affectedItems.push(
+      `${jobName}: normal retention ${retentionResidency} days, but immutability extends to ${effectiveResidency} days (extra storage cost)`,
+    );
+  } else {
+    affectedItems.push(
+      `${jobName}: normal retention ${retentionResidency} days on capacity (needs ${minDays}+)`,
+    );
+  }
+}
+
+function checkGfsRetention(
+  job: {
+    JobName: string;
+    GfsEnabled: boolean | null;
+    GfsDetails: string | null;
+  },
+  arrivalDay: number,
+  immutablePeriod: number,
+  minDays: number,
+  affectedItems: string[],
+): void {
+  if (!job.GfsEnabled || !job.GfsDetails) {
+    return;
+  }
+
+  const gfs = parseGfsDetails(job.GfsDetails);
+
+  const gfsChecks: { label: string; days: number }[] = [];
+  if (gfs.weekly !== null) {
+    gfsChecks.push({ label: "weekly", days: gfs.weekly * 7 });
+  }
+  if (gfs.monthly !== null) {
+    gfsChecks.push({ label: "monthly", days: gfs.monthly * 30 });
+  }
+  if (gfs.yearly !== null) {
+    gfsChecks.push({ label: "yearly", days: gfs.yearly * 365 });
+  }
+
+  for (const { label, days } of gfsChecks) {
+    if (days <= arrivalDay) {
+      continue;
+    }
+
+    const retentionResidency = days - arrivalDay;
+    if (retentionResidency >= minDays) {
+      continue;
+    }
+
+    const effectiveResidency = Math.max(retentionResidency, immutablePeriod);
+
+    if (effectiveResidency >= minDays) {
+      affectedItems.push(
+        `${job.JobName}: GFS ${label} ${retentionResidency} days, but immutability extends to ${effectiveResidency} days (extra storage cost)`,
+      );
+    } else {
+      affectedItems.push(
+        `${job.JobName}: GFS ${label} ${retentionResidency} days on capacity (needs ${minDays}+)`,
+      );
+    }
+  }
+}
+
+function checkArchiveResidency(
+  sobrName: string,
+  retentionPeriod: number | null,
+  arrivalDay: number,
+  immutablePeriod: number,
+  minDays: number,
+  affectedItems: string[],
+): void {
+  if (retentionPeriod === null) {
+    return;
+  }
+
+  const effectiveArchiveTrigger = Math.max(retentionPeriod, immutablePeriod);
+  const archResidency = effectiveArchiveTrigger - arrivalDay;
+
+  if (archResidency >= minDays) {
+    return;
+  }
+
+  affectedItems.push(
+    `${sobrName}: archive moves data after ${archResidency} days on capacity (needs ${minDays}+)`,
+  );
 }

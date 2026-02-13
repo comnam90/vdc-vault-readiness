@@ -24,6 +24,9 @@ export function analyzeHealthcheck(raw: HealthcheckRoot): AnalysisResult {
     securitySummary: zipSection(sections.securitySummary),
     jobInfo: zipSection(sections.jobInfo),
     Licenses: Array.isArray(raw.Licenses) ? raw.Licenses : [],
+    sobr: zipSection(sections.sobr),
+    capextents: zipSection(sections.capextents),
+    archextents: zipSection(sections.archextents),
   };
 
   const sessionData = zipSection(sections.jobSessionSummaryByJob);

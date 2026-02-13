@@ -25,7 +25,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
     it("returns normalized data and validation results", () => {
       expect(result).toHaveProperty("data");
       expect(result).toHaveProperty("validations");
-      expect(result.validations).toHaveLength(7);
+      expect(result.validations).toHaveLength(11);
     });
 
     it("parses the backup server from Headers/Rows", () => {
@@ -152,7 +152,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(result.data.securitySummary).toEqual([]);
       expect(result.data.jobInfo).toEqual([]);
       expect(result.data.Licenses).toEqual([]);
-      expect(result.validations).toHaveLength(7);
+      expect(result.validations).toHaveLength(11);
     });
 
     it("handles missing Sections key gracefully", () => {
@@ -162,7 +162,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
 
       expect(result.data.backupServer).toEqual([]);
       expect(result.data.jobInfo).toEqual([]);
-      expect(result.validations).toHaveLength(7);
+      expect(result.validations).toHaveLength(11);
     });
   });
 
