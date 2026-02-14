@@ -951,3 +951,157 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
     expect(rule?.affectedItems.some((i) => i.includes("LongJob"))).toBe(false);
   });
 });
+
+describe("missing cap/arch extent data (old healthcheck version)", () => {
+  /** SOBR with cap tier and archive enabled but no extent data. */
+  function makeSobrWithTiers(overrides: Record<string, unknown> = {}) {
+    return {
+      Name: "SOBR-01",
+      EnableCapacityTier: true,
+      CapacityTierCopy: true,
+      CapacityTierMove: true,
+      ArchiveTierEnabled: true,
+      ImmutableEnabled: false,
+      ExtentCount: null,
+      JobCount: null,
+      PolicyType: null,
+      UsePerVMFiles: null,
+      CapTierType: null,
+      ImmutablePeriod: null,
+      SizeLimitEnabled: null,
+      SizeLimit: null,
+      ...overrides,
+    };
+  }
+
+  it("sobr-cap-encryption: warns when SOBR has cap tier but no cap extent data", () => {
+    const data = makeDataset({
+      sobr: [makeSobrWithTiers()],
+      capExtents: [],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "sobr-cap-encryption");
+
+    expect(rule?.status).toBe("warning");
+    expect(rule?.affectedItems).toContain("SOBR-01");
+    expect(rule?.message).toContain("missing");
+  });
+
+  it("sobr-cap-encryption: passes when no SOBRs have cap tier (even with empty extents)", () => {
+    const data = makeDataset({
+      sobr: [makeSobrWithTiers({ EnableCapacityTier: false })],
+      capExtents: [],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "sobr-cap-encryption");
+
+    expect(rule?.status).toBe("pass");
+  });
+
+  it("sobr-immutability: warns when SOBR has cap tier but no cap extent data", () => {
+    const data = makeDataset({
+      sobr: [makeSobrWithTiers()],
+      capExtents: [],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "sobr-immutability");
+
+    expect(rule?.status).toBe("warning");
+    expect(rule?.affectedItems).toContain("SOBR-01");
+    expect(rule?.message).toContain("missing");
+  });
+
+  it("sobr-immutability: passes when no SOBRs have cap tier (even with empty extents)", () => {
+    const data = makeDataset({
+      sobr: [makeSobrWithTiers({ EnableCapacityTier: false })],
+      capExtents: [],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "sobr-immutability");
+
+    expect(rule?.status).toBe("pass");
+  });
+
+  it("archive-tier-edition: warns when SOBR has archive tier but no arch extent data", () => {
+    const data = makeDataset({
+      sobr: [makeSobrWithTiers()],
+      archExtents: [],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "archive-tier-edition");
+
+    expect(rule?.status).toBe("warning");
+    expect(rule?.affectedItems).toContain("SOBR-01");
+    expect(rule?.message).toContain("missing");
+  });
+
+  it("archive-tier-edition: passes when no SOBRs have archive tier (even with empty extents)", () => {
+    const data = makeDataset({
+      sobr: [makeSobrWithTiers({ ArchiveTierEnabled: false })],
+      archExtents: [],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "archive-tier-edition");
+
+    expect(rule?.status).toBe("pass");
+  });
+
+  it("capacity-tier-residency: warns when SOBR has cap tier but no cap extent data", () => {
+    const data = makeDataset({
+      sobr: [makeSobrWithTiers()],
+      capExtents: [],
+      jobInfo: [makeJob({ RepoName: "SOBR-01", RetainDays: 60 })],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "capacity-tier-residency");
+
+    expect(rule?.status).toBe("warning");
+    expect(rule?.affectedItems.some((i) => i.includes("SOBR-01"))).toBe(true);
+    expect(rule?.affectedItems.some((i) => i.includes("missing"))).toBe(true);
+  });
+
+  it("capacity-tier-residency: only flags SOBRs missing extent data, not those with it", () => {
+    const data = makeDataset({
+      sobr: [
+        makeSobrWithTiers({ Name: "SOBR-Missing" }),
+        makeSobrWithTiers({ Name: "SOBR-OK" }),
+      ],
+      capExtents: [
+        {
+          Name: "AzureBlob-01",
+          SobrName: "SOBR-OK",
+          EncryptionEnabled: true,
+          ImmutableEnabled: true,
+          Type: null,
+          Status: null,
+          CopyModeEnabled: true,
+          MoveModeEnabled: false,
+          MovePeriodDays: null,
+          ImmutablePeriod: 30,
+          SizeLimitEnabled: null,
+          SizeLimit: null,
+        },
+      ],
+      jobInfo: [
+        makeJob({ RepoName: "SOBR-Missing", RetainDays: 60 }),
+        makeJob({ JobName: "OKJob", RepoName: "SOBR-OK", RetainDays: 60 }),
+      ],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "capacity-tier-residency");
+
+    expect(rule?.status).toBe("warning");
+    expect(rule?.affectedItems.some((i) => i.includes("SOBR-Missing"))).toBe(
+      true,
+    );
+    expect(rule?.affectedItems.some((i) => i.includes("SOBR-OK"))).toBe(false);
+  });
+});

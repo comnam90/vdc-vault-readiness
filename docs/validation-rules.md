@@ -177,12 +177,13 @@
 
 **Conditions:**
 
-| Condition                                              | Status    | Message                                                                                                                                                            |
-| ------------------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Any cap extent has `EncryptionEnabled` = false         | `warning` | `Capacity tier extents without encryption detected. VDC Vault requires encryption on capacity tier data. Enable encryption on these extents to ensure compliance.` |
-| No cap extents, or all have `EncryptionEnabled` = true | `pass`    | `All capacity tier extents have encryption enabled.`                                                                                                               |
+| Condition                                                                           | Status    | Message                                                                                                                                                                                                      |
+| ----------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Any cap extent has `EncryptionEnabled` = false                                      | `warning` | `Capacity tier extents without encryption detected. VDC Vault requires encryption on capacity tier data. Enable encryption on these extents to ensure compliance.`                                           |
+| SOBRs have `EnableCapacityTier=true` but no matching cap extent data in healthcheck | `warning` | `Capacity tier is configured but capacity tier extent data is missing from the healthcheck. Unable to verify encryption settings. Re-export with a healthcheck version that includes capacity tier details.` |
+| All cap extents have `EncryptionEnabled` = true (with data present)                 | `pass`    | `All capacity tier extents have encryption enabled.`                                                                                                                                                         |
 
-**Affected items:** `"{Name} (SOBR: {SobrName})"` for each unencrypted cap extent.
+**Affected items:** `"{Name} (SOBR: {SobrName})"` for each unencrypted cap extent; or SOBR names when extent data is missing.
 
 **Recommendations:** Enable encryption on each affected capacity tier extent. VDC Vault requires all data on the capacity tier to be encrypted. This check complements the [`job-encryption`](#job-encryption----job-encryption-audit) rule -- jobs targeting SOBRs with capacity tiers are exempt from job-level encryption because encryption is enforced here instead.
 
@@ -197,12 +198,13 @@
 
 **Conditions:**
 
-| Condition                                             | Status    | Message                                                                                                                                                                                                                   |
-| ----------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Any cap extent has `ImmutableEnabled` = false         | `warning` | `Capacity tier extents without immutability detected. VDC Vault enforces immutability, which increases effective retention by the immutability period plus block generation period (10 days for Azure, 30 days for AWS).` |
-| No cap extents, or all have `ImmutableEnabled` = true | `pass`    | `All capacity tier extents have immutability enabled.`                                                                                                                                                                    |
+| Condition                                                                           | Status    | Message                                                                                                                                                                                                                   |
+| ----------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any cap extent has `ImmutableEnabled` = false                                       | `warning` | `Capacity tier extents without immutability detected. VDC Vault enforces immutability, which increases effective retention by the immutability period plus block generation period (10 days for Azure, 30 days for AWS).` |
+| SOBRs have `EnableCapacityTier=true` but no matching cap extent data in healthcheck | `warning` | `Capacity tier is configured but capacity tier extent data is missing from the healthcheck. Unable to verify immutability settings. Re-export with a healthcheck version that includes capacity tier details.`            |
+| All cap extents have `ImmutableEnabled` = true (with data present)                  | `pass`    | `All capacity tier extents have immutability enabled.`                                                                                                                                                                    |
 
-**Affected items:** `"{Name} (SOBR: {SobrName})"` for each non-immutable cap extent.
+**Affected items:** `"{Name} (SOBR: {SobrName})"` for each non-immutable cap extent; or SOBR names when extent data is missing.
 
 **Recommendations:** Enable immutability on each affected capacity tier extent. VDC Vault enforces immutability which cannot be disabled. Be aware that immutability increases effective retention by the immutability period plus the block generation period (10 days for Azure, 30 days for AWS), which may increase storage costs.
 
@@ -217,12 +219,13 @@
 
 **Conditions:**
 
-| Condition                                          | Status    | Message                                                                                                                                                                  |
-| -------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Any arch extent has `ArchiveTierEnabled` = true    | `warning` | `Archive tier is configured. VDC Vault Foundation has a 20% fair usage limit on egress that archiving consumes. Consider VDC Vault Advanced for archive tier workloads.` |
-| No arch extents, or none have `ArchiveTierEnabled` | `pass`    | `No active archive tier configurations detected.`                                                                                                                        |
+| Condition                                                                            | Status    | Message                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------ | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any arch extent has `ArchiveTierEnabled` = true                                      | `warning` | `Archive tier is configured. VDC Vault Foundation has a 20% fair usage limit on egress that archiving consumes. Consider VDC Vault Advanced for archive tier workloads.`                                        |
+| SOBRs have `ArchiveTierEnabled=true` but no matching arch extent data in healthcheck | `warning` | `Archive tier is configured but archive tier extent data is missing from the healthcheck. Unable to fully assess archive tier impact. Re-export with a healthcheck version that includes archive tier details.` |
+| No arch extents and no SOBRs with archive enabled                                    | `pass`    | `No active archive tier configurations detected.`                                                                                                                                                               |
 
-**Affected items:** `"{Name} (SOBR: {SobrName})"` for each enabled archive extent.
+**Affected items:** `"{Name} (SOBR: {SobrName})"` for each enabled archive extent; or SOBR names when extent data is missing.
 
 **Recommendations:** Consider upgrading to VDC Vault Advanced if archive tier is in use. VDC Vault Foundation has a 20% fair usage limit on egress, and archiving consumes egress bandwidth. Advanced edition removes this limitation.
 
@@ -275,6 +278,7 @@
 - GFS retention too short: `"{JobName}: GFS {weekly|monthly|yearly} {N} days on capacity (needs 30+)"`
 - GFS retention short but immutability covers gap: `"{JobName}: GFS {label} {N} days, but immutability extends to {M} days (extra storage cost)"`
 - GFS capped by archive tier: `"{JobName}: GFS {label} archived after {N} days on capacity (needs 30+)"`
+- Missing cap extent data: `"{SobrName}: capacity tier enabled but extent data missing from healthcheck (unable to verify residency)"`
 
 **Recommendations:** Ensure data remains on the capacity tier for at least 30 days. Options include increasing retention periods, adjusting move policy timing, or enabling immutability (which extends effective residency but incurs additional storage cost). For archive tier, note that only GFS full backup points are moved to archive -- if the archive "older than" threshold caps GFS residency below 30 days, consider increasing the archive threshold or adjusting GFS retention.
 

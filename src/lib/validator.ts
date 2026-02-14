@@ -256,6 +256,23 @@ function validateCapTierEncryption(data: NormalizedDataset): ValidationResult {
     };
   }
 
+  const sobrsMissingCapData = data.sobr.filter(
+    (s) =>
+      s.EnableCapacityTier &&
+      !data.capExtents.some((e) => e.SobrName === s.Name),
+  );
+
+  if (sobrsMissingCapData.length > 0) {
+    return {
+      ruleId: "sobr-cap-encryption",
+      title: "Capacity Tier Encryption",
+      status: "warning",
+      message:
+        "Capacity tier is configured but capacity tier extent data is missing from the healthcheck. Unable to verify encryption settings. Re-export with a healthcheck version that includes capacity tier details.",
+      affectedItems: sobrsMissingCapData.map((s) => s.Name),
+    };
+  }
+
   return {
     ruleId: "sobr-cap-encryption",
     title: "Capacity Tier Encryption",
@@ -276,6 +293,23 @@ function validateSobrImmutability(data: NormalizedDataset): ValidationResult {
       message:
         "Capacity tier extents without immutability detected. VDC Vault enforces immutability, which increases effective retention by the immutability period plus block generation period (10 days for Azure, 30 days for AWS).",
       affectedItems: nonImmutable.map((e) => `${e.Name} (SOBR: ${e.SobrName})`),
+    };
+  }
+
+  const sobrsMissingCapData = data.sobr.filter(
+    (s) =>
+      s.EnableCapacityTier &&
+      !data.capExtents.some((e) => e.SobrName === s.Name),
+  );
+
+  if (sobrsMissingCapData.length > 0) {
+    return {
+      ruleId: "sobr-immutability",
+      title: "Capacity Tier Immutability",
+      status: "warning",
+      message:
+        "Capacity tier is configured but capacity tier extent data is missing from the healthcheck. Unable to verify immutability settings. Re-export with a healthcheck version that includes capacity tier details.",
+      affectedItems: sobrsMissingCapData.map((s) => s.Name),
     };
   }
 
@@ -304,6 +338,23 @@ function validateArchiveTierEdition(data: NormalizedDataset): ValidationResult {
     };
   }
 
+  const sobrsMissingArchData = data.sobr.filter(
+    (s) =>
+      s.ArchiveTierEnabled &&
+      !data.archExtents.some((e) => e.SobrName === s.Name),
+  );
+
+  if (sobrsMissingArchData.length > 0) {
+    return {
+      ruleId: "archive-tier-edition",
+      title: "Archive Tier Edition Requirement",
+      status: "warning",
+      message:
+        "Archive tier is configured but archive tier extent data is missing from the healthcheck. Unable to fully assess archive tier impact. Re-export with a healthcheck version that includes archive tier details.",
+      affectedItems: sobrsMissingArchData.map((s) => s.Name),
+    };
+  }
+
   return {
     ruleId: "archive-tier-edition",
     title: "Archive Tier Edition Requirement",
@@ -325,6 +376,9 @@ function validateCapacityTierResidency(
     const capExtents = data.capExtents.filter((e) => e.SobrName === sobr.Name);
 
     if (capExtents.length === 0) {
+      affectedItems.push(
+        `${sobr.Name}: capacity tier enabled but extent data missing from healthcheck (unable to verify residency)`,
+      );
       continue;
     }
 
