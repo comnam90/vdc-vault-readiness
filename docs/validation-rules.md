@@ -75,14 +75,15 @@
 
 **Conditions:**
 
-| Condition                                                       | Status | Message                                                                                                                                                                                  |
-| --------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Any non-exempt job has `Encrypted` = false                      | `fail` | `Vault requires source-side encryption. You must enable encryption on these jobs or use an encrypted Backup Copy Job. Unencrypted data cannot use Move/Copy Backup to migrate to Vault.` |
-| All non-exempt jobs have `Encrypted` = true (or all are exempt) | `pass` | `All jobs have encryption enabled.`                                                                                                                                                      |
+| Condition                                  | Status    | Message                                                                                                                                                                                             |
+| ------------------------------------------ | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| All jobs have `Encrypted` = true           | `pass`    | `All jobs have encryption enabled.`                                                                                                                                                                 |
+| Some unencrypted, ALL on cap-tier SOBRs    | `warning` | `Some jobs do not have job-level encryption enabled but target SOBRs with a capacity tier, where encryption is assumed at the SOBR layer. Verify capacity tier encryption is configured correctly.` |
+| Any unencrypted job NOT on a cap-tier SOBR | `fail`    | `Vault requires source-side encryption. You must enable encryption on these jobs or use an encrypted Backup Copy Job. Unencrypted data cannot use Move/Copy Backup to migrate to Vault.`            |
 
-**Affected items:** Job names (`SafeJob.JobName`) of non-exempt unencrypted jobs.
+**Affected items:** For `fail`: job names of non-exempt unencrypted jobs. For `warning`: job names of all unencrypted jobs (all exempt via SOBR cap tier).
 
-**Recommendations:** Enable encryption on each affected job, or create encrypted Backup Copy Jobs. Unencrypted data cannot use Move/Copy Backup to migrate to Vault. Jobs targeting SOBRs with a capacity tier are exempt because encryption is enforced at the capacity tier level.
+**Recommendations:** Enable encryption on each affected job, or create encrypted Backup Copy Jobs. Unencrypted data cannot use Move/Copy Backup to migrate to Vault. Jobs targeting SOBRs with a capacity tier are assumed to have encryption at the SOBR layer -- verify capacity tier encryption is configured correctly.
 
 ---
 
@@ -241,18 +242,24 @@
    - If any cap extent has `CopyModeEnabled=true`: `arrivalDay = 0` (data arrives from day 1)
    - If move-only (`MoveModeEnabled=true`, no copy): `arrivalDay = min(MovePeriodDays)` across extents (`null` treated as `0`)
 2. **Determine immutablePeriod**: `max(ImmutablePeriod)` across cap extents where `ImmutableEnabled=true` (else `0`)
-3. **Normal retention** per job targeting the SOBR:
+3. **Determine archiveOlderThan** (if SOBR has `ArchiveTierEnabled=true`):
+   - Filter archive extents for this SOBR where `ArchiveTierEnabled=true`
+   - `archiveOlderThan = min(RetentionPeriod)` across extents (most aggressive threshold), `null` RetentionPeriods are excluded
+   - If no valid periods: `archiveOlderThan = null` (no archive impact)
+4. **Normal retention** per job targeting the SOBR:
    - Skip if `RetainDays` is null or `RetainDays <= arrivalDay` (data never reaches capacity tier)
    - `retentionResidency = RetainDays - arrivalDay`
    - If `retentionResidency >= 30`: pass
    - If `retentionResidency < 30`: check `effectiveResidency = max(retentionResidency, immutablePeriod)` -- if immutability covers the gap, flag with storage cost note; otherwise flag as insufficient
-4. **GFS retention** per job with `GfsEnabled=true` and `GfsDetails`:
+5. **GFS retention** per job with `GfsEnabled=true` and `GfsDetails` (archive-aware):
    - Weekly: `days = weekly * 7`, Monthly: `days = monthly * 30`, Yearly: `days = yearly * 365`
-   - Same residency check as normal retention using each GFS period
-5. **Archive tier** if SOBR has `ArchiveTierEnabled=true`:
-   - `effectiveArchiveTrigger = max(RetentionPeriod, immutablePeriod)` (archive can't move immutable data)
-   - `archResidency = effectiveArchiveTrigger - arrivalDay`
-   - If `archResidency < 30`: flag
+   - Archive tier only moves GFS full backup points (not standard restore points), so archive capping is applied here
+   - `effectiveArchTrigger = max(archiveOlderThan, immutablePeriod)` (archive can't move immutable data)
+   - For each GFS period: if `effectiveArchTrigger < days`, archive caps residency: `effectiveDays = effectiveArchTrigger`; otherwise `effectiveDays = days`
+   - If `effectiveDays <= arrivalDay`: skip (data leaves before or on arrival)
+   - `retentionResidency = effectiveDays - arrivalDay`
+   - If capped by archive and `retentionResidency < 30`: flag with "archived after N days" message
+   - If not capped by archive: same immutability check as normal retention
 
 **Conditions:**
 
@@ -267,9 +274,9 @@
 - Normal retention short but immutability covers gap: `"{JobName}: normal retention {N} days, but immutability extends to {M} days (extra storage cost)"`
 - GFS retention too short: `"{JobName}: GFS {weekly|monthly|yearly} {N} days on capacity (needs 30+)"`
 - GFS retention short but immutability covers gap: `"{JobName}: GFS {label} {N} days, but immutability extends to {M} days (extra storage cost)"`
-- Archive pulls data too early: `"{SobrName}: archive moves data after {N} days on capacity (needs 30+)"`
+- GFS capped by archive tier: `"{JobName}: GFS {label} archived after {N} days on capacity (needs 30+)"`
 
-**Recommendations:** Ensure data remains on the capacity tier for at least 30 days. Options include increasing retention periods, adjusting move policy timing, or enabling immutability (which extends effective residency but incurs additional storage cost). For archive tier, ensure the archive trigger period minus the arrival day is at least 30 days.
+**Recommendations:** Ensure data remains on the capacity tier for at least 30 days. Options include increasing retention periods, adjusting move policy timing, or enabling immutability (which extends effective residency but incurs additional storage cost). For archive tier, note that only GFS full backup points are moved to archive -- if the archive "older than" threshold caps GFS residency below 30 days, consider increasing the archive threshold or adjusting GFS retention.
 
 ---
 

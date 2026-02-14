@@ -56,7 +56,7 @@ function findRule(
 }
 
 describe("validateJobEncryption (SOBR encryption exemption)", () => {
-  it("exempts unencrypted job on SOBR with capacity tier", () => {
+  it("warns for unencrypted job on SOBR with capacity tier (SOBR-layer assumption)", () => {
     const data = makeDataset({
       jobInfo: [
         makeJob({ JobName: "Job A", Encrypted: false, RepoName: "SOBR-01" }),
@@ -84,8 +84,44 @@ describe("validateJobEncryption (SOBR encryption exemption)", () => {
     const results = validateHealthcheck(data);
     const rule = findRule(results, "job-encryption");
 
-    expect(rule?.status).toBe("pass");
-    expect(rule?.affectedItems).toHaveLength(0);
+    expect(rule?.status).toBe("warning");
+    expect(rule?.affectedItems).toContain("Job A");
+    expect(rule?.message).toContain("SOBR");
+    expect(rule?.message).toContain("capacity tier");
+  });
+
+  it("all unencrypted on cap-tier SOBRs: warns with SOBR-layer message", () => {
+    const data = makeDataset({
+      jobInfo: [
+        makeJob({ JobName: "Job A", Encrypted: false, RepoName: "SOBR-01" }),
+        makeJob({ JobName: "Job B", Encrypted: false, RepoName: "SOBR-01" }),
+      ],
+      sobr: [
+        {
+          Name: "SOBR-01",
+          EnableCapacityTier: true,
+          CapacityTierCopy: true,
+          CapacityTierMove: false,
+          ArchiveTierEnabled: false,
+          ImmutableEnabled: false,
+          ExtentCount: null,
+          JobCount: null,
+          PolicyType: null,
+          UsePerVMFiles: null,
+          CapTierType: null,
+          ImmutablePeriod: null,
+          SizeLimitEnabled: null,
+          SizeLimit: null,
+        },
+      ],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "job-encryption");
+
+    expect(rule?.status).toBe("warning");
+    expect(rule?.affectedItems).toEqual(["Job A", "Job B"]);
+    expect(rule?.message).toContain("SOBR");
   });
 
   it("still fails for unencrypted job on SOBR without capacity tier", () => {
@@ -581,7 +617,7 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
     expect(rule?.affectedItems.some((i) => i.includes("monthly"))).toBe(true);
   });
 
-  it("warns: archive pulls data too early", () => {
+  it("archive active but job has no GFS: no archive warning", () => {
     const data = makeDataset({
       sobr: [makeSobr({ ArchiveTierEnabled: true })],
       capExtents: [makeCapExtent({ MovePeriodDays: 14 })],
@@ -604,13 +640,139 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
     const results = validateHealthcheck(data);
     const rule = findRule(results, "capacity-tier-residency");
 
-    expect(rule?.status).toBe("warning");
-    // archRetentionPeriod=20, arrivalDay=14, archResidency=6 days
-    expect(rule?.affectedItems.some((i) => i.includes("SOBR-01"))).toBe(true);
-    expect(rule?.affectedItems.some((i) => i.includes("archive"))).toBe(true);
+    // No GFS on the job, so archive tier doesn't apply
+    expect(rule?.affectedItems.every((i) => !i.includes("archived"))).toBe(
+      true,
+    );
   });
 
-  it("archive delayed by immutability (archRetentionPeriod < immutablePeriod)", () => {
+  it("archive caps GFS residency below 30 days: warns with archived message", () => {
+    const data = makeDataset({
+      sobr: [makeSobr({ ArchiveTierEnabled: true })],
+      capExtents: [makeCapExtent({ MovePeriodDays: 0 })],
+      archExtents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: true,
+          EncryptionEnabled: true,
+          ImmutableEnabled: false,
+          RetentionPeriod: 20,
+          CostOptimizedEnabled: null,
+          FullBackupModeEnabled: null,
+          ImmutablePeriod: null,
+        },
+      ],
+      jobInfo: [
+        makeJob({
+          JobName: "GfsJob",
+          RepoName: "SOBR-01",
+          RetainDays: 60,
+          GfsEnabled: true,
+          GfsDetails: "Yearly:1",
+        }),
+      ],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "capacity-tier-residency");
+
+    // archiveOlderThan=20, immutablePeriod=0, effectiveArchTrigger=20
+    // GFS yearly=365 days, capped by archive to 20 days residency
+    expect(rule?.status).toBe("warning");
+    expect(
+      rule?.affectedItems.some(
+        (i) => i.includes("GfsJob") && i.includes("archived"),
+      ),
+    ).toBe(true);
+  });
+
+  it("archive threshold > GFS period: GFS retention check wins (not capped by archive)", () => {
+    const data = makeDataset({
+      sobr: [makeSobr({ ArchiveTierEnabled: true })],
+      capExtents: [makeCapExtent({ MovePeriodDays: 14 })],
+      archExtents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: true,
+          EncryptionEnabled: true,
+          ImmutableEnabled: false,
+          RetentionPeriod: 60,
+          CostOptimizedEnabled: null,
+          FullBackupModeEnabled: null,
+          ImmutablePeriod: null,
+        },
+      ],
+      jobInfo: [
+        makeJob({
+          JobName: "GfsJob",
+          RepoName: "SOBR-01",
+          RetainDays: 10,
+          GfsEnabled: true,
+          GfsDetails: "Weekly:3",
+        }),
+      ],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "capacity-tier-residency");
+
+    // GFS weekly: 3*7=21 days, arrivalDay=14, retentionResidency=7 < 30
+    // archiveOlderThan=60 > 21 days, so archive doesn't cap this
+    expect(rule?.status).toBe("warning");
+    expect(
+      rule?.affectedItems.some(
+        (i) => i.includes("GfsJob") && i.includes("weekly"),
+      ),
+    ).toBe(true);
+    // Should NOT mention "archived" since archive doesn't cap this
+    expect(
+      rule?.affectedItems.some(
+        (i) => i.includes("GfsJob") && i.includes("archived"),
+      ),
+    ).toBe(false);
+  });
+
+  it("archive threshold <= arrivalDay: skip (no negative values)", () => {
+    const data = makeDataset({
+      sobr: [makeSobr({ ArchiveTierEnabled: true })],
+      capExtents: [makeCapExtent({ MovePeriodDays: 14 })],
+      archExtents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: true,
+          EncryptionEnabled: true,
+          ImmutableEnabled: false,
+          RetentionPeriod: 10,
+          CostOptimizedEnabled: null,
+          FullBackupModeEnabled: null,
+          ImmutablePeriod: null,
+        },
+      ],
+      jobInfo: [
+        makeJob({
+          JobName: "GfsJob",
+          RepoName: "SOBR-01",
+          RetainDays: 60,
+          GfsEnabled: true,
+          GfsDetails: "Yearly:1",
+        }),
+      ],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "capacity-tier-residency");
+
+    // archiveOlderThan=10 (capped by immutable=0 → effectiveArchTrigger=14 via max(10,0)=10)
+    // effectiveArchTrigger=10 <= arrivalDay=14, so archive is moot, GFS yearly=365 is fine
+    expect(rule?.affectedItems.every((i) => !i.includes("archived"))).toBe(
+      true,
+    );
+  });
+
+  it("immutability delays archive past 30 days: GFS passes", () => {
     const data = makeDataset({
       sobr: [makeSobr({ ArchiveTierEnabled: true })],
       capExtents: [
@@ -633,15 +795,25 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           ImmutablePeriod: null,
         },
       ],
-      jobInfo: [makeJob({ RepoName: "SOBR-01", RetainDays: 90 })],
+      jobInfo: [
+        makeJob({
+          JobName: "GfsJob",
+          RepoName: "SOBR-01",
+          RetainDays: 90,
+          GfsEnabled: true,
+          GfsDetails: "Yearly:1",
+        }),
+      ],
     });
 
     const results = validateHealthcheck(data);
     const rule = findRule(results, "capacity-tier-residency");
 
-    // archRetentionPeriod=20 but immutablePeriod=60, so effective archive trigger = max(20,60) = 60
-    // archResidency = 60 - 0 = 60 >= 30: pass for archive
-    expect(rule?.affectedItems.every((i) => !i.includes("archive"))).toBe(true);
+    // archiveOlderThan=20, immutablePeriod=60, effectiveArchTrigger=max(20,60)=60
+    // GFS yearly=365, capped by archive to 60 days residency >= 30: pass
+    expect(rule?.affectedItems.every((i) => !i.includes("archived"))).toBe(
+      true,
+    );
   });
 
   it("immutability covers retention gap: warns with cost note", () => {
@@ -716,7 +888,7 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
     expect(rule?.affectedItems[0]).toContain("20");
   });
 
-  it("null RetentionPeriod on archive skips archive check", () => {
+  it("null RetentionPeriod on archive: no archive impact on GFS", () => {
     const data = makeDataset({
       sobr: [makeSobr({ ArchiveTierEnabled: true })],
       capExtents: [makeCapExtent({ MovePeriodDays: 0 })],
@@ -733,14 +905,24 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           ImmutablePeriod: null,
         },
       ],
-      jobInfo: [makeJob({ RepoName: "SOBR-01", RetainDays: 60 })],
+      jobInfo: [
+        makeJob({
+          JobName: "GfsJob",
+          RepoName: "SOBR-01",
+          RetainDays: 60,
+          GfsEnabled: true,
+          GfsDetails: "Yearly:1",
+        }),
+      ],
     });
 
     const results = validateHealthcheck(data);
     const rule = findRule(results, "capacity-tier-residency");
 
-    // No archive residency issue because RetentionPeriod is null
-    expect(rule?.affectedItems.every((i) => !i.includes("archive"))).toBe(true);
+    // No archive impact because RetentionPeriod is null → archiveOlderThan=null
+    expect(rule?.affectedItems.every((i) => !i.includes("archived"))).toBe(
+      true,
+    );
   });
 
   it("mixed: some jobs flagged, some not", () => {

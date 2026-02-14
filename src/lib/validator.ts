@@ -101,27 +101,41 @@ function validateJobEncryption(data: NormalizedDataset): ValidationResult {
     data.sobr.filter((s) => s.EnableCapacityTier).map((s) => s.Name),
   );
 
-  const unencryptedJobs = data.jobInfo.filter(
-    (job) => !job.Encrypted && !capTierSobrs.has(job.RepoName),
+  const allUnencrypted = data.jobInfo.filter((job) => !job.Encrypted);
+
+  if (allUnencrypted.length === 0) {
+    return {
+      ruleId: "job-encryption",
+      title: "Job Encryption Audit",
+      status: "pass",
+      message: "All jobs have encryption enabled.",
+      affectedItems: [],
+    };
+  }
+
+  const nonExempt = allUnencrypted.filter(
+    (job) => !capTierSobrs.has(job.RepoName),
   );
 
-  if (unencryptedJobs.length > 0) {
+  if (nonExempt.length > 0) {
     return {
       ruleId: "job-encryption",
       title: "Job Encryption Audit",
       status: "fail",
       message:
         "Vault requires source-side encryption. You must enable encryption on these jobs or use an encrypted Backup Copy Job. Unencrypted data cannot use Move/Copy Backup to migrate to Vault.",
-      affectedItems: unencryptedJobs.map((job) => job.JobName),
+      affectedItems: nonExempt.map((job) => job.JobName),
     };
   }
 
+  // All unencrypted jobs are on cap-tier SOBRs
   return {
     ruleId: "job-encryption",
     title: "Job Encryption Audit",
-    status: "pass",
-    message: "All jobs have encryption enabled.",
-    affectedItems: [],
+    status: "warning",
+    message:
+      "Some jobs do not have job-level encryption enabled but target SOBRs with a capacity tier, where encryption is assumed at the SOBR layer. Verify capacity tier encryption is configured correctly.",
+    affectedItems: allUnencrypted.map((job) => job.JobName),
   };
 }
 
@@ -316,6 +330,20 @@ function validateCapacityTierResidency(
 
     const { arrivalDay, immutablePeriod } = resolveCapExtentParams(capExtents);
 
+    // Determine archive threshold for this SOBR
+    let archiveOlderThan: number | null = null;
+    if (sobr.ArchiveTierEnabled) {
+      const archExts = data.archExtents.filter(
+        (e) => e.SobrName === sobr.Name && e.ArchiveTierEnabled,
+      );
+      const periods = archExts
+        .map((e) => e.RetentionPeriod)
+        .filter((p): p is number => p !== null);
+      if (periods.length > 0) {
+        archiveOlderThan = Math.min(...periods);
+      }
+    }
+
     // Normal retention checks per job targeting this SOBR
     const sobrJobs = data.jobInfo.filter((job) => job.RepoName === sobr.Name);
 
@@ -334,25 +362,8 @@ function validateCapacityTierResidency(
         immutablePeriod,
         minDays,
         affectedItems,
+        archiveOlderThan,
       );
-    }
-
-    // Archive tier check
-    if (sobr.ArchiveTierEnabled) {
-      const archExtents = data.archExtents.filter(
-        (e) => e.SobrName === sobr.Name && e.ArchiveTierEnabled,
-      );
-
-      for (const arch of archExtents) {
-        checkArchiveResidency(
-          sobr.Name,
-          arch.RetentionPeriod,
-          arrivalDay,
-          immutablePeriod,
-          minDays,
-          affectedItems,
-        );
-      }
     }
   }
 
@@ -446,6 +457,7 @@ function checkGfsRetention(
   immutablePeriod: number,
   minDays: number,
   affectedItems: string[],
+  archiveOlderThan: number | null = null,
 ): void {
   if (!job.GfsEnabled || !job.GfsDetails) {
     return;
@@ -464,50 +476,43 @@ function checkGfsRetention(
     gfsChecks.push({ label: "yearly", days: gfs.yearly * 365 });
   }
 
+  // Archive can't move immutable data, so effective trigger is at least immutablePeriod
+  const effectiveArchTrigger =
+    archiveOlderThan !== null
+      ? Math.max(archiveOlderThan, immutablePeriod)
+      : null;
+
   for (const { label, days } of gfsChecks) {
-    if (days <= arrivalDay) {
+    // Archive caps how long a GFS point stays on capacity
+    const cappedByArchive =
+      effectiveArchTrigger !== null && effectiveArchTrigger < days;
+    const effectiveDays = cappedByArchive ? effectiveArchTrigger : days;
+
+    if (effectiveDays <= arrivalDay) {
       continue;
     }
 
-    const retentionResidency = days - arrivalDay;
+    const retentionResidency = effectiveDays - arrivalDay;
     if (retentionResidency >= minDays) {
       continue;
     }
 
-    const effectiveResidency = Math.max(retentionResidency, immutablePeriod);
-
-    if (effectiveResidency >= minDays) {
+    if (cappedByArchive) {
       affectedItems.push(
-        `${job.JobName}: GFS ${label} ${retentionResidency} days, but immutability extends to ${effectiveResidency} days (extra storage cost)`,
+        `${job.JobName}: GFS ${label} archived after ${retentionResidency} days on capacity (needs ${minDays}+)`,
       );
     } else {
-      affectedItems.push(
-        `${job.JobName}: GFS ${label} ${retentionResidency} days on capacity (needs ${minDays}+)`,
-      );
+      const effectiveResidency = Math.max(retentionResidency, immutablePeriod);
+
+      if (effectiveResidency >= minDays) {
+        affectedItems.push(
+          `${job.JobName}: GFS ${label} ${retentionResidency} days, but immutability extends to ${effectiveResidency} days (extra storage cost)`,
+        );
+      } else {
+        affectedItems.push(
+          `${job.JobName}: GFS ${label} ${retentionResidency} days on capacity (needs ${minDays}+)`,
+        );
+      }
     }
   }
-}
-
-function checkArchiveResidency(
-  sobrName: string,
-  retentionPeriod: number | null,
-  arrivalDay: number,
-  immutablePeriod: number,
-  minDays: number,
-  affectedItems: string[],
-): void {
-  if (retentionPeriod === null) {
-    return;
-  }
-
-  const effectiveArchiveTrigger = Math.max(retentionPeriod, immutablePeriod);
-  const archResidency = effectiveArchiveTrigger - arrivalDay;
-
-  if (archResidency >= minDays) {
-    return;
-  }
-
-  affectedItems.push(
-    `${sobrName}: archive moves data after ${archResidency} days on capacity (needs ${minDays}+)`,
-  );
 }
