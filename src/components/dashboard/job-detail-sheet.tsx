@@ -58,7 +58,7 @@ function ChangeRateValue({ rate }: { rate: number | null }) {
     return <span className="text-destructive">{formatted}</span>;
   }
   if (rate > 10) {
-    return <span className="text-amber-600">{formatted}</span>;
+    return <span className="text-warning">{formatted}</span>;
   }
   return <span>{formatted}</span>;
 }
@@ -74,7 +74,7 @@ function SuccessRateValue({ rate }: { rate: number | null }) {
     return <span className="text-destructive">{formatted}</span>;
   }
   if (rate < 95) {
-    return <span className="text-amber-600">{formatted}</span>;
+    return <span className="text-warning">{formatted}</span>;
   }
   return <span className="text-primary">{formatted}</span>;
 }
@@ -99,7 +99,7 @@ function BooleanValue({ value }: { value: boolean | null }) {
 }
 
 function NullableValue({ value }: { value: string | number | null }) {
-  if (value === null) {
+  if (value === null || value === "N/A") {
     return <span className="text-muted-foreground">N/A</span>;
   }
   return <span>{String(value)}</span>;

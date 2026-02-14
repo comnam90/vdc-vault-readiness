@@ -322,12 +322,12 @@ describe("JobTable", () => {
       expect(naElements.length).toBeGreaterThanOrEqual(1);
     });
 
-    it("applies warning color for change rate >10%", () => {
+    it("applies warning token color for change rate >10%", () => {
       render(<JobTable jobs={MOCK_JOBS} />);
 
       // SQL Agent Backup has 15.5% change rate
       const rateElement = screen.getByText("15.5%");
-      expect(rateElement.className).toMatch(/text-amber/);
+      expect(rateElement.className).toMatch(/text-warning/);
     });
 
     it("applies destructive color for change rate >50%", () => {
