@@ -34,18 +34,18 @@ HealthcheckRoot (raw JSON)
 
 ## WHERE TO LOOK
 
-| Need                     | File                     | Notes                                                                                              |
-| ------------------------ | ------------------------ | -------------------------------------------------------------------------------------------------- |
-| Add validation rule      | validator.ts             | Add function, append to return array in validateHealthcheck()                                      |
-| Change version minimum   | constants.ts             | MINIMUM_VBR_VERSION — tests reference this constant                                                |
-| Change retention minimum | constants.ts             | MINIMUM_RETENTION_DAYS — used by validator + calculator                                            |
-| Parse new section        | parser.ts                | zipSection() handles any Headers/Rows section                                                      |
-| Add normalized field     | normalizer.ts            | Add extraction + error accumulation using flatMap/buildError                                       |
-| UI step labels           | constants.ts             | PIPELINE_STEPS — NOT 1:1 with validator ruleIds                                                    |
-| Filter validations       | validation-selectors.ts  | Blocker/passing splits consumed by dashboard components                                            |
-| Vault sizing inputs      | calculator-aggregator.ts | buildCalculatorSummary() is main entry; 6 exported functions                                       |
-| Join jobs + sessions     | enrich-jobs.ts           | enrichJobs() → EnrichedJob[] via Map<JobName, SafeJobSession>                                      |
-| Display formatting       | format-utils.ts          | formatSize (GB→TB/GB), formatPercent, formatDuration (ISO→human), formatTB, formatCompressionRatio |
+| Need                     | File                     | Notes                                                                                                      |
+| ------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Add validation rule      | validator.ts             | Add function, append to return array in validateHealthcheck()                                              |
+| Change version minimum   | constants.ts             | MINIMUM_VBR_VERSION — tests reference this constant                                                        |
+| Change retention minimum | constants.ts             | MINIMUM_RETENTION_DAYS — used by validator + calculator                                                    |
+| Parse new section        | parser.ts                | zipSection() handles any Headers/Rows section                                                              |
+| Add normalized field     | normalizer.ts            | Add extraction + error accumulation using flatMap/buildError                                               |
+| UI step labels           | constants.ts             | PIPELINE_STEPS — NOT 1:1 with validator ruleIds                                                            |
+| Filter validations       | validation-selectors.ts  | Blocker/passing splits consumed by dashboard components                                                    |
+| Vault sizing inputs      | calculator-aggregator.ts | buildCalculatorSummary() is main entry; 6 exported functions                                               |
+| Join jobs + sessions     | enrich-jobs.ts           | enrichJobs() → EnrichedJob[] via Map<JobName, SafeJobSession>                                              |
+| Display formatting       | format-utils.ts          | formatSize (GB→TB/GB), formatPercent, formatDuration (DD.HH:MM:SS→human), formatTB, formatCompressionRatio |
 
 ## CONVENTIONS
 
@@ -56,7 +56,7 @@ HealthcheckRoot (raw JSON)
 - **PIPELINE_STEPS vs ruleIds**: Steps are presentation-layer groupings (e.g., "encryption" covers both "global-encryption" and "job-encryption" rules)
 - **Calculator**: Aggregates from SafeJob[] and SafeJobSession[]; uses MINIMUM_RETENTION_DAYS from constants
 - **Enrichment**: `enrichJobs()` builds Map<JobName, SafeJobSession> for O(1) lookup, returns EnrichedJob[] with null session for unmatched jobs
-- **Formatters**: Pure functions. `formatSize()` returns `{ value, unit }` object for split display. `formatDuration()` parses ISO 8601 duration strings. `formatCompressionRatio()` handles divide-by-zero gracefully
+- **Formatters**: Pure functions. `formatSize()` returns `{ value, unit }` object for split display. `formatDuration()` parses `DD.HH:MM:SS` duration strings. `formatCompressionRatio()` handles divide-by-zero gracefully
 
 ## ANTI-PATTERNS
 

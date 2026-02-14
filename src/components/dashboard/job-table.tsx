@@ -39,7 +39,7 @@ function ChangeRateCell({ rate }: { rate: number | null }) {
     return <span className="text-destructive font-mono">{formatted}</span>;
   }
   if (rate > 10) {
-    return <span className="font-mono text-amber-600">{formatted}</span>;
+    return <span className="text-warning font-mono">{formatted}</span>;
   }
   return <span className="font-mono">{formatted}</span>;
 }
