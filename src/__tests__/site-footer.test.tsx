@@ -7,7 +7,7 @@ describe("SiteFooter", () => {
     it("renders version string", () => {
       render(<SiteFooter />);
 
-      expect(screen.getByText(/v\d+\.\d+\.\d+/)).toBeInTheDocument();
+      expect(screen.getByText(`v${__APP_VERSION__}`)).toBeInTheDocument();
     });
 
     it("renders GitHub link with correct href", () => {
@@ -68,7 +68,7 @@ describe("SiteFooter", () => {
     it("renders version in mono font", () => {
       render(<SiteFooter />);
 
-      const version = screen.getByText(/v\d+\.\d+\.\d+/);
+      const version = screen.getByText(`v${__APP_VERSION__}`);
       expect(version).toHaveClass("font-mono");
     });
   });
