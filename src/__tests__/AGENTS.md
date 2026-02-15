@@ -1,6 +1,6 @@
 # src/\_\_tests\_\_ — Test Suite
 
-477 tests across 25 test files. Vitest + React Testing Library + jsdom.
+548 tests across 27 test files. Vitest + React Testing Library + jsdom. Coverage: 97% statements, 95% branches.
 
 ## STRUCTURE
 
@@ -10,16 +10,18 @@ __tests__/
 ├── fixtures.ts                   # Shared test data: MOCK_DATA, PASS/FAIL/WARNING_RESULT, etc.
 ├── parser.test.ts                # zipSection() edge cases
 ├── normalizer.test.ts            # Error accumulation, missing fields, type coercion
-├── validator.test.ts             # All 7 validation rules (incl. retention-period)
-├── pipeline.test.ts              # End-to-end analyzeHealthcheck()
+├── normalizer-sobr.test.ts       # SOBR/CapExtent/ArchExtent normalization (615 lines)
+├── validator.test.ts             # Original 7 validation rules (incl. retention-period)
+├── validator-sobr.test.ts        # 4 SOBR validation rules: cap-tier-encryption, sobr-immutability, archive-tier-edition, capacity-tier-residency (1107 lines)
+├── pipeline.test.ts              # End-to-end analyzeHealthcheck() with real sample data
 ├── version-compare.test.ts       # Semver comparison edge cases
 ├── delay.test.ts                 # tick() with AbortSignal + fake timers
-├── constants.test.ts             # MINIMUM_VBR_VERSION, MINIMUM_RETENTION_DAYS, PIPELINE_STEPS
+├── constants.test.ts             # MINIMUM_VBR_VERSION, MINIMUM_RETENTION_DAYS, MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS, PIPELINE_STEPS
 ├── validation-selectors.test.ts  # Blocker/passing filter helpers
 ├── calculator-aggregator.test.ts # Sizing aggregation: source TB, change rates, GFS, retention
 ├── enrich-jobs.test.ts           # enrichJobs(): join matching, missing sessions, empty arrays (10 tests)
 ├── format-utils.test.ts          # formatSize, formatPercent, formatDuration, formatTB, formatCompressionRatio (28 tests)
-├── domain-types.test.ts          # Type contract verification for SafeJob, SafeJobSession
+├── domain-types.test.ts          # Type contract verification for SafeJob, SafeJobSession, SafeSobr, SafeCapExtent, SafeArchExtent
 ├── use-analysis.test.ts          # State machine transitions, race condition guard
 ├── app.test.tsx                  # Top-level state rendering (idle/processing/success/error)
 ├── file-upload.test.tsx          # Drop zone, click, keyboard, drag states, error display
@@ -47,6 +49,8 @@ __tests__/
 | Factory helpers        | calculator-aggregator.test.ts                 | makeJob(), makeSession() for unique test data       |
 | Bulk data generator    | job-table.test.tsx                            | createManyJobs(n) for table pagination tests        |
 | EnrichedJob fixtures   | job-table.test.tsx, job-detail-sheet.test.tsx | EnrichedJob factory with sessionData variants       |
+| SOBR normalizer tests  | normalizer-sobr.test.ts                       | SafeSobr, SafeCapExtent, SafeArchExtent fixtures    |
+| SOBR validator tests   | validator-sobr.test.ts                        | 4 SOBR rule tests with findRule() helper            |
 
 ## CONVENTIONS
 
@@ -60,6 +64,7 @@ __tests__/
 - **Keyboard a11y**: Test Enter/Space on `role="button"` elements
 - **Animation classes**: Assert `motion-safe:` prefix exists on animation utility classes; never assert raw `animate-*` without prefix
 - **Float comparison**: Use `toBeCloseTo(expected, decimals)` for calculator aggregation tests
+- **Real sample data**: `pipeline.test.ts` imports `veeam-healthcheck.example.json` for E2E validation
 
 ## ANTI-PATTERNS
 

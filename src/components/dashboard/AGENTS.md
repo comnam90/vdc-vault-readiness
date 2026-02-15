@@ -7,10 +7,10 @@
 ```
 dashboard/
 ├── file-upload.tsx          # Drop zone with drag/click/keyboard input + error shake
-├── dashboard-view.tsx       # Main layout: header, summary cards, tabs (overview/jobs/sizing). Memoizes enrichJobs(). 205 lines
-├── blockers-list.tsx        # Fail/warning alerts with severity ordering + stagger entrance
-├── job-table.tsx            # TanStack Table: search, sort, paginate EnrichedJob[]. Row click → sheet. 329 lines
-├── job-detail-sheet.tsx     # Right-side Sheet: storage, protection, config, session sections. 275 lines
+├── dashboard-view.tsx       # Main layout: header, summary cards, tabs (overview/jobs/sizing). Memoizes enrichJobs(). 204 lines
+├── blockers-list.tsx        # Fail/warning alerts with severity ordering + stagger entrance. 87 lines
+├── job-table.tsx            # TanStack Table: search, sort, paginate EnrichedJob[]. Row click → sheet. 335 lines
+├── job-detail-sheet.tsx     # Right-side Sheet: storage, protection, config, session sections. 276 lines
 ├── success-celebration.tsx  # All-pass state: ring animation + stagger fade-in
 ├── checklist-loader.tsx     # Processing state: step checklist with progress bar
 ├── passing-checks-list.tsx  # Passing validations with stagger animation + check icons

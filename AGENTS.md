@@ -1,16 +1,16 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-12
-**Commit:** da0f3ff
-**Branch:** feature/job-details-smart-columns-sheet
+**Generated:** 2026-02-15
+**Commit:** fd6ddc5
+**Branch:** main (tag: v1.1.0)
 
 ## OVERVIEW
 
 Client-side SPA validating Veeam VBR environments against VDC Vault requirements. Parses Healthcheck JSON locally, runs pre-flight checks. React 19 + Vite 7.3 + TypeScript 5.9 + Tailwind 4.1 + shadcn 3.8.
 
-## STATUS: MVP COMPLETE + CALCULATOR
+## STATUS: MVP COMPLETE + SOBR ANALYSIS
 
-Full pipeline operational: JSON upload → normalize → validate → dashboard. 477 tests across 25 test files. 7 validation rules implemented. Motion/animation system with `prefers-reduced-motion` support. Vault sizing calculator aggregates source data, change rates, and retention from job metadata.
+Full pipeline operational: JSON upload → normalize → validate → dashboard. 548 tests across 27 test files. 11 validation rules implemented (7 original + 4 SOBR). Motion/animation system with `prefers-reduced-motion` support. Vault sizing calculator. SOBR analysis validates capacity tier encryption, immutability, archive tier edition, and capacity tier residency.
 
 ## STRUCTURE
 
@@ -40,7 +40,7 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
     ├── index.css                 # Tailwind 4 + motion tokens + custom @utility animations
     ├── types/
     │   ├── healthcheck.ts        # Raw JSON shape types (HealthcheckRoot)
-    │   ├── domain.ts             # NormalizedDataset, SafeJob, SafeJobSession, PipelineStep
+    │   ├── domain.ts             # NormalizedDataset, SafeJob, SafeJobSession, SafeSobr, SafeCapExtent, SafeArchExtent, PipelineStep
     │   ├── validation.ts         # ValidationResult, ValidationStatus
     │   ├── calculator.ts         # CalculatorSummary interface
     │   └── enriched-job.ts       # EnrichedJob = SafeJob + sessionData (join type)
@@ -58,7 +58,7 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
 | Need               | Location                                      | Notes                                                                                                                                                                |
 | ------------------ | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Tech stack         | PRD.md §2                                     | Strict versions: Vite 7.3.1, TS 5.9.3, Tailwind 4.1.18, shadcn 3.8.3                                                                                                 |
-| Validation rules   | PRD.md §4                                     | 7 rules: VBR version, global encryption, job encryption, AWS, agents, license, retention                                                                             |
+| Validation rules   | PRD.md §4                                     | 11 rules: VBR version, global encryption, job encryption, AWS, agents, license, retention + 4 SOBR rules                                                             |
 | UI spec            | PRD.md §5                                     | Dashboard + Job Explorer table + Sizing tab                                                                                                                          |
 | Vault limitations  | VDCVAULT-CHEETSHEET.md                        | Red flags, edition diffs, workload matrix                                                                                                                            |
 | Architecture       | ARCHITECTURE.md                               | Data flow, component hierarchy, design decisions                                                                                                                     |
@@ -91,7 +91,7 @@ JSON uses decoupled format:
 
 Must normalize to: `[{ "Name": "Job A", "Encrypted": "False" }]`
 
-**Key sections:** `backupServer`, `securitySummary`, `jobInfo`, `Licenses`
+**Key sections:** `backupServer`, `securitySummary`, `jobInfo`, `Licenses`, `sobr`, `capextents`, `archextents`
 
 **Sample data:** 30 jobs, VBR 13.0.1.1071, mixed encryption, repos: LinuxHardened/WinLocal/VeeamVault/AmazonS3/DDBoost
 
