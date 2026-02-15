@@ -129,7 +129,7 @@ function StorageSection({ job }: { job: EnrichedJob }) {
 
 function ProtectionSection({ job }: { job: EnrichedJob }) {
   const gfs = parseGfsDetails(job.GfsDetails);
-  const hasGfs = job.GfsEnabled === true;
+  const gfsEnabled = job.GfsEnabled;
 
   return (
     <div className="space-y-1">
@@ -154,13 +154,15 @@ function ProtectionSection({ job }: { job: EnrichedJob }) {
         <BooleanValue value={job.SyntheticFullEnabled} />
       </PropertyRow>
       <PropertyRow label="GFS Policy">
-        {hasGfs ? (
+        {gfsEnabled === true ? (
           <span>
             Weekly: {gfs.weekly ?? "N/A"}, Monthly: {gfs.monthly ?? "N/A"},
             Yearly: {gfs.yearly ?? "N/A"}
           </span>
-        ) : (
+        ) : gfsEnabled === false ? (
           <span className="text-muted-foreground">None configured</span>
+        ) : (
+          <span className="text-muted-foreground">N/A</span>
         )}
       </PropertyRow>
     </div>

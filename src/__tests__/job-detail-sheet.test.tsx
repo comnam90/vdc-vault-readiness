@@ -233,6 +233,19 @@ describe("JobDetailSheet", () => {
       expect(screen.getByText("GFS Policy")).toBeInTheDocument();
       expect(screen.getByText("None configured")).toBeInTheDocument();
     });
+
+    it("renders muted N/A when GFS state is unknown", () => {
+      const job = createEnrichedJob({
+        GfsEnabled: null,
+        GfsDetails: null,
+      });
+      render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+      const row = screen.getByText("GFS Policy").closest("div");
+      expect(row).not.toBeNull();
+      const value = within(row as HTMLElement).getByText("N/A");
+      expect(value).toHaveClass("text-muted-foreground");
+    });
   });
 
   describe("Configuration section", () => {
