@@ -1,5 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
+import { formatPercent, formatTB } from "@/lib/format-utils";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 import { Badge } from "@/components/ui/badge";
@@ -21,16 +22,6 @@ interface CalculatorInputsProps {
 
 export function CalculatorInputs({ data }: CalculatorInputsProps) {
   const summary = buildCalculatorSummary(data.jobInfo, data.jobSessionSummary);
-
-  const formatTB = (val: number | null) => {
-    if (val === null) return "N/A";
-    return `${val.toFixed(2)} TB`;
-  };
-
-  const formatPercent = (val: number | null) => {
-    if (val === null) return "N/A";
-    return `${val.toFixed(2)}%`;
-  };
 
   const formatDays = (val: number | null) => {
     if (val === null) return "N/A";
@@ -75,7 +66,7 @@ export function CalculatorInputs({ data }: CalculatorInputsProps) {
               Daily Change Rate
             </p>
             <p className="font-mono text-2xl font-semibold">
-              {formatPercent(summary.weightedAvgChangeRate)}
+              {formatPercent(summary.weightedAvgChangeRate, 2)}
             </p>
           </div>
 

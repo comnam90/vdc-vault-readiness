@@ -15,6 +15,11 @@ function makeSession(overrides: Partial<SafeJobSession> = {}): SafeJobSession {
     JobName: "TestJob",
     MaxDataSize: null,
     AvgChangeRate: null,
+    SuccessRate: null,
+    SessionCount: null,
+    Fails: null,
+    AvgJobTime: null,
+    MaxJobTime: null,
     ...overrides,
   };
 }
@@ -28,6 +33,15 @@ function makeJob(overrides: Partial<SafeJob> = {}): SafeJob {
     RetainDays: null,
     GfsDetails: null,
     SourceSizeGB: null,
+    OnDiskGB: null,
+    RetentionScheme: null,
+    CompressionLevel: null,
+    BlockSize: null,
+    GfsEnabled: null,
+    ActiveFullEnabled: null,
+    SyntheticFullEnabled: null,
+    BackupChainType: null,
+    IndexingEnabled: null,
     ...overrides,
   };
 }

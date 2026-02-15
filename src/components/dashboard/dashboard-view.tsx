@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CheckCircle2, XCircle, Upload } from "lucide-react";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 import { MINIMUM_VBR_VERSION } from "@/lib/constants";
+import { enrichJobs } from "@/lib/enrich-jobs";
 import { getBlockerValidations } from "@/lib/validation-selectors";
 import { isVersionAtLeast } from "@/lib/version-compare";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,10 @@ export function DashboardView({
   onReset,
 }: DashboardViewProps) {
   const [activeTab, setActiveTab] = useState("overview");
+  const enrichedJobs = useMemo(
+    () => enrichJobs(data.jobInfo, data.jobSessionSummary),
+    [data.jobInfo, data.jobSessionSummary],
+  );
   const backupServers = data.backupServer ?? [];
   const knownVersions = backupServers
     .map((server) => server?.Version)
@@ -187,7 +192,7 @@ export function DashboardView({
         </TabsContent>
 
         <TabsContent value="jobs" className="mt-4">
-          <JobTable jobs={data.jobInfo} />
+          <JobTable jobs={enrichedJobs} />
         </TabsContent>
 
         <TabsContent value="sizing" className="mt-4">

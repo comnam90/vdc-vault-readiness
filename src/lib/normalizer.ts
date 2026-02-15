@@ -87,6 +87,33 @@ export function normalizeHealthcheck(
         "SourceSizeGB",
         dataErrors,
       ),
+      OnDiskGB: parseNumeric(
+        job.OnDiskGB as string | null | undefined,
+        "jobInfo",
+        rowIndex,
+        "OnDiskGB",
+        dataErrors,
+      ),
+      RetentionScheme: normalizeString(
+        job.RetentionScheme as string | null | undefined,
+      ),
+      CompressionLevel: normalizeString(
+        job.CompressionLevel as string | null | undefined,
+      ),
+      BlockSize: normalizeString(job.BlockSize as string | null | undefined),
+      GfsEnabled: parseBoolean(job.GfsEnabled as string | null | undefined),
+      ActiveFullEnabled: parseBoolean(
+        job.ActiveFullEnabled as string | null | undefined,
+      ),
+      SyntheticFullEnabled: parseBoolean(
+        job.SyntheticFullEnabled as string | null | undefined,
+      ),
+      BackupChainType: normalizeString(
+        job.BackupChainType as string | null | undefined,
+      ),
+      IndexingEnabled: parseBoolean(
+        job.IndexingEnabled as string | null | undefined,
+      ),
     };
 
     return [safeJob];
@@ -366,6 +393,33 @@ function normalizeJobSessions(
         rowIndex,
         "AvgChangeRate",
         dataErrors,
+      ),
+      SuccessRate: parseNumeric(
+        record.SuccessRate as string | null | undefined,
+        "jobSessionSummaryByJob",
+        rowIndex,
+        "SuccessRate",
+        dataErrors,
+      ),
+      SessionCount: parseNumeric(
+        record.SessionCount as string | null | undefined,
+        "jobSessionSummaryByJob",
+        rowIndex,
+        "SessionCount",
+        dataErrors,
+      ),
+      Fails: parseNumeric(
+        record.Fails as string | null | undefined,
+        "jobSessionSummaryByJob",
+        rowIndex,
+        "Fails",
+        dataErrors,
+      ),
+      AvgJobTime: normalizeString(
+        record.AvgJobTime as string | null | undefined,
+      ),
+      MaxJobTime: normalizeString(
+        record.MaxJobTime as string | null | undefined,
       ),
     };
 
