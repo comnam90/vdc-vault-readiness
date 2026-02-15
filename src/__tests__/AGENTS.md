@@ -1,6 +1,6 @@
 # src/\_\_tests\_\_ — Test Suite
 
-548 tests across 27 test files. Vitest + React Testing Library + jsdom. Coverage: 97% statements, 95% branches.
+555 tests across 28 test files. Vitest + React Testing Library + jsdom. Coverage: 97% statements, 95% branches.
 
 ## STRUCTURE
 
@@ -24,6 +24,7 @@ __tests__/
 ├── domain-types.test.ts          # Type contract verification for SafeJob, SafeJobSession, SafeSobr, SafeCapExtent, SafeArchExtent
 ├── use-analysis.test.ts          # State machine transitions, race condition guard
 ├── app.test.tsx                  # Top-level state rendering (idle/processing/success/error)
+├── experimental-banner.test.tsx  # ExperimentalBanner rendering, accessibility attributes
 ├── file-upload.test.tsx          # Drop zone, click, keyboard, drag states, error display
 ├── dashboard-view.test.tsx       # Summary cards, tabs, version display
 ├── blockers-list.test.tsx        # Severity ordering, affected items, truncation
