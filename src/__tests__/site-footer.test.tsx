@@ -4,10 +4,12 @@ import { SiteFooter } from "@/components/dashboard/site-footer";
 
 describe("SiteFooter", () => {
   describe("content", () => {
-    it("renders version string", () => {
+    it("renders version and commit hash", () => {
       render(<SiteFooter />);
 
-      expect(screen.getByText(`v${__APP_VERSION__}`)).toBeInTheDocument();
+      expect(
+        screen.getByText(`v${__APP_VERSION__} (${__APP_COMMIT__})`),
+      ).toBeInTheDocument();
     });
 
     it("renders GitHub link with correct href", () => {
@@ -68,7 +70,9 @@ describe("SiteFooter", () => {
     it("renders version in mono font", () => {
       render(<SiteFooter />);
 
-      const version = screen.getByText(`v${__APP_VERSION__}`);
+      const version = screen.getByText(
+        `v${__APP_VERSION__} (${__APP_COMMIT__})`,
+      );
       expect(version).toHaveClass("font-mono");
     });
   });

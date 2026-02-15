@@ -5,7 +5,7 @@ export function SiteFooter() {
     <footer className="motion-safe:animate-in motion-safe:fade-in border-t px-6 py-3 duration-400">
       <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-2 sm:flex-row">
         <span className="text-muted-foreground font-mono text-xs">
-          v{__APP_VERSION__}
+          v{__APP_VERSION__} ({__APP_COMMIT__})
         </span>
         <a
           href="https://github.com/comnam90/vdc-vault-readiness"
