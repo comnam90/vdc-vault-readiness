@@ -142,12 +142,12 @@ describe("JobTable", () => {
 
     // "Yes" appears in encrypted column AND GFS column
     // Encrypted: 3 Yes + GFS: 1 Yes = 4 total "Yes"
-    // Encrypted: 2 No + GFS: 4 No (false×2 + null×2) = 6 total "No"
+    // Encrypted: 2 No + GFS: 2 No (false×2; null renders as N/A) = 4 total "No"
     const yesBadges = screen.getAllByText("Yes");
     const noBadges = screen.getAllByText("No");
 
     expect(yesBadges.length).toBe(4);
-    expect(noBadges.length).toBe(6);
+    expect(noBadges.length).toBe(4);
   });
 
   it("filters jobs by name using search input", () => {
