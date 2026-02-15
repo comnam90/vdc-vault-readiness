@@ -169,10 +169,8 @@ describe("App", () => {
     mockError = "Something went wrong";
     render(<App />);
 
-    const alert = screen
-      .getByText(/something went wrong/i)
-      .closest("[role='alert']");
-    const wrapper = alert!.closest("[class*='animate-in']");
+    const alert = screen.getByRole("alert");
+    const wrapper = alert.closest("[class*='animate-in']");
     expect(wrapper).not.toBeNull();
     expect(wrapper!.className).toMatch(/fade-in/);
     expect(wrapper!.className).toMatch(/slide-in-from-bottom/);

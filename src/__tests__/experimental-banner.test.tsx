@@ -20,10 +20,11 @@ describe("ExperimentalBanner", () => {
       ).toBeInTheDocument();
     });
 
-    it("has alert role for accessibility", () => {
+    it("has status role for non-urgent accessibility", () => {
       render(<ExperimentalBanner />);
 
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+      expect(screen.getByRole("status")).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
   });
 
@@ -31,22 +32,22 @@ describe("ExperimentalBanner", () => {
     it("removes rounded corners for full-width banner look", () => {
       render(<ExperimentalBanner />);
 
-      const alert = screen.getByRole("alert");
-      expect(alert).toHaveClass("rounded-none");
+      const banner = screen.getByRole("status");
+      expect(banner).toHaveClass("rounded-none");
     });
 
     it("only shows bottom border", () => {
       render(<ExperimentalBanner />);
 
-      const alert = screen.getByRole("alert");
-      expect(alert).toHaveClass("border-x-0", "border-t-0");
+      const banner = screen.getByRole("status");
+      expect(banner).toHaveClass("border-x-0", "border-t-0");
     });
 
     it("applies fade-in animation with motion-safe prefix", () => {
       render(<ExperimentalBanner />);
 
-      const alert = screen.getByRole("alert");
-      expect(alert).toHaveClass(
+      const banner = screen.getByRole("status");
+      expect(banner).toHaveClass(
         "motion-safe:animate-in",
         "motion-safe:fade-in",
       );
