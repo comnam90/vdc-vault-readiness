@@ -160,6 +160,21 @@ describe("JobTable", () => {
     expect(screen.queryByText("VM Backup Daily")).not.toBeInTheDocument();
   });
 
+  it("shows result count when search filter is active", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+
+    const searchInput = screen.getByPlaceholderText(/search jobs/i);
+    fireEvent.change(searchInput, { target: { value: "SQL" } });
+
+    expect(screen.getByText(/1 of 5 jobs/i)).toBeInTheDocument();
+  });
+
+  it("does not show result count when search filter is empty", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+
+    expect(screen.queryByText(/\d+ of \d+ jobs/i)).not.toBeInTheDocument();
+  });
+
   it("shows empty state when filter matches nothing", () => {
     render(<JobTable jobs={MOCK_JOBS} />);
 
@@ -235,16 +250,16 @@ describe("JobTable", () => {
     // Find rows by job name, then check the parent row element
     const sqlAgentCell = screen.getByText("SQL Agent Backup");
     const sqlAgentRow = sqlAgentCell.closest("tr");
-    expect(sqlAgentRow).toHaveClass("bg-destructive/5");
+    expect(sqlAgentRow).toHaveClass("bg-destructive/10");
 
     const tapeJobCell = screen.getByText("Tape Job");
     const tapeJobRow = tapeJobCell.closest("tr");
-    expect(tapeJobRow).toHaveClass("bg-destructive/5");
+    expect(tapeJobRow).toHaveClass("bg-destructive/10");
 
     // Encrypted rows should NOT have destructive background
     const vmBackupCell = screen.getByText("VM Backup Daily");
     const vmBackupRow = vmBackupCell.closest("tr");
-    expect(vmBackupRow).not.toHaveClass("bg-destructive/5");
+    expect(vmBackupRow).not.toHaveClass("bg-destructive/10");
   });
 
   describe("smart columns", () => {

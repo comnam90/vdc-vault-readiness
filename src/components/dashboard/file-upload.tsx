@@ -69,19 +69,19 @@ export function FileUpload({ onFileSelected, error }: FileUploadProps) {
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "group/upload flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 p-12 text-center transition-all duration-150",
+        "group/upload flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 px-12 py-16 text-center transition-all duration-150",
         error
           ? "border-destructive motion-safe:animate-shake border-dashed"
           : isDragOver
             ? "border-primary motion-safe:animate-drag-pulse border-solid"
-            : "border-muted-foreground/40 hover:border-muted-foreground/60 hover:bg-muted/50 border-dashed hover:border-solid",
+            : "border-muted-foreground/25 bg-card/80 hover:border-muted-foreground/50 border-dashed shadow-sm backdrop-blur-sm hover:border-solid hover:shadow-md",
       )}
     >
       {/* Layered icon composition */}
       <div className="relative mb-4">
         <FileJson
           className={cn(
-            "size-14 transition-colors duration-150",
+            "size-16 transition-colors duration-150",
             error
               ? "text-destructive/60"
               : isDragOver
@@ -104,7 +104,7 @@ export function FileUpload({ onFileSelected, error }: FileUploadProps) {
           />
         </div>
       </div>
-      <p className="mb-1 text-lg font-medium">
+      <p className="mb-1 text-xl font-semibold">
         Drop Veeam Healthcheck JSON here
       </p>
       <p className="text-muted-foreground text-sm">

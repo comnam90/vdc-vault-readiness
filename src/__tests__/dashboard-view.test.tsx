@@ -197,6 +197,37 @@ describe("DashboardView", () => {
     expect(cards[2].className).toMatch(/delay-200/);
   });
 
+  it("uses stronger summary card borders and status tints", () => {
+    const { container } = render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    const cards = container.querySelectorAll("[data-slot='card']");
+    expect(cards[0].className).toMatch(/border-b-4/);
+    expect(cards[0].className).toMatch(/bg-card-tint-success/);
+    expect(cards[1].className).toMatch(/bg-card-tint-neutral/);
+    expect(cards[2].className).toMatch(/bg-card-tint-destructive/);
+    expect(cards[2].className).not.toMatch(/ring-2/);
+  });
+
+  it("shows readiness ring glow only when all checks pass", () => {
+    const { container } = render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={ALL_PASS_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+
+    const cards = container.querySelectorAll("[data-slot='card']");
+    expect(cards[2].className).toMatch(/ring-2/);
+    expect(cards[2].className).toMatch(/ring-primary\/20/);
+  });
+
   it("uses 400ms duration and 8px rise for entrance animation per §4", () => {
     const { container } = render(
       <DashboardView

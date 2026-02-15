@@ -200,12 +200,20 @@ export function JobTable({ jobs }: JobTableProps) {
 
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in space-y-4 duration-300">
-      <Input
-        placeholder="Search jobs..."
-        value={globalFilter}
-        onChange={(e) => setGlobalFilter(e.target.value)}
-        className="max-w-sm"
-      />
+      <div className="flex items-center gap-3">
+        <Input
+          placeholder="Search jobs..."
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          className="max-w-sm"
+        />
+        {globalFilter && (
+          <span className="text-muted-foreground text-sm tabular-nums">
+            {table.getFilteredRowModel().rows.length} of {jobs.length}{" "}
+            {jobs.length === 1 ? "job" : "jobs"}
+          </span>
+        )}
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader className="bg-muted/50">
@@ -260,8 +268,10 @@ export function JobTable({ jobs }: JobTableProps) {
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    "hover:bg-muted/30 cursor-pointer transition-colors",
-                    !row.original.Encrypted && "bg-destructive/5",
+                    "cursor-pointer transition-colors",
+                    row.original.Encrypted
+                      ? "hover:bg-muted/30"
+                      : "bg-destructive/10 hover:bg-destructive/15",
                   )}
                   onClick={() => handleRowSelect(row.original)}
                   onKeyDown={(e) => handleRowKeyDown(e, row.original)}

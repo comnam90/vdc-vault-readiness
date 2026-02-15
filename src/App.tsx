@@ -21,7 +21,10 @@ function App() {
   } = useAnalysis();
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div
+      data-testid="app-shell"
+      className="flex min-h-screen flex-col bg-[var(--surface-gradient)]"
+    >
       <ExperimentalBanner />
       <main className="flex flex-1 flex-col">
         {status === "processing" ? (
@@ -60,6 +63,10 @@ function App() {
                 <p className="text-muted-foreground mt-2">
                   Upload your Veeam Healthcheck JSON to validate Vault
                   compatibility
+                </p>
+                <p className="text-muted-foreground/60 mt-3 text-xs tracking-wide">
+                  Checks VBR version, encryption, SOBR configuration, licensing,
+                  and workload compatibility
                 </p>
               </div>
               <FileUpload onFileSelected={analyzeFile} />

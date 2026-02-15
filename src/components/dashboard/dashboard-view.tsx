@@ -25,7 +25,7 @@ import { SuccessCelebration } from "./success-celebration";
 import { cn } from "@/lib/utils";
 
 const SUMMARY_CARD =
-  "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards ease-[var(--ease-out)] border-b-2 shadow-sm transition-shadow duration-300 hover:shadow-md";
+  "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards ease-[var(--ease-out)] border-b-4 shadow-sm transition-shadow duration-300 hover:shadow-md";
 const CARD_LABEL =
   "text-muted-foreground text-xs font-semibold tracking-wide uppercase";
 
@@ -66,6 +66,7 @@ export function DashboardView({
     );
   const totalJobs = data.jobInfo.length;
   const hasFail = validations.some((v) => v.status === "fail");
+  const allChecksPass = validations.every((v) => v.status === "pass");
   const blockers = getBlockerValidations(validations);
   const hasBlockers = blockers.length > 0;
 
@@ -92,7 +93,9 @@ export function DashboardView({
         <Card
           className={cn(
             SUMMARY_CARD,
-            versionOk ? "border-b-primary" : "border-b-destructive",
+            versionOk
+              ? "border-b-primary bg-card-tint-success"
+              : "border-b-destructive bg-card-tint-destructive",
           )}
         >
           <CardHeader className="pb-2">
@@ -118,7 +121,10 @@ export function DashboardView({
         </Card>
 
         <Card
-          className={cn(SUMMARY_CARD, "border-b-muted-foreground delay-100")}
+          className={cn(
+            SUMMARY_CARD,
+            "border-b-muted-foreground bg-card-tint-neutral delay-100",
+          )}
         >
           <CardHeader className="pb-2">
             <CardDescription className={CARD_LABEL}>Total Jobs</CardDescription>
@@ -138,7 +144,10 @@ export function DashboardView({
           className={cn(
             SUMMARY_CARD,
             "delay-200",
-            hasFail ? "border-b-destructive" : "border-b-primary",
+            hasFail
+              ? "border-b-destructive bg-card-tint-destructive"
+              : "border-b-primary bg-card-tint-success",
+            allChecksPass && "ring-primary/20 ring-2",
           )}
         >
           <CardHeader className="pb-2">

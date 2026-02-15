@@ -109,12 +109,16 @@ describe("FileUpload", () => {
     expect(clickSpy).toHaveBeenCalled();
   });
 
-  it("has hover classes for background tint and border solidification", () => {
+  it("has premium drop-zone hover and surface classes", () => {
     render(<FileUpload onFileSelected={vi.fn()} />);
 
     const dropZone = screen.getByTestId("drop-zone");
     // When not dragging, hover classes should be present in the class list
-    expect(dropZone.className).toMatch(/hover:bg-muted\/50/);
+    expect(dropZone.className).toMatch(/bg-card\/80/);
+    expect(dropZone.className).toMatch(/shadow-sm/);
+    expect(dropZone.className).toMatch(/hover:shadow-md/);
+    expect(dropZone.className).toMatch(/backdrop-blur-sm/);
+    expect(dropZone.className).toMatch(/hover:border-muted-foreground\/50/);
     expect(dropZone.className).toMatch(/hover:border-solid/);
   });
 

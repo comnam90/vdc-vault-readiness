@@ -103,6 +103,17 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders value proposition text on landing page", () => {
+    render(<App />);
+    expect(screen.getByText(/checks vbr version/i)).toBeInTheDocument();
+  });
+
+  it("applies atmosphere gradient on app shell", () => {
+    render(<App />);
+    const shell = screen.getByTestId("app-shell");
+    expect(shell.className).toMatch(/bg-\[var\(--surface-gradient\)\]/);
+  });
+
   it("renders checklist loader when processing", () => {
     mockStatus = "processing";
     mockCurrentStep = "parse";

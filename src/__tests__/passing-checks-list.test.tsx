@@ -101,6 +101,18 @@ describe("PassingChecksList", () => {
     expect(screen.getByText(/2 checks passed/i)).toBeInTheDocument();
   });
 
+  it("uses celebrate-in animation classes on passing checks heading and icon", () => {
+    render(<PassingChecksList validations={[PASS_VBR, PASS_ENCRYPTION]} />);
+
+    const heading = screen.getByText(/2 checks passed/i);
+    expect(heading).toHaveClass("motion-safe:animate-celebrate-in");
+    expect(heading).toHaveClass("text-primary");
+
+    const icon = screen.getByTestId("passing-checks").querySelector("svg");
+    expect(icon).toHaveClass("motion-safe:animate-celebrate-in");
+    expect(icon).toHaveClass("text-primary");
+  });
+
   it("applies stagger animation delay to each passing check", () => {
     render(<PassingChecksList validations={[PASS_VBR, PASS_ENCRYPTION]} />);
 
