@@ -20,6 +20,13 @@ describe("formatSize", () => {
     expect(formatSize(500)).toEqual({ value: "500", unit: "GB" });
   });
 
+  it("rounds fractional GB values for readable display", () => {
+    expect(formatSize(809.518127441406)).toEqual({
+      value: "809.52",
+      unit: "GB",
+    });
+  });
+
   it("formats exactly 1024 as TB", () => {
     expect(formatSize(1024)).toEqual({ value: "1.00", unit: "TB" });
   });
