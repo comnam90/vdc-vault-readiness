@@ -7,6 +7,8 @@ export function enrichJobs(
 ): EnrichedJob[] {
   const sessionMap = new Map<string, SafeJobSession>();
 
+  // jobSessionSummaryByJob is expected to provide one row per JobName.
+  // If duplicates appear, keep the last row seen for deterministic behavior.
   for (const session of sessions) {
     sessionMap.set(session.JobName, session);
   }
