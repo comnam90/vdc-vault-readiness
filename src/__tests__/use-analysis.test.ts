@@ -30,8 +30,11 @@ const MOCK_ANALYSIS_RESULT = {
     securitySummary: [],
     jobInfo: [],
     Licenses: [],
-    dataErrors: [],
     jobSessionSummary: [],
+    sobr: [],
+    capExtents: [],
+    archExtents: [],
+    dataErrors: [],
   },
   validations: [
     {

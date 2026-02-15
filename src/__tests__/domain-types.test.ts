@@ -447,7 +447,6 @@ describe("Domain Types - NormalizedDataset extension", () => {
       securitySummary: [],
       jobInfo: [],
       Licenses: [],
-      dataErrors: [],
       jobSessionSummary: [
         {
           JobName: "Job A",
@@ -460,6 +459,10 @@ describe("Domain Types - NormalizedDataset extension", () => {
           MaxJobTime: null,
         },
       ],
+      sobr: [],
+      capExtents: [],
+      archExtents: [],
+      dataErrors: [],
     };
     expect(dataset.jobSessionSummary).toBeDefined();
     expect(dataset.jobSessionSummary).toHaveLength(1);
@@ -471,8 +474,11 @@ describe("Domain Types - NormalizedDataset extension", () => {
       securitySummary: [],
       jobInfo: [],
       Licenses: [],
-      dataErrors: [],
       jobSessionSummary: [],
+      sobr: [],
+      capExtents: [],
+      archExtents: [],
+      dataErrors: [],
     };
     expect(dataset.jobSessionSummary).toEqual([]);
   });
@@ -483,7 +489,6 @@ describe("Domain Types - NormalizedDataset extension", () => {
       securitySummary: [],
       jobInfo: [],
       Licenses: [],
-      dataErrors: [],
       jobSessionSummary: [
         {
           JobName: "Job A",
@@ -506,6 +511,10 @@ describe("Domain Types - NormalizedDataset extension", () => {
           MaxJobTime: null,
         },
       ],
+      sobr: [],
+      capExtents: [],
+      archExtents: [],
+      dataErrors: [],
     };
     expect(dataset.jobSessionSummary).toHaveLength(2);
   });
@@ -540,8 +549,11 @@ describe("Domain Types - NormalizedDataset extension", () => {
         },
       ],
       Licenses: [{ Edition: "Enterprise", Status: "Active" }],
-      dataErrors: [],
       jobSessionSummary: [],
+      sobr: [],
+      capExtents: [],
+      archExtents: [],
+      dataErrors: [],
     };
     expect(dataset.backupServer).toHaveLength(1);
     expect(dataset.jobInfo).toHaveLength(1);

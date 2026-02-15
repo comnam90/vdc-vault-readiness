@@ -54,8 +54,11 @@ const MOCK_DATA: NormalizedDataset = {
     },
   ],
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
-  dataErrors: [],
   jobSessionSummary: [],
+  sobr: [],
+  capExtents: [],
+  archExtents: [],
+  dataErrors: [],
 };
 
 const MOCK_VALIDATIONS: ValidationResult[] = [

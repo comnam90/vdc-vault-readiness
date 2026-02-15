@@ -43,6 +43,50 @@ export interface SafeJobSession {
   MaxJobTime: string | null;
 }
 
+export interface SafeSobr {
+  Name: string;
+  EnableCapacityTier: boolean;
+  CapacityTierCopy: boolean;
+  CapacityTierMove: boolean;
+  ArchiveTierEnabled: boolean;
+  ImmutableEnabled: boolean;
+  ExtentCount: number | null;
+  JobCount: number | null;
+  PolicyType: string | null;
+  UsePerVMFiles: boolean | null;
+  CapTierType: string | null;
+  ImmutablePeriod: number | null;
+  SizeLimitEnabled: boolean | null;
+  SizeLimit: number | null;
+}
+
+export interface SafeCapExtent {
+  Name: string;
+  SobrName: string;
+  EncryptionEnabled: boolean;
+  ImmutableEnabled: boolean;
+  Type: string | null;
+  Status: string | null;
+  CopyModeEnabled: boolean | null;
+  MoveModeEnabled: boolean | null;
+  MovePeriodDays: number | null;
+  ImmutablePeriod: number | null;
+  SizeLimitEnabled: boolean | null;
+  SizeLimit: number | null;
+}
+
+export interface SafeArchExtent {
+  SobrName: string;
+  Name: string;
+  ArchiveTierEnabled: boolean;
+  EncryptionEnabled: boolean;
+  ImmutableEnabled: boolean;
+  RetentionPeriod: number | null;
+  CostOptimizedEnabled: boolean | null;
+  FullBackupModeEnabled: boolean | null;
+  ImmutablePeriod: number | null;
+}
+
 export type DataError = {
   level: "Data Error";
   section:
@@ -50,7 +94,10 @@ export type DataError = {
     | "securitySummary"
     | "jobInfo"
     | "Licenses"
-    | "jobSessionSummaryByJob";
+    | "jobSessionSummaryByJob"
+    | "sobr"
+    | "capextents"
+    | "archextents";
   rowIndex: number;
   field: string;
   reason: string;
@@ -62,6 +109,9 @@ export interface NormalizedDataset {
   jobInfo: SafeJob[];
   Licenses: SafeLicense[];
   jobSessionSummary: SafeJobSession[];
+  sobr: SafeSobr[];
+  capExtents: SafeCapExtent[];
+  archExtents: SafeArchExtent[];
   dataErrors: DataError[];
 }
 

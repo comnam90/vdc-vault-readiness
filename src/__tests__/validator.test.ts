@@ -17,6 +17,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -40,6 +43,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -65,6 +71,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -88,6 +97,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -112,6 +124,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -139,6 +154,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -162,6 +180,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -180,6 +201,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -242,6 +266,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -304,6 +331,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -388,6 +418,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -414,6 +447,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -476,6 +512,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -536,6 +575,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -581,6 +623,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -624,6 +669,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -666,6 +714,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -747,6 +798,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -774,6 +828,9 @@ describe("validateHealthcheck", () => {
         Licenses: [{ Edition: "Community", Status: "Active" }],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -799,6 +856,9 @@ describe("validateHealthcheck", () => {
         Licenses: [{ Edition: "Free", Status: "Active" }],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -821,6 +881,9 @@ describe("validateHealthcheck", () => {
         Licenses: [{ Edition: "Enterprise", Status: "Active" }],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -843,6 +906,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -903,6 +969,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -965,6 +1034,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1031,6 +1103,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1110,6 +1185,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1154,6 +1232,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1197,6 +1278,9 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1210,7 +1294,7 @@ describe("validateHealthcheck", () => {
   });
 
   describe("All Rules Integration", () => {
-    it("returns results for all 7 rules", () => {
+    it("returns results for all 11 rules", () => {
       const data: NormalizedDataset = {
         backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
         securitySummary: [
@@ -1242,11 +1326,14 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(7);
+      expect(results).toHaveLength(11);
       expect(results.map((r) => r.ruleId)).toContain("vbr-version");
       expect(results.map((r) => r.ruleId)).toContain("global-encryption");
       expect(results.map((r) => r.ruleId)).toContain("job-encryption");
@@ -1254,6 +1341,10 @@ describe("validateHealthcheck", () => {
       expect(results.map((r) => r.ruleId)).toContain("agent-workload");
       expect(results.map((r) => r.ruleId)).toContain("license-edition");
       expect(results.map((r) => r.ruleId)).toContain("retention-period");
+      expect(results.map((r) => r.ruleId)).toContain("sobr-cap-encryption");
+      expect(results.map((r) => r.ruleId)).toContain("sobr-immutability");
+      expect(results.map((r) => r.ruleId)).toContain("archive-tier-edition");
+      expect(results.map((r) => r.ruleId)).toContain("capacity-tier-residency");
     });
 
     it("handles empty dataset gracefully", () => {
@@ -1264,11 +1355,14 @@ describe("validateHealthcheck", () => {
         Licenses: [],
         dataErrors: [],
         jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        archExtents: [],
       };
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(7);
+      expect(results).toHaveLength(11);
       // Version check should fail with empty backupServer
       const versionCheck = results.find((r) => r.ruleId === "vbr-version");
       expect(versionCheck?.status).toBe("fail");

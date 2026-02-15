@@ -142,7 +142,7 @@ describe("JobTable", () => {
 
     // "Yes" appears in encrypted column AND GFS column
     // Encrypted: 3 Yes + GFS: 1 Yes = 4 total "Yes"
-    // Encrypted: 2 No + GFS: 2 No (false×2) = 4 total "No"
+    // Encrypted: 2 No + GFS: 2 No (false×2; null renders as N/A) = 4 total "No"
     const yesBadges = screen.getAllByText("Yes");
     const noBadges = screen.getAllByText("No");
 
