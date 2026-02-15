@@ -322,12 +322,12 @@ describe("JobTable", () => {
       expect(naElements.length).toBeGreaterThanOrEqual(1);
     });
 
-    it("applies warning color for change rate >10%", () => {
+    it("applies warning token color for change rate >10%", () => {
       render(<JobTable jobs={MOCK_JOBS} />);
 
       // SQL Agent Backup has 15.5% change rate
       const rateElement = screen.getByText("15.5%");
-      expect(rateElement.className).toMatch(/text-amber/);
+      expect(rateElement.className).toMatch(/text-warning/);
     });
 
     it("applies destructive color for change rate >50%", () => {
@@ -383,6 +383,33 @@ describe("JobTable", () => {
       expect(
         gfsCellTexts.filter((t) => t === "No").length,
       ).toBeGreaterThanOrEqual(1);
+    });
+
+    it("renders GFS N/A when state is unknown", () => {
+      const jobs = [
+        createEnrichedJob({
+          JobName: "Unknown GFS Job",
+          GfsEnabled: null,
+          SourceSizeGB: 100,
+          sessionData: {
+            JobName: "Unknown GFS Job",
+            MaxDataSize: null,
+            AvgChangeRate: 5,
+            SuccessRate: null,
+            SessionCount: null,
+            Fails: null,
+            AvgJobTime: null,
+            MaxJobTime: null,
+          },
+        }),
+      ];
+      render(<JobTable jobs={jobs} />);
+
+      const jobRow = screen.getByText("Unknown GFS Job").closest("tr")!;
+      const cells = jobRow.querySelectorAll("td");
+      const gfsCellTexts = Array.from(cells).map((c) => c.textContent);
+      expect(gfsCellTexts).toContain("N/A");
+      expect(gfsCellTexts).not.toContain("No");
     });
   });
 

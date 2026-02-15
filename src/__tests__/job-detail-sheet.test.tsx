@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { JobDetailSheet } from "@/components/dashboard/job-detail-sheet";
 import type { EnrichedJob } from "@/types/enriched-job";
@@ -105,14 +105,17 @@ describe("JobDetailSheet", () => {
       expect(screen.getByText("2.0x")).toBeInTheDocument();
     });
 
-    it("renders N/A compression ratio when sizes missing", () => {
+    it("renders muted N/A compression ratio when sizes missing", () => {
       const job = createEnrichedJob({
         SourceSizeGB: null,
         OnDiskGB: null,
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
 
-      expect(screen.getByText("Compression Ratio")).toBeInTheDocument();
+      const row = screen.getByText("Compression Ratio").closest("div");
+      expect(row).not.toBeNull();
+      const value = within(row as HTMLElement).getByText("N/A");
+      expect(value).toHaveClass("text-muted-foreground");
     });
 
     it("renders change rate from session data", () => {
@@ -134,7 +137,7 @@ describe("JobDetailSheet", () => {
       expect(screen.getByText("5.2%")).toBeInTheDocument();
     });
 
-    it("color-codes high change rate in amber", () => {
+    it("color-codes high change rate with warning token", () => {
       const job = createEnrichedJob({
         sessionData: {
           JobName: "Test Job",
@@ -150,7 +153,7 @@ describe("JobDetailSheet", () => {
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
 
       const rateElement = screen.getByText("15.5%");
-      expect(rateElement.className).toMatch(/text-amber/);
+      expect(rateElement.className).toMatch(/text-warning/);
     });
 
     it("color-codes very high change rate in destructive", () => {
@@ -230,6 +233,19 @@ describe("JobDetailSheet", () => {
       expect(screen.getByText("GFS Policy")).toBeInTheDocument();
       expect(screen.getByText("None configured")).toBeInTheDocument();
     });
+
+    it("renders muted N/A when GFS state is unknown", () => {
+      const job = createEnrichedJob({
+        GfsEnabled: null,
+        GfsDetails: null,
+      });
+      render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+      const row = screen.getByText("GFS Policy").closest("div");
+      expect(row).not.toBeNull();
+      const value = within(row as HTMLElement).getByText("N/A");
+      expect(value).toHaveClass("text-muted-foreground");
+    });
   });
 
   describe("Configuration section", () => {
@@ -289,7 +305,7 @@ describe("JobDetailSheet", () => {
       expect(screen.getByText("98.5%")).toBeInTheDocument();
     });
 
-    it("renders amber success rate for moderate rate", () => {
+    it("renders warning token success rate for moderate rate", () => {
       const job = createEnrichedJob({
         sessionData: {
           JobName: "Test Job",
@@ -305,7 +321,7 @@ describe("JobDetailSheet", () => {
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
 
       const rateEl = screen.getByText("85.0%");
-      expect(rateEl.className).toMatch(/text-amber/);
+      expect(rateEl.className).toMatch(/text-warning/);
     });
 
     it("renders red success rate for low rate", () => {
@@ -376,6 +392,21 @@ describe("JobDetailSheet", () => {
       expect(screen.getByText("Success Rate")).toBeInTheDocument();
       const naElements = screen.getAllByText("N/A");
       expect(naElements.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("renders muted N/A for duration rows when session data is missing", () => {
+      const job = createEnrichedJob({ sessionData: null });
+      render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+      const avgRow = screen.getByText("Avg Duration").closest("div");
+      expect(avgRow).not.toBeNull();
+      const avgValue = within(avgRow as HTMLElement).getByText("N/A");
+      expect(avgValue).toHaveClass("text-muted-foreground");
+
+      const maxRow = screen.getByText("Max Duration").closest("div");
+      expect(maxRow).not.toBeNull();
+      const maxValue = within(maxRow as HTMLElement).getByText("N/A");
+      expect(maxValue).toHaveClass("text-muted-foreground");
     });
   });
 

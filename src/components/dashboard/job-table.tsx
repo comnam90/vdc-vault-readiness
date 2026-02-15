@@ -39,7 +39,7 @@ function ChangeRateCell({ rate }: { rate: number | null }) {
     return <span className="text-destructive font-mono">{formatted}</span>;
   }
   if (rate > 10) {
-    return <span className="font-mono text-amber-600">{formatted}</span>;
+    return <span className="text-warning font-mono">{formatted}</span>;
   }
   return <span className="font-mono">{formatted}</span>;
 }
@@ -110,22 +110,29 @@ const columns = [
     sortUndefined: "last",
     meta: { align: "right" },
   }),
-  columnHelper.accessor("GfsEnabled", {
+  columnHelper.accessor((row) => row.GfsEnabled ?? undefined, {
+    id: "gfsEnabled",
     header: "GFS",
     cell: (info) =>
-      info.getValue() ? (
+      info.getValue() === true ? (
         <Badge
           variant="outline"
           className="border-primary/30 bg-primary/5 text-primary"
         >
           Yes
         </Badge>
-      ) : (
+      ) : info.getValue() === false ? (
         <Badge variant="outline" className="text-muted-foreground">
           No
         </Badge>
+      ) : (
+        <Badge variant="outline" className="text-muted-foreground">
+          N/A
+        </Badge>
       ),
     enableSorting: true,
+    sortingFn: "basic",
+    sortUndefined: "last",
   }),
   columnHelper.accessor("Encrypted", {
     header: "Encrypted",

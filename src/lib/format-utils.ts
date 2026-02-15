@@ -10,7 +10,7 @@ export function formatSize(
   if (gb >= 1024) {
     return { value: (gb / 1024).toFixed(2), unit: "TB" };
   }
-  return { value: String(gb), unit: "GB" };
+  return { value: gb.toFixed(2).replace(/\.?0+$/, ""), unit: "GB" };
 }
 
 export function formatPercent(
