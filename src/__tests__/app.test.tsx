@@ -153,6 +153,11 @@ describe("App", () => {
     expect(mockReset).toHaveBeenCalledOnce();
   });
 
+  it("renders footer in idle state", () => {
+    render(<App />);
+    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
+  });
+
   it("applies entrance animation to idle state container", () => {
     render(<App />);
 
