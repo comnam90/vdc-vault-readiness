@@ -1,20 +1,21 @@
 # src/components/dashboard — Dashboard UI
 
-9 components composing the results view. Motion system with stagger animations and `prefers-reduced-motion` support. Three tabs: overview, jobs, sizing.
+10 components composing the results view. Motion system with stagger animations and `prefers-reduced-motion` support. Three tabs: overview, jobs, sizing.
 
 ## STRUCTURE
 
 ```
 dashboard/
-├── file-upload.tsx          # Drop zone with drag/click/keyboard input + error shake
-├── dashboard-view.tsx       # Main layout: header, summary cards, tabs (overview/jobs/sizing). Memoizes enrichJobs(). 204 lines
 ├── blockers-list.tsx        # Fail/warning alerts with severity ordering + stagger entrance. 87 lines
-├── job-table.tsx            # TanStack Table: search, sort, paginate EnrichedJob[]. Row click → sheet. 335 lines
-├── job-detail-sheet.tsx     # Right-side Sheet: storage, protection, config, session sections. 276 lines
-├── success-celebration.tsx  # All-pass state: ring animation + stagger fade-in
+├── calculator-inputs.tsx    # Vault sizing tab: displays aggregated source TB, change rate, retention, GFS
 ├── checklist-loader.tsx     # Processing state: step checklist with progress bar
+├── dashboard-view.tsx       # Main layout: header, summary cards, tabs (overview/jobs/sizing). Memoizes enrichJobs(). 204 lines
+├── experimental-banner.tsx  # Global status banner: experimental/development warning. 19 lines
+├── file-upload.tsx          # Drop zone with drag/click/keyboard input + error shake
+├── job-detail-sheet.tsx     # Right-side Sheet: storage, protection, config, session sections. 276 lines
+├── job-table.tsx            # TanStack Table: search, sort, paginate EnrichedJob[]. Row click → sheet. 335 lines
 ├── passing-checks-list.tsx  # Passing validations with stagger animation + check icons
-└── calculator-inputs.tsx    # Vault sizing tab: displays aggregated source TB, change rate, retention, GFS
+└── success-celebration.tsx  # All-pass state: ring animation + stagger fade-in
 ```
 
 ## WHERE TO LOOK
@@ -30,6 +31,7 @@ dashboard/
 | Show passing checks    | passing-checks-list.tsx | Uses getPassingValidations() from validation-selectors                        |
 | Vault sizing display   | calculator-inputs.tsx   | Uses buildCalculatorSummary() from calculator-aggregator                      |
 | Tab management         | dashboard-view.tsx      | 3 tabs: overview (blockers OR celebration), jobs (table), sizing (calculator) |
+| App status banner      | experimental-banner.tsx | Unconditional Alert at top of App layout; uses lucide FlaskConical icon       |
 
 ## CONVENTIONS
 
