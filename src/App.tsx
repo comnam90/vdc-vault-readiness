@@ -4,6 +4,7 @@ import { FileUpload } from "@/components/dashboard/file-upload";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import { ChecklistLoader } from "@/components/dashboard/checklist-loader";
 import { ExperimentalBanner } from "@/components/dashboard/experimental-banner";
+import { SiteFooter } from "@/components/dashboard/site-footer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -66,6 +67,7 @@ function App() {
           </div>
         )}
       </main>
+      <SiteFooter />
     </div>
   );
 }

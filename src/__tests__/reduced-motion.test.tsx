@@ -5,6 +5,7 @@ import { BlockersList } from "@/components/dashboard/blockers-list";
 import { FileUpload } from "@/components/dashboard/file-upload";
 import { SuccessCelebration } from "@/components/dashboard/success-celebration";
 import { ChecklistLoader } from "@/components/dashboard/checklist-loader";
+import { SiteFooter } from "@/components/dashboard/site-footer";
 import { MOCK_DATA, ALL_PASS_VALIDATIONS, FAIL_RESULT } from "./fixtures";
 
 describe("prefers-reduced-motion accessibility", () => {
@@ -120,6 +121,16 @@ describe("prefers-reduced-motion accessibility", () => {
         .querySelector("[data-testid='upload-icon-wrapper']");
       expect(uploadIcon).not.toBeNull();
       expect(uploadIcon?.className).toMatch(/motion-safe:.*-translate-y/);
+    });
+  });
+
+  describe("SiteFooter", () => {
+    it("uses motion-safe prefix for fade-in animation", () => {
+      render(<SiteFooter />);
+
+      const footer = screen.getByRole("contentinfo");
+      expect(footer.className).toMatch(/motion-safe:animate-in/);
+      expect(footer.className).toMatch(/motion-safe:fade-in/);
     });
   });
 });
