@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/comnam90/vdc-vault-readiness/compare/v1.0.0...v1.1.0) (2026-02-15)
+
+
+### Features
+
+* add VDC Vault Calculator sizing inputs tab ([#14](https://github.com/comnam90/vdc-vault-readiness/issues/14)) ([14f4714](https://github.com/comnam90/vdc-vault-readiness/commit/14f4714837ee1d5e23180ee4b560a31ad06b4b04))
+* **dashboard:** add job details smart columns and detail sheet ([#15](https://github.com/comnam90/vdc-vault-readiness/issues/15)) ([7e0dbe5](https://github.com/comnam90/vdc-vault-readiness/commit/7e0dbe57747773a79e80c9e4789024dab130d5d3))
+* **dashboard:** show passing checks below blockers in overview ([#12](https://github.com/comnam90/vdc-vault-readiness/issues/12)) ([c9466da](https://github.com/comnam90/vdc-vault-readiness/commit/c9466da260f3b86f965338c1864663b5198aa847))
+* **lib:** add SOBR analysis with capacity tier validation ([#16](https://github.com/comnam90/vdc-vault-readiness/issues/16)) ([c397e3f](https://github.com/comnam90/vdc-vault-readiness/commit/c397e3f860990770aee8137f58516b9afaa40875))
+* **theme:** setup Geist font and Veeam 2025 brand CSS variables ([#7](https://github.com/comnam90/vdc-vault-readiness/issues/7)) ([3f0a18a](https://github.com/comnam90/vdc-vault-readiness/commit/3f0a18ad996f19b1335421f8d177adfd9121897f))
+* **ui:** Phase 3 - Motion & Interaction polish ([#10](https://github.com/comnam90/vdc-vault-readiness/issues/10)) ([bfd2c29](https://github.com/comnam90/vdc-vault-readiness/commit/bfd2c2910308f3bccde054f42f3896c857c806a6))
+* **ui:** polish dashboard components with Precision Engineering aesthetic ([#9](https://github.com/comnam90/vdc-vault-readiness/issues/9)) ([9d26924](https://github.com/comnam90/vdc-vault-readiness/commit/9d269245c2d207aaa8b27c5f71a328b0ad38e9fa))
+
 ## 1.0.0 (2026-02-07)
 
 
