@@ -108,6 +108,17 @@ describe("App", () => {
     expect(screen.getByText(/checks vbr version/i)).toBeInTheDocument();
   });
 
+  it("renders Veeam Healthcheck link pointing to VeeamHub repo", () => {
+    render(<App />);
+    const link = screen.getByRole("link", { name: /veeam healthcheck/i });
+    expect(link).toHaveAttribute(
+      "href",
+      "https://github.com/VeeamHub/veeam-healthcheck/",
+    );
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
   it("applies atmosphere gradient on app shell", () => {
     render(<App />);
     const shell = screen.getByTestId("app-shell");

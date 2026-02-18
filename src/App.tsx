@@ -61,8 +61,16 @@ function App() {
                   VDC Vault Readiness
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                  Upload your Veeam Healthcheck JSON to validate Vault
-                  compatibility
+                  Upload your{" "}
+                  <a
+                    href="https://github.com/VeeamHub/veeam-healthcheck/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-foreground underline underline-offset-4"
+                  >
+                    Veeam Healthcheck
+                  </a>{" "}
+                  JSON to validate Vault compatibility
                 </p>
                 <p className="text-muted-foreground/60 mt-3 text-xs tracking-wide">
                   Checks VBR version, encryption, SOBR configuration, licensing,
