@@ -69,6 +69,7 @@ function App() {
                     className="hover:text-foreground underline underline-offset-4"
                   >
                     Veeam Healthcheck
+                    <span className="sr-only"> (opens in new tab)</span>
                   </a>{" "}
                   JSON to validate Vault compatibility
                 </p>

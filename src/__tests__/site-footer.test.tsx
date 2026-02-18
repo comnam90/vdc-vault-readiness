@@ -31,6 +31,12 @@ describe("SiteFooter", () => {
       expect(link).toHaveAttribute("target", "_blank");
       expect(link).toHaveAttribute("rel", "noopener noreferrer");
     });
+
+    it("includes sr-only new tab warning on GitHub link", () => {
+      render(<SiteFooter />);
+
+      expect(screen.getByText("(opens in new tab)")).toBeInTheDocument();
+    });
   });
 
   describe("accessibility", () => {

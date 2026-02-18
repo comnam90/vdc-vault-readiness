@@ -124,6 +124,7 @@ export function CalculatorInputs({ data }: CalculatorInputsProps) {
           >
             <ExternalLink className="mr-2 size-4" aria-hidden="true" />
             Open VDC Vault Calculator
+            <span className="sr-only"> (opens in new tab)</span>
           </a>
         </Button>
       </CardFooter>

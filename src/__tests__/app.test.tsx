@@ -117,6 +117,7 @@ describe("App", () => {
     );
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(link).toHaveTextContent(/opens in new tab/i);
   });
 
   it("applies atmosphere gradient on app shell", () => {

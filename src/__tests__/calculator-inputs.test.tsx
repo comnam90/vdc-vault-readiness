@@ -115,6 +115,7 @@ describe("CalculatorInputs", () => {
     );
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(link).toHaveTextContent(/opens in new tab/i);
   });
 
   it("handles empty data gracefully", () => {
