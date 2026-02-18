@@ -71,7 +71,7 @@ export function DashboardView({
   const hasBlockers = blockers.length > 0;
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto max-w-5xl space-y-6 p-6 duration-400 ease-[var(--ease-out)]">
+    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto w-full max-w-5xl space-y-6 p-6 duration-400 ease-[var(--ease-out)]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -177,13 +177,16 @@ export function DashboardView({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="jobs">Job Details</TabsTrigger>
           <TabsTrigger value="sizing">Sizing</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4 space-y-6">
+        <TabsContent
+          value="overview"
+          className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 space-y-6 motion-safe:data-[state=active]:duration-150"
+        >
           {hasBlockers ? (
             <>
               <BlockersList blockers={blockers} />
@@ -200,11 +203,17 @@ export function DashboardView({
           )}
         </TabsContent>
 
-        <TabsContent value="jobs" className="mt-4">
+        <TabsContent
+          value="jobs"
+          className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
+        >
           <JobTable jobs={enrichedJobs} />
         </TabsContent>
 
-        <TabsContent value="sizing" className="mt-4">
+        <TabsContent
+          value="sizing"
+          className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
+        >
           <CalculatorInputs data={data} validations={validations} />
         </TabsContent>
       </Tabs>

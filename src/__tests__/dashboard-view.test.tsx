@@ -197,6 +197,30 @@ describe("DashboardView", () => {
     expect(cards[2].className).toMatch(/delay-200/);
   });
 
+  it("TabsList stretches to full container width for visual stability", () => {
+    const { container } = render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+    const tabsList = container.querySelector("[data-slot='tabs-list']");
+    expect(tabsList?.className).toMatch(/\bw-full\b/);
+  });
+
+  it("outer wrapper declares w-full for stable cross-tab width", () => {
+    const { container } = render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={vi.fn()}
+      />,
+    );
+    const mainContainer = container.firstChild as HTMLElement;
+    expect(mainContainer.className).toMatch(/\bw-full\b/);
+  });
+
   it("uses stronger summary card borders and status tints", () => {
     const { container } = render(
       <DashboardView
