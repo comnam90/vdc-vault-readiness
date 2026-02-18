@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/comnam90/vdc-vault-readiness/compare/v1.2.0...v1.2.1) (2026-02-18)
+
+
+### Bug Fixes
+
+* **ci:** trigger publish on release event instead of tag push ([fd75a7e](https://github.com/comnam90/vdc-vault-readiness/commit/fd75a7e3fb7eccd485c1f89d3557a7404b9ef5bc))
+
 ## [1.2.0](https://github.com/comnam90/vdc-vault-readiness/compare/v1.1.0...v1.2.0) (2026-02-18)
 
 
