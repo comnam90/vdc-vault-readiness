@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/comnam90/vdc-vault-readiness/compare/v1.2.1...v1.2.2) (2026-02-18)
+
+
+### Bug Fixes
+
+* **ci:** chain deploy into release-please workflow to bypass GITHUB_TOKEN restriction ([9bbe293](https://github.com/comnam90/vdc-vault-readiness/commit/9bbe293e7134c6885562c9a8d63130c9c4919145))
+
 ## [1.2.1](https://github.com/comnam90/vdc-vault-readiness/compare/v1.2.0...v1.2.1) (2026-02-18)
 
 
