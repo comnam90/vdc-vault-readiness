@@ -6,7 +6,12 @@ import { FileUpload } from "@/components/dashboard/file-upload";
 import { SuccessCelebration } from "@/components/dashboard/success-celebration";
 import { ChecklistLoader } from "@/components/dashboard/checklist-loader";
 import { SiteFooter } from "@/components/dashboard/site-footer";
-import { MOCK_DATA, ALL_PASS_VALIDATIONS, FAIL_RESULT } from "./fixtures";
+import {
+  MOCK_DATA,
+  ALL_PASS_VALIDATIONS,
+  MIXED_VALIDATIONS,
+  FAIL_RESULT,
+} from "./fixtures";
 
 describe("prefers-reduced-motion accessibility", () => {
   describe("DashboardView", () => {
@@ -25,6 +30,24 @@ describe("prefers-reduced-motion accessibility", () => {
       expect(mainContainer.className).toMatch(
         /motion-safe:slide-in-from-bottom/,
       );
+    });
+
+    it("uses motion-safe prefix for tab content fade animation", () => {
+      const { container } = render(
+        <DashboardView
+          data={MOCK_DATA}
+          validations={MIXED_VALIDATIONS}
+          onReset={() => {}}
+        />,
+      );
+      const tabsContent = container.querySelectorAll(
+        "[data-slot='tabs-content']",
+      );
+      tabsContent.forEach((panel) => {
+        expect(panel.className).toMatch(
+          /motion-safe:data-\[state=active\]:animate-in/,
+        );
+      });
     });
 
     it("uses motion-safe prefix for card animations", () => {

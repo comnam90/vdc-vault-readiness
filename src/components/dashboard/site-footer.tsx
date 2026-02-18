@@ -15,6 +15,7 @@ export function SiteFooter() {
         >
           <SiGithub className="size-3.5" aria-hidden="true" />
           View on GitHub
+          <span className="sr-only"> (opens in new tab)</span>
         </a>
       </div>
     </footer>

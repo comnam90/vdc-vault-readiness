@@ -25,7 +25,7 @@ import { SuccessCelebration } from "./success-celebration";
 import { cn } from "@/lib/utils";
 
 const SUMMARY_CARD =
-  "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards ease-[var(--ease-out)] border-b-2 shadow-sm transition-shadow duration-300 hover:shadow-md";
+  "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards ease-[var(--ease-out)] border-b-4 shadow-sm transition-shadow duration-300 hover:shadow-md";
 const CARD_LABEL =
   "text-muted-foreground text-xs font-semibold tracking-wide uppercase";
 
@@ -66,11 +66,12 @@ export function DashboardView({
     );
   const totalJobs = data.jobInfo.length;
   const hasFail = validations.some((v) => v.status === "fail");
+  const allChecksPass = validations.every((v) => v.status === "pass");
   const blockers = getBlockerValidations(validations);
   const hasBlockers = blockers.length > 0;
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto max-w-5xl space-y-6 p-6 duration-400 ease-[var(--ease-out)]">
+    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto w-full max-w-5xl space-y-6 p-6 duration-400 ease-[var(--ease-out)]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -92,7 +93,9 @@ export function DashboardView({
         <Card
           className={cn(
             SUMMARY_CARD,
-            versionOk ? "border-b-primary" : "border-b-destructive",
+            versionOk
+              ? "border-b-primary bg-card-tint-success"
+              : "border-b-destructive bg-card-tint-destructive",
           )}
         >
           <CardHeader className="pb-2">
@@ -118,7 +121,10 @@ export function DashboardView({
         </Card>
 
         <Card
-          className={cn(SUMMARY_CARD, "border-b-muted-foreground delay-100")}
+          className={cn(
+            SUMMARY_CARD,
+            "border-b-muted-foreground bg-card-tint-neutral delay-100",
+          )}
         >
           <CardHeader className="pb-2">
             <CardDescription className={CARD_LABEL}>Total Jobs</CardDescription>
@@ -138,7 +144,10 @@ export function DashboardView({
           className={cn(
             SUMMARY_CARD,
             "delay-200",
-            hasFail ? "border-b-destructive" : "border-b-primary",
+            hasFail
+              ? "border-b-destructive bg-card-tint-destructive"
+              : "border-b-primary bg-card-tint-success",
+            allChecksPass && "ring-primary/20 ring-2",
           )}
         >
           <CardHeader className="pb-2">
@@ -168,13 +177,16 @@ export function DashboardView({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="jobs">Job Details</TabsTrigger>
           <TabsTrigger value="sizing">Sizing</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4 space-y-6">
+        <TabsContent
+          value="overview"
+          className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 space-y-6 motion-safe:data-[state=active]:duration-150"
+        >
           {hasBlockers ? (
             <>
               <BlockersList blockers={blockers} />
@@ -191,11 +203,17 @@ export function DashboardView({
           )}
         </TabsContent>
 
-        <TabsContent value="jobs" className="mt-4">
+        <TabsContent
+          value="jobs"
+          className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
+        >
           <JobTable jobs={enrichedJobs} />
         </TabsContent>
 
-        <TabsContent value="sizing" className="mt-4">
+        <TabsContent
+          value="sizing"
+          className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
+        >
           <CalculatorInputs data={data} validations={validations} />
         </TabsContent>
       </Tabs>

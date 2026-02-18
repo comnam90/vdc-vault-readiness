@@ -44,6 +44,14 @@
   --border: var(--french-grey);
   --input: var(--french-grey);
   --ring: var(--electric-azure);
+  --surface-gradient: linear-gradient(
+    180deg,
+    oklch(0.97 0.01 155 / 40%) 0%,
+    oklch(1 0 0) 60%
+  );
+  --card-tint-success: oklch(0.97 0.03 155);
+  --card-tint-destructive: oklch(0.97 0.03 25);
+  --card-tint-neutral: oklch(0.97 0.005 280);
 
   /* Extended Semantic Tokens */
   --success: var(--viridis);
@@ -92,6 +100,14 @@
     --primary-foreground: oklch(0.15 0 0);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
+    --surface-gradient: linear-gradient(
+      180deg,
+      oklch(0.18 0.01 155 / 30%) 0%,
+      oklch(0.15 0 0) 60%
+    );
+    --card-tint-success: oklch(0.19 0.03 155);
+    --card-tint-destructive: oklch(0.19 0.03 25);
+    --card-tint-neutral: oklch(0.19 0.005 280);
 
     /* Extended Semantic — Dark Mode */
     --success-muted: oklch(0.22 0.08 155);
@@ -139,6 +155,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-card-tint-success: var(--card-tint-success);
+  --color-card-tint-destructive: var(--card-tint-destructive);
+  --color-card-tint-neutral: var(--card-tint-neutral);
 
   /* Extended Semantic Colors */
   --color-success: var(--success);
@@ -170,6 +189,9 @@
 }
 
 @layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
   * {
     @apply border-border outline-ring/50;
   }
@@ -251,3 +273,21 @@
   animation: shake 300ms var(--ease-out) 1;
 }
 
+@keyframes celebrate-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@utility animate-celebrate-in {
+  animation: celebrate-in var(--duration-emphasis) var(--ease-spring) forwards;
+}

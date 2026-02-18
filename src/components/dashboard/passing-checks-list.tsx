@@ -24,9 +24,15 @@ export function PassingChecksList({
 
   return (
     <div data-testid="passing-checks" className="space-y-3">
-      <h3 className="text-muted-foreground text-sm font-medium">
-        {passing.length} {passing.length === 1 ? "check" : "checks"} passed
-      </h3>
+      <div className="flex items-center gap-2">
+        <CheckCircle2
+          className="text-primary motion-safe:animate-celebrate-in size-5"
+          aria-hidden="true"
+        />
+        <h3 className="text-primary motion-safe:animate-celebrate-in text-lg font-semibold">
+          {passing.length} {passing.length === 1 ? "check" : "checks"} passed
+        </h3>
+      </div>
 
       {passing.map((check, index) => (
         <Alert
