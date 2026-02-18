@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.0](https://github.com/comnam90/vdc-vault-readiness/compare/v1.1.0...v1.2.0) (2026-02-18)
+
+
+### Features
+
+* **dashboard:** add experimental site banner ([#18](https://github.com/comnam90/vdc-vault-readiness/issues/18)) ([cefb64c](https://github.com/comnam90/vdc-vault-readiness/commit/cefb64c578070e2e587591d0c38518da4eee5d61))
+* **ui:** add site footer with version and GitHub link ([#20](https://github.com/comnam90/vdc-vault-readiness/issues/20)) ([593542e](https://github.com/comnam90/vdc-vault-readiness/commit/593542e2198717c96a97f6db52ab9a1632899d89))
+* **ui:** apply design polish refinements ([#22](https://github.com/comnam90/vdc-vault-readiness/issues/22)) ([74ac3ef](https://github.com/comnam90/vdc-vault-readiness/commit/74ac3efc82cccdd95fd272820b8fc5d55b42ef3a))
+
 ## [1.1.0](https://github.com/comnam90/vdc-vault-readiness/compare/v1.0.0...v1.1.0) (2026-02-15)
 
 
