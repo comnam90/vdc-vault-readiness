@@ -1,9 +1,7 @@
-name: Deploy to Cloudflare Pages (Production Tag)
+name: Deploy to Cloudflare Pages (Manual)
 
 on:
-  release:
-    types: [published] # Release Please creates a GitHub Release — this fires correctly unlike push:tags via GITHUB_TOKEN
-  workflow_dispatch: # Allow manual trigger to backfill missed deployments
+  workflow_dispatch: # Manual trigger only — automatic deploys run via release.yml
 
 jobs:
   deploy:
@@ -15,7 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Add your build step here (e.g., npm run build)
       - name: Install & Build
         run: |
           npm install
@@ -26,6 +23,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # command: pages deploy <dist_folder> --project-name=<project> --branch=main
           command: pages deploy ./dist --project-name=vdc-vault-readiness --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
