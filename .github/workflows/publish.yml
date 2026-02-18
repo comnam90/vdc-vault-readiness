@@ -1,9 +1,9 @@
 name: Deploy to Cloudflare Pages (Production Tag)
 
 on:
-  push:
-    tags:
-      - 'v*' # Triggers on any tag starting with 'v'
+  release:
+    types: [published] # Release Please creates a GitHub Release — this fires correctly unlike push:tags via GITHUB_TOKEN
+  workflow_dispatch: # Allow manual trigger to backfill missed deployments
 
 jobs:
   deploy:
