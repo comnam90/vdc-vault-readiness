@@ -785,11 +785,11 @@ function normalizeArchExtents(
       ArchiveTierEnabled: archiveTierEnabled,
       EncryptionEnabled: encryptionEnabled,
       ImmutableEnabled: immutableEnabled,
-      RetentionPeriod: parseNumeric(
-        row.RetentionPeriod as string | null | undefined,
+      OffloadPeriod: parseNumeric(
+        row.OffloadPeriod as string | null | undefined,
         "archextents",
         rowIndex,
-        "RetentionPeriod",
+        "OffloadPeriod",
         dataErrors,
       ),
       CostOptimizedEnabled: parseBoolean(
@@ -797,13 +797,6 @@ function normalizeArchExtents(
       ),
       FullBackupModeEnabled: parseBoolean(
         row.FullBackupModeEnabled as string | null | undefined,
-      ),
-      ImmutablePeriod: parseNumeric(
-        row.ImmutablePeriod as string | null | undefined,
-        "archextents",
-        rowIndex,
-        "ImmutablePeriod",
-        dataErrors,
       ),
     };
 

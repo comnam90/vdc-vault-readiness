@@ -81,10 +81,9 @@ export interface SafeArchExtent {
   ArchiveTierEnabled: boolean;
   EncryptionEnabled: boolean;
   ImmutableEnabled: boolean;
-  RetentionPeriod: number | null;
+  OffloadPeriod: number | null;
   CostOptimizedEnabled: boolean | null;
   FullBackupModeEnabled: boolean | null;
-  ImmutablePeriod: number | null;
 }
 
 export type DataError = {

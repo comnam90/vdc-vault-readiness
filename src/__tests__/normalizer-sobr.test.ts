@@ -563,7 +563,7 @@ describe("normalizeArchExtents", () => {
     });
   });
 
-  it("parses RetentionPeriod as numeric value", () => {
+  it("parses OffloadPeriod as numeric value", () => {
     const raw: NormalizerInput = {
       ...BASE_INPUT,
       archextents: [
@@ -573,14 +573,14 @@ describe("normalizeArchExtents", () => {
           ArchiveTierEnabled: "True",
           EncryptionEnabled: "True",
           ImmutableEnabled: "False",
-          RetentionPeriod: "90",
+          OffloadPeriod: "90",
         },
       ],
     };
 
     const result = normalizeHealthcheck(raw);
 
-    expect(result.archExtents[0].RetentionPeriod).toBe(90);
+    expect(result.archExtents[0].OffloadPeriod).toBe(90);
   });
 
   it("defaults optional fields to null when missing", () => {
@@ -599,10 +599,9 @@ describe("normalizeArchExtents", () => {
 
     const result = normalizeHealthcheck(raw);
 
-    expect(result.archExtents[0].RetentionPeriod).toBeNull();
+    expect(result.archExtents[0].OffloadPeriod).toBeNull();
     expect(result.archExtents[0].CostOptimizedEnabled).toBeNull();
     expect(result.archExtents[0].FullBackupModeEnabled).toBeNull();
-    expect(result.archExtents[0].ImmutablePeriod).toBeNull();
   });
 
   it("returns empty array when archextents input is undefined", () => {
