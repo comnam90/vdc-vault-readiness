@@ -16,6 +16,12 @@ import { formatSize, formatPercent } from "@/lib/format-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { JobDetailSheet } from "./job-detail-sheet";
 import {
   Table,
@@ -81,7 +87,19 @@ const columns = [
   }),
   columnHelper.accessor("JobName", {
     header: "Job Name",
-    cell: (info) => <span className="font-medium">{info.getValue()}</span>,
+    cell: (info) => {
+      const value = info.getValue();
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="block max-w-[180px] truncate font-medium">
+              {value}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>{value}</TooltipContent>
+        </Tooltip>
+      );
+    },
     enableSorting: true,
   }),
   columnHelper.accessor("JobType", {
@@ -90,7 +108,17 @@ const columns = [
   }),
   columnHelper.accessor("RepoName", {
     header: "Repository",
-    cell: (info) => info.getValue(),
+    cell: (info) => {
+      const value = info.getValue();
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="block max-w-[140px] truncate">{value}</span>
+          </TooltipTrigger>
+          <TooltipContent>{value}</TooltipContent>
+        </Tooltip>
+      );
+    },
   }),
   columnHelper.accessor((row) => row.SourceSizeGB ?? undefined, {
     id: "sourceSize",
@@ -201,147 +229,149 @@ export function JobTable({ jobs }: JobTableProps) {
   };
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in space-y-4 duration-300">
-      <div className="flex items-center gap-3">
-        <Input
-          placeholder="Search jobs..."
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="max-w-sm"
-        />
-        {globalFilter && (
-          <span className="text-muted-foreground text-sm tabular-nums">
-            {table.getFilteredRowModel().rows.length} of {jobs.length}{" "}
-            {jobs.length === 1 ? "job" : "jobs"}
-          </span>
-        )}
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader className="bg-muted/50">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  const align =
-                    (header.column.columnDef.meta as { align?: string })
-                      ?.align === "right"
-                      ? "text-right"
-                      : "";
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className={cn(
-                        "text-muted-foreground text-xs font-semibold tracking-wide uppercase",
-                        align,
-                      )}
-                    >
-                      {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                        <button
-                          type="button"
-                          className={cn(
-                            "flex items-center gap-1",
-                            align && "ml-auto",
-                          )}
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          <ArrowUpDown className="size-3" />
-                        </button>
-                      ) : (
-                        flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )
-                      )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  role="button"
-                  tabIndex={0}
-                  className={cn(
-                    "cursor-pointer transition-colors",
-                    row.original.Encrypted
-                      ? "hover:bg-muted/30"
-                      : "bg-destructive/10 hover:bg-destructive/15",
-                  )}
-                  onClick={() => handleRowSelect(row.original)}
-                  onKeyDown={(e) => handleRowKeyDown(e, row.original)}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const cellAlign =
-                      (cell.column.columnDef.meta as { align?: string })
+    <TooltipProvider>
+      <div className="motion-safe:animate-in motion-safe:fade-in space-y-4 duration-300">
+        <div className="flex items-center gap-3">
+          <Input
+            placeholder="Search jobs..."
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="max-w-sm"
+          />
+          {globalFilter && (
+            <span className="text-muted-foreground text-sm tabular-nums">
+              {table.getFilteredRowModel().rows.length} of {jobs.length}{" "}
+              {jobs.length === 1 ? "job" : "jobs"}
+            </span>
+          )}
+        </div>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    const align =
+                      (header.column.columnDef.meta as { align?: string })
                         ?.align === "right"
                         ? "text-right"
                         : "";
                     return (
-                      <TableCell key={cell.id} className={cellAlign}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
+                      <TableHead
+                        key={header.id}
+                        className={cn(
+                          "text-muted-foreground text-xs font-semibold tracking-wide uppercase",
+                          align,
                         )}
-                      </TableCell>
+                      >
+                        {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                          <button
+                            type="button"
+                            className={cn(
+                              "flex items-center gap-1",
+                              align && "ml-auto",
+                            )}
+                            onClick={header.column.getToggleSortingHandler()}
+                          >
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                            <ArrowUpDown className="size-3" />
+                          </button>
+                        ) : (
+                          flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )
+                        )}
+                      </TableHead>
                     );
                   })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="text-muted-foreground h-24 text-center"
-                >
-                  No jobs found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      {table.getPageCount() > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground text-sm">
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-            </Button>
-          </div>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    role="button"
+                    tabIndex={0}
+                    className={cn(
+                      "cursor-pointer transition-colors",
+                      row.original.Encrypted
+                        ? "hover:bg-muted/30"
+                        : "bg-destructive/10 hover:bg-destructive/15",
+                    )}
+                    onClick={() => handleRowSelect(row.original)}
+                    onKeyDown={(e) => handleRowKeyDown(e, row.original)}
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const cellAlign =
+                        (cell.column.columnDef.meta as { align?: string })
+                          ?.align === "right"
+                          ? "text-right"
+                          : "";
+                      return (
+                        <TableCell key={cell.id} className={cellAlign}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="text-muted-foreground h-24 text-center"
+                  >
+                    No jobs found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
-      )}
+        {table.getPageCount() > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground text-sm">
+              Page {table.getState().pagination.pageIndex + 1} of{" "}
+              {table.getPageCount()}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
 
-      <JobDetailSheet
-        job={selectedJob}
-        open={selectedJob !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedJob(null);
-        }}
-      />
-    </div>
+        <JobDetailSheet
+          job={selectedJob}
+          open={selectedJob !== null}
+          onOpenChange={(open) => {
+            if (!open) setSelectedJob(null);
+          }}
+        />
+      </div>
+    </TooltipProvider>
   );
 }

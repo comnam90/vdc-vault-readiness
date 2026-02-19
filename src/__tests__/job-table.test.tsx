@@ -484,6 +484,20 @@ describe("JobTable", () => {
     });
   });
 
+  it("applies truncation class to job name cells", () => {
+    render(
+      <JobTable
+        jobs={[
+          createEnrichedJob({
+            JobName: "A Very Long Job Name That Should Be Truncated",
+          }),
+        ]}
+      />,
+    );
+    const truncated = document.querySelector(".truncate");
+    expect(truncated).toBeInTheDocument();
+  });
+
   describe("column sorting", () => {
     it("sorts by Source Size values with nulls last", () => {
       const jobs = [
