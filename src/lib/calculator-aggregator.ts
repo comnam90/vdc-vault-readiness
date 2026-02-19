@@ -143,13 +143,18 @@ export function aggregateGfsMax(jobs: SafeJob[]): GfsResult {
 export function buildCalculatorSummary(
   jobs: SafeJob[],
   sessions: SafeJobSession[],
+  excludedJobNames: Set<string> = new Set(),
 ): CalculatorSummary {
-  const gfs = aggregateGfsMax(jobs);
-  const originalMax = getMaxRetentionDays(jobs);
+  const filteredJobs =
+    excludedJobNames.size > 0
+      ? jobs.filter((j) => !excludedJobNames.has(j.JobName))
+      : jobs;
+  const gfs = aggregateGfsMax(filteredJobs);
+  const originalMax = getMaxRetentionDays(filteredJobs);
 
   return {
-    totalSourceDataTB: calculateTotalSourceDataTB(jobs),
-    weightedAvgChangeRate: calculateWeightedChangeRate(jobs, sessions),
+    totalSourceDataTB: calculateTotalSourceDataTB(filteredJobs),
+    weightedAvgChangeRate: calculateWeightedChangeRate(filteredJobs, sessions),
     immutabilityDays: 30,
     maxRetentionDays:
       originalMax !== null

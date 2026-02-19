@@ -508,3 +508,39 @@ describe("buildCalculatorSummary", () => {
     });
   });
 });
+
+describe("buildCalculatorSummary with exclusions", () => {
+  it("excludes jobs by name from all aggregations", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "Job A", SourceSizeGB: 1024, RetainDays: 14 }),
+      makeJob({ JobName: "Job B", SourceSizeGB: 1024, RetainDays: 60 }),
+    ];
+    const sessions: SafeJobSession[] = [
+      makeSession({ JobName: "Job A", AvgChangeRate: 10 }),
+      makeSession({ JobName: "Job B", AvgChangeRate: 20 }),
+    ];
+    const excluded = new Set(["Job B"]);
+    const summary = buildCalculatorSummary(jobs, sessions, excluded);
+    // Only Job A: 1024 GB = 1 TB
+    expect(summary.totalSourceDataTB).toBeCloseTo(1.0, 4);
+    // Only Job A change rate
+    expect(summary.weightedAvgChangeRate).toBeCloseTo(10, 1);
+    // Job A retention = 14, but minimum is 30
+    expect(summary.maxRetentionDays).toBe(30);
+  });
+
+  it("returns full aggregation when excluded set is empty", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "Job A", SourceSizeGB: 512 }),
+      makeJob({ JobName: "Job B", SourceSizeGB: 512 }),
+    ];
+    const summary = buildCalculatorSummary(jobs, [], new Set());
+    expect(summary.totalSourceDataTB).toBeCloseTo(1.0, 4);
+  });
+
+  it("handles undefined excluded set (backward compat)", () => {
+    const jobs: SafeJob[] = [makeJob({ SourceSizeGB: 1024 })];
+    const summary = buildCalculatorSummary(jobs, []);
+    expect(summary.totalSourceDataTB).toBeCloseTo(1.0, 4);
+  });
+});
