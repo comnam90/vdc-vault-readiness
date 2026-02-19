@@ -129,9 +129,15 @@ describe("JobTable", () => {
   it("renders column headers", () => {
     render(<JobTable jobs={MOCK_JOBS} />);
 
-    expect(screen.getByText("Job Name")).toBeInTheDocument();
-    expect(screen.getByText("Type")).toBeInTheDocument();
-    expect(screen.getByText("Repository")).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Job Name" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Type" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Repository" }),
+    ).toBeInTheDocument();
     // "Encrypted" appears in both the column header and sr-only status labels
     expect(
       screen.getByRole("columnheader", { name: /encrypted/i }),
@@ -366,7 +372,9 @@ describe("JobTable", () => {
     it("renders GFS column header", () => {
       render(<JobTable jobs={MOCK_JOBS} />);
 
-      expect(screen.getByText("GFS")).toBeInTheDocument();
+      expect(
+        screen.getByRole("columnheader", { name: "GFS" }),
+      ).toBeInTheDocument();
     });
 
     it("renders GFS Yes badge when enabled", () => {
@@ -483,6 +491,38 @@ describe("JobTable", () => {
       const row = vmBackupCell.closest("tr");
       expect(row!.className).toMatch(/cursor-pointer/);
     });
+  });
+
+  it("filters rows by job type via multiselect", async () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+    const typeFilterBtn = screen.getByRole("button", {
+      name: /filter by type/i,
+    });
+    fireEvent.click(typeFilterBtn);
+    const vmwareOption = screen.getByRole("checkbox", {
+      name: /vmware backup/i,
+    });
+    fireEvent.click(vmwareOption);
+    expect(screen.getByText("VM Backup Daily")).toBeInTheDocument();
+    expect(screen.queryByText("SQL Agent Backup")).not.toBeInTheDocument();
+  });
+
+  it("filters rows by encryption toggle", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+    const encryptedToggle = screen.getByRole("button", {
+      name: /show encrypted only/i,
+    });
+    fireEvent.click(encryptedToggle);
+    expect(screen.getByText("VM Backup Daily")).toBeInTheDocument();
+    expect(screen.queryByText("SQL Agent Backup")).not.toBeInTheDocument();
+  });
+
+  it("filters rows by GFS toggle", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+    const gfsToggle = screen.getByRole("button", { name: /show gfs only/i });
+    fireEvent.click(gfsToggle);
+    expect(screen.getByText("VM Backup Daily")).toBeInTheDocument();
+    expect(screen.queryByText("SQL Agent Backup")).not.toBeInTheDocument();
   });
 
   it("renders a checkbox for each job row", () => {

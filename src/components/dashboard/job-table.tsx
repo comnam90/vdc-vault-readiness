@@ -8,8 +8,14 @@ import {
   flexRender,
   createColumnHelper,
   type SortingState,
+  type ColumnFiltersState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, LockKeyhole, LockKeyholeOpen } from "lucide-react";
+import {
+  ArrowUpDown,
+  Filter,
+  LockKeyhole,
+  LockKeyholeOpen,
+} from "lucide-react";
 import type { EnrichedJob } from "@/types/enriched-job";
 import { cn } from "@/lib/utils";
 import { formatSize, formatPercent } from "@/lib/format-utils";
@@ -17,6 +23,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
@@ -64,6 +75,118 @@ function SourceSizeCell({ gb }: { gb: number | null }) {
     </span>
   );
 }
+
+// ── Filter helpers ────────────────────────────────────────────────────────────
+
+interface MultiSelectFilterProps {
+  label: string;
+  options: string[];
+  value: string[];
+  onChange: (v: string[]) => void;
+}
+
+function MultiSelectFilter({
+  label,
+  options,
+  value,
+  onChange,
+}: MultiSelectFilterProps) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          aria-label={`filter by ${label.toLowerCase()}`}
+          className={cn(
+            "h-8 gap-1 text-xs",
+            value.length > 0 && "border-primary text-primary",
+          )}
+        >
+          <Filter className="size-3" aria-hidden="true" />
+          {label}
+          {value.length > 0 && (
+            <Badge variant="secondary" className="ml-1 rounded-sm px-1 text-xs">
+              {value.length}
+            </Badge>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-48 p-2" align="start">
+        <div className="space-y-1">
+          {options.map((opt) => (
+            <label
+              key={opt}
+              className="hover:bg-muted flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm"
+            >
+              <Checkbox
+                checked={value.includes(opt)}
+                onCheckedChange={(checked) => {
+                  const next = checked
+                    ? [...value, opt]
+                    : value.filter((v) => v !== opt);
+                  onChange(next);
+                }}
+              />
+              <span>{opt}</span>
+            </label>
+          ))}
+        </div>
+        {value.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-1 w-full text-xs"
+            onClick={() => onChange([])}
+          >
+            Clear
+          </Button>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+type ToggleState = "all" | "yes" | "no";
+
+interface ThreeStateToggleProps {
+  label: string;
+  ariaLabel: string;
+  value: ToggleState;
+  onChange: (v: ToggleState) => void;
+}
+
+function ThreeStateToggle({
+  label,
+  ariaLabel,
+  value,
+  onChange,
+}: ThreeStateToggleProps) {
+  const cycle: ToggleState[] = ["all", "yes", "no"];
+  const next = cycle[(cycle.indexOf(value) + 1) % cycle.length];
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      aria-label={ariaLabel}
+      className={cn(
+        "h-8 text-xs",
+        value === "yes" && "border-primary text-primary",
+        value === "no" && "border-destructive text-destructive",
+      )}
+      onClick={() => onChange(next)}
+    >
+      {label}
+      {value !== "all" && (
+        <Badge variant="secondary" className="ml-1 rounded-sm px-1 text-xs">
+          {value === "yes" ? "Yes" : "No"}
+        </Badge>
+      )}
+    </Button>
+  );
+}
+
+// ── Column definitions ────────────────────────────────────────────────────────
 
 function buildColumns(
   excludedJobNames: Set<string>,
@@ -134,6 +257,10 @@ function buildColumns(
     }),
     columnHelper.accessor("JobType", {
       header: "Type",
+      filterFn: (row, _id, filterValue: string[]) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        return filterValue.includes(row.original.JobType);
+      },
       cell: (info) => info.getValue(),
     }),
     columnHelper.accessor("RepoName", {
@@ -174,6 +301,11 @@ function buildColumns(
     columnHelper.accessor((row) => row.GfsEnabled ?? undefined, {
       id: "gfsEnabled",
       header: "GFS",
+      filterFn: (row, _id, filterValue: "all" | "yes" | "no") => {
+        if (!filterValue || filterValue === "all") return true;
+        const gfs = row.original.GfsEnabled;
+        return filterValue === "yes" ? gfs === true : gfs === false;
+      },
       cell: (info) =>
         info.getValue() === true ? (
           <Badge
@@ -197,6 +329,12 @@ function buildColumns(
     }),
     columnHelper.accessor("Encrypted", {
       header: "Encrypted",
+      filterFn: (row, _id, filterValue: "all" | "yes" | "no") => {
+        if (!filterValue || filterValue === "all") return true;
+        return filterValue === "yes"
+          ? row.original.Encrypted
+          : !row.original.Encrypted;
+      },
       cell: (info) =>
         info.getValue() ? (
           <Badge
@@ -230,6 +368,7 @@ export function JobTable({
 }: JobTableProps) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [selectedJob, setSelectedJob] = useState<EnrichedJob | null>(null);
 
   const columns = useMemo(
@@ -240,9 +379,10 @@ export function JobTable({
   const table = useReactTable({
     data: jobs,
     columns,
-    state: { globalFilter, sorting },
+    state: { globalFilter, sorting, columnFilters },
     onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     globalFilterFn: (row, _columnId, filterValue: string) => {
       return row.original.JobName.toLowerCase().includes(
         filterValue.toLowerCase(),
@@ -274,14 +414,53 @@ export function JobTable({
   return (
     <TooltipProvider>
       <div className="motion-safe:animate-in motion-safe:fade-in space-y-4 duration-300">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Input
             placeholder="Search jobs..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-sm"
+            className="max-w-[200px]"
           />
-          {globalFilter && (
+          <MultiSelectFilter
+            label="Type"
+            options={[...new Set(jobs.map((j) => j.JobType))].sort()}
+            value={
+              (table.getColumn("JobType")?.getFilterValue() as string[]) ?? []
+            }
+            onChange={(v) =>
+              table
+                .getColumn("JobType")
+                ?.setFilterValue(v.length ? v : undefined)
+            }
+          />
+          <ThreeStateToggle
+            label="Encrypted"
+            ariaLabel="show encrypted only"
+            value={
+              (table.getColumn("Encrypted")?.getFilterValue() as ToggleState) ??
+              "all"
+            }
+            onChange={(v) =>
+              table
+                .getColumn("Encrypted")
+                ?.setFilterValue(v === "all" ? undefined : v)
+            }
+          />
+          <ThreeStateToggle
+            label="GFS"
+            ariaLabel="show gfs only"
+            value={
+              (table
+                .getColumn("gfsEnabled")
+                ?.getFilterValue() as ToggleState) ?? "all"
+            }
+            onChange={(v) =>
+              table
+                .getColumn("gfsEnabled")
+                ?.setFilterValue(v === "all" ? undefined : v)
+            }
+          />
+          {table.getFilteredRowModel().rows.length !== jobs.length && (
             <span className="text-muted-foreground text-sm tabular-nums">
               {table.getFilteredRowModel().rows.length} of {jobs.length}{" "}
               {jobs.length === 1 ? "job" : "jobs"}
