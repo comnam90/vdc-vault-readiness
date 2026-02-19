@@ -375,6 +375,22 @@ describe("DashboardView", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders repo names in Repositories tab", async () => {
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={ALL_PASS_VALIDATIONS}
+        onReset={() => {}}
+      />,
+    );
+    const reposTab = screen.getByRole("tab", { name: "Repositories" });
+    await act(async () => {
+      fireEvent.mouseDown(reposTab);
+      fireEvent.click(reposTab);
+    });
+    expect(await screen.findByText("LinuxHardened")).toBeInTheDocument();
+  });
+
   describe("multiple backup servers", () => {
     it("displays oldest version when multiple servers have mixed versions", () => {
       render(

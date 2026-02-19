@@ -21,6 +21,7 @@ import { CalculatorInputs } from "@/components/dashboard/calculator-inputs";
 import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
 import { PassingChecksList } from "./passing-checks-list";
+import { RepositoriesTab } from "./repositories-tab";
 import { SuccessCelebration } from "./success-celebration";
 import { cn } from "@/lib/utils";
 
@@ -229,9 +230,12 @@ export function DashboardView({
           value="repositories"
           className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
         >
-          <p className="text-muted-foreground text-sm">
-            Repositories tab — coming soon.
-          </p>
+          <RepositoriesTab
+            jobs={data.jobInfo}
+            sobr={data.sobr}
+            capExtents={data.capExtents}
+            archExtents={data.archExtents}
+          />
         </TabsContent>
       </Tabs>
     </div>
