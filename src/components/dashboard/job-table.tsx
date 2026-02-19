@@ -388,6 +388,15 @@ export function JobTable({
     [excludedJobNames, onExcludedChange],
   );
 
+  const jobTypeOptions = useMemo(
+    () => [...new Set(jobs.map((j) => j.JobType))].sort(),
+    [jobs],
+  );
+  const repoNameOptions = useMemo(
+    () => [...new Set(jobs.map((j) => j.RepoName))].sort(),
+    [jobs],
+  );
+
   const table = useReactTable({
     data: jobs,
     columns,
@@ -435,7 +444,7 @@ export function JobTable({
           />
           <MultiSelectFilter
             label="Type"
-            options={[...new Set(jobs.map((j) => j.JobType))].sort()}
+            options={jobTypeOptions}
             value={
               (table.getColumn("JobType")?.getFilterValue() as string[]) ?? []
             }
@@ -447,7 +456,7 @@ export function JobTable({
           />
           <MultiSelectFilter
             label="Repository"
-            options={[...new Set(jobs.map((j) => j.RepoName))].sort()}
+            options={repoNameOptions}
             value={
               (table.getColumn("RepoName")?.getFilterValue() as string[]) ?? []
             }
