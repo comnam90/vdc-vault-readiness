@@ -3,7 +3,6 @@ import { describe, it, expect, vi } from "vitest";
 import { CalculatorInputs } from "@/components/dashboard/calculator-inputs";
 import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
 import type { NormalizedDataset } from "@/types/domain";
-import type { ValidationResult } from "@/types/validation";
 
 // Mock the aggregator function
 vi.mock("@/lib/calculator-aggregator", () => ({
@@ -15,8 +14,6 @@ describe("CalculatorInputs", () => {
     jobInfo: [],
     jobSessionSummary: [],
   } as unknown as NormalizedDataset;
-
-  const mockValidations = [] as ValidationResult[];
 
   it("renders all 5 calculator input labels", () => {
     vi.mocked(buildCalculatorSummary).mockReturnValue({
@@ -30,7 +27,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: 1,
     });
 
-    render(<CalculatorInputs data={mockData} validations={mockValidations} />);
+    render(<CalculatorInputs data={mockData} />);
 
     expect(screen.getByText("Source Data")).toBeInTheDocument();
     expect(screen.getByText("Daily Change Rate")).toBeInTheDocument();
@@ -51,7 +48,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: 7,
     });
 
-    render(<CalculatorInputs data={mockData} validations={mockValidations} />);
+    render(<CalculatorInputs data={mockData} />);
 
     // Source Data: 2 decimal places
     expect(screen.getByText("123.46 TB")).toBeInTheDocument();
@@ -84,7 +81,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
     });
 
-    render(<CalculatorInputs data={mockData} validations={mockValidations} />);
+    render(<CalculatorInputs data={mockData} />);
 
     const naElements = screen.getAllByText("N/A");
     expect(naElements.length).toBeGreaterThan(0); // Should appear multiple times
@@ -104,7 +101,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
     });
 
-    render(<CalculatorInputs data={mockData} validations={mockValidations} />);
+    render(<CalculatorInputs data={mockData} />);
 
     const link = screen.getByRole("link", {
       name: /open vdc vault calculator/i,
@@ -131,9 +128,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
     });
 
-    const { container } = render(
-      <CalculatorInputs data={mockData} validations={mockValidations} />,
-    );
+    const { container } = render(<CalculatorInputs data={mockData} />);
     expect(container).toBeInTheDocument();
   });
 
@@ -149,7 +144,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
     });
 
-    render(<CalculatorInputs data={mockData} validations={mockValidations} />);
+    render(<CalculatorInputs data={mockData} />);
 
     expect(screen.getAllByText("30 days").length).toBeGreaterThan(0);
     expect(screen.getByText("(current: 14 days)")).toBeInTheDocument();
@@ -167,7 +162,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
     });
 
-    render(<CalculatorInputs data={mockData} validations={mockValidations} />);
+    render(<CalculatorInputs data={mockData} />);
 
     expect(screen.getByText("45 days")).toBeInTheDocument();
     expect(screen.queryByText(/current:/)).not.toBeInTheDocument();
@@ -185,7 +180,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
     });
 
-    render(<CalculatorInputs data={mockData} validations={mockValidations} />);
+    render(<CalculatorInputs data={mockData} />);
 
     expect(screen.queryByText(/current:/)).not.toBeInTheDocument();
   });
@@ -202,13 +197,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
     });
     const excluded = new Set(["Job B"]);
-    render(
-      <CalculatorInputs
-        data={mockData}
-        validations={[]}
-        excludedJobNames={excluded}
-      />,
-    );
+    render(<CalculatorInputs data={mockData} excludedJobNames={excluded} />);
     // Only Job A: 1024 GB = 1 TB
     expect(screen.getByText("1.00 TB")).toBeInTheDocument();
   });

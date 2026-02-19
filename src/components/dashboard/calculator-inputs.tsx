@@ -2,7 +2,6 @@ import { ExternalLink } from "lucide-react";
 import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
 import { formatPercent, formatTB } from "@/lib/format-utils";
 import type { NormalizedDataset } from "@/types/domain";
-import type { ValidationResult } from "@/types/validation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MINIMUM_RETENTION_DAYS } from "@/lib/constants";
@@ -17,7 +16,6 @@ import {
 
 interface CalculatorInputsProps {
   data: NormalizedDataset;
-  validations: ValidationResult[];
   excludedJobNames?: Set<string>;
 }
 

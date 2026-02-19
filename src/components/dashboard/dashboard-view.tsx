@@ -222,11 +222,7 @@ export function DashboardView({
           value="sizing"
           className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
         >
-          <CalculatorInputs
-            data={data}
-            validations={validations}
-            excludedJobNames={excludedJobNames}
-          />
+          <CalculatorInputs data={data} excludedJobNames={excludedJobNames} />
         </TabsContent>
 
         <TabsContent
