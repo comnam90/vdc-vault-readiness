@@ -510,7 +510,7 @@ describe("JobTable", () => {
   it("filters rows by encryption toggle", () => {
     render(<JobTable jobs={MOCK_JOBS} />);
     const encryptedToggle = screen.getByRole("button", {
-      name: /show encrypted only/i,
+      name: /filter by encrypted status/i,
     });
     fireEvent.click(encryptedToggle);
     expect(screen.getByText("VM Backup Daily")).toBeInTheDocument();
@@ -519,7 +519,9 @@ describe("JobTable", () => {
 
   it("filters rows by GFS toggle", () => {
     render(<JobTable jobs={MOCK_JOBS} />);
-    const gfsToggle = screen.getByRole("button", { name: /show gfs only/i });
+    const gfsToggle = screen.getByRole("button", {
+      name: /filter by gfs status/i,
+    });
     fireEvent.click(gfsToggle);
     expect(screen.getByText("VM Backup Daily")).toBeInTheDocument();
     expect(screen.queryByText("SQL Agent Backup")).not.toBeInTheDocument();
@@ -572,6 +574,19 @@ describe("JobTable", () => {
     );
     const checkbox = screen.getByRole("checkbox");
     fireEvent.click(checkbox);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("pressing Space on checkbox does not open job detail sheet", () => {
+    render(
+      <JobTable
+        jobs={[createEnrichedJob({ JobName: "VM Backup Daily" })]}
+        excludedJobNames={new Set()}
+        onExcludedChange={() => {}}
+      />,
+    );
+    const checkbox = screen.getByRole("checkbox");
+    fireEvent.keyDown(checkbox, { key: " " });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 

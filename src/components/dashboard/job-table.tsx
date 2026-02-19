@@ -204,6 +204,9 @@ function buildColumns(
             checked={isExcluded}
             aria-label={`Exclude ${jobName} from sizing`}
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === " " || e.key === "Enter") e.stopPropagation();
+            }}
             onCheckedChange={(checked) => {
               const next = new Set(excludedJobNames);
               if (checked) {
@@ -245,7 +248,10 @@ function buildColumns(
         return (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="block max-w-[180px] truncate font-medium">
+              <span
+                className="block max-w-[180px] truncate font-medium"
+                tabIndex={0}
+              >
                 {value}
               </span>
             </TooltipTrigger>
@@ -274,7 +280,9 @@ function buildColumns(
         return (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="block max-w-[140px] truncate">{value}</span>
+              <span className="block max-w-[140px] truncate" tabIndex={0}>
+                {value}
+              </span>
             </TooltipTrigger>
             <TooltipContent>{value}</TooltipContent>
           </Tooltip>
@@ -451,7 +459,7 @@ export function JobTable({
           />
           <ThreeStateToggle
             label="Encrypted"
-            ariaLabel="show encrypted only"
+            ariaLabel="filter by encrypted status"
             value={
               (table.getColumn("Encrypted")?.getFilterValue() as ToggleState) ??
               "all"
@@ -464,7 +472,7 @@ export function JobTable({
           />
           <ThreeStateToggle
             label="GFS"
-            ariaLabel="show gfs only"
+            ariaLabel="filter by gfs status"
             value={
               (table
                 .getColumn("gfsEnabled")
