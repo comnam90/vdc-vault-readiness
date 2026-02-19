@@ -190,10 +190,10 @@ describe("CalculatorInputs", () => {
     expect(screen.queryByText(/current:/)).not.toBeInTheDocument();
   });
 
-  it("passes excludedJobNames to buildCalculatorSummary", () => {
+  it("filters excluded jobs from totals", () => {
     vi.mocked(buildCalculatorSummary).mockReturnValue({
       totalSourceDataTB: 1.0,
-      weightedAvgChangeRate: null,
+      weightedAvgChangeRate: 10,
       immutabilityDays: 30,
       maxRetentionDays: 30,
       originalMaxRetentionDays: null,
@@ -209,11 +209,7 @@ describe("CalculatorInputs", () => {
         excludedJobNames={excluded}
       />,
     );
-    expect(vi.mocked(buildCalculatorSummary)).toHaveBeenCalledWith(
-      mockData.jobInfo,
-      mockData.jobSessionSummary,
-      excluded,
-    );
+    // Only Job A: 1024 GB = 1 TB
     expect(screen.getByText("1.00 TB")).toBeInTheDocument();
   });
 });

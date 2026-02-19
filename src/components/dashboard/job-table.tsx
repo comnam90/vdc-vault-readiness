@@ -265,6 +265,10 @@ function buildColumns(
     }),
     columnHelper.accessor("RepoName", {
       header: "Repository",
+      filterFn: (row, _id, filterValue: string[]) => {
+        if (!filterValue || filterValue.length === 0) return true;
+        return filterValue.includes(row.original.RepoName);
+      },
       cell: (info) => {
         const value = info.getValue();
         return (
@@ -430,6 +434,18 @@ export function JobTable({
             onChange={(v) =>
               table
                 .getColumn("JobType")
+                ?.setFilterValue(v.length ? v : undefined)
+            }
+          />
+          <MultiSelectFilter
+            label="Repository"
+            options={[...new Set(jobs.map((j) => j.RepoName))].sort()}
+            value={
+              (table.getColumn("RepoName")?.getFilterValue() as string[]) ?? []
+            }
+            onChange={(v) =>
+              table
+                .getColumn("RepoName")
                 ?.setFilterValue(v.length ? v : undefined)
             }
           />
