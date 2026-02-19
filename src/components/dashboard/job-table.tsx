@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { formatSize, formatPercent } from "@/lib/format-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Tooltip,
@@ -64,124 +65,157 @@ function SourceSizeCell({ gb }: { gb: number | null }) {
   );
 }
 
-const columns = [
-  columnHelper.display({
-    id: "status",
-    header: () => <span className="sr-only">Status</span>,
-    cell: ({ row }) =>
-      row.original.Encrypted ? (
-        <>
-          <LockKeyhole className="text-primary size-5" aria-hidden="true" />
-          <span className="sr-only">Encrypted</span>
-        </>
-      ) : (
-        <>
-          <LockKeyholeOpen
-            className="text-destructive size-5"
-            aria-hidden="true"
+function buildColumns(
+  excludedJobNames: Set<string>,
+  onExcludedChange: (names: Set<string>) => void,
+) {
+  return [
+    columnHelper.display({
+      id: "exclude",
+      header: () => <span className="sr-only">Exclude from sizing</span>,
+      cell: ({ row }) => {
+        const jobName = row.original.JobName;
+        const isExcluded = excludedJobNames.has(jobName);
+        return (
+          <Checkbox
+            checked={isExcluded}
+            aria-label={`Exclude ${jobName} from sizing`}
+            onClick={(e) => e.stopPropagation()}
+            onCheckedChange={(checked) => {
+              const next = new Set(excludedJobNames);
+              if (checked) {
+                next.add(jobName);
+              } else {
+                next.delete(jobName);
+              }
+              onExcludedChange(next);
+            }}
           />
-          <span className="sr-only">Not encrypted</span>
-        </>
-      ),
-    size: 40,
-  }),
-  columnHelper.accessor("JobName", {
-    header: "Job Name",
-    cell: (info) => {
-      const value = info.getValue();
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="block max-w-[180px] truncate font-medium">
-              {value}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>{value}</TooltipContent>
-        </Tooltip>
-      );
-    },
-    enableSorting: true,
-  }),
-  columnHelper.accessor("JobType", {
-    header: "Type",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("RepoName", {
-    header: "Repository",
-    cell: (info) => {
-      const value = info.getValue();
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="block max-w-[140px] truncate">{value}</span>
-          </TooltipTrigger>
-          <TooltipContent>{value}</TooltipContent>
-        </Tooltip>
-      );
-    },
-  }),
-  columnHelper.accessor((row) => row.SourceSizeGB ?? undefined, {
-    id: "sourceSize",
-    header: "Source Size",
-    cell: (info) => <SourceSizeCell gb={info.getValue() ?? null} />,
-    enableSorting: true,
-    sortingFn: "basic",
-    sortUndefined: "last",
-    meta: { align: "right" },
-  }),
-  columnHelper.accessor((row) => row.sessionData?.AvgChangeRate ?? undefined, {
-    id: "changeRate",
-    header: "Change Rate",
-    cell: (info) => <ChangeRateCell rate={info.getValue() ?? null} />,
-    enableSorting: true,
-    sortingFn: "basic",
-    sortUndefined: "last",
-    meta: { align: "right" },
-  }),
-  columnHelper.accessor((row) => row.GfsEnabled ?? undefined, {
-    id: "gfsEnabled",
-    header: "GFS",
-    cell: (info) =>
-      info.getValue() === true ? (
-        <Badge
-          variant="outline"
-          className="border-primary/30 bg-primary/5 text-primary"
-        >
-          Yes
-        </Badge>
-      ) : info.getValue() === false ? (
-        <Badge variant="outline" className="text-muted-foreground">
-          No
-        </Badge>
-      ) : (
-        <Badge variant="outline" className="text-muted-foreground">
-          N/A
-        </Badge>
-      ),
-    enableSorting: true,
-    sortingFn: "basic",
-    sortUndefined: "last",
-  }),
-  columnHelper.accessor("Encrypted", {
-    header: "Encrypted",
-    cell: (info) =>
-      info.getValue() ? (
-        <Badge
-          variant="outline"
-          className="border-primary/30 bg-primary/5 text-primary"
-        >
-          Yes
-        </Badge>
-      ) : (
-        <Badge
-          variant="outline"
-          className="border-destructive/30 bg-destructive/5 text-destructive"
-        >
-          No
-        </Badge>
-      ),
-  }),
-];
+        );
+      },
+      size: 40,
+    }),
+    columnHelper.display({
+      id: "status",
+      header: () => <span className="sr-only">Status</span>,
+      cell: ({ row }) =>
+        row.original.Encrypted ? (
+          <>
+            <LockKeyhole className="text-primary size-5" aria-hidden="true" />
+            <span className="sr-only">Encrypted</span>
+          </>
+        ) : (
+          <>
+            <LockKeyholeOpen
+              className="text-destructive size-5"
+              aria-hidden="true"
+            />
+            <span className="sr-only">Not encrypted</span>
+          </>
+        ),
+      size: 40,
+    }),
+    columnHelper.accessor("JobName", {
+      header: "Job Name",
+      cell: (info) => {
+        const value = info.getValue();
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="block max-w-[180px] truncate font-medium">
+                {value}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{value}</TooltipContent>
+          </Tooltip>
+        );
+      },
+      enableSorting: true,
+    }),
+    columnHelper.accessor("JobType", {
+      header: "Type",
+      cell: (info) => info.getValue(),
+    }),
+    columnHelper.accessor("RepoName", {
+      header: "Repository",
+      cell: (info) => {
+        const value = info.getValue();
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="block max-w-[140px] truncate">{value}</span>
+            </TooltipTrigger>
+            <TooltipContent>{value}</TooltipContent>
+          </Tooltip>
+        );
+      },
+    }),
+    columnHelper.accessor((row) => row.SourceSizeGB ?? undefined, {
+      id: "sourceSize",
+      header: "Source Size",
+      cell: (info) => <SourceSizeCell gb={info.getValue() ?? null} />,
+      enableSorting: true,
+      sortingFn: "basic",
+      sortUndefined: "last",
+      meta: { align: "right" },
+    }),
+    columnHelper.accessor(
+      (row) => row.sessionData?.AvgChangeRate ?? undefined,
+      {
+        id: "changeRate",
+        header: "Change Rate",
+        cell: (info) => <ChangeRateCell rate={info.getValue() ?? null} />,
+        enableSorting: true,
+        sortingFn: "basic",
+        sortUndefined: "last",
+        meta: { align: "right" },
+      },
+    ),
+    columnHelper.accessor((row) => row.GfsEnabled ?? undefined, {
+      id: "gfsEnabled",
+      header: "GFS",
+      cell: (info) =>
+        info.getValue() === true ? (
+          <Badge
+            variant="outline"
+            className="border-primary/30 bg-primary/5 text-primary"
+          >
+            Yes
+          </Badge>
+        ) : info.getValue() === false ? (
+          <Badge variant="outline" className="text-muted-foreground">
+            No
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-muted-foreground">
+            N/A
+          </Badge>
+        ),
+      enableSorting: true,
+      sortingFn: "basic",
+      sortUndefined: "last",
+    }),
+    columnHelper.accessor("Encrypted", {
+      header: "Encrypted",
+      cell: (info) =>
+        info.getValue() ? (
+          <Badge
+            variant="outline"
+            className="border-primary/30 bg-primary/5 text-primary"
+          >
+            Yes
+          </Badge>
+        ) : (
+          <Badge
+            variant="outline"
+            className="border-destructive/30 bg-destructive/5 text-destructive"
+          >
+            No
+          </Badge>
+        ),
+    }),
+  ];
+}
 
 interface JobTableProps {
   jobs: EnrichedJob[];
@@ -189,10 +223,19 @@ interface JobTableProps {
   onExcludedChange?: (names: Set<string>) => void;
 }
 
-export function JobTable({ jobs }: JobTableProps) {
+export function JobTable({
+  jobs,
+  excludedJobNames = new Set(),
+  onExcludedChange,
+}: JobTableProps) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [selectedJob, setSelectedJob] = useState<EnrichedJob | null>(null);
+
+  const columns = useMemo(
+    () => buildColumns(excludedJobNames, onExcludedChange ?? (() => {})),
+    [excludedJobNames, onExcludedChange],
+  );
 
   const table = useReactTable({
     data: jobs,
@@ -245,6 +288,13 @@ export function JobTable({ jobs }: JobTableProps) {
             </span>
           )}
         </div>
+        {excludedJobNames.size > 0 && (
+          <p className="text-muted-foreground text-sm">
+            {excludedJobNames.size}{" "}
+            {excludedJobNames.size === 1 ? "job excluded" : "jobs excluded"}{" "}
+            from sizing
+          </p>
+        )}
         <div className="rounded-md border">
           <Table>
             <TableHeader className="bg-muted/50">

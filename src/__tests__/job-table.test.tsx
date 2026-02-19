@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { JobTable } from "@/components/dashboard/job-table";
 import type { EnrichedJob } from "@/types/enriched-job";
 
@@ -112,7 +112,8 @@ function getJobNamesInOrder() {
   const table = screen.getByRole("table");
   return Array.from(table.querySelectorAll("tbody tr")).map((row) => {
     const cells = row.querySelectorAll("td");
-    return cells[1] ? (cells[1].textContent?.trim() ?? "") : "";
+    // cells[0]=checkbox, cells[1]=status icon, cells[2]=job name
+    return cells[2] ? (cells[2].textContent?.trim() ?? "") : "";
   });
 }
 
@@ -482,6 +483,56 @@ describe("JobTable", () => {
       const row = vmBackupCell.closest("tr");
       expect(row!.className).toMatch(/cursor-pointer/);
     });
+  });
+
+  it("renders a checkbox for each job row", () => {
+    render(
+      <JobTable
+        jobs={MOCK_JOBS}
+        excludedJobNames={new Set()}
+        onExcludedChange={() => {}}
+      />,
+    );
+    const checkboxes = screen.getAllByRole("checkbox");
+    expect(checkboxes.length).toBe(MOCK_JOBS.length);
+  });
+
+  it("calls onExcludedChange with job name when checkbox clicked", () => {
+    const onExcludedChange = vi.fn();
+    render(
+      <JobTable
+        jobs={[createEnrichedJob({ JobName: "VM Backup Daily" })]}
+        excludedJobNames={new Set()}
+        onExcludedChange={onExcludedChange}
+      />,
+    );
+    const checkbox = screen.getByRole("checkbox");
+    fireEvent.click(checkbox);
+    expect(onExcludedChange).toHaveBeenCalledWith(new Set(["VM Backup Daily"]));
+  });
+
+  it("shows excluded count badge when jobs are excluded", () => {
+    render(
+      <JobTable
+        jobs={MOCK_JOBS}
+        excludedJobNames={new Set(["VM Backup Daily"])}
+        onExcludedChange={() => {}}
+      />,
+    );
+    expect(screen.getByText(/1 job excluded/i)).toBeInTheDocument();
+  });
+
+  it("clicking checkbox does not open job detail sheet", () => {
+    render(
+      <JobTable
+        jobs={[createEnrichedJob({ JobName: "VM Backup Daily" })]}
+        excludedJobNames={new Set()}
+        onExcludedChange={() => {}}
+      />,
+    );
+    const checkbox = screen.getByRole("checkbox");
+    fireEvent.click(checkbox);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("applies truncation class to job name cells", () => {
