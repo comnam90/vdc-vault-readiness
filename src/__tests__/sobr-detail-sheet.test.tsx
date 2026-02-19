@@ -1,7 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { SobrDetailSheet } from "@/components/dashboard/sobr-detail-sheet";
-import type { SafeSobr, SafeCapExtent, SafeArchExtent } from "@/types/domain";
+import type {
+  SafeSobr,
+  SafeExtent,
+  SafeCapExtent,
+  SafeArchExtent,
+} from "@/types/domain";
 
 const MOCK_SOBR: SafeSobr = {
   Name: "SOBR-01",
@@ -20,8 +25,18 @@ const MOCK_SOBR: SafeSobr = {
   SizeLimit: null,
 };
 
-const MOCK_CAP_EXTENT: SafeCapExtent = {
+const MOCK_PERF_EXTENT: SafeExtent = {
   Name: "Perf-Extent-01",
+  SobrName: "SOBR-01",
+  Type: "Local",
+  Host: "vbr-host-01",
+  ImmutabilitySupported: true,
+  FreeSpaceTB: 5.0,
+  TotalSpaceTB: 10.0,
+};
+
+const MOCK_CAP_EXTENT: SafeCapExtent = {
+  Name: "Cap-Extent-01",
   SobrName: "SOBR-01",
   EncryptionEnabled: true,
   ImmutableEnabled: true,
@@ -51,6 +66,7 @@ describe("SobrDetailSheet", () => {
     render(
       <SobrDetailSheet
         sobr={MOCK_SOBR}
+        perfExtents={[]}
         capExtents={[MOCK_CAP_EXTENT]}
         archExtents={[MOCK_ARCH_EXTENT]}
         open={true}
@@ -64,7 +80,8 @@ describe("SobrDetailSheet", () => {
     render(
       <SobrDetailSheet
         sobr={MOCK_SOBR}
-        capExtents={[MOCK_CAP_EXTENT]}
+        perfExtents={[MOCK_PERF_EXTENT]}
+        capExtents={[]}
         archExtents={[]}
         open={true}
         onOpenChange={() => {}}
@@ -78,6 +95,7 @@ describe("SobrDetailSheet", () => {
     render(
       <SobrDetailSheet
         sobr={MOCK_SOBR}
+        perfExtents={[]}
         capExtents={[]}
         archExtents={[MOCK_ARCH_EXTENT]}
         open={true}
@@ -92,6 +110,7 @@ describe("SobrDetailSheet", () => {
     render(
       <SobrDetailSheet
         sobr={null}
+        perfExtents={[]}
         capExtents={[]}
         archExtents={[]}
         open={false}

@@ -42,6 +42,7 @@ function makeDataset(
     jobSessionSummary: [],
     sobr: [],
     capExtents: [],
+    extents: [],
     archExtents: [],
     dataErrors: [],
     ...overrides,

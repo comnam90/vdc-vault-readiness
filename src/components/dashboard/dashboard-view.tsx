@@ -233,6 +233,7 @@ export function DashboardView({
           <RepositoriesTab
             jobs={data.jobInfo}
             sobr={data.sobr}
+            extents={data.extents}
             capExtents={data.capExtents}
             archExtents={data.archExtents}
           />

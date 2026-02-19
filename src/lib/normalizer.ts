@@ -5,6 +5,7 @@ import type {
   SafeArchExtent,
   SafeBackupServer,
   SafeCapExtent,
+  SafeExtent,
   SafeJob,
   SafeJobSession,
   SafeLicense,
@@ -260,6 +261,7 @@ export function normalizeHealthcheck(
     Licenses,
     jobSessionSummary: normalizeJobSessions(asArray(sessionData), dataErrors),
     sobr: normalizeSobr(asArray(raw.sobr), dataErrors),
+    extents: normalizeExtents(asArray(raw.extents), dataErrors),
     capExtents: normalizeCapExtents(asArray(raw.capextents), dataErrors),
     archExtents: normalizeArchExtents(asArray(raw.archextents), dataErrors),
     dataErrors,
@@ -578,6 +580,69 @@ function normalizeSobr(
     };
 
     return [safeSobr];
+  });
+}
+
+type ExtentRecord = Record<string, string | null | undefined>;
+
+function normalizeExtents(
+  rows: ExtentRecord[],
+  dataErrors: DataError[],
+): SafeExtent[] {
+  return rows.flatMap((row, rowIndex) => {
+    if (!isRecord(row)) {
+      dataErrors.push(
+        buildError("extents", rowIndex, "_row", "Invalid row: not an object"),
+      );
+      return [];
+    }
+
+    const name = normalizeString(row.Name as string | null | undefined);
+    if (!name) {
+      dataErrors.push(
+        buildError("extents", rowIndex, "Name", "Missing required Name"),
+      );
+      return [];
+    }
+
+    const sobrName = normalizeString(row.SobrName as string | null | undefined);
+    if (!sobrName) {
+      dataErrors.push(
+        buildError(
+          "extents",
+          rowIndex,
+          "SobrName",
+          "Missing required SobrName",
+        ),
+      );
+      return [];
+    }
+
+    const safeExtent: SafeExtent = {
+      Name: name,
+      SobrName: sobrName,
+      Type: normalizeString(row.Type as string | null | undefined),
+      Host: normalizeString(row.Host as string | null | undefined),
+      ImmutabilitySupported: parseBoolean(
+        row.IsImmutabilitySupported as string | null | undefined,
+      ),
+      FreeSpaceTB: parseNumeric(
+        row.FreeSpace as string | null | undefined,
+        "extents",
+        rowIndex,
+        "FreeSpace",
+        dataErrors,
+      ),
+      TotalSpaceTB: parseNumeric(
+        row.TotalSpace as string | null | undefined,
+        "extents",
+        rowIndex,
+        "TotalSpace",
+        dataErrors,
+      ),
+    };
+
+    return [safeExtent];
   });
 }
 

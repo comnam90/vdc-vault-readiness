@@ -19,6 +19,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -45,6 +46,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -73,6 +75,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -99,6 +102,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -126,6 +130,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -156,6 +161,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -182,6 +188,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -203,6 +210,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -268,6 +276,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -333,6 +342,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -420,6 +430,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -449,6 +460,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -514,6 +526,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -577,6 +590,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -625,6 +639,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -671,6 +686,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -716,6 +732,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -800,6 +817,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -830,6 +848,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -858,6 +877,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -883,6 +903,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -908,6 +929,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -971,6 +993,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -1036,6 +1059,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -1105,6 +1129,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -1187,6 +1212,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -1234,6 +1260,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -1280,6 +1307,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -1328,6 +1356,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 
@@ -1357,6 +1386,7 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
       };
 

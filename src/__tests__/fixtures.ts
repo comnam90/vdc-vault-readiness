@@ -70,6 +70,7 @@ export const MOCK_DATA: NormalizedDataset = {
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
   jobSessionSummary: [],
   sobr: [],
+  extents: [],
   capExtents: [],
   archExtents: [],
   dataErrors: [],

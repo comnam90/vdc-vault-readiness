@@ -47,6 +47,7 @@ describe("RepositoriesTab", () => {
       <RepositoriesTab
         jobs={MOCK_JOBS}
         sobr={[]}
+        extents={[]}
         capExtents={[]}
         archExtents={[]}
       />,
@@ -59,6 +60,7 @@ describe("RepositoriesTab", () => {
       <RepositoriesTab
         jobs={MOCK_JOBS}
         sobr={[]}
+        extents={[]}
         capExtents={[]}
         archExtents={[]}
       />,
@@ -71,6 +73,7 @@ describe("RepositoriesTab", () => {
       <RepositoriesTab
         jobs={[]}
         sobr={[MOCK_SOBR]}
+        extents={[]}
         capExtents={[]}
         archExtents={[]}
       />,
@@ -83,6 +86,7 @@ describe("RepositoriesTab", () => {
       <RepositoriesTab
         jobs={[]}
         sobr={[MOCK_SOBR]}
+        extents={[]}
         capExtents={[]}
         archExtents={[]}
       />,
@@ -93,7 +97,13 @@ describe("RepositoriesTab", () => {
 
   it("shows empty state when no standard repos", () => {
     render(
-      <RepositoriesTab jobs={[]} sobr={[]} capExtents={[]} archExtents={[]} />,
+      <RepositoriesTab
+        jobs={[]}
+        sobr={[]}
+        extents={[]}
+        capExtents={[]}
+        archExtents={[]}
+      />,
     );
     expect(screen.getByText(/no repositories found/i)).toBeInTheDocument();
   });

@@ -461,6 +461,7 @@ describe("Domain Types - NormalizedDataset extension", () => {
       ],
       sobr: [],
       capExtents: [],
+      extents: [],
       archExtents: [],
       dataErrors: [],
     };
@@ -477,6 +478,7 @@ describe("Domain Types - NormalizedDataset extension", () => {
       jobSessionSummary: [],
       sobr: [],
       capExtents: [],
+      extents: [],
       archExtents: [],
       dataErrors: [],
     };
@@ -513,6 +515,7 @@ describe("Domain Types - NormalizedDataset extension", () => {
       ],
       sobr: [],
       capExtents: [],
+      extents: [],
       archExtents: [],
       dataErrors: [],
     };
@@ -552,6 +555,7 @@ describe("Domain Types - NormalizedDataset extension", () => {
       jobSessionSummary: [],
       sobr: [],
       capExtents: [],
+      extents: [],
       archExtents: [],
       dataErrors: [],
     };

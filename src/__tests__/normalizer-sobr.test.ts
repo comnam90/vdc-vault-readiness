@@ -680,3 +680,75 @@ describe("normalizeArchExtents", () => {
     expect(result.archExtents).toEqual([]);
   });
 });
+
+describe("normalizeExtents", () => {
+  it("normalizes a valid extents row with all fields", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      extents: [
+        {
+          Name: "Perf-Extent-01",
+          SobrName: "SOBR-01",
+          Type: "Local",
+          Host: "vbr-host-01",
+          IsImmutabilitySupported: "True",
+          FreeSpace: "5.0",
+          TotalSpace: "10.0",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.extents).toHaveLength(1);
+    expect(result.extents[0]).toMatchObject({
+      Name: "Perf-Extent-01",
+      SobrName: "SOBR-01",
+      Type: "Local",
+      Host: "vbr-host-01",
+      ImmutabilitySupported: true,
+      FreeSpaceTB: 5.0,
+      TotalSpaceTB: 10.0,
+    });
+  });
+
+  it("skips row missing required Name and records data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      extents: [{ SobrName: "SOBR-01", Type: "Local" }],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.extents).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "extents",
+      field: "Name",
+    });
+  });
+
+  it("skips row missing required SobrName and records data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      extents: [{ Name: "Perf-01", Type: "Local" }],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.extents).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "extents",
+      field: "SobrName",
+    });
+  });
+
+  it("returns empty array when extents input is undefined", () => {
+    const raw: NormalizerInput = { ...BASE_INPUT };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.extents).toEqual([]);
+  });
+});

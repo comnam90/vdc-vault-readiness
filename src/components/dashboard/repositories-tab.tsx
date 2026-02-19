@@ -2,6 +2,7 @@ import { useState } from "react";
 import type {
   SafeJob,
   SafeSobr,
+  SafeExtent,
   SafeCapExtent,
   SafeArchExtent,
 } from "@/types/domain";
@@ -21,6 +22,7 @@ import { SobrDetailSheet } from "./sobr-detail-sheet";
 interface RepositoriesTabProps {
   jobs: SafeJob[];
   sobr: SafeSobr[];
+  extents: SafeExtent[];
   capExtents: SafeCapExtent[];
   archExtents: SafeArchExtent[];
 }
@@ -28,6 +30,7 @@ interface RepositoriesTabProps {
 export function RepositoriesTab({
   jobs,
   sobr,
+  extents,
   capExtents,
   archExtents,
 }: RepositoriesTabProps) {
@@ -212,6 +215,9 @@ export function RepositoriesTab({
 
       <SobrDetailSheet
         sobr={selectedSobr}
+        perfExtents={extents.filter(
+          (e) => selectedSobr && e.SobrName === selectedSobr.Name,
+        )}
         capExtents={capExtents.filter(
           (e) => selectedSobr && e.SobrName === selectedSobr.Name,
         )}

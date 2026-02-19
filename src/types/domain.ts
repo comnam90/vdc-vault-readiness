@@ -86,6 +86,16 @@ export interface SafeArchExtent {
   FullBackupModeEnabled: boolean | null;
 }
 
+export interface SafeExtent {
+  Name: string;
+  SobrName: string;
+  Type: string | null;
+  Host: string | null;
+  ImmutabilitySupported: boolean | null;
+  FreeSpaceTB: number | null;
+  TotalSpaceTB: number | null;
+}
+
 export type DataError = {
   level: "Data Error";
   section:
@@ -96,7 +106,8 @@ export type DataError = {
     | "jobSessionSummaryByJob"
     | "sobr"
     | "capextents"
-    | "archextents";
+    | "archextents"
+    | "extents";
   rowIndex: number;
   field: string;
   reason: string;
@@ -109,6 +120,7 @@ export interface NormalizedDataset {
   Licenses: SafeLicense[];
   jobSessionSummary: SafeJobSession[];
   sobr: SafeSobr[];
+  extents: SafeExtent[];
   capExtents: SafeCapExtent[];
   archExtents: SafeArchExtent[];
   dataErrors: DataError[];

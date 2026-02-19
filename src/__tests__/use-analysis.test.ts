@@ -33,6 +33,7 @@ const MOCK_ANALYSIS_RESULT = {
     jobSessionSummary: [],
     sobr: [],
     capExtents: [],
+    extents: [],
     archExtents: [],
     dataErrors: [],
   },

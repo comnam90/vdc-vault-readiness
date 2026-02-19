@@ -1,4 +1,9 @@
-import type { SafeSobr, SafeCapExtent, SafeArchExtent } from "@/types/domain";
+import type {
+  SafeSobr,
+  SafeExtent,
+  SafeCapExtent,
+  SafeArchExtent,
+} from "@/types/domain";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -13,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 interface SobrDetailSheetProps {
   sobr: SafeSobr | null;
+  perfExtents: SafeExtent[];
   capExtents: SafeCapExtent[];
   archExtents: SafeArchExtent[];
   open: boolean;
@@ -62,6 +68,30 @@ function BoolBadge({
     <Badge variant="outline" className="text-muted-foreground">
       {falseLabel}
     </Badge>
+  );
+}
+
+function ExtentRow({ extent }: { extent: SafeExtent }) {
+  return (
+    <div className="space-y-1.5 rounded-md border p-3">
+      <p className="text-sm font-medium">{extent.Name}</p>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+        <span className="text-muted-foreground">Type</span>
+        <span>{extent.Type ?? "N/A"}</span>
+        <span className="text-muted-foreground">Host</span>
+        <span>{extent.Host ?? "N/A"}</span>
+        <span className="text-muted-foreground">Immutability</span>
+        <BoolBadge value={extent.ImmutabilitySupported ?? false} />
+        {extent.TotalSpaceTB !== null && (
+          <>
+            <span className="text-muted-foreground">Capacity</span>
+            <span className="font-mono">
+              {extent.TotalSpaceTB.toFixed(2)} TB
+            </span>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -115,6 +145,7 @@ function ArchExtentRow({ extent }: { extent: SafeArchExtent }) {
 
 export function SobrDetailSheet({
   sobr,
+  perfExtents,
   capExtents,
   archExtents,
   open,
@@ -127,17 +158,6 @@ export function SobrDetailSheet({
       </Sheet>
     );
   }
-
-  // Performance tier = non-cloud cap extents; Capacity tier = cloud/object extents
-  const perfExtents = capExtents.filter(
-    (e) =>
-      e.Type &&
-      !e.Type.toLowerCase().includes("cloud") &&
-      !e.Type.toLowerCase().includes("object") &&
-      !e.Type.toLowerCase().includes("amazon") &&
-      !e.Type.toLowerCase().includes("azure"),
-  );
-  const capTierExtents = capExtents.filter((e) => !perfExtents.includes(e));
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -188,18 +208,18 @@ export function SobrDetailSheet({
                 <div className="space-y-2">
                   <SectionHeading>Performance Tier</SectionHeading>
                   {perfExtents.map((e) => (
-                    <CapExtentRow key={e.Name} extent={e} />
+                    <ExtentRow key={e.Name} extent={e} />
                   ))}
                 </div>
               </>
             )}
 
-            {capTierExtents.length > 0 && (
+            {capExtents.length > 0 && (
               <>
                 <Separator />
                 <div className="space-y-2">
                   <SectionHeading>Capacity Tier</SectionHeading>
-                  {capTierExtents.map((e) => (
+                  {capExtents.map((e) => (
                     <CapExtentRow key={e.Name} extent={e} />
                   ))}
                 </div>

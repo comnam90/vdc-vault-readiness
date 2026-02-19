@@ -99,6 +99,7 @@ describe("normalizeHealthcheck", () => {
       jobSessionSummary: [],
       sobr: [],
       capExtents: [],
+      extents: [],
       archExtents: [],
       dataErrors: [],
     });
@@ -145,6 +146,7 @@ describe("normalizeHealthcheck", () => {
       jobSessionSummary: [],
       sobr: [],
       capExtents: [],
+      extents: [],
       archExtents: [],
       dataErrors: [],
     });
@@ -165,6 +167,7 @@ describe("normalizeHealthcheck", () => {
       jobSessionSummary: [],
       sobr: [],
       capExtents: [],
+      extents: [],
       archExtents: [],
       dataErrors: [],
     });

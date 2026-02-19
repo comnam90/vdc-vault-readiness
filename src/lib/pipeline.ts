@@ -25,6 +25,7 @@ export function analyzeHealthcheck(raw: HealthcheckRoot): AnalysisResult {
     jobInfo: zipSection(sections.jobInfo),
     Licenses: Array.isArray(raw.Licenses) ? raw.Licenses : [],
     sobr: zipSection(sections.sobr),
+    extents: zipSection(sections.extents),
     capextents: zipSection(sections.capextents),
     archextents: zipSection(sections.archextents),
   };
