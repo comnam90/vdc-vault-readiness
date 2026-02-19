@@ -563,6 +563,49 @@ describe("normalizeArchExtents", () => {
     });
   });
 
+  it("falls back to RetentionPeriod when OffloadPeriod is absent (old format)", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      archextents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+          RetentionPeriod: "60",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents[0].OffloadPeriod).toBe(60);
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
+  it("prefers OffloadPeriod over RetentionPeriod when both are present", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      archextents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+          OffloadPeriod: "90",
+          RetentionPeriod: "60",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents[0].OffloadPeriod).toBe(90);
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
   it("parses OffloadPeriod as numeric value", () => {
     const raw: NormalizerInput = {
       ...BASE_INPUT,

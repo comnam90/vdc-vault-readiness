@@ -786,7 +786,7 @@ function normalizeArchExtents(
       EncryptionEnabled: encryptionEnabled,
       ImmutableEnabled: immutableEnabled,
       OffloadPeriod: parseNumeric(
-        row.OffloadPeriod as string | null | undefined,
+        (row.OffloadPeriod ?? row.RetentionPeriod) as string | null | undefined,
         "archextents",
         rowIndex,
         "OffloadPeriod",
