@@ -247,7 +247,7 @@
 2. **Determine immutablePeriod**: `max(ImmutablePeriod)` across cap extents where `ImmutableEnabled=true` (else `0`)
 3. **Determine archiveOlderThan** (if SOBR has `ArchiveTierEnabled=true`):
    - Filter archive extents for this SOBR where `ArchiveTierEnabled=true`
-   - `archiveOlderThan = min(RetentionPeriod)` across extents (most aggressive threshold), `null` RetentionPeriods are excluded
+   - `archiveOlderThan = min(OffloadPeriod)` across extents (most aggressive threshold), `null` OffloadPeriods are excluded
    - If no valid periods: `archiveOlderThan = null` (no archive impact)
 4. **Normal retention** per job targeting the SOBR:
    - Skip if `RetainDays` is null or `RetainDays <= arrivalDay` (data never reaches capacity tier)

@@ -401,10 +401,9 @@ describe("validateArchiveTierEdition (archive-tier-edition)", () => {
           ArchiveTierEnabled: false,
           EncryptionEnabled: true,
           ImmutableEnabled: false,
-          RetentionPeriod: null,
+          OffloadPeriod: null,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
-          ImmutablePeriod: null,
         },
       ],
     });
@@ -424,10 +423,9 @@ describe("validateArchiveTierEdition (archive-tier-edition)", () => {
           ArchiveTierEnabled: true,
           EncryptionEnabled: true,
           ImmutableEnabled: false,
-          RetentionPeriod: 90,
+          OffloadPeriod: 90,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
-          ImmutablePeriod: null,
         },
       ],
     });
@@ -628,10 +626,9 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           ArchiveTierEnabled: true,
           EncryptionEnabled: true,
           ImmutableEnabled: false,
-          RetentionPeriod: 20,
+          OffloadPeriod: 20,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
-          ImmutablePeriod: null,
         },
       ],
       jobInfo: [makeJob({ RepoName: "SOBR-01", RetainDays: 60 })],
@@ -657,10 +654,9 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           ArchiveTierEnabled: true,
           EncryptionEnabled: true,
           ImmutableEnabled: false,
-          RetentionPeriod: 20,
+          OffloadPeriod: 20,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
-          ImmutablePeriod: null,
         },
       ],
       jobInfo: [
@@ -698,10 +694,9 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           ArchiveTierEnabled: true,
           EncryptionEnabled: true,
           ImmutableEnabled: false,
-          RetentionPeriod: 60,
+          OffloadPeriod: 60,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
-          ImmutablePeriod: null,
         },
       ],
       jobInfo: [
@@ -745,10 +740,9 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           ArchiveTierEnabled: true,
           EncryptionEnabled: true,
           ImmutableEnabled: false,
-          RetentionPeriod: 10,
+          OffloadPeriod: 10,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
-          ImmutablePeriod: null,
         },
       ],
       jobInfo: [
@@ -789,10 +783,9 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           ArchiveTierEnabled: true,
           EncryptionEnabled: true,
           ImmutableEnabled: false,
-          RetentionPeriod: 20,
+          OffloadPeriod: 20,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
-          ImmutablePeriod: null,
         },
       ],
       jobInfo: [
@@ -888,7 +881,7 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
     expect(rule?.affectedItems[0]).toContain("20");
   });
 
-  it("null RetentionPeriod on archive: no archive impact on GFS", () => {
+  it("null OffloadPeriod on archive: no archive impact on GFS", () => {
     const data = makeDataset({
       sobr: [makeSobr({ ArchiveTierEnabled: true })],
       capExtents: [makeCapExtent({ MovePeriodDays: 0 })],
@@ -899,10 +892,9 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           ArchiveTierEnabled: true,
           EncryptionEnabled: true,
           ImmutableEnabled: false,
-          RetentionPeriod: null,
+          OffloadPeriod: null,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
-          ImmutablePeriod: null,
         },
       ],
       jobInfo: [
@@ -919,7 +911,7 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
     const results = validateHealthcheck(data);
     const rule = findRule(results, "capacity-tier-residency");
 
-    // No archive impact because RetentionPeriod is null → archiveOlderThan=null
+    // No archive impact because OffloadPeriod is null → archiveOlderThan=null
     expect(rule?.affectedItems.every((i) => !i.includes("archived"))).toBe(
       true,
     );

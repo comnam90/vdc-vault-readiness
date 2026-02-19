@@ -56,147 +56,55 @@
         "ConfigBackupEncryptionEnabled",
         "MFAEnabled"
       ],
-      "Rows": [
-        [
-          "True",
-          "True",
-          "True",
-          "True",
-          "False"
-        ]
-      ],
+      "Rows": [["True", "True", "True", "True", "False"]],
       "Summary": null
     },
     "serverSummary": {
       "SectionName": "serverSummary",
-      "Headers": [
-        "ServerType",
-        "Count"
-      ],
+      "Headers": ["ServerType", "Count"],
       "Rows": [
-        [
-          "AzureEntraIdTenant",
-          "1"
-        ],
-        [
-          "CifsShare",
-          "1"
-        ],
-        [
-          "ESXi",
-          "18"
-        ],
-        [
-          "ExternalInfrastructureServer",
-          "3"
-        ],
-        [
-          "HvCluster",
-          "1"
-        ],
-        [
-          "HvServer",
-          "2"
-        ],
-        [
-          "Linux",
-          "3"
-        ],
-        [
-          "VC",
-          "2"
-        ],
-        [
-          "VcdSystem",
-          "1"
-        ],
-        [
-          "Windows",
-          "2"
-        ]
+        ["AzureEntraIdTenant", "1"],
+        ["CifsShare", "1"],
+        ["ESXi", "18"],
+        ["ExternalInfrastructureServer", "3"],
+        ["HvCluster", "1"],
+        ["HvServer", "2"],
+        ["Linux", "3"],
+        ["VC", "2"],
+        ["VcdSystem", "1"],
+        ["Windows", "2"]
       ],
       "Summary": null
     },
     "jobSummary": {
       "SectionName": "jobSummary",
-      "Headers": [
-        "JobType",
-        "Count"
-      ],
+      "Headers": ["JobType", "Count"],
       "Rows": [
-        [
-          "Agent Backup",
-          "4"
-        ],
-        [
-          "Backup",
-          "9"
-        ],
-        [
-          "EpAgentBackup",
-          "3"
-        ],
-        [
-          "EpAgentPolicy",
-          "1"
-        ],
-        [
-          "File Backup",
-          "3"
-        ],
-        [
-          "Replica",
-          "2"
-        ],
-        [
-          "SureBackup",
-          "2"
-        ],
-        [
-          "Tape",
-          "4"
-        ],
-        [
-          "VmbApiPolicyTempJob",
-          "2"
-        ],
-        [
-          "Total Jobs",
-          "30"
-        ]
+        ["Agent Backup", "4"],
+        ["Backup", "9"],
+        ["EpAgentBackup", "3"],
+        ["EpAgentPolicy", "1"],
+        ["File Backup", "3"],
+        ["Replica", "2"],
+        ["SureBackup", "2"],
+        ["Tape", "4"],
+        ["VmbApiPolicyTempJob", "2"],
+        ["Total Jobs", "30"]
       ],
       "Summary": null
     },
     "missingJobs": {
       "SectionName": "missingJobs",
-      "Headers": [
-        "MissingJobType"
-      ],
+      "Headers": ["MissingJobType"],
       "Rows": [
-        [
-          "Backup Copy"
-        ],
-        [
-          "Catalyst Copy"
-        ],
-        [
-          "CDP"
-        ],
-        [
-          "File Backup - Copy"
-        ],
-        [
-          "Kasten"
-        ],
-        [
-          "Plugin"
-        ],
-        [
-          "Unmanaged Agent"
-        ],
-        [
-          "VB365"
-        ]
+        ["Backup Copy"],
+        ["Catalyst Copy"],
+        ["CDP"],
+        ["File Backup - Copy"],
+        ["Kasten"],
+        ["Plugin"],
+        ["Unmanaged Agent"],
+        ["VB365"]
       ],
       "Summary": null
     },
@@ -210,41 +118,11 @@
         "Duplicates"
       ],
       "Rows": [
-        [
-          "VMware",
-          "1886",
-          "29",
-          "1857",
-          "80"
-        ],
-        [
-          "Hyper-V",
-          "19",
-          "2",
-          "17",
-          "8"
-        ],
-        [
-          "Physical",
-          "5",
-          "0",
-          "5",
-          "N/A"
-        ],
-        [
-          "PhysicalVMsProtected",
-          "0",
-          "N/A",
-          "N/A",
-          "N/A"
-        ],
-        [
-          "Entra-Test-Tenant",
-          "Default Backup Repository",
-          "N/A",
-          "N/A",
-          "N/A"
-        ]
+        ["VMware", "1886", "29", "1857", "80"],
+        ["Hyper-V", "19", "2", "17", "8"],
+        ["Physical", "5", "0", "5", "N/A"],
+        ["PhysicalVMsProtected", "0", "N/A", "N/A", "N/A"],
+        ["Entra-Test-Tenant", "Default Backup Repository", "N/A", "N/A", "N/A"]
       ],
       "Summary": null
     },
@@ -781,10 +659,7 @@
     },
     "regKeys": {
       "SectionName": "regKeys",
-      "Headers": [
-        "Key",
-        "Value"
-      ],
+      "Headers": ["Key", "Value"],
       "Rows": [],
       "Summary": null
     },
@@ -804,32 +679,8 @@
         "IsHvOffload"
       ],
       "Rows": [
-        [
-          "Server_1",
-          "2",
-          "12",
-          "31",
-          "File",
-          "",
-          "",
-          "",
-          "",
-          "Server_1",
-          ""
-        ],
-        [
-          "Server_37",
-          "6",
-          "12",
-          "32",
-          "File",
-          "",
-          "",
-          "",
-          "",
-          "Server_37",
-          ""
-        ],
+        ["Server_1", "2", "12", "31", "File", "", "", "", "", "Server_1", ""],
+        ["Server_37", "6", "12", "32", "File", "", "", "", "", "Server_37", ""],
         [
           "Server_37",
           "24",
@@ -891,6 +742,22 @@
           null,
           "False",
           null,
+          "False",
+          null
+        ],
+        [
+          "SOBR_41",
+          "1",
+          "1",
+          "DataLocality",
+          "True",
+          "True",
+          "True",
+          "True",
+          "True",
+          "DataCloudVault",
+          "True",
+          "7",
           "False",
           null
         ]
@@ -1118,213 +985,63 @@
     },
     "jobConcurrency": {
       "SectionName": "jobConcurrency",
-      "Headers": [
-        "TimeWindow",
-        "Values"
-      ],
+      "Headers": ["TimeWindow", "Values"],
       "Rows": [
-        [
-          "0",
-          ",,,,,,"
-        ],
-        [
-          "1",
-          ",,,,,,"
-        ],
-        [
-          "2",
-          ",,,,,,"
-        ],
-        [
-          "3",
-          ",,,,,,"
-        ],
-        [
-          "4",
-          ",,,,,,"
-        ],
-        [
-          "5",
-          ",,,,,,"
-        ],
-        [
-          "6",
-          ",,,,,,"
-        ],
-        [
-          "7",
-          ",,,,,,"
-        ],
-        [
-          "8",
-          ",,,,,,"
-        ],
-        [
-          "9",
-          ",,,,,,"
-        ],
-        [
-          "10",
-          ",,,,,,"
-        ],
-        [
-          "11",
-          ",,,,,,"
-        ],
-        [
-          "12",
-          ",,,,,,"
-        ],
-        [
-          "13",
-          ",,,,,,"
-        ],
-        [
-          "14",
-          ",,,,,,"
-        ],
-        [
-          "15",
-          ",,,,,,"
-        ],
-        [
-          "16",
-          ",,,,,,"
-        ],
-        [
-          "17",
-          ",,,,,,"
-        ],
-        [
-          "18",
-          ",,,,,,"
-        ],
-        [
-          "19",
-          ",,,,,,"
-        ],
-        [
-          "20",
-          ",,,,,,"
-        ],
-        [
-          "21",
-          ",,,,,,"
-        ],
-        [
-          "22",
-          "3,3,2,2,2,3,7"
-        ],
-        [
-          "23",
-          "3,3,2,,2,3,7"
-        ]
+        ["0", ",,,,,,"],
+        ["1", ",,,,,,"],
+        ["2", ",,,,,,"],
+        ["3", ",,,,,,"],
+        ["4", ",,,,,,"],
+        ["5", ",,,,,,"],
+        ["6", ",,,,,,"],
+        ["7", ",,,,,,"],
+        ["8", ",,,,,,"],
+        ["9", ",,,,,,"],
+        ["10", ",,,,,,"],
+        ["11", ",,,,,,"],
+        ["12", ",,,,,,"],
+        ["13", ",,,,,,"],
+        ["14", ",,,,,,"],
+        ["15", ",,,,,,"],
+        ["16", ",,,,,,"],
+        ["17", ",,,,,,"],
+        ["18", ",,,,,,"],
+        ["19", ",,,,,,"],
+        ["20", ",,,,,,"],
+        ["21", ",,,,,,"],
+        ["22", "3,3,2,2,2,3,7"],
+        ["23", "3,3,2,,2,3,7"]
       ],
       "Summary": null
     },
     "taskConcurrency": {
       "SectionName": "taskConcurrency",
-      "Headers": [
-        "TimeWindow",
-        "Values"
-      ],
+      "Headers": ["TimeWindow", "Values"],
       "Rows": [
-        [
-          "0",
-          ",,,,,,"
-        ],
-        [
-          "1",
-          ",,,,,,"
-        ],
-        [
-          "2",
-          ",,,,,,"
-        ],
-        [
-          "3",
-          ",,,,,,"
-        ],
-        [
-          "4",
-          ",,,,,,"
-        ],
-        [
-          "5",
-          ",,,,,,"
-        ],
-        [
-          "6",
-          ",,,,,,"
-        ],
-        [
-          "7",
-          ",,,,,,"
-        ],
-        [
-          "8",
-          ",,,,,,"
-        ],
-        [
-          "9",
-          ",,,,,,"
-        ],
-        [
-          "10",
-          ",,,,,,"
-        ],
-        [
-          "11",
-          ",,,,,,"
-        ],
-        [
-          "12",
-          ",,,,,,"
-        ],
-        [
-          "13",
-          ",,,,,,"
-        ],
-        [
-          "14",
-          ",,,,,,"
-        ],
-        [
-          "15",
-          ",,,,,,"
-        ],
-        [
-          "16",
-          ",,,,,,"
-        ],
-        [
-          "17",
-          ",,,,,,"
-        ],
-        [
-          "18",
-          ",,,,,,"
-        ],
-        [
-          "19",
-          ",,,,,,"
-        ],
-        [
-          "20",
-          ",,,,,,"
-        ],
-        [
-          "21",
-          ",,,,,,"
-        ],
-        [
-          "22",
-          "3,3,2,2,2,3,7"
-        ],
-        [
-          "23",
-          "3,3,2,,2,3,7"
-        ]
+        ["0", ",,,,,,"],
+        ["1", ",,,,,,"],
+        ["2", ",,,,,,"],
+        ["3", ",,,,,,"],
+        ["4", ",,,,,,"],
+        ["5", ",,,,,,"],
+        ["6", ",,,,,,"],
+        ["7", ",,,,,,"],
+        ["8", ",,,,,,"],
+        ["9", ",,,,,,"],
+        ["10", ",,,,,,"],
+        ["11", ",,,,,,"],
+        ["12", ",,,,,,"],
+        ["13", ",,,,,,"],
+        ["14", ",,,,,,"],
+        ["15", ",,,,,,"],
+        ["16", ",,,,,,"],
+        ["17", ",,,,,,"],
+        ["18", ",,,,,,"],
+        ["19", ",,,,,,"],
+        ["20", ",,,,,,"],
+        ["21", ",,,,,,"],
+        ["22", "3,3,2,2,2,3,7"],
+        ["23", "3,3,2,,2,3,7"]
       ],
       "Summary": null
     },
@@ -1854,6 +1571,80 @@
           "True",
           "Forward Incremental",
           "True"
+        ]
+      ],
+      "Summary": null
+    },
+    "capextents": {
+      "SectionName": "capextents",
+      "Headers": [
+        "Name",
+        "SobrName",
+        "Status",
+        "ConnectionType",
+        "GatewayServer",
+        "CopyModeEnabled",
+        "MoveModeEnabled",
+        "MovePeriodDays",
+        "EncryptionEnabled",
+        "ImmutableEnabled",
+        "ImmutablePeriod",
+        "ImmutabilityMode",
+        "SizeLimitEnabled",
+        "SizeLimit",
+        "Type"
+      ],
+      "Rows": [
+        [
+          "Repository_42",
+          "SOBR_41",
+          "Normal",
+          "Direct",
+          "Server_1",
+          "True",
+          "True",
+          "7",
+          "True",
+          "True",
+          "7",
+          "",
+          "False",
+          null,
+          "DataCloudVault"
+        ]
+      ],
+      "Summary": null
+    },
+    "archextents": {
+      "SectionName": "archextents",
+      "Headers": [
+        "Name",
+        "SobrName",
+        "Status",
+        "GatewayMode",
+        "GatewayServer",
+        "OffloadPeriod",
+        "ArchiveTierEnabled",
+        "CostOptimizedEnabled",
+        "FullBackupModeEnabled",
+        "EncryptionEnabled",
+        "ImmutableEnabled",
+        "Type"
+      ],
+      "Rows": [
+        [
+          "Repository_43",
+          "SOBR_41",
+          "Normal",
+          "Direct",
+          "Server_1",
+          "90",
+          "True",
+          "True",
+          "False",
+          "True",
+          "False",
+          "AzureArchive"
         ]
       ],
       "Summary": null

@@ -391,7 +391,7 @@ function validateCapacityTierResidency(
         (e) => e.SobrName === sobr.Name && e.ArchiveTierEnabled,
       );
       const periods = archExts
-        .map((e) => e.RetentionPeriod)
+        .map((e) => e.OffloadPeriod)
         .filter((p): p is number => p !== null);
       if (periods.length > 0) {
         archiveOlderThan = Math.min(...periods);
