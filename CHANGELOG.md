@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.3](https://github.com/comnam90/vdc-vault-readiness/compare/v1.2.2...v1.2.3) (2026-02-19)
+
+
+### Bug Fixes
+
+* Rename RetentionPeriod to OffloadPeriod and remove ImmutablePeriod ([#25](https://github.com/comnam90/vdc-vault-readiness/issues/25)) ([dc0b406](https://github.com/comnam90/vdc-vault-readiness/commit/dc0b406a8bb80801b2a42108b654d3880101e43e))
+
 ## [1.2.2](https://github.com/comnam90/vdc-vault-readiness/compare/v1.2.1...v1.2.2) (2026-02-18)
 
 
