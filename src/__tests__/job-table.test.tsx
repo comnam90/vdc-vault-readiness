@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { JobTable } from "@/components/dashboard/job-table";
 import type { EnrichedJob } from "@/types/enriched-job";
 
@@ -112,7 +112,8 @@ function getJobNamesInOrder() {
   const table = screen.getByRole("table");
   return Array.from(table.querySelectorAll("tbody tr")).map((row) => {
     const cells = row.querySelectorAll("td");
-    return cells[1] ? (cells[1].textContent?.trim() ?? "") : "";
+    // cells[0]=checkbox, cells[1]=status icon, cells[2]=job name
+    return cells[2] ? (cells[2].textContent?.trim() ?? "") : "";
   });
 }
 
@@ -128,9 +129,15 @@ describe("JobTable", () => {
   it("renders column headers", () => {
     render(<JobTable jobs={MOCK_JOBS} />);
 
-    expect(screen.getByText("Job Name")).toBeInTheDocument();
-    expect(screen.getByText("Type")).toBeInTheDocument();
-    expect(screen.getByText("Repository")).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Job Name" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Type" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Repository" }),
+    ).toBeInTheDocument();
     // "Encrypted" appears in both the column header and sr-only status labels
     expect(
       screen.getByRole("columnheader", { name: /encrypted/i }),
@@ -365,7 +372,9 @@ describe("JobTable", () => {
     it("renders GFS column header", () => {
       render(<JobTable jobs={MOCK_JOBS} />);
 
-      expect(screen.getByText("GFS")).toBeInTheDocument();
+      expect(
+        screen.getByRole("columnheader", { name: "GFS" }),
+      ).toBeInTheDocument();
     });
 
     it("renders GFS Yes badge when enabled", () => {
@@ -482,6 +491,117 @@ describe("JobTable", () => {
       const row = vmBackupCell.closest("tr");
       expect(row!.className).toMatch(/cursor-pointer/);
     });
+  });
+
+  it("filters rows by job type via multiselect", async () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+    const typeFilterBtn = screen.getByRole("button", {
+      name: /filter by type/i,
+    });
+    fireEvent.click(typeFilterBtn);
+    const vmwareOption = screen.getByRole("checkbox", {
+      name: /vmware backup/i,
+    });
+    fireEvent.click(vmwareOption);
+    expect(screen.getByText("VM Backup Daily")).toBeInTheDocument();
+    expect(screen.queryByText("SQL Agent Backup")).not.toBeInTheDocument();
+  });
+
+  it("filters rows by encryption toggle", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+    const encryptedToggle = screen.getByRole("button", {
+      name: /filter by encrypted status/i,
+    });
+    fireEvent.click(encryptedToggle);
+    expect(screen.getByText("VM Backup Daily")).toBeInTheDocument();
+    expect(screen.queryByText("SQL Agent Backup")).not.toBeInTheDocument();
+  });
+
+  it("filters rows by GFS toggle", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+    const gfsToggle = screen.getByRole("button", {
+      name: /filter by gfs status/i,
+    });
+    fireEvent.click(gfsToggle);
+    expect(screen.getByText("VM Backup Daily")).toBeInTheDocument();
+    expect(screen.queryByText("SQL Agent Backup")).not.toBeInTheDocument();
+  });
+
+  it("renders a checkbox for each job row", () => {
+    render(
+      <JobTable
+        jobs={MOCK_JOBS}
+        excludedJobNames={new Set()}
+        onExcludedChange={() => {}}
+      />,
+    );
+    const checkboxes = screen.getAllByRole("checkbox");
+    expect(checkboxes.length).toBe(MOCK_JOBS.length);
+  });
+
+  it("calls onExcludedChange with job name when checkbox clicked", () => {
+    const onExcludedChange = vi.fn();
+    render(
+      <JobTable
+        jobs={[createEnrichedJob({ JobName: "VM Backup Daily" })]}
+        excludedJobNames={new Set()}
+        onExcludedChange={onExcludedChange}
+      />,
+    );
+    const checkbox = screen.getByRole("checkbox");
+    fireEvent.click(checkbox);
+    expect(onExcludedChange).toHaveBeenCalledWith(new Set(["VM Backup Daily"]));
+  });
+
+  it("shows excluded count badge when jobs are excluded", () => {
+    render(
+      <JobTable
+        jobs={MOCK_JOBS}
+        excludedJobNames={new Set(["VM Backup Daily"])}
+        onExcludedChange={() => {}}
+      />,
+    );
+    expect(screen.getByText(/1 job excluded/i)).toBeInTheDocument();
+  });
+
+  it("clicking checkbox does not open job detail sheet", () => {
+    render(
+      <JobTable
+        jobs={[createEnrichedJob({ JobName: "VM Backup Daily" })]}
+        excludedJobNames={new Set()}
+        onExcludedChange={() => {}}
+      />,
+    );
+    const checkbox = screen.getByRole("checkbox");
+    fireEvent.click(checkbox);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("pressing Space on checkbox does not open job detail sheet", () => {
+    render(
+      <JobTable
+        jobs={[createEnrichedJob({ JobName: "VM Backup Daily" })]}
+        excludedJobNames={new Set()}
+        onExcludedChange={() => {}}
+      />,
+    );
+    const checkbox = screen.getByRole("checkbox");
+    fireEvent.keyDown(checkbox, { key: " " });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("applies truncation class to job name cells", () => {
+    render(
+      <JobTable
+        jobs={[
+          createEnrichedJob({
+            JobName: "A Very Long Job Name That Should Be Truncated",
+          }),
+        ]}
+      />,
+    );
+    const truncated = document.querySelector(".truncate");
+    expect(truncated).toBeInTheDocument();
   });
 
   describe("column sorting", () => {
