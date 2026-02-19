@@ -563,6 +563,31 @@ describe("normalizeArchExtents", () => {
     });
   });
 
+  it("logs DataError when RetentionPeriod fallback value is non-numeric (old format)", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      archextents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+          RetentionPeriod: "bad",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents[0].OffloadPeriod).toBeNull();
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "archextents",
+      field: "OffloadPeriod",
+    });
+  });
+
   it("falls back to RetentionPeriod when OffloadPeriod is absent (old format)", () => {
     const raw: NormalizerInput = {
       ...BASE_INPUT,
