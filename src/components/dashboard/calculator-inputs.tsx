@@ -18,10 +18,18 @@ import {
 interface CalculatorInputsProps {
   data: NormalizedDataset;
   validations: ValidationResult[];
+  excludedJobNames?: Set<string>;
 }
 
-export function CalculatorInputs({ data }: CalculatorInputsProps) {
-  const summary = buildCalculatorSummary(data.jobInfo, data.jobSessionSummary);
+export function CalculatorInputs({
+  data,
+  excludedJobNames = new Set(),
+}: CalculatorInputsProps) {
+  const summary = buildCalculatorSummary(
+    data.jobInfo,
+    data.jobSessionSummary,
+    excludedJobNames,
+  );
 
   const formatDays = (val: number | null) => {
     if (val === null) return "N/A";

@@ -189,4 +189,31 @@ describe("CalculatorInputs", () => {
 
     expect(screen.queryByText(/current:/)).not.toBeInTheDocument();
   });
+
+  it("passes excludedJobNames to buildCalculatorSummary", () => {
+    vi.mocked(buildCalculatorSummary).mockReturnValue({
+      totalSourceDataTB: 1.0,
+      weightedAvgChangeRate: null,
+      immutabilityDays: 30,
+      maxRetentionDays: 30,
+      originalMaxRetentionDays: null,
+      gfsWeekly: null,
+      gfsMonthly: null,
+      gfsYearly: null,
+    });
+    const excluded = new Set(["Job B"]);
+    render(
+      <CalculatorInputs
+        data={mockData}
+        validations={[]}
+        excludedJobNames={excluded}
+      />,
+    );
+    expect(vi.mocked(buildCalculatorSummary)).toHaveBeenCalledWith(
+      mockData.jobInfo,
+      mockData.jobSessionSummary,
+      excluded,
+    );
+    expect(screen.getByText("1.00 TB")).toBeInTheDocument();
+  });
 });

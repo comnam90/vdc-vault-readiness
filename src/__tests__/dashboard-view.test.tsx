@@ -362,6 +362,19 @@ describe("DashboardView", () => {
     expect(screen.queryByTestId("passing-checks")).not.toBeInTheDocument();
   });
 
+  it("renders Repositories tab trigger", () => {
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={MIXED_VALIDATIONS}
+        onReset={() => {}}
+      />,
+    );
+    expect(
+      screen.getByRole("tab", { name: "Repositories" }),
+    ).toBeInTheDocument();
+  });
+
   describe("multiple backup servers", () => {
     it("displays oldest version when multiple servers have mixed versions", () => {
       render(

@@ -157,6 +157,8 @@ const columns = [
 
 interface JobTableProps {
   jobs: EnrichedJob[];
+  excludedJobNames?: Set<string>;
+  onExcludedChange?: (names: Set<string>) => void;
 }
 
 export function JobTable({ jobs }: JobTableProps) {

@@ -41,6 +41,9 @@ export function DashboardView({
   onReset,
 }: DashboardViewProps) {
   const [activeTab, setActiveTab] = useState("overview");
+  const [excludedJobNames, setExcludedJobNames] = useState<Set<string>>(
+    new Set(),
+  );
   const enrichedJobs = useMemo(
     () => enrichJobs(data.jobInfo, data.jobSessionSummary),
     [data.jobInfo, data.jobSessionSummary],
@@ -181,6 +184,7 @@ export function DashboardView({
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="jobs">Job Details</TabsTrigger>
           <TabsTrigger value="sizing">Sizing</TabsTrigger>
+          <TabsTrigger value="repositories">Repositories</TabsTrigger>
         </TabsList>
 
         <TabsContent
@@ -207,14 +211,31 @@ export function DashboardView({
           value="jobs"
           className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
         >
-          <JobTable jobs={enrichedJobs} />
+          <JobTable
+            jobs={enrichedJobs}
+            excludedJobNames={excludedJobNames}
+            onExcludedChange={setExcludedJobNames}
+          />
         </TabsContent>
 
         <TabsContent
           value="sizing"
           className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
         >
-          <CalculatorInputs data={data} validations={validations} />
+          <CalculatorInputs
+            data={data}
+            validations={validations}
+            excludedJobNames={excludedJobNames}
+          />
+        </TabsContent>
+
+        <TabsContent
+          value="repositories"
+          className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
+        >
+          <p className="text-muted-foreground text-sm">
+            Repositories tab — coming soon.
+          </p>
         </TabsContent>
       </Tabs>
     </div>
