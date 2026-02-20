@@ -1,7 +1,13 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { RepositoriesTab } from "@/components/dashboard/repositories-tab";
-import type { SafeJob, SafeSobr, SafeRepo } from "@/types/domain";
+import type {
+  SafeJob,
+  SafeSobr,
+  SafeRepo,
+  SafeCapExtent,
+  SafeArchExtent,
+} from "@/types/domain";
 
 function makeManyRepos(count: number): SafeRepo[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -246,6 +252,46 @@ describe("RepositoriesTab", () => {
     const noBadge = screen.getByText("No");
     expect(noBadge).toHaveClass("text-destructive");
   });
+
+  it("shows Name column header in standard repos table", () => {
+    render(
+      <RepositoriesTab
+        repos={[MOCK_REPO]}
+        jobs={[]}
+        sobr={[]}
+        extents={[]}
+        capExtents={[]}
+        archExtents={[]}
+      />,
+    );
+    // sobr={[]} so only standard repos section renders → one "Name" heading
+    expect(screen.getByText("Name")).toBeInTheDocument();
+  });
+
+  it("sorts standard repos descending when Name header clicked (default is asc)", () => {
+    const repos = [
+      { ...MOCK_REPO, Name: "Zoo Repo" },
+      { ...MOCK_REPO, Name: "Alpha Repo" },
+    ];
+    render(
+      <RepositoriesTab
+        repos={repos}
+        jobs={[]}
+        sobr={[]}
+        extents={[]}
+        capExtents={[]}
+        archExtents={[]}
+      />,
+    );
+    // Default sort asc → Alpha is first cell
+    const cellsBefore = screen.getAllByRole("cell");
+    expect(cellsBefore[0]).toHaveTextContent("Alpha Repo");
+
+    // Click Name header → toggles to desc → Zoo is first
+    fireEvent.click(screen.getByRole("button", { name: /^name$/i }));
+    const cellsAfter = screen.getAllByRole("cell");
+    expect(cellsAfter[0]).toHaveTextContent("Zoo Repo");
+  });
 });
 
 describe("Standard Repositories pagination", () => {
@@ -353,6 +399,60 @@ describe("SOBR Source Data derivation", () => {
     expect(sourceDataHeaders.length).toBeGreaterThan(0);
     const backupDataHeaders = screen.getAllByText(/backup data/i);
     expect(backupDataHeaders.length).toBeGreaterThan(0);
+  });
+
+  it("shows capacity tier move period in SOBR table", () => {
+    const mockCapExtent: SafeCapExtent = {
+      Name: "Cap-01",
+      SobrName: "SOBR-01",
+      EncryptionEnabled: true,
+      ImmutableEnabled: false,
+      Type: "AmazonS3",
+      Status: "Connected",
+      CopyModeEnabled: false,
+      MoveModeEnabled: true,
+      MovePeriodDays: 90,
+      ImmutablePeriod: null,
+      SizeLimitEnabled: null,
+      SizeLimit: null,
+    };
+    render(
+      <RepositoriesTab
+        repos={[]}
+        jobs={[]}
+        sobr={[
+          { ...MOCK_SOBR, EnableCapacityTier: true, CapacityTierMove: true },
+        ]}
+        extents={[]}
+        capExtents={[mockCapExtent]}
+        archExtents={[]}
+      />,
+    );
+    expect(screen.getByText("90d")).toBeInTheDocument();
+  });
+
+  it("shows archive tier offload period in SOBR table", () => {
+    const mockArchExtent: SafeArchExtent = {
+      Name: "Arch-01",
+      SobrName: "SOBR-01",
+      ArchiveTierEnabled: true,
+      EncryptionEnabled: true,
+      ImmutableEnabled: false,
+      OffloadPeriod: 60,
+      CostOptimizedEnabled: null,
+      FullBackupModeEnabled: null,
+    };
+    render(
+      <RepositoriesTab
+        repos={[]}
+        jobs={[]}
+        sobr={[{ ...MOCK_SOBR, ArchiveTierEnabled: true }]}
+        extents={[]}
+        capExtents={[]}
+        archExtents={[mockArchExtent]}
+      />,
+    );
+    expect(screen.getByText("60d")).toBeInTheDocument();
   });
 
   it("shows SOBR Source Data derived from jobs targeting SOBR by name", () => {
