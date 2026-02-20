@@ -117,7 +117,7 @@ export function RepositoriesTab({
                     Source Data
                   </TableHead>
                   <TableHead className="text-muted-foreground text-right text-xs font-semibold tracking-wide uppercase">
-                    On Disk
+                    Backup Data
                   </TableHead>
                   <TableHead className="text-muted-foreground text-right text-xs font-semibold tracking-wide uppercase">
                     Total Capacity
@@ -168,7 +168,7 @@ export function RepositoriesTab({
                         ) : (
                           <Badge
                             variant="outline"
-                            className="text-muted-foreground"
+                            className="border-destructive/30 bg-destructive/5 text-destructive"
                           >
                             No
                           </Badge>
@@ -228,7 +228,7 @@ export function RepositoriesTab({
                     Source Data
                   </TableHead>
                   <TableHead className="text-muted-foreground text-right text-xs font-semibold tracking-wide uppercase">
-                    On Disk
+                    Backup Data
                   </TableHead>
                   <TableHead className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                     Capacity Tier
@@ -238,9 +238,6 @@ export function RepositoriesTab({
                   </TableHead>
                   <TableHead className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                     Immutability
-                  </TableHead>
-                  <TableHead className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                    Extents
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -326,7 +323,6 @@ export function RepositoriesTab({
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell>{s.ExtentCount ?? "N/A"}</TableCell>
                     </TableRow>
                   );
                 })}

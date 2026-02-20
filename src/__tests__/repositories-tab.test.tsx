@@ -215,7 +215,7 @@ describe("RepositoriesTab", () => {
     expect(screen.getByText("1.00 TB")).toBeInTheDocument();
   });
 
-  it("shows On Disk column derived from matching jobs", () => {
+  it("shows Backup Data column derived from matching jobs", () => {
     // Job A: 512 GB OnDisk = 0.5 TB
     render(
       <RepositoriesTab
@@ -227,9 +227,24 @@ describe("RepositoriesTab", () => {
         archExtents={[]}
       />,
     );
-    expect(screen.getByText(/on disk/i)).toBeInTheDocument();
+    expect(screen.getByText(/backup data/i)).toBeInTheDocument();
     // 512 GB = 0.50 TB
     expect(screen.getByText("0.50 TB")).toBeInTheDocument();
+  });
+
+  it("shows red badge for immutability not supported", () => {
+    render(
+      <RepositoriesTab
+        repos={[{ ...MOCK_REPO, ImmutabilitySupported: false }]}
+        jobs={[]}
+        sobr={[]}
+        extents={[]}
+        capExtents={[]}
+        archExtents={[]}
+      />,
+    );
+    const noBadge = screen.getByText("No");
+    expect(noBadge).toHaveClass("text-destructive");
   });
 });
 
@@ -322,7 +337,7 @@ describe("Scale-Out Repositories pagination", () => {
 });
 
 describe("SOBR Source Data derivation", () => {
-  it("shows Source Data and On Disk column headers in SOBR table", () => {
+  it("shows Source Data and Backup Data column headers in SOBR table", () => {
     render(
       <RepositoriesTab
         repos={[]}
@@ -333,11 +348,11 @@ describe("SOBR Source Data derivation", () => {
         archExtents={[]}
       />,
     );
-    // SOBR table should have Source Data and On Disk columns
+    // SOBR table should have Source Data and Backup Data columns
     const sourceDataHeaders = screen.getAllByText(/source data/i);
     expect(sourceDataHeaders.length).toBeGreaterThan(0);
-    const onDiskHeaders = screen.getAllByText(/on disk/i);
-    expect(onDiskHeaders.length).toBeGreaterThan(0);
+    const backupDataHeaders = screen.getAllByText(/backup data/i);
+    expect(backupDataHeaders.length).toBeGreaterThan(0);
   });
 
   it("shows SOBR Source Data derived from jobs targeting SOBR by name", () => {
