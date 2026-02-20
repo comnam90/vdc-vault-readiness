@@ -9,6 +9,7 @@ import type {
 import { deriveStandardRepos } from "@/lib/repo-aggregator";
 import { formatTB } from "@/lib/format-utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -35,7 +36,21 @@ export function RepositoriesTab({
   archExtents,
 }: RepositoriesTabProps) {
   const [selectedSobr, setSelectedSobr] = useState<SafeSobr | null>(null);
+  const [stdPage, setStdPage] = useState(0);
+  const [sobrPage, setSobrPage] = useState(0);
   const standardRepos = deriveStandardRepos(jobs);
+
+  const PAGE_SIZE = 10;
+  const stdPageCount = Math.ceil(standardRepos.length / PAGE_SIZE);
+  const pagedStandardRepos = standardRepos.slice(
+    stdPage * PAGE_SIZE,
+    (stdPage + 1) * PAGE_SIZE,
+  );
+  const sobrPageCount = Math.ceil(sobr.length / PAGE_SIZE);
+  const pagedSobr = sobr.slice(
+    sobrPage * PAGE_SIZE,
+    (sobrPage + 1) * PAGE_SIZE,
+  );
 
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in space-y-8 duration-300">
@@ -68,7 +83,7 @@ export function RepositoriesTab({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {standardRepos.map((repo) => (
+                {pagedStandardRepos.map((repo) => (
                   <TableRow key={repo.repoName}>
                     <TableCell className="font-medium">
                       {repo.repoName}
@@ -100,6 +115,31 @@ export function RepositoriesTab({
                 ))}
               </TableBody>
             </Table>
+            {stdPageCount > 1 && (
+              <div className="flex items-center justify-between border-t px-4 py-3">
+                <p className="text-muted-foreground text-sm">
+                  Page {stdPage + 1} of {stdPageCount}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStdPage((p) => p - 1)}
+                    disabled={stdPage === 0}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStdPage((p) => p + 1)}
+                    disabled={stdPage >= stdPageCount - 1}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -135,7 +175,7 @@ export function RepositoriesTab({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sobr.map((s) => (
+                {pagedSobr.map((s) => (
                   <TableRow
                     key={s.Name}
                     role="button"
@@ -209,6 +249,31 @@ export function RepositoriesTab({
                 ))}
               </TableBody>
             </Table>
+            {sobrPageCount > 1 && (
+              <div className="flex items-center justify-between border-t px-4 py-3">
+                <p className="text-muted-foreground text-sm">
+                  Page {sobrPage + 1} of {sobrPageCount}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSobrPage((p) => p - 1)}
+                    disabled={sobrPage === 0}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSobrPage((p) => p + 1)}
+                    disabled={sobrPage >= sobrPageCount - 1}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       )}
