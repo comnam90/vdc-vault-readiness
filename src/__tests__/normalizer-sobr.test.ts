@@ -752,3 +752,126 @@ describe("normalizeExtents", () => {
     expect(result.extents).toEqual([]);
   });
 });
+
+describe("normalizeRepos", () => {
+  it("normalizes a valid repo row with all fields", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      repos: [
+        {
+          Name: "LinuxHardened",
+          IsImmutabilitySupported: "True",
+          JobCount: "5",
+          TotalSpace: "10.0",
+          FreeSpace: "4.5",
+          Type: "LinuxLocal",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.repos).toHaveLength(1);
+    expect(result.repos[0]).toMatchObject({
+      Name: "LinuxHardened",
+      ImmutabilitySupported: true,
+      JobCount: 5,
+      TotalSpaceTB: 10.0,
+      FreeSpaceTB: 4.5,
+      Type: "LinuxLocal",
+    });
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
+  it("drops repo row missing Name and logs data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      repos: [
+        {
+          Name: null,
+          IsImmutabilitySupported: "True",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.repos).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "repos",
+      rowIndex: 0,
+      field: "Name",
+    });
+  });
+
+  it("drops repo row with invalid IsImmutabilitySupported and logs data error", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      repos: [
+        {
+          Name: "WindowsRepo",
+          IsImmutabilitySupported: "maybe",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.repos).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      section: "repos",
+      field: "IsImmutabilitySupported",
+    });
+  });
+
+  it("returns empty array when repos input is undefined", () => {
+    const raw: NormalizerInput = { ...BASE_INPUT };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.repos).toEqual([]);
+  });
+
+  it("defaults optional fields to null when missing", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      repos: [
+        {
+          Name: "MinimalRepo",
+          IsImmutabilitySupported: "False",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.repos).toHaveLength(1);
+    expect(result.repos[0].JobCount).toBeNull();
+    expect(result.repos[0].TotalSpaceTB).toBeNull();
+    expect(result.repos[0].FreeSpaceTB).toBeNull();
+    expect(result.repos[0].Type).toBeNull();
+  });
+
+  it("parses optional numeric fields from string values", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      repos: [
+        {
+          Name: "FullRepo",
+          IsImmutabilitySupported: "True",
+          JobCount: "12",
+          TotalSpace: "5.5",
+          FreeSpace: "2.0",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.repos[0].JobCount).toBe(12);
+    expect(result.repos[0].TotalSpaceTB).toBe(5.5);
+    expect(result.repos[0].FreeSpaceTB).toBe(2.0);
+  });
+});
