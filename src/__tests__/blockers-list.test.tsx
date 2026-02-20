@@ -101,4 +101,19 @@ describe("BlockersList", () => {
         .length ?? 0,
     ).toBe(0);
   });
+
+  describe("prefers-reduced-motion accessibility", () => {
+    it("uses motion-safe prefix for alert animations", () => {
+      render(<BlockersList blockers={[FAIL_RESULT]} />);
+      const alert = screen.getByRole("alert");
+      expect(alert.className).toMatch(/motion-safe:animate-in/);
+      expect(alert.className).toMatch(/motion-safe:fade-in/);
+    });
+
+    it("uses motion-safe prefix for attention-pulse animation", () => {
+      render(<BlockersList blockers={[FAIL_RESULT]} />);
+      const alert = screen.getByRole("alert");
+      expect(alert.className).toMatch(/motion-safe:animate-attention-pulse/);
+    });
+  });
 });
