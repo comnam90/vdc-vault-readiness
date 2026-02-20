@@ -44,6 +44,7 @@ function makeDataset(
     capExtents: [],
     extents: [],
     archExtents: [],
+    repos: [],
     dataErrors: [],
     ...overrides,
   };

@@ -35,6 +35,7 @@ const MOCK_ANALYSIS_RESULT = {
     capExtents: [],
     extents: [],
     archExtents: [],
+    repos: [],
     dataErrors: [],
   },
   validations: [

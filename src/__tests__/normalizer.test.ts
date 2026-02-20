@@ -101,6 +101,7 @@ describe("normalizeHealthcheck", () => {
       capExtents: [],
       extents: [],
       archExtents: [],
+      repos: [],
       dataErrors: [],
     });
   });
@@ -148,6 +149,7 @@ describe("normalizeHealthcheck", () => {
       capExtents: [],
       extents: [],
       archExtents: [],
+      repos: [],
       dataErrors: [],
     });
   });
@@ -169,6 +171,7 @@ describe("normalizeHealthcheck", () => {
       capExtents: [],
       extents: [],
       archExtents: [],
+      repos: [],
       dataErrors: [],
     });
   });

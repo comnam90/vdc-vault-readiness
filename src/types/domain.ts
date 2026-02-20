@@ -96,6 +96,15 @@ export interface SafeExtent {
   TotalSpaceTB: number | null;
 }
 
+export interface SafeRepo {
+  Name: string;
+  JobCount: number | null;
+  TotalSpaceTB: number | null;
+  FreeSpaceTB: number | null;
+  ImmutabilitySupported: boolean;
+  Type: string | null;
+}
+
 export type DataError = {
   level: "Data Error";
   section:
@@ -107,7 +116,8 @@ export type DataError = {
     | "sobr"
     | "capextents"
     | "archextents"
-    | "extents";
+    | "extents"
+    | "repos";
   rowIndex: number;
   field: string;
   reason: string;
@@ -123,6 +133,7 @@ export interface NormalizedDataset {
   extents: SafeExtent[];
   capExtents: SafeCapExtent[];
   archExtents: SafeArchExtent[];
+  repos: SafeRepo[];
   dataErrors: DataError[];
 }
 

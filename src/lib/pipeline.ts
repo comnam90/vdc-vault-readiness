@@ -28,6 +28,7 @@ export function analyzeHealthcheck(raw: HealthcheckRoot): AnalysisResult {
     extents: zipSection(sections.extents),
     capextents: zipSection(sections.capextents),
     archextents: zipSection(sections.archextents),
+    repos: zipSection(sections.repos),
   };
 
   const sessionData = zipSection(sections.jobSessionSummaryByJob);

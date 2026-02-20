@@ -73,4 +73,5 @@ export interface NormalizerInput {
   extents?: Record<string, HealthcheckRowValue>[];
   capextents?: Record<string, HealthcheckRowValue>[];
   archextents?: Record<string, HealthcheckRowValue>[];
+  repos?: Record<string, HealthcheckRowValue>[];
 }

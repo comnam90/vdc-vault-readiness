@@ -59,6 +59,7 @@ const MOCK_DATA: NormalizedDataset = {
   capExtents: [],
   extents: [],
   archExtents: [],
+  repos: [],
   dataErrors: [],
 };
 

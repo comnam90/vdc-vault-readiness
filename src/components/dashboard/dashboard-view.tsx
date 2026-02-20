@@ -231,6 +231,7 @@ export function DashboardView({
           className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
         >
           <RepositoriesTab
+            repos={data.repos}
             jobs={data.jobInfo}
             sobr={data.sobr}
             extents={data.extents}

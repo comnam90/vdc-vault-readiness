@@ -5,8 +5,8 @@ import type {
   SafeExtent,
   SafeCapExtent,
   SafeArchExtent,
+  SafeRepo,
 } from "@/types/domain";
-import { deriveStandardRepos } from "@/lib/repo-aggregator";
 import { formatTB } from "@/lib/format-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
 import { SobrDetailSheet } from "./sobr-detail-sheet";
 
 interface RepositoriesTabProps {
+  repos: SafeRepo[];
   jobs: SafeJob[];
   sobr: SafeSobr[];
   extents: SafeExtent[];
@@ -29,6 +30,7 @@ interface RepositoriesTabProps {
 }
 
 export function RepositoriesTab({
+  repos,
   jobs,
   sobr,
   extents,
@@ -38,11 +40,46 @@ export function RepositoriesTab({
   const [selectedSobr, setSelectedSobr] = useState<SafeSobr | null>(null);
   const [stdPage, setStdPage] = useState(0);
   const [sobrPage, setSobrPage] = useState(0);
-  const standardRepos = deriveStandardRepos(jobs);
+
+  // Standard repos: job-derived stats indexed by repo name
+  const repoStatsMap = new Map<
+    string,
+    { sourceTB: number; onDiskTB: number }
+  >();
+  for (const job of jobs) {
+    const cur = repoStatsMap.get(job.RepoName) ?? { sourceTB: 0, onDiskTB: 0 };
+    repoStatsMap.set(job.RepoName, {
+      sourceTB:
+        cur.sourceTB +
+        (job.SourceSizeGB !== null ? job.SourceSizeGB / 1024 : 0),
+      onDiskTB:
+        cur.onDiskTB + (job.OnDiskGB !== null ? job.OnDiskGB / 1024 : 0),
+    });
+  }
+
+  // SOBR: job → extent → SOBR join
+  const extentToSobr = new Map(extents.map((e) => [e.Name, e.SobrName]));
+  const sobrStatsMap = new Map<
+    string,
+    { sourceTB: number; onDiskTB: number }
+  >();
+  for (const job of jobs) {
+    const sobrName = extentToSobr.get(job.RepoName);
+    if (sobrName !== undefined) {
+      const cur = sobrStatsMap.get(sobrName) ?? { sourceTB: 0, onDiskTB: 0 };
+      sobrStatsMap.set(sobrName, {
+        sourceTB:
+          cur.sourceTB +
+          (job.SourceSizeGB !== null ? job.SourceSizeGB / 1024 : 0),
+        onDiskTB:
+          cur.onDiskTB + (job.OnDiskGB !== null ? job.OnDiskGB / 1024 : 0),
+      });
+    }
+  }
 
   const PAGE_SIZE = 10;
-  const stdPageCount = Math.ceil(standardRepos.length / PAGE_SIZE);
-  const pagedStandardRepos = standardRepos.slice(
+  const stdPageCount = Math.ceil(repos.length / PAGE_SIZE);
+  const pagedStandardRepos = repos.slice(
     stdPage * PAGE_SIZE,
     (stdPage + 1) * PAGE_SIZE,
   );
@@ -59,7 +96,7 @@ export function RepositoriesTab({
         <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
           Standard Repositories
         </h2>
-        {standardRepos.length === 0 ? (
+        {repos.length === 0 ? (
           <p className="text-muted-foreground text-sm">
             No repositories found.
           </p>
@@ -77,42 +114,67 @@ export function RepositoriesTab({
                   <TableHead className="text-muted-foreground text-right text-xs font-semibold tracking-wide uppercase">
                     Source Data
                   </TableHead>
+                  <TableHead className="text-muted-foreground text-right text-xs font-semibold tracking-wide uppercase">
+                    On Disk
+                  </TableHead>
+                  <TableHead className="text-muted-foreground text-right text-xs font-semibold tracking-wide uppercase">
+                    Total Capacity
+                  </TableHead>
+                  <TableHead className="text-muted-foreground text-right text-xs font-semibold tracking-wide uppercase">
+                    Free Capacity
+                  </TableHead>
                   <TableHead className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                    Encrypted
+                    Immutability
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pagedStandardRepos.map((repo) => (
-                  <TableRow key={repo.repoName}>
-                    <TableCell className="font-medium">
-                      {repo.repoName}
-                    </TableCell>
-                    <TableCell>{repo.jobCount}</TableCell>
-                    <TableCell className="text-right font-mono">
-                      {repo.totalSourceTB !== null
-                        ? formatTB(repo.totalSourceTB)
-                        : "N/A"}
-                    </TableCell>
-                    <TableCell>
-                      {repo.allEncrypted ? (
-                        <Badge
-                          variant="outline"
-                          className="border-primary/30 bg-primary/5 text-primary"
-                        >
-                          Yes
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="border-destructive/30 bg-destructive/5 text-destructive"
-                        >
-                          No
-                        </Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {pagedStandardRepos.map((repo) => {
+                  const stats = repoStatsMap.get(repo.Name);
+                  return (
+                    <TableRow key={repo.Name}>
+                      <TableCell className="font-medium">{repo.Name}</TableCell>
+                      <TableCell>{repo.JobCount ?? "N/A"}</TableCell>
+                      <TableCell className="text-right font-mono">
+                        {stats && stats.sourceTB > 0
+                          ? formatTB(stats.sourceTB)
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {stats && stats.onDiskTB > 0
+                          ? formatTB(stats.onDiskTB)
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {repo.TotalSpaceTB !== null
+                          ? formatTB(repo.TotalSpaceTB)
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {repo.FreeSpaceTB !== null
+                          ? formatTB(repo.FreeSpaceTB)
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {repo.ImmutabilitySupported ? (
+                          <Badge
+                            variant="outline"
+                            className="border-primary/30 bg-primary/5 text-primary"
+                          >
+                            Yes
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="text-muted-foreground"
+                          >
+                            No
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
             {stdPageCount > 1 && (
@@ -158,6 +220,15 @@ export function RepositoriesTab({
                     Name
                   </TableHead>
                   <TableHead className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                    Jobs
+                  </TableHead>
+                  <TableHead className="text-muted-foreground text-right text-xs font-semibold tracking-wide uppercase">
+                    Source Data
+                  </TableHead>
+                  <TableHead className="text-muted-foreground text-right text-xs font-semibold tracking-wide uppercase">
+                    On Disk
+                  </TableHead>
+                  <TableHead className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                     Capacity Tier
                   </TableHead>
                   <TableHead className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
@@ -169,84 +240,94 @@ export function RepositoriesTab({
                   <TableHead className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                     Extents
                   </TableHead>
-                  <TableHead className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                    Jobs
-                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pagedSobr.map((s) => (
-                  <TableRow
-                    key={s.Name}
-                    role="button"
-                    tabIndex={0}
-                    className="hover:bg-muted/30 cursor-pointer transition-colors"
-                    onClick={() => setSelectedSobr(s)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setSelectedSobr(s);
-                      }
-                    }}
-                  >
-                    <TableCell className="font-medium">{s.Name}</TableCell>
-                    <TableCell>
-                      {s.EnableCapacityTier ? (
-                        <Badge
-                          variant="outline"
-                          className="border-primary/30 bg-primary/5 text-primary"
-                        >
-                          Yes
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="text-muted-foreground"
-                        >
-                          No
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {s.ArchiveTierEnabled ? (
-                        <Badge
-                          variant="outline"
-                          className="border-primary/30 bg-primary/5 text-primary"
-                        >
-                          Yes
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="text-muted-foreground"
-                        >
-                          No
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {s.ImmutableEnabled ? (
-                        <Badge
-                          variant="outline"
-                          className="border-primary/30 bg-primary/5 text-primary"
-                        >
-                          {s.ImmutablePeriod != null
-                            ? `${s.ImmutablePeriod}d`
-                            : "Yes"}
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="border-destructive/30 bg-destructive/5 text-destructive"
-                        >
-                          No
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>{s.ExtentCount ?? "N/A"}</TableCell>
-                    <TableCell>{s.JobCount ?? "N/A"}</TableCell>
-                  </TableRow>
-                ))}
+                {pagedSobr.map((s) => {
+                  const stats = sobrStatsMap.get(s.Name);
+                  return (
+                    <TableRow
+                      key={s.Name}
+                      role="button"
+                      tabIndex={0}
+                      className="hover:bg-muted/30 cursor-pointer transition-colors"
+                      onClick={() => setSelectedSobr(s)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedSobr(s);
+                        }
+                      }}
+                    >
+                      <TableCell className="font-medium">{s.Name}</TableCell>
+                      <TableCell>{s.JobCount ?? "N/A"}</TableCell>
+                      <TableCell className="text-right font-mono">
+                        {stats && stats.sourceTB > 0
+                          ? formatTB(stats.sourceTB)
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {stats && stats.onDiskTB > 0
+                          ? formatTB(stats.onDiskTB)
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {s.EnableCapacityTier ? (
+                          <Badge
+                            variant="outline"
+                            className="border-primary/30 bg-primary/5 text-primary"
+                          >
+                            Yes
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="text-muted-foreground"
+                          >
+                            No
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {s.ArchiveTierEnabled ? (
+                          <Badge
+                            variant="outline"
+                            className="border-primary/30 bg-primary/5 text-primary"
+                          >
+                            Yes
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="text-muted-foreground"
+                          >
+                            No
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {s.ImmutableEnabled ? (
+                          <Badge
+                            variant="outline"
+                            className="border-primary/30 bg-primary/5 text-primary"
+                          >
+                            {s.ImmutablePeriod != null
+                              ? `${s.ImmutablePeriod}d`
+                              : "Yes"}
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="border-destructive/30 bg-destructive/5 text-destructive"
+                          >
+                            No
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>{s.ExtentCount ?? "N/A"}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
             {sobrPageCount > 1 && (

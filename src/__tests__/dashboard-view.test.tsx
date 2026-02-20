@@ -21,6 +21,7 @@ const MULTI_SERVER_MIXED_DATA: NormalizedDataset = {
   extents: [],
   capExtents: [],
   archExtents: [],
+  repos: [],
   dataErrors: [],
 };
 
@@ -40,6 +41,7 @@ const MULTI_SERVER_ALL_PASS_DATA: NormalizedDataset = {
   extents: [],
   capExtents: [],
   archExtents: [],
+  repos: [],
   dataErrors: [],
 };
 

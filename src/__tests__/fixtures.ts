@@ -1,4 +1,4 @@
-import type { NormalizedDataset } from "@/types/domain";
+import type { NormalizedDataset, SafeRepo } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 
 /**
@@ -73,6 +73,16 @@ export const MOCK_DATA: NormalizedDataset = {
   extents: [],
   capExtents: [],
   archExtents: [],
+  repos: [
+    {
+      Name: "LinuxHardened",
+      JobCount: 1,
+      TotalSpaceTB: 2.0,
+      FreeSpaceTB: 1.0,
+      ImmutabilitySupported: true,
+      Type: "LinuxLocal",
+    } satisfies SafeRepo,
+  ],
   dataErrors: [],
 };
 

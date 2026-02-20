@@ -21,6 +21,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -48,6 +49,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -77,6 +79,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -104,6 +107,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -132,6 +136,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -163,6 +168,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -190,6 +196,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -212,6 +219,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -278,6 +286,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -344,6 +353,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -432,6 +442,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -462,6 +473,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -528,6 +540,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -592,6 +605,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -641,6 +655,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -688,6 +703,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -734,6 +750,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -819,6 +836,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -850,6 +868,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -879,6 +898,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -905,6 +925,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -931,6 +952,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -995,6 +1017,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1061,6 +1084,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1131,6 +1155,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1214,6 +1239,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1262,6 +1288,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1309,6 +1336,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1358,6 +1386,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1388,6 +1417,7 @@ describe("validateHealthcheck", () => {
         capExtents: [],
         extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);

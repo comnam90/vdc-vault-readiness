@@ -9,6 +9,7 @@ import type {
   SafeJob,
   SafeJobSession,
   SafeLicense,
+  SafeRepo,
   SafeSecuritySummary,
   SafeSobr,
 } from "@/types/domain";
@@ -264,6 +265,7 @@ export function normalizeHealthcheck(
     extents: normalizeExtents(asArray(raw.extents), dataErrors),
     capExtents: normalizeCapExtents(asArray(raw.capextents), dataErrors),
     archExtents: normalizeArchExtents(asArray(raw.archextents), dataErrors),
+    repos: normalizeRepos(asArray(raw.repos), dataErrors),
     dataErrors,
   };
 }
@@ -866,5 +868,73 @@ function normalizeArchExtents(
     };
 
     return [safeArchExtent];
+  });
+}
+
+type RepoRecord = Record<string, string | null | undefined>;
+
+function normalizeRepos(
+  rows: RepoRecord[],
+  dataErrors: DataError[],
+): SafeRepo[] {
+  return rows.flatMap((row, rowIndex) => {
+    if (!isRecord(row)) {
+      dataErrors.push(
+        buildError("repos", rowIndex, "_row", "Invalid row: not an object"),
+      );
+      return [];
+    }
+
+    const name = normalizeString(row.Name as string | null | undefined);
+    if (!name) {
+      dataErrors.push(
+        buildError("repos", rowIndex, "Name", "Missing required Name"),
+      );
+      return [];
+    }
+
+    const immutabilitySupported = parseBoolean(
+      row.IsImmutabilitySupported as string | null | undefined,
+    );
+    if (immutabilitySupported === null) {
+      dataErrors.push(
+        buildError(
+          "repos",
+          rowIndex,
+          "IsImmutabilitySupported",
+          "Missing or invalid IsImmutabilitySupported value",
+        ),
+      );
+      return [];
+    }
+
+    const safeRepo: SafeRepo = {
+      Name: name,
+      ImmutabilitySupported: immutabilitySupported,
+      JobCount: parseNumeric(
+        row.JobCount as string | null | undefined,
+        "repos",
+        rowIndex,
+        "JobCount",
+        dataErrors,
+      ),
+      TotalSpaceTB: parseNumeric(
+        row.TotalSpace as string | null | undefined,
+        "repos",
+        rowIndex,
+        "TotalSpace",
+        dataErrors,
+      ),
+      FreeSpaceTB: parseNumeric(
+        row.FreeSpace as string | null | undefined,
+        "repos",
+        rowIndex,
+        "FreeSpace",
+        dataErrors,
+      ),
+      Type: normalizeString(row.Type as string | null | undefined),
+    };
+
+    return [safeRepo];
   });
 }
