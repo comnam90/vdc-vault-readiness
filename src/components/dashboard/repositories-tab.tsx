@@ -53,7 +53,7 @@ function renderNameCell(value: string) {
 
 function renderDataCell(val: number | null) {
   return (
-    <span className="font-mono">{val && val > 0 ? formatTB(val) : "N/A"}</span>
+    <span className="font-mono">{val !== null ? formatTB(val) : "N/A"}</span>
   );
 }
 
