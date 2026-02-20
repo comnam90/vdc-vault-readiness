@@ -4,11 +4,9 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   getPaginationRowModel,
-  flexRender,
   createColumnHelper,
   type SortingState,
 } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
 import type {
   SafeJob,
   SafeSobr,
@@ -18,17 +16,8 @@ import type {
   SafeRepo,
 } from "@/types/domain";
 import { formatTB } from "@/lib/format-utils";
-import { cn } from "@/lib/utils";
+import { aggregateRepoStatsMap, type RepoStats } from "@/lib/repo-aggregator";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Tooltip,
   TooltipContent,
@@ -36,6 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { SobrDetailSheet } from "./sobr-detail-sheet";
+import { RepositoriesTable } from "./repositories-table";
 
 interface RepositoriesTabProps {
   repos: SafeRepo[];
@@ -46,34 +36,38 @@ interface RepositoriesTabProps {
   archExtents: SafeArchExtent[];
 }
 
+// ── Shared cell render helpers ──────────────────────────────────────────────────
+
+function renderNameCell(value: string) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="block max-w-[180px] truncate font-medium" tabIndex={0}>
+          {value}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{value}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function renderDataCell(val: number | null) {
+  return (
+    <span className="font-mono">{val && val > 0 ? formatTB(val) : "N/A"}</span>
+  );
+}
+
 // ── Column helpers ─────────────────────────────────────────────────────────────
 
 const repoColumnHelper = createColumnHelper<SafeRepo>();
 const sobrColumnHelper = createColumnHelper<SafeSobr>();
 
-function buildRepoColumns(
-  statsMap: Map<string, { sourceTB: number; onDiskTB: number }>,
-) {
+function buildRepoColumns(statsMap: Map<string, RepoStats>) {
   return [
     repoColumnHelper.accessor("Name", {
       header: "Name",
       enableSorting: true,
-      cell: (info) => {
-        const value = info.getValue();
-        return (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                className="block max-w-[180px] truncate font-medium"
-                tabIndex={0}
-              >
-                {value}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>{value}</TooltipContent>
-          </Tooltip>
-        );
-      },
+      cell: (info) => renderNameCell(info.getValue()),
     }),
     repoColumnHelper.accessor((row) => row.JobCount, {
       id: "jobs",
@@ -87,14 +81,7 @@ function buildRepoColumns(
       {
         id: "sourceData",
         header: "Source Data",
-        cell: (info) => {
-          const val = info.getValue();
-          return (
-            <span className="font-mono">
-              {val && val > 0 ? formatTB(val) : "N/A"}
-            </span>
-          );
-        },
+        cell: (info) => renderDataCell(info.getValue()),
         enableSorting: true,
         sortUndefined: "last",
         meta: { align: "right" },
@@ -105,14 +92,7 @@ function buildRepoColumns(
       {
         id: "backupData",
         header: "Backup Data",
-        cell: (info) => {
-          const val = info.getValue();
-          return (
-            <span className="font-mono">
-              {val && val > 0 ? formatTB(val) : "N/A"}
-            </span>
-          );
-        },
+        cell: (info) => renderDataCell(info.getValue()),
         enableSorting: true,
         sortUndefined: "last",
         meta: { align: "right" },
@@ -173,7 +153,7 @@ function buildRepoColumns(
 }
 
 function buildSobrColumns(
-  statsMap: Map<string, { sourceTB: number; onDiskTB: number }>,
+  statsMap: Map<string, RepoStats>,
   capExtents: SafeCapExtent[],
   archExtents: SafeArchExtent[],
 ) {
@@ -181,22 +161,7 @@ function buildSobrColumns(
     sobrColumnHelper.accessor("Name", {
       header: "Name",
       enableSorting: true,
-      cell: (info) => {
-        const value = info.getValue();
-        return (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                className="block max-w-[180px] truncate font-medium"
-                tabIndex={0}
-              >
-                {value}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>{value}</TooltipContent>
-          </Tooltip>
-        );
-      },
+      cell: (info) => renderNameCell(info.getValue()),
     }),
     sobrColumnHelper.accessor((row) => row.JobCount, {
       id: "jobs",
@@ -210,14 +175,7 @@ function buildSobrColumns(
       {
         id: "sourceData",
         header: "Source Data",
-        cell: (info) => {
-          const val = info.getValue();
-          return (
-            <span className="font-mono">
-              {val && val > 0 ? formatTB(val) : "N/A"}
-            </span>
-          );
-        },
+        cell: (info) => renderDataCell(info.getValue()),
         enableSorting: true,
         sortUndefined: "last",
         meta: { align: "right" },
@@ -228,14 +186,7 @@ function buildSobrColumns(
       {
         id: "backupData",
         header: "Backup Data",
-        cell: (info) => {
-          const val = info.getValue();
-          return (
-            <span className="font-mono">
-              {val && val > 0 ? formatTB(val) : "N/A"}
-            </span>
-          );
-        },
+        cell: (info) => renderDataCell(info.getValue()),
         enableSorting: true,
         sortUndefined: "last",
         meta: { align: "right" },
@@ -331,39 +282,13 @@ export function RepositoriesTab({
     { id: "Name", desc: false },
   ]);
 
-  const repoStatsMap = useMemo(() => {
-    const map = new Map<string, { sourceTB: number; onDiskTB: number }>();
-    for (const job of jobs) {
-      const cur = map.get(job.RepoName) ?? { sourceTB: 0, onDiskTB: 0 };
-      map.set(job.RepoName, {
-        sourceTB:
-          cur.sourceTB +
-          (job.SourceSizeGB !== null ? job.SourceSizeGB / 1024 : 0),
-        onDiskTB:
-          cur.onDiskTB + (job.OnDiskGB !== null ? job.OnDiskGB / 1024 : 0),
-      });
-    }
-    return map;
-  }, [jobs]);
-
   const sobrNames = useMemo(() => new Set(sobr.map((s) => s.Name)), [sobr]);
 
-  const sobrStatsMap = useMemo(() => {
-    const map = new Map<string, { sourceTB: number; onDiskTB: number }>();
-    for (const job of jobs) {
-      if (sobrNames.has(job.RepoName)) {
-        const cur = map.get(job.RepoName) ?? { sourceTB: 0, onDiskTB: 0 };
-        map.set(job.RepoName, {
-          sourceTB:
-            cur.sourceTB +
-            (job.SourceSizeGB !== null ? job.SourceSizeGB / 1024 : 0),
-          onDiskTB:
-            cur.onDiskTB + (job.OnDiskGB !== null ? job.OnDiskGB / 1024 : 0),
-        });
-      }
-    }
-    return map;
-  }, [jobs, sobrNames]);
+  const repoStatsMap = useMemo(() => aggregateRepoStatsMap(jobs), [jobs]);
+  const sobrStatsMap = useMemo(
+    () => aggregateRepoStatsMap(jobs, sobrNames),
+    [jobs, sobrNames],
+  );
 
   const repoColumns = useMemo(
     () => buildRepoColumns(repoStatsMap),
@@ -409,112 +334,10 @@ export function RepositoriesTab({
           <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             Standard Repositories
           </h2>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader className="bg-muted/50">
-                {repoTable.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      const align =
-                        (header.column.columnDef.meta as { align?: string })
-                          ?.align === "right"
-                          ? "text-right"
-                          : "";
-                      return (
-                        <TableHead
-                          key={header.id}
-                          className={cn(
-                            "text-muted-foreground text-xs font-semibold tracking-wide uppercase",
-                            align,
-                          )}
-                        >
-                          {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                            <button
-                              type="button"
-                              className={cn(
-                                "flex items-center gap-1",
-                                align && "ml-auto",
-                              )}
-                              onClick={header.column.getToggleSortingHandler()}
-                            >
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                              <ArrowUpDown className="size-3" />
-                            </button>
-                          ) : (
-                            flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )
-                          )}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {repoTable.getRowModel().rows.length > 0 ? (
-                  repoTable.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => {
-                        const cellAlign =
-                          (cell.column.columnDef.meta as { align?: string })
-                            ?.align === "right"
-                            ? "text-right"
-                            : "";
-                        return (
-                          <TableCell key={cell.id} className={cellAlign}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={repoColumns.length}
-                      className="text-muted-foreground h-24 text-center"
-                    >
-                      No repositories found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            {repoTable.getPageCount() > 1 && (
-              <div className="flex items-center justify-between border-t px-4 py-3">
-                <p className="text-muted-foreground text-sm">
-                  Page {repoTable.getState().pagination.pageIndex + 1} of{" "}
-                  {repoTable.getPageCount()}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => repoTable.previousPage()}
-                    disabled={!repoTable.getCanPreviousPage()}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => repoTable.nextPage()}
-                    disabled={!repoTable.getCanNextPage()}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
+          <RepositoriesTable
+            table={repoTable}
+            emptyMessage="No repositories found."
+          />
         </section>
 
         {/* SOBR Repositories */}
@@ -523,113 +346,10 @@ export function RepositoriesTab({
             <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
               Scale-Out Repositories
             </h2>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader className="bg-muted/50">
-                  {sobrTable.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => {
-                        const align =
-                          (header.column.columnDef.meta as { align?: string })
-                            ?.align === "right"
-                            ? "text-right"
-                            : "";
-                        return (
-                          <TableHead
-                            key={header.id}
-                            className={cn(
-                              "text-muted-foreground text-xs font-semibold tracking-wide uppercase",
-                              align,
-                            )}
-                          >
-                            {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                              <button
-                                type="button"
-                                className={cn(
-                                  "flex items-center gap-1",
-                                  align && "ml-auto",
-                                )}
-                                onClick={header.column.getToggleSortingHandler()}
-                              >
-                                {flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext(),
-                                )}
-                                <ArrowUpDown className="size-3" />
-                              </button>
-                            ) : (
-                              flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )
-                            )}
-                          </TableHead>
-                        );
-                      })}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {sobrTable.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      role="button"
-                      tabIndex={0}
-                      className="hover:bg-muted/30 cursor-pointer transition-colors"
-                      onClick={() => setSelectedSobr(row.original)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          setSelectedSobr(row.original);
-                        }
-                      }}
-                    >
-                      {row.getVisibleCells().map((cell) => {
-                        const cellAlign =
-                          (cell.column.columnDef.meta as { align?: string })
-                            ?.align === "right"
-                            ? "text-right"
-                            : "";
-                        return (
-                          <TableCell key={cell.id} className={cellAlign}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              {sobrTable.getPageCount() > 1 && (
-                <div className="flex items-center justify-between border-t px-4 py-3">
-                  <p className="text-muted-foreground text-sm">
-                    Page {sobrTable.getState().pagination.pageIndex + 1} of{" "}
-                    {sobrTable.getPageCount()}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => sobrTable.previousPage()}
-                      disabled={!sobrTable.getCanPreviousPage()}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => sobrTable.nextPage()}
-                      disabled={!sobrTable.getCanNextPage()}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
+            <RepositoriesTable
+              table={sobrTable}
+              onRowClick={(row) => setSelectedSobr(row.original)}
+            />
           </section>
         )}
 
