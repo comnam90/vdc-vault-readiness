@@ -29,6 +29,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { SobrDetailSheet } from "./sobr-detail-sheet";
 
 interface RepositoriesTabProps {
@@ -52,6 +58,22 @@ function buildRepoColumns(
     repoColumnHelper.accessor("Name", {
       header: "Name",
       enableSorting: true,
+      cell: (info) => {
+        const value = info.getValue();
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className="block max-w-[180px] truncate font-medium"
+                tabIndex={0}
+              >
+                {value}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{value}</TooltipContent>
+          </Tooltip>
+        );
+      },
     }),
     repoColumnHelper.accessor((row) => row.JobCount, {
       id: "jobs",
@@ -159,6 +181,22 @@ function buildSobrColumns(
     sobrColumnHelper.accessor("Name", {
       header: "Name",
       enableSorting: true,
+      cell: (info) => {
+        const value = info.getValue();
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className="block max-w-[180px] truncate font-medium"
+                tabIndex={0}
+              >
+                {value}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{value}</TooltipContent>
+          </Tooltip>
+        );
+      },
     }),
     sobrColumnHelper.accessor((row) => row.JobCount, {
       id: "jobs",
@@ -364,130 +402,17 @@ export function RepositoriesTab({
   });
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in space-y-8 duration-300">
-      {/* Standard Repositories */}
-      <section className="space-y-3">
-        <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-          Standard Repositories
-        </h2>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader className="bg-muted/50">
-              {repoTable.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    const align =
-                      (header.column.columnDef.meta as { align?: string })
-                        ?.align === "right"
-                        ? "text-right"
-                        : "";
-                    return (
-                      <TableHead
-                        key={header.id}
-                        className={cn(
-                          "text-muted-foreground text-xs font-semibold tracking-wide uppercase",
-                          align,
-                        )}
-                      >
-                        {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                          <button
-                            type="button"
-                            className={cn(
-                              "flex items-center gap-1",
-                              align && "ml-auto",
-                            )}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                            <ArrowUpDown className="size-3" />
-                          </button>
-                        ) : (
-                          flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )
-                        )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {repoTable.getRowModel().rows.length > 0 ? (
-                repoTable.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => {
-                      const cellAlign =
-                        (cell.column.columnDef.meta as { align?: string })
-                          ?.align === "right"
-                          ? "text-right"
-                          : "";
-                      return (
-                        <TableCell key={cell.id} className={cellAlign}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={repoColumns.length}
-                    className="text-muted-foreground h-24 text-center"
-                  >
-                    No repositories found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          {repoTable.getPageCount() > 1 && (
-            <div className="flex items-center justify-between border-t px-4 py-3">
-              <p className="text-muted-foreground text-sm">
-                Page {repoTable.getState().pagination.pageIndex + 1} of{" "}
-                {repoTable.getPageCount()}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => repoTable.previousPage()}
-                  disabled={!repoTable.getCanPreviousPage()}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => repoTable.nextPage()}
-                  disabled={!repoTable.getCanNextPage()}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* SOBR Repositories */}
-      {sobr.length > 0 && (
+    <TooltipProvider>
+      <div className="motion-safe:animate-in motion-safe:fade-in space-y-8 duration-300">
+        {/* Standard Repositories */}
         <section className="space-y-3">
           <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-            Scale-Out Repositories
+            Standard Repositories
           </h2>
           <div className="rounded-md border">
             <Table>
               <TableHeader className="bg-muted/50">
-                {sobrTable.getHeaderGroups().map((headerGroup) => (
+                {repoTable.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                       const align =
@@ -531,59 +456,58 @@ export function RepositoriesTab({
                 ))}
               </TableHeader>
               <TableBody>
-                {sobrTable.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    role="button"
-                    tabIndex={0}
-                    className="hover:bg-muted/30 cursor-pointer transition-colors"
-                    onClick={() => setSelectedSobr(row.original)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setSelectedSobr(row.original);
-                      }
-                    }}
-                  >
-                    {row.getVisibleCells().map((cell) => {
-                      const cellAlign =
-                        (cell.column.columnDef.meta as { align?: string })
-                          ?.align === "right"
-                          ? "text-right"
-                          : "";
-                      return (
-                        <TableCell key={cell.id} className={cellAlign}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      );
-                    })}
+                {repoTable.getRowModel().rows.length > 0 ? (
+                  repoTable.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => {
+                        const cellAlign =
+                          (cell.column.columnDef.meta as { align?: string })
+                            ?.align === "right"
+                            ? "text-right"
+                            : "";
+                        return (
+                          <TableCell key={cell.id} className={cellAlign}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={repoColumns.length}
+                      className="text-muted-foreground h-24 text-center"
+                    >
+                      No repositories found.
+                    </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
-            {sobrTable.getPageCount() > 1 && (
+            {repoTable.getPageCount() > 1 && (
               <div className="flex items-center justify-between border-t px-4 py-3">
                 <p className="text-muted-foreground text-sm">
-                  Page {sobrTable.getState().pagination.pageIndex + 1} of{" "}
-                  {sobrTable.getPageCount()}
+                  Page {repoTable.getState().pagination.pageIndex + 1} of{" "}
+                  {repoTable.getPageCount()}
                 </p>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => sobrTable.previousPage()}
-                    disabled={!sobrTable.getCanPreviousPage()}
+                    onClick={() => repoTable.previousPage()}
+                    disabled={!repoTable.getCanPreviousPage()}
                   >
                     Previous
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => sobrTable.nextPage()}
-                    disabled={!sobrTable.getCanNextPage()}
+                    onClick={() => repoTable.nextPage()}
+                    disabled={!repoTable.getCanNextPage()}
                   >
                     Next
                   </Button>
@@ -592,24 +516,140 @@ export function RepositoriesTab({
             )}
           </div>
         </section>
-      )}
 
-      <SobrDetailSheet
-        sobr={selectedSobr}
-        perfExtents={extents.filter(
-          (e) => selectedSobr && e.SobrName === selectedSobr.Name,
+        {/* SOBR Repositories */}
+        {sobr.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+              Scale-Out Repositories
+            </h2>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  {sobrTable.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        const align =
+                          (header.column.columnDef.meta as { align?: string })
+                            ?.align === "right"
+                            ? "text-right"
+                            : "";
+                        return (
+                          <TableHead
+                            key={header.id}
+                            className={cn(
+                              "text-muted-foreground text-xs font-semibold tracking-wide uppercase",
+                              align,
+                            )}
+                          >
+                            {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                              <button
+                                type="button"
+                                className={cn(
+                                  "flex items-center gap-1",
+                                  align && "ml-auto",
+                                )}
+                                onClick={header.column.getToggleSortingHandler()}
+                              >
+                                {flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                                <ArrowUpDown className="size-3" />
+                              </button>
+                            ) : (
+                              flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )
+                            )}
+                          </TableHead>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {sobrTable.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      role="button"
+                      tabIndex={0}
+                      className="hover:bg-muted/30 cursor-pointer transition-colors"
+                      onClick={() => setSelectedSobr(row.original)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedSobr(row.original);
+                        }
+                      }}
+                    >
+                      {row.getVisibleCells().map((cell) => {
+                        const cellAlign =
+                          (cell.column.columnDef.meta as { align?: string })
+                            ?.align === "right"
+                            ? "text-right"
+                            : "";
+                        return (
+                          <TableCell key={cell.id} className={cellAlign}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {sobrTable.getPageCount() > 1 && (
+                <div className="flex items-center justify-between border-t px-4 py-3">
+                  <p className="text-muted-foreground text-sm">
+                    Page {sobrTable.getState().pagination.pageIndex + 1} of{" "}
+                    {sobrTable.getPageCount()}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => sobrTable.previousPage()}
+                      disabled={!sobrTable.getCanPreviousPage()}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => sobrTable.nextPage()}
+                      disabled={!sobrTable.getCanNextPage()}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
         )}
-        capExtents={capExtents.filter(
-          (e) => selectedSobr && e.SobrName === selectedSobr.Name,
-        )}
-        archExtents={archExtents.filter(
-          (e) => selectedSobr && e.SobrName === selectedSobr.Name,
-        )}
-        open={selectedSobr !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedSobr(null);
-        }}
-      />
-    </div>
+
+        <SobrDetailSheet
+          sobr={selectedSobr}
+          perfExtents={extents.filter(
+            (e) => selectedSobr && e.SobrName === selectedSobr.Name,
+          )}
+          capExtents={capExtents.filter(
+            (e) => selectedSobr && e.SobrName === selectedSobr.Name,
+          )}
+          archExtents={archExtents.filter(
+            (e) => selectedSobr && e.SobrName === selectedSobr.Name,
+          )}
+          open={selectedSobr !== null}
+          onOpenChange={(open) => {
+            if (!open) setSelectedSobr(null);
+          }}
+        />
+      </div>
+    </TooltipProvider>
   );
 }

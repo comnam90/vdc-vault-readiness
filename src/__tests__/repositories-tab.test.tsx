@@ -268,6 +268,36 @@ describe("RepositoriesTab", () => {
     expect(screen.getByText("Name")).toBeInTheDocument();
   });
 
+  it("renders standard repo name with truncate class", () => {
+    render(
+      <RepositoriesTab
+        repos={[MOCK_REPO]}
+        jobs={[]}
+        sobr={[]}
+        extents={[]}
+        capExtents={[]}
+        archExtents={[]}
+      />,
+    );
+    const nameSpan = screen.getByText("LinuxHardened");
+    expect(nameSpan).toHaveClass("truncate");
+  });
+
+  it("renders SOBR name with truncate class", () => {
+    render(
+      <RepositoriesTab
+        repos={[]}
+        jobs={[]}
+        sobr={[MOCK_SOBR]}
+        extents={[]}
+        capExtents={[]}
+        archExtents={[]}
+      />,
+    );
+    const nameSpan = screen.getByText("SOBR-01");
+    expect(nameSpan).toHaveClass("truncate");
+  });
+
   it("sorts standard repos descending when Name header clicked (default is asc)", () => {
     const repos = [
       { ...MOCK_REPO, Name: "Zoo Repo" },
