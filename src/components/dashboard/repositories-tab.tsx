@@ -57,17 +57,19 @@ export function RepositoriesTab({
     });
   }
 
-  // SOBR: job → extent → SOBR join
-  const extentToSobr = new Map(extents.map((e) => [e.Name, e.SobrName]));
+  // SOBR: jobs target SOBRs directly by name (job.RepoName === sobrName)
+  const sobrNames = new Set(sobr.map((s) => s.Name));
   const sobrStatsMap = new Map<
     string,
     { sourceTB: number; onDiskTB: number }
   >();
   for (const job of jobs) {
-    const sobrName = extentToSobr.get(job.RepoName);
-    if (sobrName !== undefined) {
-      const cur = sobrStatsMap.get(sobrName) ?? { sourceTB: 0, onDiskTB: 0 };
-      sobrStatsMap.set(sobrName, {
+    if (sobrNames.has(job.RepoName)) {
+      const cur = sobrStatsMap.get(job.RepoName) ?? {
+        sourceTB: 0,
+        onDiskTB: 0,
+      };
+      sobrStatsMap.set(job.RepoName, {
         sourceTB:
           cur.sourceTB +
           (job.SourceSizeGB !== null ? job.SourceSizeGB / 1024 : 0),

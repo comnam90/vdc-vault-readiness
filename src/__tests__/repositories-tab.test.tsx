@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { RepositoriesTab } from "@/components/dashboard/repositories-tab";
-import type { SafeJob, SafeSobr, SafeExtent, SafeRepo } from "@/types/domain";
+import type { SafeJob, SafeSobr, SafeRepo } from "@/types/domain";
 
 function makeManyRepos(count: number): SafeRepo[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -340,21 +340,12 @@ describe("SOBR Source Data derivation", () => {
     expect(onDiskHeaders.length).toBeGreaterThan(0);
   });
 
-  it("shows SOBR Source Data derived via job → extent → SOBR join", () => {
-    const sobrExtent: SafeExtent = {
-      Name: "Extent-01",
-      SobrName: "SOBR-01",
-      Type: "LinuxLocal",
-      Host: null,
-      ImmutabilitySupported: true,
-      FreeSpaceTB: 1.0,
-      TotalSpaceTB: 2.0,
-    };
-    const jobTargetingExtent: SafeJob = {
+  it("shows SOBR Source Data derived from jobs targeting SOBR by name", () => {
+    const jobTargetingSobr: SafeJob = {
       JobName: "SOBR Job",
       JobType: "VMware Backup",
       Encrypted: true,
-      RepoName: "Extent-01",
+      RepoName: "SOBR-01",
       SourceSizeGB: 2048,
       RetainDays: null,
       GfsDetails: null,
@@ -371,9 +362,9 @@ describe("SOBR Source Data derivation", () => {
     render(
       <RepositoriesTab
         repos={[]}
-        jobs={[jobTargetingExtent]}
+        jobs={[jobTargetingSobr]}
         sobr={[MOCK_SOBR]}
-        extents={[sobrExtent]}
+        extents={[]}
         capExtents={[]}
         archExtents={[]}
       />,
