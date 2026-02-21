@@ -68,4 +68,23 @@ describe("ChecklistLoader", () => {
     expect(container.className).toMatch(/animate-in/);
     expect(container.className).toMatch(/fade-in/);
   });
+
+  describe("prefers-reduced-motion accessibility", () => {
+    it("uses motion-safe prefix for container animation", () => {
+      render(<ChecklistLoader completedSteps={[]} currentStep="parse" />);
+      const loader = screen.getByTestId("checklist-loader");
+      expect(loader.className).toMatch(/motion-safe:animate-in/);
+      expect(loader.className).toMatch(/motion-safe:fade-in/);
+    });
+
+    it("uses motion-safe prefix for spinner animation", () => {
+      const { container } = render(
+        <ChecklistLoader completedSteps={[]} currentStep="parse" />,
+      );
+      const spinner = container.querySelector(
+        "[class*='motion-safe:animate-spin']",
+      );
+      expect(spinner).not.toBeNull();
+    });
+  });
 });

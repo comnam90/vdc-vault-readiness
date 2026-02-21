@@ -18,8 +18,10 @@ const MULTI_SERVER_MIXED_DATA: NormalizedDataset = {
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
   jobSessionSummary: [],
   sobr: [],
+  extents: [],
   capExtents: [],
   archExtents: [],
+  repos: [],
   dataErrors: [],
 };
 
@@ -36,8 +38,10 @@ const MULTI_SERVER_ALL_PASS_DATA: NormalizedDataset = {
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
   jobSessionSummary: [],
   sobr: [],
+  extents: [],
   capExtents: [],
   archExtents: [],
+  repos: [],
   dataErrors: [],
 };
 
@@ -373,6 +377,72 @@ describe("DashboardView", () => {
     expect(
       screen.getByRole("tab", { name: "Repositories" }),
     ).toBeInTheDocument();
+  });
+
+  it("renders repo names in Repositories tab", async () => {
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={ALL_PASS_VALIDATIONS}
+        onReset={() => {}}
+      />,
+    );
+    const reposTab = screen.getByRole("tab", { name: "Repositories" });
+    await act(async () => {
+      fireEvent.mouseDown(reposTab);
+      fireEvent.click(reposTab);
+    });
+    expect(await screen.findByText("LinuxHardened")).toBeInTheDocument();
+  });
+
+  describe("prefers-reduced-motion accessibility", () => {
+    it("uses motion-safe prefix for entrance animations", () => {
+      const { container } = render(
+        <DashboardView
+          data={MOCK_DATA}
+          validations={ALL_PASS_VALIDATIONS}
+          onReset={() => {}}
+        />,
+      );
+      const mainContainer = container.firstChild as HTMLElement;
+      expect(mainContainer.className).toMatch(/motion-safe:animate-in/);
+      expect(mainContainer.className).toMatch(/motion-safe:fade-in/);
+      expect(mainContainer.className).toMatch(
+        /motion-safe:slide-in-from-bottom/,
+      );
+    });
+
+    it("uses motion-safe prefix for tab content fade animation", () => {
+      const { container } = render(
+        <DashboardView
+          data={MOCK_DATA}
+          validations={MIXED_VALIDATIONS}
+          onReset={() => {}}
+        />,
+      );
+      const tabsContent = container.querySelectorAll(
+        "[data-slot='tabs-content']",
+      );
+      tabsContent.forEach((panel) => {
+        expect(panel.className).toMatch(
+          /motion-safe:data-\[state=active\]:animate-in/,
+        );
+      });
+    });
+
+    it("uses motion-safe prefix for card animations", () => {
+      const { container } = render(
+        <DashboardView
+          data={MOCK_DATA}
+          validations={ALL_PASS_VALIDATIONS}
+          onReset={() => {}}
+        />,
+      );
+      const cards = container.querySelectorAll("[data-slot='card']");
+      expect(cards.length).toBeGreaterThan(0);
+      expect(cards[0].className).toMatch(/motion-safe:animate-in/);
+      expect(cards[0].className).toMatch(/motion-safe:fade-in/);
+    });
   });
 
   describe("multiple backup servers", () => {

@@ -70,6 +70,8 @@ export interface NormalizerInput {
   jobInfo?: Record<string, HealthcheckRowValue>[];
   Licenses?: Record<string, HealthcheckRowValue>[];
   sobr?: Record<string, HealthcheckRowValue>[];
+  extents?: Record<string, HealthcheckRowValue>[];
   capextents?: Record<string, HealthcheckRowValue>[];
   archextents?: Record<string, HealthcheckRowValue>[];
+  repos?: Record<string, HealthcheckRowValue>[];
 }

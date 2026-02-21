@@ -73,6 +73,9 @@ export interface SafeCapExtent {
   ImmutablePeriod: number | null;
   SizeLimitEnabled: boolean | null;
   SizeLimit: number | null;
+  GatewayServer: string | null;
+  ConnectionType: string | null;
+  ImmutabilityMode: string | null;
 }
 
 export interface SafeArchExtent {
@@ -84,6 +87,36 @@ export interface SafeArchExtent {
   OffloadPeriod: number | null;
   CostOptimizedEnabled: boolean | null;
   FullBackupModeEnabled: boolean | null;
+  GatewayServer: string | null;
+  GatewayMode: string | null;
+}
+
+export interface SafeExtent {
+  Name: string;
+  SobrName: string;
+  Type: string | null;
+  Host: string | null;
+  ImmutabilitySupported: boolean | null;
+  FreeSpaceTB: number | null;
+  TotalSpaceTB: number | null;
+  FreeSpacePercent: number | null;
+}
+
+export interface SafeRepo {
+  Name: string;
+  JobCount: number | null;
+  TotalSpaceTB: number | null;
+  FreeSpaceTB: number | null;
+  ImmutabilitySupported: boolean;
+  Type: string | null;
+  Host: string | null;
+  Path: string | null;
+  MaxTasks: number | null;
+  IsPerVmBackupFiles: boolean | null;
+  IsDecompress: boolean | null;
+  AlignBlocks: boolean | null;
+  IsRotatedDrives: boolean | null;
+  FreeSpacePercent: number | null;
 }
 
 export type DataError = {
@@ -96,7 +129,9 @@ export type DataError = {
     | "jobSessionSummaryByJob"
     | "sobr"
     | "capextents"
-    | "archextents";
+    | "archextents"
+    | "extents"
+    | "repos";
   rowIndex: number;
   field: string;
   reason: string;
@@ -109,8 +144,10 @@ export interface NormalizedDataset {
   Licenses: SafeLicense[];
   jobSessionSummary: SafeJobSession[];
   sobr: SafeSobr[];
+  extents: SafeExtent[];
   capExtents: SafeCapExtent[];
   archExtents: SafeArchExtent[];
+  repos: SafeRepo[];
   dataErrors: DataError[];
 }
 

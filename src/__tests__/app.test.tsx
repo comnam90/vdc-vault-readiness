@@ -57,7 +57,9 @@ const MOCK_DATA: NormalizedDataset = {
   jobSessionSummary: [],
   sobr: [],
   capExtents: [],
+  extents: [],
   archExtents: [],
+  repos: [],
   dataErrors: [],
 };
 

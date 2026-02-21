@@ -461,7 +461,9 @@ describe("Domain Types - NormalizedDataset extension", () => {
       ],
       sobr: [],
       capExtents: [],
+      extents: [],
       archExtents: [],
+      repos: [],
       dataErrors: [],
     };
     expect(dataset.jobSessionSummary).toBeDefined();
@@ -477,7 +479,9 @@ describe("Domain Types - NormalizedDataset extension", () => {
       jobSessionSummary: [],
       sobr: [],
       capExtents: [],
+      extents: [],
       archExtents: [],
+      repos: [],
       dataErrors: [],
     };
     expect(dataset.jobSessionSummary).toEqual([]);
@@ -513,7 +517,9 @@ describe("Domain Types - NormalizedDataset extension", () => {
       ],
       sobr: [],
       capExtents: [],
+      extents: [],
       archExtents: [],
+      repos: [],
       dataErrors: [],
     };
     expect(dataset.jobSessionSummary).toHaveLength(2);
@@ -552,7 +558,9 @@ describe("Domain Types - NormalizedDataset extension", () => {
       jobSessionSummary: [],
       sobr: [],
       capExtents: [],
+      extents: [],
       archExtents: [],
+      repos: [],
       dataErrors: [],
     };
     expect(dataset.backupServer).toHaveLength(1);

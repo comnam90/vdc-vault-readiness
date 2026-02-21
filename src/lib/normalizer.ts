@@ -5,9 +5,11 @@ import type {
   SafeArchExtent,
   SafeBackupServer,
   SafeCapExtent,
+  SafeExtent,
   SafeJob,
   SafeJobSession,
   SafeLicense,
+  SafeRepo,
   SafeSecuritySummary,
   SafeSobr,
 } from "@/types/domain";
@@ -260,8 +262,10 @@ export function normalizeHealthcheck(
     Licenses,
     jobSessionSummary: normalizeJobSessions(asArray(sessionData), dataErrors),
     sobr: normalizeSobr(asArray(raw.sobr), dataErrors),
+    extents: normalizeExtents(asArray(raw.extents), dataErrors),
     capExtents: normalizeCapExtents(asArray(raw.capextents), dataErrors),
     archExtents: normalizeArchExtents(asArray(raw.archextents), dataErrors),
+    repos: normalizeRepos(asArray(raw.repos), dataErrors),
     dataErrors,
   };
 }
@@ -581,6 +585,76 @@ function normalizeSobr(
   });
 }
 
+type ExtentRecord = Record<string, string | null | undefined>;
+
+function normalizeExtents(
+  rows: ExtentRecord[],
+  dataErrors: DataError[],
+): SafeExtent[] {
+  return rows.flatMap((row, rowIndex) => {
+    if (!isRecord(row)) {
+      dataErrors.push(
+        buildError("extents", rowIndex, "_row", "Invalid row: not an object"),
+      );
+      return [];
+    }
+
+    const name = normalizeString(row.Name as string | null | undefined);
+    if (!name) {
+      dataErrors.push(
+        buildError("extents", rowIndex, "Name", "Missing required Name"),
+      );
+      return [];
+    }
+
+    const sobrName = normalizeString(row.SobrName as string | null | undefined);
+    if (!sobrName) {
+      dataErrors.push(
+        buildError(
+          "extents",
+          rowIndex,
+          "SobrName",
+          "Missing required SobrName",
+        ),
+      );
+      return [];
+    }
+
+    const safeExtent: SafeExtent = {
+      Name: name,
+      SobrName: sobrName,
+      Type: normalizeString(row.Type as string | null | undefined),
+      Host: normalizeString(row.Host as string | null | undefined),
+      ImmutabilitySupported: parseBoolean(
+        row.IsImmutabilitySupported as string | null | undefined,
+      ),
+      FreeSpaceTB: parseNumeric(
+        row.FreeSpace as string | null | undefined,
+        "extents",
+        rowIndex,
+        "FreeSpace",
+        dataErrors,
+      ),
+      TotalSpaceTB: parseNumeric(
+        row.TotalSpace as string | null | undefined,
+        "extents",
+        rowIndex,
+        "TotalSpace",
+        dataErrors,
+      ),
+      FreeSpacePercent: parseNumeric(
+        row.FreeSpacePercent as string | null | undefined,
+        "extents",
+        rowIndex,
+        "FreeSpacePercent",
+        dataErrors,
+      ),
+    };
+
+    return [safeExtent];
+  });
+}
+
 type CapExtentRecord = Record<string, string | null | undefined>;
 
 function normalizeCapExtents(
@@ -687,6 +761,15 @@ function normalizeCapExtents(
         rowIndex,
         "SizeLimit",
         dataErrors,
+      ),
+      GatewayServer: normalizeString(
+        row.GatewayServer as string | null | undefined,
+      ),
+      ConnectionType: normalizeString(
+        row.ConnectionType as string | null | undefined,
+      ),
+      ImmutabilityMode: normalizeString(
+        row.ImmutabilityMode as string | null | undefined,
       ),
     };
 
@@ -798,8 +881,106 @@ function normalizeArchExtents(
       FullBackupModeEnabled: parseBoolean(
         row.FullBackupModeEnabled as string | null | undefined,
       ),
+      GatewayServer: normalizeString(
+        row.GatewayServer as string | null | undefined,
+      ),
+      GatewayMode: normalizeString(
+        row.GatewayMode as string | null | undefined,
+      ),
     };
 
     return [safeArchExtent];
+  });
+}
+
+type RepoRecord = Record<string, string | null | undefined>;
+
+function normalizeRepos(
+  rows: RepoRecord[],
+  dataErrors: DataError[],
+): SafeRepo[] {
+  return rows.flatMap((row, rowIndex) => {
+    if (!isRecord(row)) {
+      dataErrors.push(
+        buildError("repos", rowIndex, "_row", "Invalid row: not an object"),
+      );
+      return [];
+    }
+
+    const name = normalizeString(row.Name as string | null | undefined);
+    if (!name) {
+      dataErrors.push(
+        buildError("repos", rowIndex, "Name", "Missing required Name"),
+      );
+      return [];
+    }
+
+    const immutabilitySupported = parseBoolean(
+      row.IsImmutabilitySupported as string | null | undefined,
+    );
+    if (immutabilitySupported === null) {
+      dataErrors.push(
+        buildError(
+          "repos",
+          rowIndex,
+          "IsImmutabilitySupported",
+          "Missing or invalid IsImmutabilitySupported value",
+        ),
+      );
+      return [];
+    }
+
+    const safeRepo: SafeRepo = {
+      Name: name,
+      ImmutabilitySupported: immutabilitySupported,
+      JobCount: parseNumeric(
+        row.JobCount as string | null | undefined,
+        "repos",
+        rowIndex,
+        "JobCount",
+        dataErrors,
+      ),
+      TotalSpaceTB: parseNumeric(
+        row.TotalSpace as string | null | undefined,
+        "repos",
+        rowIndex,
+        "TotalSpace",
+        dataErrors,
+      ),
+      FreeSpaceTB: parseNumeric(
+        row.FreeSpace as string | null | undefined,
+        "repos",
+        rowIndex,
+        "FreeSpace",
+        dataErrors,
+      ),
+      Type: normalizeString(row.Type as string | null | undefined),
+      Host: normalizeString(row.Host as string | null | undefined),
+      Path: normalizeString(row.Path as string | null | undefined),
+      MaxTasks: parseNumeric(
+        row.MaxTasks as string | null | undefined,
+        "repos",
+        rowIndex,
+        "MaxTasks",
+        dataErrors,
+      ),
+      IsPerVmBackupFiles: parseBoolean(
+        row.IsPerVmBackupFiles as string | null | undefined,
+      ),
+      IsDecompress: parseBoolean(row.IsDecompress as string | null | undefined),
+      AlignBlocks: parseBoolean(row.AlignBlocks as string | null | undefined),
+      IsRotatedDrives: parseBoolean(
+        row.IsRotatedDrives as string | null | undefined,
+      ),
+      FreeSpacePercent: parseNumeric(
+        row.FreeSpacePercent as string | null | undefined,
+        "repos",
+        rowIndex,
+        "FreeSpacePercent",
+        dataErrors,
+      ),
+    };
+
+    return [safeRepo];
   });
 }

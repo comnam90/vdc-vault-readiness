@@ -19,7 +19,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -45,7 +47,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -73,7 +77,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -99,7 +105,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -126,7 +134,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -156,7 +166,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -182,7 +194,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -203,7 +217,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -268,7 +284,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -333,7 +351,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -420,7 +440,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -449,7 +471,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -514,7 +538,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -577,7 +603,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -625,7 +653,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -671,7 +701,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -716,7 +748,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -800,7 +834,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -830,7 +866,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -858,7 +896,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -883,7 +923,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -908,7 +950,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -971,7 +1015,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1036,7 +1082,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1105,7 +1153,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1187,7 +1237,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1234,7 +1286,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1280,7 +1334,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1328,7 +1384,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
@@ -1357,7 +1415,9 @@ describe("validateHealthcheck", () => {
         jobSessionSummary: [],
         sobr: [],
         capExtents: [],
+        extents: [],
         archExtents: [],
+        repos: [],
       };
 
       const results = validateHealthcheck(data);
