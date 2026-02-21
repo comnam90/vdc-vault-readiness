@@ -1,0 +1,176 @@
+{
+  "Licenses": [
+    {
+      "Edition": "EnterprisePlus",
+      "Status": "Valid",
+      "LicensedTo": "Synthetic Testing Corp",
+      "Type": "Subscription",
+      "LicensedInstances": "500",
+      "UsedInstances": "245",
+      "NewInstances": "0",
+      "RentalInstances": "0",
+      "LicensedSockets": "0",
+      "UsedSockets": "0",
+      "LicensedNas": "0",
+      "UsedNas": "0",
+      "ExpirationDate": "12/31/2028 12:00:00 AM",
+      "SupportExpirationDate": "12/31/2028 12:00:00 AM",
+      "CloudConnect": "Disabled"
+    }
+  ],
+  "Sections": {
+    "backupServer": {
+      "SectionName": "backupServer",
+      "Headers": [
+        "Name",
+        "Version",
+        "DbType",
+        "DbHost",
+        "ConfigBackupEnabled",
+        "ConfigBackupLastResult",
+        "ConfigBackupEncryption",
+        "ConfigBackupTarget"
+      ],
+      "Rows": [
+        [
+          "Server_Old",
+          "11.0.1.1261",
+          "PostgreSQL",
+          "localhost",
+          "True",
+          "Success",
+          "True",
+          "Default Configuration Backup"
+        ]
+      ]
+    },
+    "securitySummary": {
+      "SectionName": "securitySummary",
+      "Headers": [
+        "MFAEnabled",
+        "TrafficEncryptionEnabled",
+        "BackupFileEncryptionEnabled",
+        "ConfigBackupEncryptionEnabled",
+        "ImmutabilityEnabled"
+      ],
+      "Rows": [["False", "False", "False", "False", "False"]]
+    },
+    "repos": {
+      "SectionName": "repos",
+      "Headers": [
+        "Name",
+        "JobCount",
+        "MaxTasks",
+        "Cores",
+        "Ram",
+        "Host",
+        "Path",
+        "FreeSpace",
+        "TotalSpace",
+        "IsImmutabilitySupported",
+        "Type"
+      ],
+      "Rows": [
+        [
+          "Windows-Repo-Old",
+          "0",
+          "4",
+          "8",
+          "32",
+          "Backup-Repo-01",
+          "/backups",
+          "11",
+          "22",
+          "False",
+          "WinLocal"
+        ]
+      ]
+    },
+    "jobInfo": {
+      "SectionName": "jobInfo",
+      "Headers": [
+        "JobName",
+        "RepoName",
+        "SourceSizeGB",
+        "OnDiskGB",
+        "RetentionScheme",
+        "RetainDays",
+        "Encrypted",
+        "JobType",
+        "CompressionLevel",
+        "BlockSize",
+        "GfsEnabled",
+        "GfsDetails",
+        "ActiveFullEnabled",
+        "SyntheticFullEnabled",
+        "BackupChainType",
+        "IndexingEnabled"
+      ],
+      "Rows": [
+        [
+          "Job_Legacy_01",
+          "Windows-Repo-Old",
+          "1243",
+          "745",
+          "Days",
+          "14",
+          "False",
+          "Backup",
+          "Optimal",
+          "1 MB",
+          "False",
+          "",
+          "False",
+          "True",
+          "Forward Incremental",
+          "True"
+        ]
+      ]
+    },
+    "jobSessionSummaryByJob": {
+      "SectionName": "jobSessionSummaryByJob",
+      "Headers": [
+        "JobName",
+        "ItemCount",
+        "MinJobTime",
+        "MaxJobTime",
+        "AvgJobTime",
+        "SessionCount",
+        "Fails",
+        "Retries",
+        "SuccessRate",
+        "AvgBackupSize",
+        "MaxBackupSize",
+        "AvgDataSize",
+        "MaxDataSize",
+        "AvgChangeRate",
+        "WaitCount",
+        "MaxWait",
+        "AvgWait",
+        "JobTypes"
+      ],
+      "Rows": [
+        [
+          "Job_Legacy_01",
+          "10",
+          "00:05:00",
+          "02:30:00",
+          "01:15:00",
+          "30",
+          "0",
+          "1",
+          "100",
+          "196.5",
+          "314.40000000000003",
+          "393",
+          "471.59999999999997",
+          "2.5",
+          "0",
+          "0",
+          "0",
+          "VMware Backup"
+        ]
+      ]
+    }
+  }
+}
