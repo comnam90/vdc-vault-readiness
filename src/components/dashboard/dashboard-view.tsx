@@ -21,6 +21,7 @@ import { CalculatorInputs } from "@/components/dashboard/calculator-inputs";
 import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
 import { PassingChecksList } from "./passing-checks-list";
+import { JobsCharts } from "./jobs-charts";
 import { RepositoriesTab } from "./repositories-tab";
 import { SuccessCelebration } from "./success-celebration";
 import { cn } from "@/lib/utils";
@@ -212,11 +213,14 @@ export function DashboardView({
           value="jobs"
           className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
         >
-          <JobTable
-            jobs={enrichedJobs}
-            excludedJobNames={excludedJobNames}
-            onExcludedChange={setExcludedJobNames}
-          />
+          <div className="space-y-6">
+            <JobsCharts jobs={enrichedJobs} />
+            <JobTable
+              jobs={enrichedJobs}
+              excludedJobNames={excludedJobNames}
+              onExcludedChange={setExcludedJobNames}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent

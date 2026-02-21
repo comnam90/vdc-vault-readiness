@@ -24,8 +24,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { groupByRepo } from "@/lib/chart-selectors";
 import { SobrDetailSheet } from "./sobr-detail-sheet";
 import { RepoDetailSheet } from "./repo-detail-sheet";
+import { RepoSizeChart } from "./repo-size-chart";
 import { RepositoriesTable } from "./repositories-table";
 
 interface RepositoriesTabProps {
@@ -344,6 +346,7 @@ export function RepositoriesTab({
           <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             Standard Repositories
           </h2>
+          <RepoSizeChart data={groupByRepo(jobs)} />
           <RepositoriesTable
             table={repoTable}
             emptyMessage="No repositories found."
