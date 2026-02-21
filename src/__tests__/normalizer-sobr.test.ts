@@ -413,6 +413,49 @@ describe("normalizeCapExtents", () => {
 
     expect(result.capExtents).toEqual([]);
   });
+
+  it("parses GatewayServer, ConnectionType, ImmutabilityMode when present", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      capextents: [
+        {
+          Name: "AzureBlob-01",
+          SobrName: "SOBR-01",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "True",
+          GatewayServer: "gw-server-01",
+          ConnectionType: "Gateway",
+          ImmutabilityMode: "Governance",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.capExtents[0].GatewayServer).toBe("gw-server-01");
+    expect(result.capExtents[0].ConnectionType).toBe("Gateway");
+    expect(result.capExtents[0].ImmutabilityMode).toBe("Governance");
+  });
+
+  it("defaults GatewayServer, ConnectionType, ImmutabilityMode to null when absent", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      capextents: [
+        {
+          Name: "AzureBlob-01",
+          SobrName: "SOBR-01",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "True",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.capExtents[0].GatewayServer).toBeNull();
+    expect(result.capExtents[0].ConnectionType).toBeNull();
+    expect(result.capExtents[0].ImmutabilityMode).toBeNull();
+  });
 });
 
 describe("normalizeArchExtents", () => {
@@ -670,6 +713,8 @@ describe("normalizeArchExtents", () => {
     expect(result.archExtents[0].OffloadPeriod).toBeNull();
     expect(result.archExtents[0].CostOptimizedEnabled).toBeNull();
     expect(result.archExtents[0].FullBackupModeEnabled).toBeNull();
+    expect(result.archExtents[0].GatewayServer).toBeNull();
+    expect(result.archExtents[0].GatewayMode).toBeNull();
   });
 
   it("returns empty array when archextents input is undefined", () => {
@@ -678,6 +723,28 @@ describe("normalizeArchExtents", () => {
     const result = normalizeHealthcheck(raw);
 
     expect(result.archExtents).toEqual([]);
+  });
+
+  it("parses GatewayServer and GatewayMode when present", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      archextents: [
+        {
+          SobrName: "SOBR-01",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+          GatewayServer: "arch-gw-01",
+          GatewayMode: "Direct",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.archExtents[0].GatewayServer).toBe("arch-gw-01");
+    expect(result.archExtents[0].GatewayMode).toBe("Direct");
   });
 });
 
@@ -750,6 +817,39 @@ describe("normalizeExtents", () => {
     const result = normalizeHealthcheck(raw);
 
     expect(result.extents).toEqual([]);
+  });
+
+  it("parses FreeSpacePercent when present", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      extents: [
+        {
+          Name: "Perf-Extent-01",
+          SobrName: "SOBR-01",
+          FreeSpacePercent: "42",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.extents[0].FreeSpacePercent).toBe(42);
+  });
+
+  it("defaults FreeSpacePercent to null when absent", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      extents: [
+        {
+          Name: "Perf-Extent-01",
+          SobrName: "SOBR-01",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.extents[0].FreeSpacePercent).toBeNull();
   });
 });
 

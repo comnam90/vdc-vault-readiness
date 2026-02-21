@@ -281,6 +281,9 @@ describe("validateCapTierEncryption (sobr-cap-encryption)", () => {
           ImmutablePeriod: null,
           SizeLimitEnabled: null,
           SizeLimit: null,
+          GatewayServer: null,
+          ConnectionType: null,
+          ImmutabilityMode: null,
         },
       ],
     });
@@ -307,6 +310,9 @@ describe("validateCapTierEncryption (sobr-cap-encryption)", () => {
           ImmutablePeriod: null,
           SizeLimitEnabled: null,
           SizeLimit: null,
+          GatewayServer: null,
+          ConnectionType: null,
+          ImmutabilityMode: null,
         },
       ],
     });
@@ -345,6 +351,9 @@ describe("validateSobrImmutability (sobr-immutability)", () => {
           ImmutablePeriod: null,
           SizeLimitEnabled: null,
           SizeLimit: null,
+          GatewayServer: null,
+          ConnectionType: null,
+          ImmutabilityMode: null,
         },
       ],
     });
@@ -371,6 +380,9 @@ describe("validateSobrImmutability (sobr-immutability)", () => {
           ImmutablePeriod: null,
           SizeLimitEnabled: null,
           SizeLimit: null,
+          GatewayServer: null,
+          ConnectionType: null,
+          ImmutabilityMode: null,
         },
       ],
     });
@@ -406,6 +418,8 @@ describe("validateArchiveTierEdition (archive-tier-edition)", () => {
           OffloadPeriod: null,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
+          GatewayServer: null,
+          GatewayMode: null,
         },
       ],
     });
@@ -428,6 +442,8 @@ describe("validateArchiveTierEdition (archive-tier-edition)", () => {
           OffloadPeriod: 90,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
+          GatewayServer: null,
+          GatewayMode: null,
         },
       ],
     });
@@ -459,6 +475,9 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
       ImmutablePeriod: null,
       SizeLimitEnabled: null,
       SizeLimit: null,
+      GatewayServer: null,
+      ConnectionType: null,
+      ImmutabilityMode: null,
       ...overrides,
     };
   }
@@ -478,6 +497,9 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
       ImmutablePeriod: null,
       SizeLimitEnabled: null,
       SizeLimit: null,
+      GatewayServer: null,
+      ConnectionType: null,
+      ImmutabilityMode: null,
       ...overrides,
     };
   }
@@ -631,6 +653,8 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           OffloadPeriod: 20,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
+          GatewayServer: null,
+          GatewayMode: null,
         },
       ],
       jobInfo: [makeJob({ RepoName: "SOBR-01", RetainDays: 60 })],
@@ -659,6 +683,8 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           OffloadPeriod: 20,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
+          GatewayServer: null,
+          GatewayMode: null,
         },
       ],
       jobInfo: [
@@ -699,6 +725,8 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           OffloadPeriod: 60,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
+          GatewayServer: null,
+          GatewayMode: null,
         },
       ],
       jobInfo: [
@@ -745,6 +773,8 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           OffloadPeriod: 10,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
+          GatewayServer: null,
+          GatewayMode: null,
         },
       ],
       jobInfo: [
@@ -788,6 +818,8 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           OffloadPeriod: 20,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
+          GatewayServer: null,
+          GatewayMode: null,
         },
       ],
       jobInfo: [
@@ -897,6 +929,8 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
           OffloadPeriod: null,
           CostOptimizedEnabled: null,
           FullBackupModeEnabled: null,
+          GatewayServer: null,
+          GatewayMode: null,
         },
       ],
       jobInfo: [
@@ -964,6 +998,9 @@ describe("missing cap/arch extent data (old healthcheck version)", () => {
       ImmutablePeriod: null,
       SizeLimitEnabled: null,
       SizeLimit: null,
+      GatewayServer: null,
+      ConnectionType: null,
+      ImmutabilityMode: null,
       ...overrides,
     };
   }
@@ -1081,6 +1118,9 @@ describe("missing cap/arch extent data (old healthcheck version)", () => {
           ImmutablePeriod: 30,
           SizeLimitEnabled: null,
           SizeLimit: null,
+          GatewayServer: null,
+          ConnectionType: null,
+          ImmutabilityMode: null,
         },
       ],
       jobInfo: [

@@ -33,6 +33,7 @@ const MOCK_PERF_EXTENT: SafeExtent = {
   ImmutabilitySupported: true,
   FreeSpaceTB: 5.0,
   TotalSpaceTB: 10.0,
+  FreeSpacePercent: 50,
 };
 
 const MOCK_CAP_EXTENT: SafeCapExtent = {
@@ -48,6 +49,9 @@ const MOCK_CAP_EXTENT: SafeCapExtent = {
   ImmutablePeriod: 30,
   SizeLimitEnabled: false,
   SizeLimit: null,
+  GatewayServer: null,
+  ConnectionType: null,
+  ImmutabilityMode: null,
 };
 
 const MOCK_ARCH_EXTENT: SafeArchExtent = {
@@ -59,6 +63,8 @@ const MOCK_ARCH_EXTENT: SafeArchExtent = {
   OffloadPeriod: 365,
   CostOptimizedEnabled: true,
   FullBackupModeEnabled: false,
+  GatewayServer: null,
+  GatewayMode: null,
 };
 
 describe("SobrDetailSheet", () => {
@@ -118,5 +124,99 @@ describe("SobrDetailSheet", () => {
       />,
     );
     expect(screen.queryByText("SOBR-01")).not.toBeInTheDocument();
+  });
+
+  it("shows immutable period in configuration section", () => {
+    render(
+      <SobrDetailSheet
+        sobr={MOCK_SOBR}
+        perfExtents={[]}
+        capExtents={[]}
+        archExtents={[]}
+        open={true}
+        onOpenChange={() => {}}
+      />,
+    );
+    expect(screen.getByText("30 days")).toBeInTheDocument();
+  });
+
+  it("shows cap tier type in configuration section", () => {
+    render(
+      <SobrDetailSheet
+        sobr={MOCK_SOBR}
+        perfExtents={[]}
+        capExtents={[]}
+        archExtents={[]}
+        open={true}
+        onOpenChange={() => {}}
+      />,
+    );
+    expect(screen.getByText("Amazon S3")).toBeInTheDocument();
+  });
+
+  it("shows free space percent on performance tier extent", () => {
+    render(
+      <SobrDetailSheet
+        sobr={MOCK_SOBR}
+        perfExtents={[MOCK_PERF_EXTENT]}
+        capExtents={[]}
+        archExtents={[]}
+        open={true}
+        onOpenChange={() => {}}
+      />,
+    );
+    expect(screen.getByText(/50%/)).toBeInTheDocument();
+  });
+
+  it("shows gateway server on cap extent when set", () => {
+    const capExtentWithGateway = {
+      ...MOCK_CAP_EXTENT,
+      GatewayServer: "gw-server-01",
+    };
+    render(
+      <SobrDetailSheet
+        sobr={MOCK_SOBR}
+        perfExtents={[]}
+        capExtents={[capExtentWithGateway]}
+        archExtents={[]}
+        open={true}
+        onOpenChange={() => {}}
+      />,
+    );
+    expect(screen.getByText("gw-server-01")).toBeInTheDocument();
+  });
+
+  it("shows immutability badge on archive extent", () => {
+    render(
+      <SobrDetailSheet
+        sobr={MOCK_SOBR}
+        perfExtents={[]}
+        capExtents={[]}
+        archExtents={[MOCK_ARCH_EXTENT]}
+        open={true}
+        onOpenChange={() => {}}
+      />,
+    );
+    expect(screen.getByText("Disabled")).toBeInTheDocument();
+  });
+
+  it("shows gateway mode on archive extent when set", () => {
+    const archExtentWithGateway = {
+      ...MOCK_ARCH_EXTENT,
+      GatewayServer: "arch-gw-01",
+      GatewayMode: "Direct",
+    };
+    render(
+      <SobrDetailSheet
+        sobr={MOCK_SOBR}
+        perfExtents={[]}
+        capExtents={[]}
+        archExtents={[archExtentWithGateway]}
+        open={true}
+        onOpenChange={() => {}}
+      />,
+    );
+    expect(screen.getByText("Direct")).toBeInTheDocument();
+    expect(screen.getByText("arch-gw-01")).toBeInTheDocument();
   });
 });

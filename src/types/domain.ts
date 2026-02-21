@@ -73,6 +73,9 @@ export interface SafeCapExtent {
   ImmutablePeriod: number | null;
   SizeLimitEnabled: boolean | null;
   SizeLimit: number | null;
+  GatewayServer: string | null;
+  ConnectionType: string | null;
+  ImmutabilityMode: string | null;
 }
 
 export interface SafeArchExtent {
@@ -84,6 +87,8 @@ export interface SafeArchExtent {
   OffloadPeriod: number | null;
   CostOptimizedEnabled: boolean | null;
   FullBackupModeEnabled: boolean | null;
+  GatewayServer: string | null;
+  GatewayMode: string | null;
 }
 
 export interface SafeExtent {
@@ -94,6 +99,7 @@ export interface SafeExtent {
   ImmutabilitySupported: boolean | null;
   FreeSpaceTB: number | null;
   TotalSpaceTB: number | null;
+  FreeSpacePercent: number | null;
 }
 
 export interface SafeRepo {

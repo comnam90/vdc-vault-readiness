@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { formatTB } from "@/lib/format-utils";
 
 export function PropertyRow({
   label,
@@ -20,6 +21,44 @@ export function SectionHeading({ children }: { children: React.ReactNode }) {
     <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
       {children}
     </h3>
+  );
+}
+
+export function FreeSpaceValue({
+  tb,
+  percent,
+}: {
+  tb: number | null;
+  percent: number | null;
+}) {
+  if (tb === null) {
+    return <span className="text-muted-foreground">N/A</span>;
+  }
+
+  const formatted = formatTB(tb);
+  const pctLabel = percent !== null ? ` (${percent.toFixed(0)}%)` : "";
+
+  if (percent !== null && percent < 15) {
+    return (
+      <span className="text-destructive">
+        {formatted}
+        {pctLabel}
+      </span>
+    );
+  }
+  if (percent !== null && percent < 30) {
+    return (
+      <span className="text-warning">
+        {formatted}
+        {pctLabel}
+      </span>
+    );
+  }
+  return (
+    <span className="text-primary">
+      {formatted}
+      {pctLabel}
+    </span>
   );
 }
 

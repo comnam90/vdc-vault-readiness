@@ -642,6 +642,13 @@ function normalizeExtents(
         "TotalSpace",
         dataErrors,
       ),
+      FreeSpacePercent: parseNumeric(
+        row.FreeSpacePercent as string | null | undefined,
+        "extents",
+        rowIndex,
+        "FreeSpacePercent",
+        dataErrors,
+      ),
     };
 
     return [safeExtent];
@@ -755,6 +762,15 @@ function normalizeCapExtents(
         "SizeLimit",
         dataErrors,
       ),
+      GatewayServer: normalizeString(
+        row.GatewayServer as string | null | undefined,
+      ),
+      ConnectionType: normalizeString(
+        row.ConnectionType as string | null | undefined,
+      ),
+      ImmutabilityMode: normalizeString(
+        row.ImmutabilityMode as string | null | undefined,
+      ),
     };
 
     return [safeCapExtent];
@@ -864,6 +880,12 @@ function normalizeArchExtents(
       ),
       FullBackupModeEnabled: parseBoolean(
         row.FullBackupModeEnabled as string | null | undefined,
+      ),
+      GatewayServer: normalizeString(
+        row.GatewayServer as string | null | undefined,
+      ),
+      GatewayMode: normalizeString(
+        row.GatewayMode as string | null | undefined,
       ),
     };
 

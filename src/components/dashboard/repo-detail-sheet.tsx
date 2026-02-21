@@ -12,7 +12,12 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { PropertyRow, SectionHeading, BoolBadge } from "./detail-sheet-helpers";
+import {
+  PropertyRow,
+  SectionHeading,
+  BoolBadge,
+  FreeSpaceValue,
+} from "./detail-sheet-helpers";
 
 const MAX_VISIBLE_JOBS = 10;
 
@@ -22,44 +27,6 @@ interface RepoDetailSheetProps {
   jobs: SafeJob[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-function FreeSpaceValue({
-  tb,
-  percent,
-}: {
-  tb: number | null;
-  percent: number | null;
-}) {
-  if (tb === null) {
-    return <span className="text-muted-foreground">N/A</span>;
-  }
-
-  const formatted = formatTB(tb);
-  const pctLabel = percent !== null ? ` (${percent.toFixed(0)}%)` : "";
-
-  if (percent !== null && percent < 15) {
-    return (
-      <span className="text-destructive">
-        {formatted}
-        {pctLabel}
-      </span>
-    );
-  }
-  if (percent !== null && percent < 30) {
-    return (
-      <span className="text-warning">
-        {formatted}
-        {pctLabel}
-      </span>
-    );
-  }
-  return (
-    <span className="text-primary">
-      {formatted}
-      {pctLabel}
-    </span>
-  );
 }
 
 function JobsList({ jobs }: { jobs: SafeJob[] }) {

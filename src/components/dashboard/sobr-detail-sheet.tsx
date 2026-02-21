@@ -15,7 +15,12 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { PropertyRow, SectionHeading, BoolBadge } from "./detail-sheet-helpers";
+import {
+  PropertyRow,
+  SectionHeading,
+  BoolBadge,
+  FreeSpaceValue,
+} from "./detail-sheet-helpers";
 
 interface SobrDetailSheetProps {
   sobr: SafeSobr | null;
@@ -42,6 +47,17 @@ function ExtentRow({ extent }: { extent: SafeExtent }) {
             <span className="text-muted-foreground">Capacity</span>
             <span className="font-mono">
               {extent.TotalSpaceTB.toFixed(2)} TB
+            </span>
+          </>
+        )}
+        {(extent.FreeSpaceTB !== null || extent.FreeSpacePercent !== null) && (
+          <>
+            <span className="text-muted-foreground">Free Space</span>
+            <span className="font-mono">
+              <FreeSpaceValue
+                tb={extent.FreeSpaceTB}
+                percent={extent.FreeSpacePercent}
+              />
             </span>
           </>
         )}
@@ -73,6 +89,24 @@ function CapExtentRow({ extent }: { extent: SafeCapExtent }) {
             <span>{extent.MovePeriodDays ?? "?"} days</span>
           </>
         )}
+        {extent.ConnectionType && (
+          <>
+            <span className="text-muted-foreground">Connection</span>
+            <span>{extent.ConnectionType}</span>
+          </>
+        )}
+        {extent.GatewayServer && (
+          <>
+            <span className="text-muted-foreground">Gateway</span>
+            <span className="truncate">{extent.GatewayServer}</span>
+          </>
+        )}
+        {extent.ImmutableEnabled && extent.ImmutabilityMode && (
+          <>
+            <span className="text-muted-foreground">Immut. Mode</span>
+            <span>{extent.ImmutabilityMode}</span>
+          </>
+        )}
       </div>
     </div>
   );
@@ -85,6 +119,20 @@ function ArchExtentRow({ extent }: { extent: SafeArchExtent }) {
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
         <span className="text-muted-foreground">Encryption</span>
         <BoolBadge value={extent.EncryptionEnabled} />
+        <span className="text-muted-foreground">Immutability</span>
+        <BoolBadge value={extent.ImmutableEnabled} />
+        {extent.GatewayMode && (
+          <>
+            <span className="text-muted-foreground">Gateway Mode</span>
+            <span>{extent.GatewayMode}</span>
+          </>
+        )}
+        {extent.GatewayServer && (
+          <>
+            <span className="text-muted-foreground">Gateway</span>
+            <span className="truncate">{extent.GatewayServer}</span>
+          </>
+        )}
         <span className="text-muted-foreground">Offload Period</span>
         <span>
           {extent.OffloadPeriod != null
@@ -154,6 +202,14 @@ export function SobrDetailSheet({
               </PropertyRow>
               <PropertyRow label="Per-VM Files">
                 <BoolBadge value={sobr.UsePerVMFiles ?? false} />
+              </PropertyRow>
+              {sobr.ImmutablePeriod !== null && (
+                <PropertyRow label="Immut. Period">
+                  {sobr.ImmutablePeriod} days
+                </PropertyRow>
+              )}
+              <PropertyRow label="Cap Tier Type">
+                {sobr.CapTierType ?? "N/A"}
               </PropertyRow>
             </div>
 

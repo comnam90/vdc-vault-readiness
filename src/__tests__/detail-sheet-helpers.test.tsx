@@ -4,6 +4,7 @@ import {
   PropertyRow,
   SectionHeading,
   BoolBadge,
+  FreeSpaceValue,
 } from "@/components/dashboard/detail-sheet-helpers";
 
 describe("PropertyRow", () => {
@@ -94,5 +95,46 @@ describe("BoolBadge", () => {
     render(<BoolBadge value={null} />);
     const span = screen.getByText("N/A");
     expect(span).toHaveClass("text-muted-foreground");
+  });
+});
+
+describe("FreeSpaceValue", () => {
+  it("shows N/A when tb is null", () => {
+    render(<FreeSpaceValue tb={null} percent={null} />);
+    expect(screen.getByText("N/A")).toBeInTheDocument();
+  });
+
+  it("applies muted styling when tb is null", () => {
+    render(<FreeSpaceValue tb={null} percent={null} />);
+    expect(screen.getByText("N/A")).toHaveClass("text-muted-foreground");
+  });
+
+  it("applies destructive styling when percent < 15", () => {
+    render(<FreeSpaceValue tb={1} percent={10} />);
+    const el = screen.getByText(/10%/);
+    expect(el).toHaveClass("text-destructive");
+  });
+
+  it("applies warning styling when percent is between 15 and 29", () => {
+    render(<FreeSpaceValue tb={2} percent={20} />);
+    const el = screen.getByText(/20%/);
+    expect(el).toHaveClass("text-warning");
+  });
+
+  it("applies primary styling when percent >= 30", () => {
+    render(<FreeSpaceValue tb={5} percent={50} />);
+    const el = screen.getByText(/50%/);
+    expect(el).toHaveClass("text-primary");
+  });
+
+  it("shows formatted TB value with percent label", () => {
+    render(<FreeSpaceValue tb={2.5} percent={40} />);
+    expect(screen.getByText(/40%/)).toBeInTheDocument();
+  });
+
+  it("shows TB value without percent label when percent is null", () => {
+    render(<FreeSpaceValue tb={3} percent={null} />);
+    const el = document.querySelector(".text-primary");
+    expect(el).toBeInTheDocument();
   });
 });

@@ -461,6 +461,9 @@ describe("SOBR Source Data derivation", () => {
       ImmutablePeriod: null,
       SizeLimitEnabled: null,
       SizeLimit: null,
+      GatewayServer: null,
+      ConnectionType: null,
+      ImmutabilityMode: null,
     };
     render(
       <RepositoriesTab
@@ -487,6 +490,8 @@ describe("SOBR Source Data derivation", () => {
       OffloadPeriod: 60,
       CostOptimizedEnabled: null,
       FullBackupModeEnabled: null,
+      GatewayServer: null,
+      GatewayMode: null,
     };
     render(
       <RepositoriesTab
