@@ -933,6 +933,30 @@ function normalizeRepos(
         dataErrors,
       ),
       Type: normalizeString(row.Type as string | null | undefined),
+      Host: normalizeString(row.Host as string | null | undefined),
+      Path: normalizeString(row.Path as string | null | undefined),
+      MaxTasks: parseNumeric(
+        row.MaxTasks as string | null | undefined,
+        "repos",
+        rowIndex,
+        "MaxTasks",
+        dataErrors,
+      ),
+      IsPerVmBackupFiles: parseBoolean(
+        row.IsPerVmBackupFiles as string | null | undefined,
+      ),
+      IsDecompress: parseBoolean(row.IsDecompress as string | null | undefined),
+      AlignBlocks: parseBoolean(row.AlignBlocks as string | null | undefined),
+      IsRotatedDrives: parseBoolean(
+        row.IsRotatedDrives as string | null | undefined,
+      ),
+      FreeSpacePercent: parseNumeric(
+        row.FreeSpacePercent as string | null | undefined,
+        "repos",
+        rowIndex,
+        "FreeSpacePercent",
+        dataErrors,
+      ),
     };
 
     return [safeRepo];

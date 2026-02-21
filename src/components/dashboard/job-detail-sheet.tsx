@@ -17,34 +17,12 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { PropertyRow, SectionHeading } from "./detail-sheet-helpers";
 
 interface JobDetailSheetProps {
   job: EnrichedJob | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-function PropertyRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="grid grid-cols-[140px_1fr] items-baseline gap-2 py-1.5">
-      <span className="text-muted-foreground text-sm">{label}</span>
-      <span className="font-mono text-sm">{children}</span>
-    </div>
-  );
-}
-
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-      {children}
-    </h3>
-  );
 }
 
 function ChangeRateValue({ rate }: { rate: number | null }) {

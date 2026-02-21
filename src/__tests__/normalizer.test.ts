@@ -2118,3 +2118,122 @@ describe("normalizeHealthcheck", () => {
     });
   });
 });
+
+describe("normalizeRepos — extended fields", () => {
+  function makeRawRepoRow(
+    overrides: Record<string, string | null> = {},
+  ): Record<string, string | null> {
+    return {
+      Name: "LinuxHardened",
+      IsImmutabilitySupported: "True",
+      JobCount: "2",
+      TotalSpace: "5.0",
+      FreeSpace: "2.0",
+      Type: "LinuxHardened",
+      Host: "backup-server-01",
+      Path: "/mnt/backups",
+      MaxTasks: "4",
+      IsPerVmBackupFiles: "True",
+      IsDecompress: "False",
+      AlignBlocks: "True",
+      IsRotatedDrives: "False",
+      FreeSpacePercent: "40",
+      ...overrides,
+    };
+  }
+
+  it("extracts Host as string", () => {
+    const result = normalizeHealthcheck({ repos: [makeRawRepoRow()] });
+    expect(result.repos[0].Host).toBe("backup-server-01");
+  });
+
+  it("extracts Path as string", () => {
+    const result = normalizeHealthcheck({ repos: [makeRawRepoRow()] });
+    expect(result.repos[0].Path).toBe("/mnt/backups");
+  });
+
+  it("extracts MaxTasks as number", () => {
+    const result = normalizeHealthcheck({ repos: [makeRawRepoRow()] });
+    expect(result.repos[0].MaxTasks).toBe(4);
+  });
+
+  it("extracts IsPerVmBackupFiles as boolean true", () => {
+    const result = normalizeHealthcheck({ repos: [makeRawRepoRow()] });
+    expect(result.repos[0].IsPerVmBackupFiles).toBe(true);
+  });
+
+  it("extracts IsDecompress as boolean false", () => {
+    const result = normalizeHealthcheck({ repos: [makeRawRepoRow()] });
+    expect(result.repos[0].IsDecompress).toBe(false);
+  });
+
+  it("extracts AlignBlocks as boolean true", () => {
+    const result = normalizeHealthcheck({ repos: [makeRawRepoRow()] });
+    expect(result.repos[0].AlignBlocks).toBe(true);
+  });
+
+  it("extracts IsRotatedDrives as boolean false", () => {
+    const result = normalizeHealthcheck({ repos: [makeRawRepoRow()] });
+    expect(result.repos[0].IsRotatedDrives).toBe(false);
+  });
+
+  it("extracts FreeSpacePercent as number", () => {
+    const result = normalizeHealthcheck({ repos: [makeRawRepoRow()] });
+    expect(result.repos[0].FreeSpacePercent).toBe(40);
+  });
+
+  it("sets Host to null when missing", () => {
+    const result = normalizeHealthcheck({
+      repos: [makeRawRepoRow({ Host: null })],
+    });
+    expect(result.repos[0].Host).toBeNull();
+  });
+
+  it("sets Path to null when missing", () => {
+    const result = normalizeHealthcheck({
+      repos: [makeRawRepoRow({ Path: null })],
+    });
+    expect(result.repos[0].Path).toBeNull();
+  });
+
+  it("sets MaxTasks to null when missing", () => {
+    const result = normalizeHealthcheck({
+      repos: [makeRawRepoRow({ MaxTasks: null })],
+    });
+    expect(result.repos[0].MaxTasks).toBeNull();
+  });
+
+  it("sets boolean fields to null when missing", () => {
+    const result = normalizeHealthcheck({
+      repos: [
+        makeRawRepoRow({
+          IsPerVmBackupFiles: null,
+          IsDecompress: null,
+          AlignBlocks: null,
+          IsRotatedDrives: null,
+        }),
+      ],
+    });
+    expect(result.repos[0].IsPerVmBackupFiles).toBeNull();
+    expect(result.repos[0].IsDecompress).toBeNull();
+    expect(result.repos[0].AlignBlocks).toBeNull();
+    expect(result.repos[0].IsRotatedDrives).toBeNull();
+  });
+
+  it("sets FreeSpacePercent to null when missing", () => {
+    const result = normalizeHealthcheck({
+      repos: [makeRawRepoRow({ FreeSpacePercent: null })],
+    });
+    expect(result.repos[0].FreeSpacePercent).toBeNull();
+  });
+
+  it("preserves existing fields alongside new fields", () => {
+    const result = normalizeHealthcheck({ repos: [makeRawRepoRow()] });
+    const repo = result.repos[0];
+    expect(repo.Name).toBe("LinuxHardened");
+    expect(repo.ImmutabilitySupported).toBe(true);
+    expect(repo.TotalSpaceTB).toBe(5.0);
+    expect(repo.FreeSpaceTB).toBe(2.0);
+    expect(repo.Type).toBe("LinuxHardened");
+  });
+});

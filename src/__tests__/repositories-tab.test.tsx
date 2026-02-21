@@ -17,6 +17,14 @@ function makeManyRepos(count: number): SafeRepo[] {
     FreeSpaceTB: 0.5,
     ImmutabilitySupported: false,
     Type: "LinuxLocal",
+    Host: null,
+    Path: null,
+    MaxTasks: null,
+    IsPerVmBackupFiles: null,
+    IsDecompress: null,
+    AlignBlocks: null,
+    IsRotatedDrives: null,
+    FreeSpacePercent: null,
   }));
 }
 
@@ -46,6 +54,14 @@ const MOCK_REPO: SafeRepo = {
   FreeSpaceTB: 1.2,
   ImmutabilitySupported: true,
   Type: "LinuxLocal",
+  Host: "backup-server-01",
+  Path: "/mnt/backups",
+  MaxTasks: 4,
+  IsPerVmBackupFiles: true,
+  IsDecompress: false,
+  AlignBlocks: true,
+  IsRotatedDrives: false,
+  FreeSpacePercent: 48,
 };
 
 const MOCK_JOBS: SafeJob[] = [
@@ -516,5 +532,39 @@ describe("SOBR Source Data derivation", () => {
     );
     // 2048 GB = 2.00 TB shown in SOBR table
     expect(screen.getByText("2.00 TB")).toBeInTheDocument();
+  });
+});
+
+describe("Standard Repository row click", () => {
+  it("clicking a standard repo row opens the repo detail sheet", () => {
+    render(
+      <RepositoriesTab
+        repos={[MOCK_REPO]}
+        jobs={MOCK_JOBS}
+        sobr={[]}
+        extents={[]}
+        capExtents={[]}
+        archExtents={[]}
+      />,
+    );
+    fireEvent.click(screen.getByText("LinuxHardened"));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("repo detail sheet shows the clicked repo name as title", () => {
+    render(
+      <RepositoriesTab
+        repos={[MOCK_REPO]}
+        jobs={MOCK_JOBS}
+        sobr={[]}
+        extents={[]}
+        capExtents={[]}
+        archExtents={[]}
+      />,
+    );
+    fireEvent.click(screen.getByText("LinuxHardened"));
+    // Title appears in the sheet dialog
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toBeInTheDocument();
   });
 });

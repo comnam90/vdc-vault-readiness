@@ -15,6 +15,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { PropertyRow, SectionHeading, BoolBadge } from "./detail-sheet-helpers";
 
 interface SobrDetailSheetProps {
   sobr: SafeSobr | null;
@@ -23,52 +24,6 @@ interface SobrDetailSheetProps {
   archExtents: SafeArchExtent[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-      {children}
-    </h3>
-  );
-}
-
-function PropertyRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="grid grid-cols-[160px_1fr] items-baseline gap-2 py-1.5">
-      <span className="text-muted-foreground text-sm">{label}</span>
-      <span className="font-mono text-sm">{children}</span>
-    </div>
-  );
-}
-
-function BoolBadge({
-  value,
-  trueLabel = "Enabled",
-  falseLabel = "Disabled",
-}: {
-  value: boolean;
-  trueLabel?: string;
-  falseLabel?: string;
-}) {
-  return value ? (
-    <Badge
-      variant="outline"
-      className="border-primary/30 bg-primary/5 text-primary"
-    >
-      {trueLabel}
-    </Badge>
-  ) : (
-    <Badge variant="outline" className="text-muted-foreground">
-      {falseLabel}
-    </Badge>
-  );
 }
 
 function ExtentRow({ extent }: { extent: SafeExtent }) {

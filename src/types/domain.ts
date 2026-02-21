@@ -103,6 +103,14 @@ export interface SafeRepo {
   FreeSpaceTB: number | null;
   ImmutabilitySupported: boolean;
   Type: string | null;
+  Host: string | null;
+  Path: string | null;
+  MaxTasks: number | null;
+  IsPerVmBackupFiles: boolean | null;
+  IsDecompress: boolean | null;
+  AlignBlocks: boolean | null;
+  IsRotatedDrives: boolean | null;
+  FreeSpacePercent: number | null;
 }
 
 export type DataError = {

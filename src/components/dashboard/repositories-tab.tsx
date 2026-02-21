@@ -25,6 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { SobrDetailSheet } from "./sobr-detail-sheet";
+import { RepoDetailSheet } from "./repo-detail-sheet";
 import { RepositoriesTable } from "./repositories-table";
 
 interface RepositoriesTabProps {
@@ -275,6 +276,7 @@ export function RepositoriesTab({
   archExtents,
 }: RepositoriesTabProps) {
   const [selectedSobr, setSelectedSobr] = useState<SafeSobr | null>(null);
+  const [selectedRepo, setSelectedRepo] = useState<SafeRepo | null>(null);
   const [repoSorting, setRepoSorting] = useState<SortingState>([
     { id: "Name", desc: false },
   ]);
@@ -289,6 +291,14 @@ export function RepositoriesTab({
     () => aggregateRepoStatsMap(jobs, sobrNames),
     [jobs, sobrNames],
   );
+
+  const repoJobs = useMemo(
+    () => jobs.filter((j) => j.RepoName === selectedRepo?.Name),
+    [jobs, selectedRepo],
+  );
+  const selectedRepoStats = selectedRepo
+    ? (repoStatsMap.get(selectedRepo.Name) ?? null)
+    : null;
 
   const repoColumns = useMemo(
     () => buildRepoColumns(repoStatsMap),
@@ -337,6 +347,7 @@ export function RepositoriesTab({
           <RepositoriesTable
             table={repoTable}
             emptyMessage="No repositories found."
+            onRowClick={(row) => setSelectedRepo(row.original)}
           />
         </section>
 
@@ -367,6 +378,16 @@ export function RepositoriesTab({
           open={selectedSobr !== null}
           onOpenChange={(open) => {
             if (!open) setSelectedSobr(null);
+          }}
+        />
+
+        <RepoDetailSheet
+          repo={selectedRepo}
+          repoStats={selectedRepoStats}
+          jobs={repoJobs}
+          open={selectedRepo !== null}
+          onOpenChange={(open) => {
+            if (!open) setSelectedRepo(null);
           }}
         />
       </div>
