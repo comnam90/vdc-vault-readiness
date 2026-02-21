@@ -41,7 +41,7 @@ function ExtentRow({ extent }: { extent: SafeExtent }) {
         <span className="text-muted-foreground">Host</span>
         <span>{extent.Host ?? "N/A"}</span>
         <span className="text-muted-foreground">Immutability</span>
-        <BoolBadge value={extent.ImmutabilitySupported ?? false} />
+        <BoolBadge value={extent.ImmutabilitySupported} />
         {extent.TotalSpaceTB !== null && (
           <>
             <span className="text-muted-foreground">Capacity</span>
@@ -140,7 +140,7 @@ function ArchExtentRow({ extent }: { extent: SafeArchExtent }) {
             : "N/A"}
         </span>
         <span className="text-muted-foreground">Cost Optimized</span>
-        <BoolBadge value={extent.CostOptimizedEnabled ?? false} />
+        <BoolBadge value={extent.CostOptimizedEnabled} />
       </div>
     </div>
   );
@@ -201,7 +201,7 @@ export function SobrDetailSheet({
                 {sobr.PolicyType ?? "N/A"}
               </PropertyRow>
               <PropertyRow label="Per-VM Files">
-                <BoolBadge value={sobr.UsePerVMFiles ?? false} />
+                <BoolBadge value={sobr.UsePerVMFiles} />
               </PropertyRow>
               {sobr.ImmutablePeriod !== null && (
                 <PropertyRow label="Immut. Period">
