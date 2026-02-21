@@ -116,7 +116,7 @@ export function RepoDetailSheet({
           </div>
         </SheetHeader>
 
-        <ScrollArea className="flex-1 px-4 pb-4">
+        <ScrollArea className="min-h-0 flex-1 px-4 pb-4">
           <div className="space-y-5">
             {/* Section 1 — Identity */}
             <div className="space-y-1">
