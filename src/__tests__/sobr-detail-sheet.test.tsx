@@ -197,7 +197,7 @@ describe("SobrDetailSheet", () => {
         onOpenChange={() => {}}
       />,
     );
-    expect(screen.getByText("Disabled")).toBeInTheDocument();
+    expect(screen.getAllByText("Disabled").length).toBeGreaterThan(0);
   });
 
   it("shows gateway mode on archive extent when set", () => {

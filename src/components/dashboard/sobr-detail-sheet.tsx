@@ -14,6 +14,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { formatTB } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 import {
   PropertyRow,
@@ -89,6 +90,18 @@ function CapExtentRow({ extent }: { extent: SafeCapExtent }) {
             <span>{extent.MovePeriodDays ?? "?"} days</span>
           </>
         )}
+        {extent.CopyModeEnabled && (
+          <>
+            <span className="text-muted-foreground">Copy Mode</span>
+            <BoolBadge value={extent.CopyModeEnabled} trueLabel="Enabled" />
+          </>
+        )}
+        {extent.SizeLimitEnabled && extent.SizeLimit !== null && (
+          <>
+            <span className="text-muted-foreground">Size Limit</span>
+            <span className="font-mono">{formatTB(extent.SizeLimit)}</span>
+          </>
+        )}
         {extent.ConnectionType && (
           <>
             <span className="text-muted-foreground">Connection</span>
@@ -141,6 +154,8 @@ function ArchExtentRow({ extent }: { extent: SafeArchExtent }) {
         </span>
         <span className="text-muted-foreground">Cost Optimized</span>
         <BoolBadge value={extent.CostOptimizedEnabled} />
+        <span className="text-muted-foreground">Full Backup Mode</span>
+        <BoolBadge value={extent.FullBackupModeEnabled} />
       </div>
     </div>
   );
@@ -211,6 +226,20 @@ export function SobrDetailSheet({
               <PropertyRow label="Cap Tier Type">
                 {sobr.CapTierType ?? "N/A"}
               </PropertyRow>
+              <PropertyRow label="Tier Policy">
+                {sobr.CapacityTierCopy && sobr.CapacityTierMove
+                  ? "Copy + Move"
+                  : sobr.CapacityTierMove
+                    ? "Move"
+                    : sobr.CapacityTierCopy
+                      ? "Copy"
+                      : "N/A"}
+              </PropertyRow>
+              {sobr.SizeLimitEnabled && sobr.SizeLimit !== null && (
+                <PropertyRow label="Size Limit">
+                  <span className="font-mono">{formatTB(sobr.SizeLimit)}</span>
+                </PropertyRow>
+              )}
             </div>
 
             {perfExtents.length > 0 && (
