@@ -1,4 +1,9 @@
-import type { SafeJob, SafeJobSession } from "@/types/domain";
+import type {
+  SafeJob,
+  SafeJobSession,
+  SafeRepo,
+  SafeSobr,
+} from "@/types/domain";
 
 export interface JobTypeChartDatum {
   jobType: string;
@@ -61,6 +66,32 @@ export function bucketChangeRates(
     count: counts[i],
     color: b.color,
   }));
+}
+
+export interface ImmutabilitySlice {
+  name: string;
+  count: number;
+  fill: string;
+}
+
+export function repoImmutabilityCounts(
+  repos: SafeRepo[],
+  sobr: SafeSobr[],
+): ImmutabilitySlice[] {
+  const immutable =
+    repos.filter((r) => r.ImmutabilitySupported).length +
+    sobr.filter((s) => s.ImmutableEnabled).length;
+  const notImmutable =
+    repos.filter((r) => !r.ImmutabilitySupported).length +
+    sobr.filter((s) => !s.ImmutableEnabled).length;
+  return [
+    { name: "Immutable", count: immutable, fill: "var(--color-primary)" },
+    {
+      name: "Not Immutable",
+      count: notImmutable,
+      fill: "var(--color-destructive)",
+    },
+  ];
 }
 
 export function groupByRepo(jobs: SafeJob[]): RepoChartDatum[] {

@@ -1,9 +1,15 @@
 import { describe, it, expect } from "vitest";
-import type { SafeJob, SafeJobSession } from "@/types/domain";
+import type {
+  SafeJob,
+  SafeJobSession,
+  SafeRepo,
+  SafeSobr,
+} from "@/types/domain";
 import {
   groupByJobType,
   bucketChangeRates,
   groupByRepo,
+  repoImmutabilityCounts,
 } from "@/lib/chart-selectors";
 
 function makeJob(overrides: Partial<SafeJob> = {}): SafeJob {
@@ -109,5 +115,63 @@ describe("groupByRepo", () => {
     const result = groupByRepo(jobs);
     expect(result[0].repoName).toBe("Repo B");
     expect(result[1].repoName).toBe("Repo A");
+  });
+});
+
+function makeRepo(overrides: Partial<SafeRepo> = {}): SafeRepo {
+  return {
+    Name: "Repo",
+    JobCount: null,
+    TotalSpaceTB: null,
+    FreeSpaceTB: null,
+    ImmutabilitySupported: false,
+    Type: null,
+    Host: null,
+    Path: null,
+    MaxTasks: null,
+    IsPerVmBackupFiles: null,
+    IsDecompress: null,
+    AlignBlocks: null,
+    IsRotatedDrives: null,
+    FreeSpacePercent: null,
+    ...overrides,
+  };
+}
+
+function makeSobr(overrides: Partial<SafeSobr> = {}): SafeSobr {
+  return {
+    Name: "SOBR",
+    EnableCapacityTier: false,
+    CapacityTierCopy: false,
+    CapacityTierMove: false,
+    ArchiveTierEnabled: false,
+    ImmutableEnabled: false,
+    ExtentCount: null,
+    JobCount: null,
+    PolicyType: null,
+    UsePerVMFiles: null,
+    CapTierType: null,
+    ImmutablePeriod: null,
+    SizeLimitEnabled: null,
+    SizeLimit: null,
+    ...overrides,
+  };
+}
+
+describe("repoImmutabilityCounts", () => {
+  it("counts immutable vs non-immutable across repos and SOBR combined", () => {
+    const repos: SafeRepo[] = [
+      makeRepo({ ImmutabilitySupported: true }),
+      makeRepo({ ImmutabilitySupported: false }),
+    ];
+    const sobr: SafeSobr[] = [makeSobr({ ImmutableEnabled: true })];
+    const result = repoImmutabilityCounts(repos, sobr);
+    expect(result.find((s) => s.name === "Immutable")?.count).toBe(2);
+    expect(result.find((s) => s.name === "Not Immutable")?.count).toBe(1);
+  });
+
+  it("returns zeros for empty inputs", () => {
+    const result = repoImmutabilityCounts([], []);
+    expect(result.every((s) => s.count === 0)).toBe(true);
   });
 });
