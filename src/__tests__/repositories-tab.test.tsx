@@ -185,7 +185,7 @@ describe("RepositoriesTab", () => {
         archExtents={[]}
       />,
     );
-    expect(screen.getByText(/immutability/i)).toBeInTheDocument();
+    expect(screen.getByText("Immutability")).toBeInTheDocument();
     expect(screen.queryByText(/encrypted/i)).not.toBeInTheDocument();
   });
 
@@ -537,6 +537,22 @@ describe("SOBR Source Data derivation", () => {
     );
     // 2048 GB = 2.00 TB shown in SOBR table
     expect(screen.getByText("2.00 TB")).toBeInTheDocument();
+  });
+});
+
+describe("Immutability chart wiring", () => {
+  it("renders immutability coverage chart when repos exist", () => {
+    render(
+      <RepositoriesTab
+        repos={[MOCK_REPO]}
+        jobs={MOCK_JOBS}
+        sobr={[]}
+        extents={[]}
+        capExtents={[]}
+        archExtents={[]}
+      />,
+    );
+    expect(screen.getByText(/immutability coverage/i)).toBeInTheDocument();
   });
 });
 
