@@ -11,28 +11,7 @@ import {
   groupByRepo,
   repoImmutabilityCounts,
 } from "@/lib/chart-selectors";
-
-function makeJob(overrides: Partial<SafeJob> = {}): SafeJob {
-  return {
-    JobName: "Job",
-    JobType: "VMware Backup",
-    Encrypted: true,
-    RepoName: "Repo",
-    RetainDays: null,
-    GfsDetails: null,
-    SourceSizeGB: null,
-    OnDiskGB: null,
-    RetentionScheme: null,
-    CompressionLevel: null,
-    BlockSize: null,
-    GfsEnabled: null,
-    ActiveFullEnabled: null,
-    SyntheticFullEnabled: null,
-    BackupChainType: null,
-    IndexingEnabled: null,
-    ...overrides,
-  };
-}
+import { makeJob, makeRepo, makeSobr } from "./fixtures";
 
 describe("groupByJobType", () => {
   it("sums source TB per job type, sorted descending", () => {
@@ -117,46 +96,6 @@ describe("groupByRepo", () => {
     expect(result[1].repoName).toBe("Repo A");
   });
 });
-
-function makeRepo(overrides: Partial<SafeRepo> = {}): SafeRepo {
-  return {
-    Name: "Repo",
-    JobCount: null,
-    TotalSpaceTB: null,
-    FreeSpaceTB: null,
-    ImmutabilitySupported: false,
-    Type: null,
-    Host: null,
-    Path: null,
-    MaxTasks: null,
-    IsPerVmBackupFiles: null,
-    IsDecompress: null,
-    AlignBlocks: null,
-    IsRotatedDrives: null,
-    FreeSpacePercent: null,
-    ...overrides,
-  };
-}
-
-function makeSobr(overrides: Partial<SafeSobr> = {}): SafeSobr {
-  return {
-    Name: "SOBR",
-    EnableCapacityTier: false,
-    CapacityTierCopy: false,
-    CapacityTierMove: false,
-    ArchiveTierEnabled: false,
-    ImmutableEnabled: false,
-    ExtentCount: null,
-    JobCount: null,
-    PolicyType: null,
-    UsePerVMFiles: null,
-    CapTierType: null,
-    ImmutablePeriod: null,
-    SizeLimitEnabled: null,
-    SizeLimit: null,
-    ...overrides,
-  };
-}
 
 describe("repoImmutabilityCounts", () => {
   it("counts immutable vs non-immutable across repos and SOBR combined", () => {

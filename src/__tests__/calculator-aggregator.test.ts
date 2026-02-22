@@ -9,42 +9,7 @@ import {
   aggregateGfsMax,
   buildCalculatorSummary,
 } from "@/lib/calculator-aggregator";
-
-function makeSession(overrides: Partial<SafeJobSession> = {}): SafeJobSession {
-  return {
-    JobName: "TestJob",
-    MaxDataSize: null,
-    AvgChangeRate: null,
-    SuccessRate: null,
-    SessionCount: null,
-    Fails: null,
-    AvgJobTime: null,
-    MaxJobTime: null,
-    ...overrides,
-  };
-}
-
-function makeJob(overrides: Partial<SafeJob> = {}): SafeJob {
-  return {
-    JobName: "TestJob",
-    JobType: "VMware Backup",
-    Encrypted: true,
-    RepoName: "LinuxHardened",
-    RetainDays: null,
-    GfsDetails: null,
-    SourceSizeGB: null,
-    OnDiskGB: null,
-    RetentionScheme: null,
-    CompressionLevel: null,
-    BlockSize: null,
-    GfsEnabled: null,
-    ActiveFullEnabled: null,
-    SyntheticFullEnabled: null,
-    BackupChainType: null,
-    IndexingEnabled: null,
-    ...overrides,
-  };
-}
+import { makeJob, makeSession } from "./fixtures";
 
 describe("calculateTotalSourceDataTB", () => {
   it("sums SourceSizeGB values and converts to TB (divide by 1024)", () => {

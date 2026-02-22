@@ -1,4 +1,10 @@
-import type { NormalizedDataset, SafeRepo } from "@/types/domain";
+import type {
+  NormalizedDataset,
+  SafeRepo,
+  SafeJob,
+  SafeJobSession,
+  SafeSobr,
+} from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 
 /**
@@ -117,6 +123,84 @@ export const WARNING_RESULT: ValidationResult = {
   message: "Agent workloads detected.",
   affectedItems: ["Job B"],
 };
+
+export function makeJob(overrides: Partial<SafeJob> = {}): SafeJob {
+  return {
+    JobName: "TestJob",
+    JobType: "VMware Backup",
+    Encrypted: true,
+    RepoName: "LinuxHardened",
+    RetainDays: null,
+    GfsDetails: null,
+    SourceSizeGB: null,
+    OnDiskGB: null,
+    RetentionScheme: null,
+    CompressionLevel: null,
+    BlockSize: null,
+    GfsEnabled: null,
+    ActiveFullEnabled: null,
+    SyntheticFullEnabled: null,
+    BackupChainType: null,
+    IndexingEnabled: null,
+    ...overrides,
+  };
+}
+
+export function makeSession(
+  overrides: Partial<SafeJobSession> = {},
+): SafeJobSession {
+  return {
+    JobName: "TestJob",
+    MaxDataSize: null,
+    AvgChangeRate: null,
+    SuccessRate: null,
+    SessionCount: null,
+    Fails: null,
+    AvgJobTime: null,
+    MaxJobTime: null,
+    ...overrides,
+  };
+}
+
+export function makeRepo(overrides: Partial<SafeRepo> = {}): SafeRepo {
+  return {
+    Name: "Repo",
+    JobCount: null,
+    TotalSpaceTB: null,
+    FreeSpaceTB: null,
+    ImmutabilitySupported: false,
+    Type: null,
+    Host: null,
+    Path: null,
+    MaxTasks: null,
+    IsPerVmBackupFiles: null,
+    IsDecompress: null,
+    AlignBlocks: null,
+    IsRotatedDrives: null,
+    FreeSpacePercent: null,
+    ...overrides,
+  };
+}
+
+export function makeSobr(overrides: Partial<SafeSobr> = {}): SafeSobr {
+  return {
+    Name: "SOBR",
+    EnableCapacityTier: false,
+    CapacityTierCopy: false,
+    CapacityTierMove: false,
+    ArchiveTierEnabled: false,
+    ImmutableEnabled: false,
+    ExtentCount: null,
+    JobCount: null,
+    PolicyType: null,
+    UsePerVMFiles: null,
+    CapTierType: null,
+    ImmutablePeriod: null,
+    SizeLimitEnabled: null,
+    SizeLimit: null,
+    ...overrides,
+  };
+}
 
 export const ALL_PASS_VALIDATIONS: ValidationResult[] = [
   PASS_RESULT,

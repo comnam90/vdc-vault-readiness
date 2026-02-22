@@ -21,25 +21,11 @@ vi.mock("recharts", () => ({
 
 import { JobsCharts } from "@/components/dashboard/jobs-charts";
 import type { EnrichedJob } from "@/types/enriched-job";
+import { makeJob } from "./fixtures";
 
-function makeJob(overrides: Partial<EnrichedJob> = {}): EnrichedJob {
+function makeEnrichedJob(overrides: Partial<EnrichedJob> = {}): EnrichedJob {
   return {
-    JobName: "Job",
-    JobType: "VMware Backup",
-    Encrypted: true,
-    RepoName: "Repo",
-    RetainDays: null,
-    GfsDetails: null,
-    SourceSizeGB: 1024,
-    OnDiskGB: null,
-    RetentionScheme: null,
-    CompressionLevel: null,
-    BlockSize: null,
-    GfsEnabled: null,
-    ActiveFullEnabled: null,
-    SyntheticFullEnabled: null,
-    BackupChainType: null,
-    IndexingEnabled: null,
+    ...makeJob({ SourceSizeGB: 1024 }),
     sessionData: null,
     ...overrides,
   };
@@ -47,17 +33,17 @@ function makeJob(overrides: Partial<EnrichedJob> = {}): EnrichedJob {
 
 describe("JobsCharts", () => {
   it("renders source size by job type heading", () => {
-    render(<JobsCharts jobs={[makeJob()]} />);
+    render(<JobsCharts jobs={[makeEnrichedJob()]} />);
     expect(screen.getByText(/source size by job type/i)).toBeInTheDocument();
   });
 
   it("renders change rate distribution heading", () => {
-    render(<JobsCharts jobs={[makeJob()]} />);
+    render(<JobsCharts jobs={[makeEnrichedJob()]} />);
     expect(screen.getByText(/change rate distribution/i)).toBeInTheDocument();
   });
 
   it("renders recharts containers", () => {
-    render(<JobsCharts jobs={[makeJob()]} />);
+    render(<JobsCharts jobs={[makeEnrichedJob()]} />);
     expect(screen.getAllByTestId("responsive-container")).toHaveLength(2);
   });
 
