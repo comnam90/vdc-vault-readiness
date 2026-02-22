@@ -7,6 +7,7 @@ import {
   Legend,
 } from "recharts";
 import type { ImmutabilitySlice } from "@/lib/chart-selectors";
+import { CARD_LABEL } from "@/lib/constants";
 
 interface RepoImmutabilityChartProps {
   data: ImmutabilitySlice[];
@@ -17,9 +18,7 @@ export function RepoImmutabilityChart({ data }: RepoImmutabilityChartProps) {
 
   return (
     <div className="space-y-2">
-      <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-        Immutability Coverage
-      </p>
+      <p className={CARD_LABEL}>Immutability Coverage</p>
       <ResponsiveContainer width="100%" height={200}>
         <PieChart>
           <Pie

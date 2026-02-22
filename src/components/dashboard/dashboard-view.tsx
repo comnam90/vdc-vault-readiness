@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { CheckCircle2, XCircle, Upload } from "lucide-react";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
-import { MINIMUM_VBR_VERSION } from "@/lib/constants";
+import { CARD_LABEL, MINIMUM_VBR_VERSION } from "@/lib/constants";
 import { enrichJobs } from "@/lib/enrich-jobs";
 import { getBlockerValidations } from "@/lib/validation-selectors";
 import { isVersionAtLeast } from "@/lib/version-compare";
@@ -28,8 +28,6 @@ import { cn } from "@/lib/utils";
 
 const SUMMARY_CARD =
   "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards ease-[var(--ease-out)] border-b-4 shadow-sm transition-shadow duration-300 hover:shadow-md";
-const CARD_LABEL =
-  "text-muted-foreground text-xs font-semibold tracking-wide uppercase";
 
 interface DashboardViewProps {
   data: NormalizedDataset;

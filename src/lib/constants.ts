@@ -1,5 +1,8 @@
 import type { PipelineStep } from "@/types/domain";
 
+export const CARD_LABEL =
+  "text-muted-foreground text-xs font-semibold tracking-wide uppercase";
+
 export const MINIMUM_VBR_VERSION = "12.1.2";
 export const MINIMUM_RETENTION_DAYS = 30;
 export const MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS = 30;

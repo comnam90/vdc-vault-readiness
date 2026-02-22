@@ -8,6 +8,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { RepoChartDatum } from "@/lib/chart-selectors";
+import { CARD_LABEL } from "@/lib/constants";
+import { formatTooltipTB } from "@/lib/format-utils";
 
 interface RepoSizeChartProps {
   data: RepoChartDatum[];
@@ -18,9 +20,7 @@ export function RepoSizeChart({ data }: RepoSizeChartProps) {
 
   return (
     <div className="space-y-2">
-      <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-        Source Size by Repository
-      </p>
+      <p className={CARD_LABEL}>Source Size by Repository</p>
       <ResponsiveContainer
         width="100%"
         height={Math.max(160, data.length * 36)}
@@ -38,11 +38,7 @@ export function RepoSizeChart({ data }: RepoSizeChartProps) {
             width={140}
             tick={{ fontSize: 11 }}
           />
-          <Tooltip
-            formatter={(v: number | undefined) =>
-              v != null ? [`${v.toFixed(2)} TB`, "Source"] : []
-            }
-          />
+          <Tooltip formatter={formatTooltipTB} />
           <Bar
             dataKey="totalTB"
             fill="var(--color-primary)"

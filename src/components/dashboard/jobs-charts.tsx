@@ -10,6 +10,8 @@ import {
 } from "recharts";
 import type { EnrichedJob } from "@/types/enriched-job";
 import { groupByJobType, bucketChangeRates } from "@/lib/chart-selectors";
+import { CARD_LABEL } from "@/lib/constants";
+import { formatTooltipTB } from "@/lib/format-utils";
 
 interface JobsChartsProps {
   jobs: EnrichedJob[];
@@ -30,9 +32,7 @@ export function JobsCharts({ jobs }: JobsChartsProps) {
   return (
     <div className="grid gap-6 sm:grid-cols-2">
       <div className="space-y-2">
-        <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-          Source Size by Job Type
-        </p>
+        <p className={CARD_LABEL}>Source Size by Job Type</p>
         <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
           <BarChart
             data={byType}
@@ -51,11 +51,7 @@ export function JobsCharts({ jobs }: JobsChartsProps) {
               width={120}
               tick={{ fontSize: 11 }}
             />
-            <Tooltip
-              formatter={(v: number | undefined) =>
-                v != null ? [`${v.toFixed(2)} TB`, "Source"] : []
-              }
-            />
+            <Tooltip formatter={formatTooltipTB} />
             <Bar
               dataKey="totalTB"
               fill="var(--color-primary)"
@@ -66,9 +62,7 @@ export function JobsCharts({ jobs }: JobsChartsProps) {
       </div>
 
       <div className="space-y-2">
-        <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-          Change Rate Distribution
-        </p>
+        <p className={CARD_LABEL}>Change Rate Distribution</p>
         <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
           <BarChart data={changeRateBuckets} margin={{ left: 8, right: 16 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
