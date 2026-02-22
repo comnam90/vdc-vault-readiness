@@ -20,7 +20,7 @@ export function RepoSizeChart({ data }: RepoSizeChartProps) {
 
   return (
     <div className="space-y-2">
-      <p className={CARD_LABEL}>Source Size by Repository</p>
+      <p className={CARD_LABEL}>Source Size by Repository (Top 5)</p>
       <ResponsiveContainer
         width="100%"
         height={Math.max(160, data.length * 36)}
