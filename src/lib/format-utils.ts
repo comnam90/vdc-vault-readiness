@@ -43,6 +43,10 @@ export function formatTB(val: number | null): string {
   return `${val.toFixed(2)} TB`;
 }
 
+export function formatTooltipTB(v: number | undefined): [string, string] | [] {
+  return v != null ? [`${v.toFixed(2)} TB`, "Source"] : [];
+}
+
 export function formatCompressionRatio(
   sourceGB: number | null,
   diskGB: number | null,
