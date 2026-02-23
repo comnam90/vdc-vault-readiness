@@ -1,4 +1,5 @@
 import type { VmAgentResponse } from "@/types/veeam-api";
+import { formatSize } from "@/lib/format-utils";
 import {
   Card,
   CardContent,
@@ -37,6 +38,10 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 export function SizingResults({ result }: SizingResultsProps) {
   const { data } = result;
+
+  const immutabilityFormatted = formatSize(
+    data.performanceTierImmutabilityTaxGB,
+  );
 
   const repoDisk = data.repoCompute.compute.volumes
     .filter((v) => v.diskPurpose === 3)
@@ -95,7 +100,9 @@ export function SizingResults({ result }: SizingResultsProps) {
         <div className="space-y-1">
           <SectionHeading>Immutability Overhead</SectionHeading>
           <ResultRow label="Performance Tier">
-            {data.performanceTierImmutabilityTaxGB} GB
+            {immutabilityFormatted
+              ? `${immutabilityFormatted.value} ${immutabilityFormatted.unit}`
+              : "N/A"}
           </ResultRow>
         </div>
 

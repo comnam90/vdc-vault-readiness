@@ -721,4 +721,12 @@ describe("JobTable", () => {
       }
     });
   });
+
+  it("shows calculator icon in exclude column header", () => {
+    render(<JobTable jobs={MOCK_JOBS} />);
+    const header = screen.getByRole("columnheader", {
+      name: /exclude from sizing/i,
+    });
+    expect(header.querySelector("svg")).toBeInTheDocument();
+  });
 });
