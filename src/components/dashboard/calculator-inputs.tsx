@@ -46,7 +46,8 @@ export function CalculatorInputs({
     setError(null);
     setResult(null);
     try {
-      const res = await callVmAgentApi(summary, activeJobCount);
+      const vbrVersion = data.backupServer?.[0]?.Version ?? "";
+      const res = await callVmAgentApi(summary, activeJobCount, vbrVersion);
       setResult(res);
     } catch {
       setError(

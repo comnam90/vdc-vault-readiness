@@ -34,7 +34,7 @@ const MOCK_RESPONSE: VmAgentResponse = {
 
 describe("buildVmAgentRequest", () => {
   it("maps summary fields to request payload", () => {
-    const req = buildVmAgentRequest(MOCK_SUMMARY, 30);
+    const req = buildVmAgentRequest(MOCK_SUMMARY, 30, "13.0.1.1071");
     expect(req.sourceTB).toBe(5.0);
     expect(req.ChangeRate).toBe(8.0);
     expect(req.days).toBe(30);
@@ -45,7 +45,7 @@ describe("buildVmAgentRequest", () => {
   });
 
   it("uses hardcoded defaults", () => {
-    const req = buildVmAgentRequest(MOCK_SUMMARY, 10);
+    const req = buildVmAgentRequest(MOCK_SUMMARY, 10, "13.0.1.1071");
     expect(req.Reduction).toBe(50);
     expect(req.backupWindowHours).toBe(8);
     expect(req.GrowthRatePercent).toBe(5);
@@ -62,8 +62,18 @@ describe("buildVmAgentRequest", () => {
     expect(req.productVersion).toBe(0);
   });
 
+  it("sets productVersion=0 for VBR 13+", () => {
+    const req = buildVmAgentRequest(MOCK_SUMMARY, 10, "13.0.1.1071");
+    expect(req.productVersion).toBe(0);
+  });
+
+  it("sets productVersion=-1 for VBR 12.x", () => {
+    const req = buildVmAgentRequest(MOCK_SUMMARY, 10, "12.1.2.456");
+    expect(req.productVersion).toBe(-1);
+  });
+
   it("builds retention object from summary", () => {
-    const req = buildVmAgentRequest(MOCK_SUMMARY, 10);
+    const req = buildVmAgentRequest(MOCK_SUMMARY, 10, "13.0.1.1071");
     expect(req.retention.days).toBe(14); // originalMaxRetentionDays
     expect(req.retention.gfs.isDefined).toBe(true);
     expect(req.retention.gfs.weeks).toBe(4);
@@ -79,7 +89,7 @@ describe("buildVmAgentRequest", () => {
       gfsMonthly: null,
       gfsYearly: null,
     };
-    const req = buildVmAgentRequest(noGfsSummary, 10);
+    const req = buildVmAgentRequest(noGfsSummary, 10, "13.0.1.1071");
     expect(req.retention.gfs.isDefined).toBe(false);
     expect(req.retention.isGfsDefined).toBe(false);
   });
@@ -93,7 +103,7 @@ describe("buildVmAgentRequest", () => {
       gfsMonthly: null,
       gfsYearly: null,
     };
-    const req = buildVmAgentRequest(nullSummary, 10);
+    const req = buildVmAgentRequest(nullSummary, 10, "13.0.1.1071");
     expect(req.sourceTB).toBe(0);
     expect(req.ChangeRate).toBe(0);
     expect(req.Weeklies).toBe(0);
@@ -113,7 +123,7 @@ describe("callVmAgentApi", () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response(JSON.stringify(MOCK_RESPONSE), { status: 200 }),
     );
-    const result = await callVmAgentApi(MOCK_SUMMARY, 30);
+    const result = await callVmAgentApi(MOCK_SUMMARY, 30, "13.0.1.1071");
     expect(result.success).toBe(true);
     expect(result.data.totalStorageTB).toBe(12.5);
     expect(fetch).toHaveBeenCalledWith(
@@ -126,6 +136,8 @@ describe("callVmAgentApi", () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response("Bad Request", { status: 400 }),
     );
-    await expect(callVmAgentApi(MOCK_SUMMARY, 5)).rejects.toThrow();
+    await expect(
+      callVmAgentApi(MOCK_SUMMARY, 5, "13.0.1.1071"),
+    ).rejects.toThrow();
   });
 });
