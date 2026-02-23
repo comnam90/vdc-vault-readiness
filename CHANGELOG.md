@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.0](https://github.com/comnam90/vdc-vault-readiness/compare/v1.2.3...v1.3.0) (2026-02-23)
+
+
+### Features
+
+* **charts:** add recharts visuals to jobs and repos ([#32](https://github.com/comnam90/vdc-vault-readiness/issues/32)) ([50346bf](https://github.com/comnam90/vdc-vault-readiness/commit/50346bf5fb21aaf96d0b5d756285887d361a3e98))
+* job table UX improvements — truncation, filters, exclusion ([#27](https://github.com/comnam90/vdc-vault-readiness/issues/27)) ([053bfc7](https://github.com/comnam90/vdc-vault-readiness/commit/053bfc7453a1ce6954fe3c1a2647b316ef518eba))
+* **repos:** Add Repositories Tab ([#29](https://github.com/comnam90/vdc-vault-readiness/issues/29)) ([1b6f526](https://github.com/comnam90/vdc-vault-readiness/commit/1b6f52675b3b766f676bf10503f274316e9f9e4c))
+
 ## [1.2.3](https://github.com/comnam90/vdc-vault-readiness/compare/v1.2.2...v1.2.3) (2026-02-19)
 
 
