@@ -1,32 +1,56 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CalculatorInputs } from "@/components/dashboard/calculator-inputs";
 import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
 import type { NormalizedDataset } from "@/types/domain";
+import type { VmAgentResponse } from "@/types/veeam-api";
 
 // Mock the aggregator function
 vi.mock("@/lib/calculator-aggregator", () => ({
   buildCalculatorSummary: vi.fn(),
 }));
 
+vi.mock("@/lib/veeam-api", () => ({
+  callVmAgentApi: vi.fn(),
+}));
+
+import { callVmAgentApi } from "@/lib/veeam-api";
+
+const mockData = {
+  jobInfo: [],
+  jobSessionSummary: [],
+} as unknown as NormalizedDataset;
+
+const MOCK_API_RESULT: VmAgentResponse = {
+  success: true,
+  data: {
+    totalStorageTB: 12.5,
+    proxyCompute: { compute: { cores: 4, ram: 8, volumes: [] } },
+    repoCompute: { compute: { cores: 8, ram: 16, volumes: [] } },
+    transactions: {},
+    performanceTierImmutabilityTaxGB: 0,
+    capacityTierImmutabilityTaxGB: 0,
+  },
+};
+
+const defaultSummary = {
+  totalSourceDataTB: 10.5,
+  weightedAvgChangeRate: 5.2,
+  immutabilityDays: 30,
+  maxRetentionDays: 14,
+  originalMaxRetentionDays: 14,
+  gfsWeekly: 1,
+  gfsMonthly: 1,
+  gfsYearly: 1,
+};
+
+beforeEach(() => {
+  vi.mocked(buildCalculatorSummary).mockReturnValue(defaultSummary);
+  vi.mocked(callVmAgentApi).mockReset();
+});
+
 describe("CalculatorInputs", () => {
-  const mockData = {
-    jobInfo: [],
-    jobSessionSummary: [],
-  } as unknown as NormalizedDataset;
-
   it("renders all 5 calculator input labels", () => {
-    vi.mocked(buildCalculatorSummary).mockReturnValue({
-      totalSourceDataTB: 10.5,
-      weightedAvgChangeRate: 5.2,
-      immutabilityDays: 30,
-      maxRetentionDays: 14,
-      originalMaxRetentionDays: 14,
-      gfsWeekly: 1,
-      gfsMonthly: 1,
-      gfsYearly: 1,
-    });
-
     render(<CalculatorInputs data={mockData} />);
 
     expect(screen.getByText("Source Data")).toBeInTheDocument();
@@ -89,22 +113,11 @@ describe("CalculatorInputs", () => {
     expect(screen.getByText("None configured")).toBeInTheDocument(); // For GFS
   });
 
-  it("renders the CTA link correctly", () => {
-    vi.mocked(buildCalculatorSummary).mockReturnValue({
-      totalSourceDataTB: 10,
-      weightedAvgChangeRate: 5,
-      immutabilityDays: 30,
-      maxRetentionDays: 14,
-      originalMaxRetentionDays: 14,
-      gfsWeekly: null,
-      gfsMonthly: null,
-      gfsYearly: null,
-    });
-
+  it("renders the advanced calculator link correctly", () => {
     render(<CalculatorInputs data={mockData} />);
 
     const link = screen.getByRole("link", {
-      name: /open vdc vault calculator/i,
+      name: /advanced calculator/i,
     });
     expect(link).toHaveAttribute(
       "href",
@@ -112,11 +125,9 @@ describe("CalculatorInputs", () => {
     );
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
-    expect(link).toHaveTextContent(/opens in new tab/i);
   });
 
   it("handles empty data gracefully", () => {
-    // Even if aggregator returns nulls, component should not crash
     vi.mocked(buildCalculatorSummary).mockReturnValue({
       totalSourceDataTB: null,
       weightedAvgChangeRate: null,
@@ -200,5 +211,32 @@ describe("CalculatorInputs", () => {
     render(<CalculatorInputs data={mockData} excludedJobNames={excluded} />);
     // Only Job A: 1024 GB = 1 TB
     expect(screen.getByText("1.00 TB")).toBeInTheDocument();
+  });
+
+  it("shows Get Sizing Estimate button", () => {
+    render(<CalculatorInputs data={mockData} />);
+    expect(
+      screen.getByRole("button", { name: /get sizing estimate/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows sizing results after successful API call", async () => {
+    vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
+    render(<CalculatorInputs data={mockData} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /get sizing estimate/i }),
+    );
+    expect(await screen.findByText(/12.50 TB/)).toBeInTheDocument();
+  });
+
+  it("shows error message on API failure", async () => {
+    vi.mocked(callVmAgentApi).mockRejectedValueOnce(new Error("Network error"));
+    render(<CalculatorInputs data={mockData} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /get sizing estimate/i }),
+    );
+    expect(
+      await screen.findByText(/could not retrieve sizing/i),
+    ).toBeInTheDocument();
   });
 });
