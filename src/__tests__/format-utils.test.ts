@@ -5,6 +5,7 @@ import {
   formatDuration,
   formatCompressionRatio,
   formatTB,
+  formatTooltipTB,
 } from "@/lib/format-utils";
 
 describe("formatSize", () => {
@@ -99,6 +100,15 @@ describe("formatTB", () => {
 
   it("formats large values", () => {
     expect(formatTB(123.456)).toBe("123.46 TB");
+  });
+});
+
+describe("formatTooltipTB", () => {
+  it("returns formatted TB string and 'Source' label for a number", () => {
+    expect(formatTooltipTB(1.5)).toEqual(["1.50 TB", "Source"]);
+  });
+  it("returns empty array for undefined", () => {
+    expect(formatTooltipTB(undefined)).toEqual([]);
   });
 });
 

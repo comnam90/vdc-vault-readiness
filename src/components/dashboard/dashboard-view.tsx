@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { CheckCircle2, XCircle, Upload } from "lucide-react";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
-import { MINIMUM_VBR_VERSION } from "@/lib/constants";
+import { CARD_LABEL, MINIMUM_VBR_VERSION } from "@/lib/constants";
 import { enrichJobs } from "@/lib/enrich-jobs";
 import { getBlockerValidations } from "@/lib/validation-selectors";
 import { isVersionAtLeast } from "@/lib/version-compare";
@@ -21,14 +21,13 @@ import { CalculatorInputs } from "@/components/dashboard/calculator-inputs";
 import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
 import { PassingChecksList } from "./passing-checks-list";
+import { JobsCharts } from "./jobs-charts";
 import { RepositoriesTab } from "./repositories-tab";
 import { SuccessCelebration } from "./success-celebration";
 import { cn } from "@/lib/utils";
 
 const SUMMARY_CARD =
   "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards ease-[var(--ease-out)] border-b-4 shadow-sm transition-shadow duration-300 hover:shadow-md";
-const CARD_LABEL =
-  "text-muted-foreground text-xs font-semibold tracking-wide uppercase";
 
 interface DashboardViewProps {
   data: NormalizedDataset;
@@ -212,11 +211,14 @@ export function DashboardView({
           value="jobs"
           className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
         >
-          <JobTable
-            jobs={enrichedJobs}
-            excludedJobNames={excludedJobNames}
-            onExcludedChange={setExcludedJobNames}
-          />
+          <div className="space-y-6">
+            <JobsCharts jobs={enrichedJobs} />
+            <JobTable
+              jobs={enrichedJobs}
+              excludedJobNames={excludedJobNames}
+              onExcludedChange={setExcludedJobNames}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent

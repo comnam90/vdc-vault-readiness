@@ -24,8 +24,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { groupByRepo, repoImmutabilityCounts } from "@/lib/chart-selectors";
+import { RepoImmutabilityChart } from "./repo-immutability-chart";
 import { SobrDetailSheet } from "./sobr-detail-sheet";
 import { RepoDetailSheet } from "./repo-detail-sheet";
+import { RepoSizeChart } from "./repo-size-chart";
 import { RepositoriesTable } from "./repositories-table";
 
 interface RepositoriesTabProps {
@@ -344,6 +347,10 @@ export function RepositoriesTab({
           <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             Standard Repositories
           </h2>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <RepoSizeChart data={groupByRepo(jobs).slice(0, 5)} />
+            <RepoImmutabilityChart data={repoImmutabilityCounts(repos, sobr)} />
+          </div>
           <RepositoriesTable
             table={repoTable}
             emptyMessage="No repositories found."
