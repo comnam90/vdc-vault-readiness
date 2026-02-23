@@ -89,7 +89,7 @@ describe("callVmAgentApi", () => {
     expect(result.success).toBe(true);
     expect(result.data.totalStorageTB).toBe(12.5);
     expect(fetch).toHaveBeenCalledWith(
-      "https://calculator.veeam.com/vse/api/VmAgent",
+      "/api/veeam-proxy",
       expect.objectContaining({ method: "POST" }),
     );
   });

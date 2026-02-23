@@ -1,7 +1,7 @@
 import type { CalculatorSummary } from "@/types/calculator";
 import type { VmAgentRequest, VmAgentResponse } from "@/types/veeam-api";
 
-const API_URL = "https://calculator.veeam.com/vse/api/VmAgent";
+const API_URL = "/api/veeam-proxy";
 
 export function buildVmAgentRequest(
   summary: CalculatorSummary,
