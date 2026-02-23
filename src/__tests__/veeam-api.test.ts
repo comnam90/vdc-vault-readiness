@@ -50,11 +50,38 @@ describe("buildVmAgentRequest", () => {
     expect(req.backupWindowHours).toBe(8);
     expect(req.GrowthRatePercent).toBe(5);
     expect(req.GrowthRateScopeYears).toBe(1);
+    expect(req.blockGenerationDays).toBe(10);
+    expect(req.Blockcloning).toBe(true);
+    expect(req.ObjectStorage).toBe(true);
     expect(req.immutablePerf).toBe(true);
     expect(req.immutablePerfDays).toBe(30);
+    expect(req.immutableCap).toBe(true);
+    expect(req.immutableCapDays).toBe(30);
     expect(req.isCapTierVDCV).toBe(true);
-    expect(req.ObjectStorage).toBe(true);
+    expect(req.isManaged).toBe(true);
     expect(req.productVersion).toBe(0);
+  });
+
+  it("builds retention object from summary", () => {
+    const req = buildVmAgentRequest(MOCK_SUMMARY, 10);
+    expect(req.retention.days).toBe(14); // originalMaxRetentionDays
+    expect(req.retention.gfs.isDefined).toBe(true);
+    expect(req.retention.gfs.weeks).toBe(4);
+    expect(req.retention.gfs.months).toBe(12);
+    expect(req.retention.gfs.years).toBe(1);
+    expect(req.retention.isGfsDefined).toBe(true);
+  });
+
+  it("sets isGfsDefined=false when no GFS configured", () => {
+    const noGfsSummary: CalculatorSummary = {
+      ...MOCK_SUMMARY,
+      gfsWeekly: null,
+      gfsMonthly: null,
+      gfsYearly: null,
+    };
+    const req = buildVmAgentRequest(noGfsSummary, 10);
+    expect(req.retention.gfs.isDefined).toBe(false);
+    expect(req.retention.isGfsDefined).toBe(false);
   });
 
   it("falls back to 0 for null summary fields", () => {

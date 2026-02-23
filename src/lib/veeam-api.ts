@@ -7,6 +7,12 @@ export function buildVmAgentRequest(
   summary: CalculatorSummary,
   jobCount: number,
 ): VmAgentRequest {
+  const weeklies = summary.gfsWeekly ?? 0;
+  const monthlies = summary.gfsMonthly ?? 0;
+  const yearlies = summary.gfsYearly ?? 0;
+  const hasGfs = weeklies > 0 || monthlies > 0 || yearlies > 0;
+  const shortTermDays = summary.originalMaxRetentionDays ?? 14;
+
   return {
     sourceTB: summary.totalSourceDataTB ?? 0,
     ChangeRate: summary.weightedAvgChangeRate ?? 0,
@@ -14,16 +20,38 @@ export function buildVmAgentRequest(
     backupWindowHours: 8,
     GrowthRatePercent: 5,
     GrowthRateScopeYears: 1,
+    blockGenerationDays: 10,
+    retention: {
+      days: shortTermDays,
+      gfs: {
+        isDefined: hasGfs,
+        weeks: weeklies,
+        months: monthlies,
+        years: yearlies,
+      },
+      isGfsDefined: hasGfs,
+    },
     days: summary.maxRetentionDays ?? 30,
-    Weeklies: summary.gfsWeekly ?? 0,
-    Monthlies: summary.gfsMonthly ?? 0,
-    Yearlies: summary.gfsYearly ?? 0,
-    Blockcloning: false,
+    Weeklies: weeklies,
+    Monthlies: monthlies,
+    Yearlies: yearlies,
+    Blockcloning: true,
     ObjectStorage: true,
     moveCapacityTierEnabled: false,
+    capacityTierDays: shortTermDays,
+    copyCapacityTierEnabled: false,
     immutablePerf: true,
     immutablePerfDays: 30,
+    immutableCap: true,
+    immutableCapDays: 30,
+    archiveTierEnabled: false,
+    archiveTierStandalone: false,
+    archiveTierDays: 90,
     isCapTierVDCV: true,
+    isManaged: true,
+    machineType: 0,
+    hyperVisor: 0,
+    calculatorMode: 0,
     productVersion: 0,
     instanceCount: jobCount,
   };

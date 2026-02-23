@@ -1,3 +1,16 @@
+export interface GfsPolicy {
+  isDefined: boolean;
+  weeks: number;
+  months: number;
+  years: number;
+}
+
+export interface RetentionPolicy {
+  days: number;
+  gfs: GfsPolicy;
+  isGfsDefined: boolean;
+}
+
 export interface VmAgentRequest {
   sourceTB: number;
   ChangeRate: number;
@@ -5,6 +18,8 @@ export interface VmAgentRequest {
   backupWindowHours: number;
   GrowthRatePercent: number;
   GrowthRateScopeYears: number;
+  blockGenerationDays: number;
+  retention: RetentionPolicy;
   days: number;
   Weeklies: number;
   Monthlies: number;
@@ -12,9 +27,20 @@ export interface VmAgentRequest {
   Blockcloning: boolean;
   ObjectStorage: boolean;
   moveCapacityTierEnabled: boolean;
+  capacityTierDays: number;
+  copyCapacityTierEnabled: boolean;
   immutablePerf: boolean;
   immutablePerfDays: number;
+  immutableCap: boolean;
+  immutableCapDays: number;
+  archiveTierEnabled: boolean;
+  archiveTierStandalone: boolean;
+  archiveTierDays: number;
   isCapTierVDCV: boolean;
+  isManaged: boolean;
+  machineType: number;
+  hyperVisor: number;
+  calculatorMode: number;
   productVersion: number;
   instanceCount: number;
 }
