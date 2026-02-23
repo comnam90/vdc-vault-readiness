@@ -3,9 +3,14 @@ import type { VmAgentRequest, VmAgentResponse } from "@/types/veeam-api";
 
 const API_URL = "/api/veeam-proxy";
 
+function vbrMajorVersion(version: string): number {
+  return parseInt(version.split(".")[0], 10);
+}
+
 export function buildVmAgentRequest(
   summary: CalculatorSummary,
   jobCount: number,
+  vbrVersion: string,
 ): VmAgentRequest {
   const weeklies = summary.gfsWeekly ?? 0;
   const monthlies = summary.gfsMonthly ?? 0;
@@ -52,7 +57,7 @@ export function buildVmAgentRequest(
     machineType: 0,
     hyperVisor: 0,
     calculatorMode: 0,
-    productVersion: 0,
+    productVersion: vbrMajorVersion(vbrVersion) >= 13 ? 0 : -1,
     instanceCount: jobCount,
   };
 }
@@ -60,8 +65,9 @@ export function buildVmAgentRequest(
 export async function callVmAgentApi(
   summary: CalculatorSummary,
   jobCount: number,
+  vbrVersion: string,
 ): Promise<VmAgentResponse> {
-  const payload = buildVmAgentRequest(summary, jobCount);
+  const payload = buildVmAgentRequest(summary, jobCount, vbrVersion);
   const response = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
