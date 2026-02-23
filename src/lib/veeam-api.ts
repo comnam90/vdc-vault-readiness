@@ -19,7 +19,7 @@ export function buildVmAgentRequest(
     Monthlies: summary.gfsMonthly ?? 0,
     Yearlies: summary.gfsYearly ?? 0,
     Blockcloning: false,
-    ObjectStorage: false,
+    ObjectStorage: true,
     moveCapacityTierEnabled: false,
     immutablePerf: true,
     immutablePerfDays: 30,

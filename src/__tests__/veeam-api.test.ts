@@ -53,6 +53,7 @@ describe("buildVmAgentRequest", () => {
     expect(req.immutablePerf).toBe(true);
     expect(req.immutablePerfDays).toBe(30);
     expect(req.isCapTierVDCV).toBe(true);
+    expect(req.ObjectStorage).toBe(true);
     expect(req.productVersion).toBe(0);
   });
 
