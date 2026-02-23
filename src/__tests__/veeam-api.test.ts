@@ -72,6 +72,21 @@ describe("buildVmAgentRequest", () => {
     expect(req.productVersion).toBe(-1);
   });
 
+  it("uses productVersionOverride when provided", () => {
+    const req = buildVmAgentRequest(MOCK_SUMMARY, 10, "12.1.2.456", 0);
+    expect(req.productVersion).toBe(0);
+  });
+
+  it("productVersionOverride=0 on VBR 13 still uses override", () => {
+    const req = buildVmAgentRequest(MOCK_SUMMARY, 10, "13.0.1.1071", 0);
+    expect(req.productVersion).toBe(0);
+  });
+
+  it("productVersionOverride=-1 on VBR 13 forces legacy version", () => {
+    const req = buildVmAgentRequest(MOCK_SUMMARY, 10, "13.0.1.1071", -1);
+    expect(req.productVersion).toBe(-1);
+  });
+
   it("builds retention object from summary", () => {
     const req = buildVmAgentRequest(MOCK_SUMMARY, 10, "13.0.1.1071");
     expect(req.retention.days).toBe(14); // originalMaxRetentionDays
@@ -130,6 +145,18 @@ describe("callVmAgentApi", () => {
       "/api/veeam-proxy",
       expect.objectContaining({ method: "POST" }),
     );
+  });
+
+  it("passes productVersionOverride through to the request payload", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify(MOCK_RESPONSE), { status: 200 }),
+    );
+    await callVmAgentApi(MOCK_SUMMARY, 10, "12.1.2.456", 0);
+    const [, options] = vi.mocked(fetch).mock.calls[0];
+    const body = JSON.parse((options as RequestInit).body as string) as {
+      productVersion: number;
+    };
+    expect(body.productVersion).toBe(0);
   });
 
   it("throws when the API returns a non-ok response", async () => {

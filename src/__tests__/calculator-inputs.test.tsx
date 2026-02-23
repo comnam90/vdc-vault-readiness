@@ -21,6 +21,27 @@ const mockData = {
   jobSessionSummary: [],
 } as unknown as NormalizedDataset;
 
+const mockDataVbr12 = {
+  jobInfo: [],
+  jobSessionSummary: [],
+  backupServer: [{ Version: "12.1.2.456", Name: "Server" }],
+  sobr: [],
+} as unknown as NormalizedDataset;
+
+const mockDataVbr13 = {
+  jobInfo: [],
+  jobSessionSummary: [],
+  backupServer: [{ Version: "13.0.1.1071", Name: "Server" }],
+  sobr: [],
+} as unknown as NormalizedDataset;
+
+const mockDataVbr12WithSobr = {
+  jobInfo: [],
+  jobSessionSummary: [],
+  backupServer: [{ Version: "12.1.2.456", Name: "Server" }],
+  sobr: [{ Name: "MySobr" }],
+} as unknown as NormalizedDataset;
+
 const MOCK_API_RESULT: VmAgentResponse = {
   success: true,
   data: {
@@ -29,6 +50,30 @@ const MOCK_API_RESULT: VmAgentResponse = {
     repoCompute: { compute: { cores: 8, ram: 16, volumes: [] } },
     transactions: {},
     performanceTierImmutabilityTaxGB: 0,
+    capacityTierImmutabilityTaxGB: 0,
+  },
+};
+
+const MOCK_V12_RESULT: VmAgentResponse = {
+  success: true,
+  data: {
+    totalStorageTB: 15.0,
+    proxyCompute: { compute: { cores: 4, ram: 8, volumes: [] } },
+    repoCompute: { compute: { cores: 8, ram: 16, volumes: [] } },
+    transactions: {},
+    performanceTierImmutabilityTaxGB: 300,
+    capacityTierImmutabilityTaxGB: 0,
+  },
+};
+
+const MOCK_V13_RESULT: VmAgentResponse = {
+  success: true,
+  data: {
+    totalStorageTB: 12.5,
+    proxyCompute: { compute: { cores: 4, ram: 8, volumes: [] } },
+    repoCompute: { compute: { cores: 8, ram: 16, volumes: [] } },
+    transactions: {},
+    performanceTierImmutabilityTaxGB: 250,
     capacityTierImmutabilityTaxGB: 0,
   },
 };
@@ -238,5 +283,83 @@ describe("CalculatorInputs", () => {
     expect(
       await screen.findByText(/could not retrieve sizing/i),
     ).toBeInTheDocument();
+  });
+
+  describe("VBR upgrade savings comparison", () => {
+    it("renders UpgradeSavings when VBR 12 + no SOBRs + API succeeds", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_V13_RESULT);
+
+      render(<CalculatorInputs data={mockDataVbr12} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+
+      // UpgradeSavings card title: "Upgrade to VBR 13 Saves 2.50 TB"
+      expect(await screen.findByText(/Saves 2\.50 TB/i)).toBeInTheDocument();
+      expect(screen.getByText(/VBR 12 to VBR 13/i)).toBeInTheDocument();
+    });
+
+    it("makes two API calls for VBR 12 + no SOBRs", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_V13_RESULT);
+
+      render(<CalculatorInputs data={mockDataVbr12} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+
+      await screen.findAllByText(/15\.00 TB/);
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(2);
+    });
+
+    it("does NOT render UpgradeSavings for VBR 13", async () => {
+      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
+
+      render(<CalculatorInputs data={mockDataVbr13} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+
+      await screen.findByText(/12\.50 TB/);
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(/VBR 12 to VBR 13/i)).not.toBeInTheDocument();
+    });
+
+    it("does NOT render UpgradeSavings for VBR 12 with SOBRs", async () => {
+      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
+
+      render(<CalculatorInputs data={mockDataVbr12WithSobr} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+
+      await screen.findByText(/12\.50 TB/);
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(/VBR 12 to VBR 13/i)).not.toBeInTheDocument();
+    });
+
+    it("resets upgrade result when re-calculating", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_V13_RESULT)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_V13_RESULT);
+
+      render(<CalculatorInputs data={mockDataVbr12} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+
+      await screen.findByText(/Saves 2\.50 TB/i);
+
+      // Re-calculate
+      fireEvent.click(screen.getByRole("button", { name: /re-calculate/i }));
+
+      await screen.findByText(/Saves 2\.50 TB/i);
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(4);
+    });
   });
 });

@@ -18,6 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SizingResults } from "./sizing-results";
+import { UpgradeSavings } from "./upgrade-savings";
 
 interface CalculatorInputsProps {
   data: NormalizedDataset;
@@ -30,6 +31,9 @@ export function CalculatorInputs({
 }: CalculatorInputsProps) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VmAgentResponse | null>(null);
+  const [upgradeResult, setUpgradeResult] = useState<VmAgentResponse | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   const summary = buildCalculatorSummary(
@@ -41,14 +45,29 @@ export function CalculatorInputs({
     (j) => !excludedJobNames.has(j.JobName),
   ).length;
 
+  const vbrVersion = data.backupServer?.[0]?.Version ?? "";
+  const isVbr12 = parseInt(vbrVersion.split(".")[0], 10) < 13;
+  const hasSobr = (data.sobr?.length ?? 0) > 0;
+  const showUpgrade = isVbr12 && !hasSobr;
+
   const handleGetEstimate = async () => {
     setLoading(true);
     setError(null);
     setResult(null);
+    setUpgradeResult(null);
     try {
-      const vbrVersion = data.backupServer?.[0]?.Version ?? "";
-      const res = await callVmAgentApi(summary, activeJobCount, vbrVersion);
-      setResult(res);
+      if (showUpgrade) {
+        const [v12Res, v13Res] = await Promise.all([
+          callVmAgentApi(summary, activeJobCount, vbrVersion),
+          callVmAgentApi(summary, activeJobCount, vbrVersion, 0),
+        ]);
+        setResult(v12Res);
+        setUpgradeResult(v13Res);
+      } else {
+        const res = await callVmAgentApi(summary, activeJobCount, vbrVersion);
+        setResult(res);
+        setUpgradeResult(null);
+      }
     } catch {
       setError(
         "Could not retrieve sizing estimate. Check your connection and try again.",
@@ -205,6 +224,9 @@ export function CalculatorInputs({
       )}
 
       {result && <SizingResults result={result} />}
+      {result && upgradeResult && (
+        <UpgradeSavings v12Result={result} v13Result={upgradeResult} />
+      )}
     </div>
   );
 }

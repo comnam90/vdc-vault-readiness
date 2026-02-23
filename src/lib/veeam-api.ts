@@ -11,6 +11,7 @@ export function buildVmAgentRequest(
   summary: CalculatorSummary,
   jobCount: number,
   vbrVersion: string,
+  productVersionOverride?: number,
 ): VmAgentRequest {
   const weeklies = summary.gfsWeekly ?? 0;
   const monthlies = summary.gfsMonthly ?? 0;
@@ -57,7 +58,8 @@ export function buildVmAgentRequest(
     machineType: 0,
     hyperVisor: 0,
     calculatorMode: 0,
-    productVersion: vbrMajorVersion(vbrVersion) >= 13 ? 0 : -1,
+    productVersion:
+      productVersionOverride ?? (vbrMajorVersion(vbrVersion) >= 13 ? 0 : -1),
     instanceCount: jobCount,
   };
 }
@@ -66,8 +68,14 @@ export async function callVmAgentApi(
   summary: CalculatorSummary,
   jobCount: number,
   vbrVersion: string,
+  productVersionOverride?: number,
 ): Promise<VmAgentResponse> {
-  const payload = buildVmAgentRequest(summary, jobCount, vbrVersion);
+  const payload = buildVmAgentRequest(
+    summary,
+    jobCount,
+    vbrVersion,
+    productVersionOverride,
+  );
   const response = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
