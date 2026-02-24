@@ -52,6 +52,18 @@ export function formatDays(val: number | null): string {
   return `${val} days`;
 }
 
+export function formatGFS(
+  weekly: number | null,
+  monthly: number | null,
+  yearly: number | null,
+): string {
+  const parts = [];
+  if (weekly !== null) parts.push(`Weekly: ${weekly}`);
+  if (monthly !== null) parts.push(`Monthly: ${monthly}`);
+  if (yearly !== null) parts.push(`Yearly: ${yearly}`);
+  return parts.length > 0 ? parts.join(", ") : "None configured";
+}
+
 export function formatCompressionRatio(
   sourceGB: number | null,
   diskGB: number | null,

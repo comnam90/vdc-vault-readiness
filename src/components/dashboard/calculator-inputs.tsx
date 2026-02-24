@@ -2,7 +2,12 @@ import { useState } from "react";
 import { ExternalLink, Loader2, RotateCcw, Calculator } from "lucide-react";
 import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
 import { callVmAgentApi } from "@/lib/veeam-api";
-import { formatDays, formatPercent, formatTB } from "@/lib/format-utils";
+import {
+  formatDays,
+  formatGFS,
+  formatPercent,
+  formatTB,
+} from "@/lib/format-utils";
 import type { NormalizedDataset } from "@/types/domain";
 import type { VmAgentResponse } from "@/types/veeam-api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -77,15 +82,6 @@ export function CalculatorInputs({
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatGFS = (w: number | null, m: number | null, y: number | null) => {
-    if (w === null && m === null && y === null) return "None configured";
-    const parts = [];
-    if (w !== null) parts.push(`Weekly: ${w}`);
-    if (m !== null) parts.push(`Monthly: ${m}`);
-    if (y !== null) parts.push(`Yearly: ${y}`);
-    return parts.join(", ");
   };
 
   return (

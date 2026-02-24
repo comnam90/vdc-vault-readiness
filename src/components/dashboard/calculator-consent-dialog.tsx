@@ -16,13 +16,19 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { formatTB, formatPercent, formatDays } from "@/lib/format-utils";
+import {
+  formatDays,
+  formatGFS,
+  formatPercent,
+  formatTB,
+} from "@/lib/format-utils";
 import type { CalculatorSummary } from "@/types/calculator";
 
 interface CalculatorConsentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAccept: () => void;
+  /** Called after the dialog closes. The dialog manages its own close state via onOpenChange. */
   onDecline: () => void;
   summary: CalculatorSummary;
   activeJobCount: number;
@@ -49,14 +55,11 @@ export function CalculatorConsentDialog({
 }: CalculatorConsentDialogProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const gfsLabel = (() => {
-    const parts = [];
-    if (summary.gfsWeekly !== null) parts.push(`Weekly: ${summary.gfsWeekly}`);
-    if (summary.gfsMonthly !== null)
-      parts.push(`Monthly: ${summary.gfsMonthly}`);
-    if (summary.gfsYearly !== null) parts.push(`Yearly: ${summary.gfsYearly}`);
-    return parts.length > 0 ? parts.join(", ") : "None configured";
-  })();
+  const gfsLabel = formatGFS(
+    summary.gfsWeekly,
+    summary.gfsMonthly,
+    summary.gfsYearly,
+  );
 
   const handleAccept = () => {
     onOpenChange(false);
@@ -102,7 +105,7 @@ export function CalculatorConsentDialog({
           </CollapsibleTrigger>
           <CollapsibleContent
             className={cn(
-              "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1 duration-200",
+              "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-1 motion-safe:duration-200",
             )}
           >
             <div className="bg-muted/30 mt-2 space-y-3 rounded-md p-3">
