@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ExternalLink, Loader2, RotateCcw, Calculator } from "lucide-react";
 import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
 import { callVmAgentApi } from "@/lib/veeam-api";
-import { formatPercent, formatTB } from "@/lib/format-utils";
+import { formatDays, formatPercent, formatTB } from "@/lib/format-utils";
 import type { NormalizedDataset } from "@/types/domain";
 import type { VmAgentResponse } from "@/types/veeam-api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { SizingResults } from "./sizing-results";
 import { UpgradeSavings } from "./upgrade-savings";
+import { CalculatorConsentDialog } from "./calculator-consent-dialog";
 
 interface CalculatorInputsProps {
   data: NormalizedDataset;
@@ -35,6 +36,7 @@ export function CalculatorInputs({
     null,
   );
   const [error, setError] = useState<string | null>(null);
+  const [consentOpen, setConsentOpen] = useState(false);
 
   const summary = buildCalculatorSummary(
     data.jobInfo,
@@ -75,11 +77,6 @@ export function CalculatorInputs({
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatDays = (val: number | null) => {
-    if (val === null) return "N/A";
-    return `${val} days`;
   };
 
   const formatGFS = (w: number | null, m: number | null, y: number | null) => {
@@ -178,14 +175,14 @@ export function CalculatorInputs({
         </CardContent>
         <CardFooter className="flex flex-wrap gap-2">
           <Button
-            onClick={() => void handleGetEstimate()}
+            onClick={() => setConsentOpen(true)}
             disabled={loading}
             className="sm:w-auto"
           >
             {loading ? (
               <>
                 <Loader2
-                  className="mr-2 size-4 animate-spin"
+                  className="mr-2 size-4 motion-safe:animate-spin"
                   aria-hidden="true"
                 />
                 Calculating…
@@ -227,6 +224,16 @@ export function CalculatorInputs({
       {result && upgradeResult && (
         <UpgradeSavings v12Result={result} v13Result={upgradeResult} />
       )}
+
+      <CalculatorConsentDialog
+        open={consentOpen}
+        onOpenChange={setConsentOpen}
+        onAccept={() => void handleGetEstimate()}
+        onDecline={() => {}}
+        summary={summary}
+        activeJobCount={activeJobCount}
+        vbrVersion={vbrVersion}
+      />
     </div>
   );
 }

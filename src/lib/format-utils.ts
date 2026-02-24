@@ -47,6 +47,11 @@ export function formatTooltipTB(v: number | undefined): [string, string] | [] {
   return v != null ? [`${v.toFixed(2)} TB`, "Source"] : [];
 }
 
+export function formatDays(val: number | null): string {
+  if (val === null) return "N/A";
+  return `${val} days`;
+}
+
 export function formatCompressionRatio(
   sourceGB: number | null,
   diskGB: number | null,

@@ -265,20 +265,44 @@ describe("CalculatorInputs", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows sizing results after successful API call", async () => {
+  it("opens consent dialog when button clicked (no API call yet)", () => {
+    render(<CalculatorInputs data={mockData} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /get sizing estimate/i }),
+    );
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(vi.mocked(callVmAgentApi)).not.toHaveBeenCalled();
+  });
+
+  it("does not call API when Decline is clicked", () => {
+    render(<CalculatorInputs data={mockData} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /get sizing estimate/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /decline/i }));
+    expect(vi.mocked(callVmAgentApi)).not.toHaveBeenCalled();
+  });
+
+  it("shows sizing results after accepting consent dialog", async () => {
     vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
     render(<CalculatorInputs data={mockData} />);
     fireEvent.click(
       screen.getByRole("button", { name: /get sizing estimate/i }),
     );
+    fireEvent.click(
+      screen.getByRole("button", { name: /accept & calculate/i }),
+    );
     expect(await screen.findByText(/12.50 TB/)).toBeInTheDocument();
   });
 
-  it("shows error message on API failure", async () => {
+  it("shows error message on API failure after accepting consent", async () => {
     vi.mocked(callVmAgentApi).mockRejectedValueOnce(new Error("Network error"));
     render(<CalculatorInputs data={mockData} />);
     fireEvent.click(
       screen.getByRole("button", { name: /get sizing estimate/i }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /accept & calculate/i }),
     );
     expect(
       await screen.findByText(/could not retrieve sizing/i),
@@ -295,6 +319,9 @@ describe("CalculatorInputs", () => {
       fireEvent.click(
         screen.getByRole("button", { name: /get sizing estimate/i }),
       );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
 
       // UpgradeSavings card title: "Upgrade to VBR 13 Saves 2.50 TB"
       expect(await screen.findByText(/Saves 2\.50 TB/i)).toBeInTheDocument();
@@ -310,6 +337,9 @@ describe("CalculatorInputs", () => {
       fireEvent.click(
         screen.getByRole("button", { name: /get sizing estimate/i }),
       );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
 
       await screen.findAllByText(/15\.00 TB/);
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(2);
@@ -321,6 +351,9 @@ describe("CalculatorInputs", () => {
       render(<CalculatorInputs data={mockDataVbr13} />);
       fireEvent.click(
         screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
       );
 
       await screen.findByText(/12\.50 TB/);
@@ -334,6 +367,9 @@ describe("CalculatorInputs", () => {
       render(<CalculatorInputs data={mockDataVbr12WithSobr} />);
       fireEvent.click(
         screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
       );
 
       await screen.findByText(/12\.50 TB/);
@@ -352,11 +388,17 @@ describe("CalculatorInputs", () => {
       fireEvent.click(
         screen.getByRole("button", { name: /get sizing estimate/i }),
       );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
 
       await screen.findByText(/Saves 2\.50 TB/i);
 
-      // Re-calculate
+      // Re-calculate (button text changes after first result)
       fireEvent.click(screen.getByRole("button", { name: /re-calculate/i }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
 
       await screen.findByText(/Saves 2\.50 TB/i);
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(4);
