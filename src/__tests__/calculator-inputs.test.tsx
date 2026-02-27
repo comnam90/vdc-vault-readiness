@@ -310,7 +310,7 @@ describe("CalculatorInputs", () => {
   });
 
   describe("VBR upgrade savings comparison", () => {
-    it("renders UpgradeSavings when VBR 12 + no SOBRs + API succeeds", async () => {
+    it("renders inline upgrade annotation when VBR 12 + no SOBRs + API succeeds", async () => {
       vi.mocked(callVmAgentApi)
         .mockResolvedValueOnce(MOCK_V12_RESULT)
         .mockResolvedValueOnce(MOCK_V13_RESULT);
@@ -323,9 +323,11 @@ describe("CalculatorInputs", () => {
         screen.getByRole("button", { name: /accept & calculate/i }),
       );
 
-      // UpgradeSavings card title: "Upgrade to VBR 13 Saves 2.50 TB"
-      expect(await screen.findByText(/Saves 2\.50 TB/i)).toBeInTheDocument();
-      expect(screen.getByText(/VBR 12 to VBR 13/i)).toBeInTheDocument();
+      // Inline hero annotation: "Upgrade to VBR 13 could reduce this to 12.50 TB (saving 2.50 TB)"
+      expect(
+        await screen.findByText(/upgrade to VBR 13 could reduce this to/i),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/saving 2\.50 TB/i)).toBeInTheDocument();
     });
 
     it("makes two API calls for VBR 12 + no SOBRs", async () => {
@@ -392,7 +394,7 @@ describe("CalculatorInputs", () => {
         screen.getByRole("button", { name: /accept & calculate/i }),
       );
 
-      await screen.findByText(/Saves 2\.50 TB/i);
+      await screen.findByText(/saving 2\.50 TB/i);
 
       // Re-calculate (button text changes after first result)
       fireEvent.click(screen.getByRole("button", { name: /re-calculate/i }));
@@ -400,7 +402,7 @@ describe("CalculatorInputs", () => {
         screen.getByRole("button", { name: /accept & calculate/i }),
       );
 
-      await screen.findByText(/Saves 2\.50 TB/i);
+      await screen.findByText(/saving 2\.50 TB/i);
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(4);
     });
   });

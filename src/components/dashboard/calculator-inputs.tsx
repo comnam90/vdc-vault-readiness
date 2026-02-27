@@ -23,7 +23,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SizingResults } from "./sizing-results";
-import { UpgradeSavings } from "./upgrade-savings";
 import { CalculatorConsentDialog } from "./calculator-consent-dialog";
 
 interface CalculatorInputsProps {
@@ -216,9 +215,11 @@ export function CalculatorInputs({
         </Alert>
       )}
 
-      {result && <SizingResults result={result} />}
-      {result && upgradeResult && (
-        <UpgradeSavings v12Result={result} v13Result={upgradeResult} />
+      {result && (
+        <SizingResults
+          result={result}
+          upgradeResult={upgradeResult ?? undefined}
+        />
       )}
 
       <CalculatorConsentDialog

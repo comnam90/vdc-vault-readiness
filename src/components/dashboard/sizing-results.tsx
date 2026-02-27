@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 
 interface SizingResultsProps {
   result: VmAgentResponse;
+  upgradeResult?: VmAgentResponse;
 }
 
 function ResultRow({
@@ -36,7 +37,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function SizingResults({ result }: SizingResultsProps) {
+export function SizingResults({ result, upgradeResult }: SizingResultsProps) {
   const { data } = result;
 
   const immutabilityFormatted = formatSize(
@@ -48,6 +49,14 @@ export function SizingResults({ result }: SizingResultsProps) {
     .reduce((sum, v) => sum + v.diskGB, 0);
 
   const capTx = data.transactions.capacityTierTransactions;
+
+  const storageSavingsTB = upgradeResult
+    ? data.totalStorageTB - upgradeResult.data.totalStorageTB
+    : null;
+  const immutabilitySavingsGB = upgradeResult
+    ? data.performanceTierImmutabilityTaxGB -
+      upgradeResult.data.performanceTierImmutabilityTaxGB
+    : null;
 
   return (
     <Card className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 fill-mode-backwards duration-500">
@@ -64,6 +73,15 @@ export function SizingResults({ result }: SizingResultsProps) {
           <p className="text-primary font-mono text-3xl font-bold">
             {data.totalStorageTB.toFixed(2)} TB
           </p>
+          {storageSavingsTB !== null && storageSavingsTB > 0 && (
+            <p className="text-muted-foreground text-sm">
+              Upgrade to VBR 13 could reduce this to{" "}
+              <span className="font-mono">
+                {upgradeResult!.data.totalStorageTB.toFixed(2)} TB
+              </span>{" "}
+              (saving {storageSavingsTB.toFixed(2)} TB)
+            </p>
+          )}
         </div>
 
         <Separator />
@@ -103,6 +121,11 @@ export function SizingResults({ result }: SizingResultsProps) {
             {immutabilityFormatted
               ? `${immutabilityFormatted.value} ${immutabilityFormatted.unit}`
               : "N/A"}
+            {immutabilitySavingsGB !== null && immutabilitySavingsGB > 0 && (
+              <span className="text-muted-foreground ml-2 font-sans text-xs font-normal">
+                (saves {immutabilitySavingsGB} GB with VBR 13 upgrade)
+              </span>
+            )}
           </ResultRow>
         </div>
 
