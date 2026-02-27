@@ -6,6 +6,7 @@ import {
   formatCompressionRatio,
   formatTB,
   formatTooltipTB,
+  formatGFS,
 } from "@/lib/format-utils";
 
 describe("formatSize", () => {
@@ -109,6 +110,32 @@ describe("formatTooltipTB", () => {
   });
   it("returns empty array for undefined", () => {
     expect(formatTooltipTB(undefined)).toEqual([]);
+  });
+});
+
+describe("formatGFS", () => {
+  it('returns "None configured" when all inputs are null', () => {
+    expect(formatGFS(null, null, null)).toBe("None configured");
+  });
+
+  it("formats weekly only", () => {
+    expect(formatGFS(4, null, null)).toBe("Weekly: 4");
+  });
+
+  it("formats monthly only", () => {
+    expect(formatGFS(null, 12, null)).toBe("Monthly: 12");
+  });
+
+  it("formats yearly only", () => {
+    expect(formatGFS(null, null, 7)).toBe("Yearly: 7");
+  });
+
+  it("formats all three in order", () => {
+    expect(formatGFS(4, 12, 7)).toBe("Weekly: 4, Monthly: 12, Yearly: 7");
+  });
+
+  it("formats weekly and monthly without yearly", () => {
+    expect(formatGFS(4, 12, null)).toBe("Weekly: 4, Monthly: 12");
   });
 });
 
