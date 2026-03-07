@@ -156,6 +156,10 @@ function buildRepoColumns(statsMap: Map<string, RepoStats>) {
   ];
 }
 
+// Badge styling note:
+// Immutability "No" uses destructive styling — missing immutability is a risk for Vault compliance.
+// Capacity Tier "No" and Archive Tier "No" use muted styling — these are optional SOBR features;
+// not having them configured is informational, not a blocker.
 function buildSobrColumns(
   statsMap: Map<string, RepoStats>,
   capExtents: SafeCapExtent[],
