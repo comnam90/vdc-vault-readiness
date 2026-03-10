@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-table";
 import {
   ArrowUpDown,
+  Calculator,
   Filter,
   LockKeyhole,
   LockKeyholeOpen,
@@ -195,7 +196,20 @@ function buildColumns(
   return [
     columnHelper.display({
       id: "exclude",
-      header: () => <span className="sr-only">Exclude from sizing</span>,
+      header: () => (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="flex items-center justify-center">
+              <Calculator
+                className="text-muted-foreground size-3.5"
+                aria-hidden="true"
+              />
+              <span className="sr-only">Exclude from sizing</span>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>Exclude from sizing calculator</TooltipContent>
+        </Tooltip>
+      ),
       cell: ({ row }) => {
         const jobName = row.original.JobName;
         const isExcluded = excludedJobNames.has(jobName);

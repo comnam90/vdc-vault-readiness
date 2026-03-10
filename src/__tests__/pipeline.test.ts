@@ -44,8 +44,9 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       );
     });
 
-    it("parses all 20 jobs from Headers/Rows", () => {
-      expect(result.data.jobInfo).toHaveLength(20);
+    it("parses all non-Replica jobs from Headers/Rows (Replica jobs excluded)", () => {
+      // 20 raw jobs minus 2 Replica jobs = 18 normalized jobs
+      expect(result.data.jobInfo).toHaveLength(18);
     });
 
     it("normalizes job fields correctly", () => {
@@ -113,11 +114,11 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(rule.status).toBe("pass");
     });
 
-    // Rule 3: Job Encryption - 16 unencrypted → fail
-    it("fails job encryption audit with 16 unencrypted jobs", () => {
+    // Rule 3: Job Encryption - 14 unencrypted → fail (2 Replica jobs excluded)
+    it("fails job encryption audit with 14 unencrypted jobs", () => {
       const rule = findRule(result.validations, "job-encryption");
       expect(rule.status).toBe("fail");
-      expect(rule.affectedItems).toHaveLength(16);
+      expect(rule.affectedItems).toHaveLength(14);
     });
 
     // Rule 4: AWS Workloads - no AWS job types → pass
