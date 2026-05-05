@@ -151,4 +151,36 @@ describe("SizingResults", () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  describe("SOBR-blocks-upgrade note", () => {
+    it("does not render the SOBR note by default", () => {
+      render(<SizingResults result={MOCK_RESULT} />);
+      expect(screen.queryByText(/SOBR Capacity Tier/i)).not.toBeInTheDocument();
+    });
+
+    it("renders the SOBR note when sobrBlocksUpgrade is true", () => {
+      render(<SizingResults result={MOCK_RESULT} sobrBlocksUpgrade />);
+      expect(
+        screen.getByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+      ).toBeInTheDocument();
+    });
+
+    it("does not show the savings annotation when sobrBlocksUpgrade is true (mutually exclusive)", () => {
+      // Even if upgradeResult were somehow provided, the SOBR note replaces the
+      // savings annotation under the hero metric.
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          sobrBlocksUpgrade
+        />,
+      );
+      expect(
+        screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+      ).toBeInTheDocument();
+    });
+  });
 });

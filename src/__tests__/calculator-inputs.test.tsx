@@ -379,6 +379,58 @@ describe("CalculatorInputs", () => {
       expect(screen.queryByText(/VBR 12 to VBR 13/i)).not.toBeInTheDocument();
     });
 
+    it("renders the SOBR-blocks-upgrade note for VBR 12 with SOBRs", async () => {
+      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
+
+      render(<CalculatorInputs data={mockDataVbr12WithSobr} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
+
+      expect(
+        await screen.findByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+      ).toBeInTheDocument();
+    });
+
+    it("does NOT render the SOBR-blocks-upgrade note for VBR 12 without SOBRs", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_V13_RESULT);
+
+      render(<CalculatorInputs data={mockDataVbr12} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
+
+      await screen.findByText(/saving 2\.50 TB/i);
+      expect(
+        screen.queryByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does NOT render the SOBR-blocks-upgrade note for VBR 13", async () => {
+      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
+
+      render(<CalculatorInputs data={mockDataVbr13} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
+
+      await screen.findByText(/12\.50 TB/);
+      expect(
+        screen.queryByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+      ).not.toBeInTheDocument();
+    });
+
     it("resets upgrade result when re-calculating", async () => {
       vi.mocked(callVmAgentApi)
         .mockResolvedValueOnce(MOCK_V12_RESULT)

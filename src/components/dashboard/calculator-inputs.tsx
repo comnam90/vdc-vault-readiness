@@ -54,6 +54,11 @@ export function CalculatorInputs({
   const vbrVersion = data.backupServer?.[0]?.Version ?? "";
   const isVbr12 = parseInt(vbrVersion.split(".")[0], 10) < 13;
   const hasSobr = (data.sobr?.length ?? 0) > 0;
+  // VBR 13.0.0 / 13.0.1 still apply v12 sizing logic when Vault is the
+  // Capacity Tier of a SOBR. The v13 storage savings only materialize for
+  // direct-to-Vault backup jobs or Backup Copy jobs targeting Vault directly.
+  // Skip the comparison call when SOBR is present to avoid surfacing a
+  // misleading "no savings" result.
   const showUpgrade = isVbr12 && !hasSobr;
 
   const handleGetEstimate = async () => {
@@ -219,6 +224,7 @@ export function CalculatorInputs({
         <SizingResults
           result={result}
           upgradeResult={upgradeResult ?? undefined}
+          sobrBlocksUpgrade={isVbr12 && hasSobr}
         />
       )}
 

@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 interface SizingResultsProps {
   result: VmAgentResponse;
   upgradeResult?: VmAgentResponse;
+  sobrBlocksUpgrade?: boolean;
 }
 
 function ResultRow({
@@ -37,7 +38,11 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function SizingResults({ result, upgradeResult }: SizingResultsProps) {
+export function SizingResults({
+  result,
+  upgradeResult,
+  sobrBlocksUpgrade = false,
+}: SizingResultsProps) {
   const { data } = result;
 
   const immutabilityFormatted = formatSize(
@@ -73,14 +78,23 @@ export function SizingResults({ result, upgradeResult }: SizingResultsProps) {
           <p className="text-primary font-mono text-3xl font-bold">
             {data.totalStorageTB.toFixed(2)} TB
           </p>
-          {storageSavingsTB !== null && storageSavingsTB > 0 && (
+          {sobrBlocksUpgrade ? (
             <p className="text-muted-foreground text-sm">
-              Upgrade to VBR 13 could reduce this to{" "}
-              <span className="font-mono">
-                {upgradeResult!.data.totalStorageTB.toFixed(2)} TB
-              </span>{" "}
-              (saving {storageSavingsTB.toFixed(2)} TB)
+              VBR 13 storage savings only apply when Vault is targeted directly
+              (via backup or Backup Copy jobs). SOBR Capacity Tier still uses
+              VBR 12 sizing in VBR 13.0.0/13.0.1.
             </p>
+          ) : (
+            storageSavingsTB !== null &&
+            storageSavingsTB > 0 && (
+              <p className="text-muted-foreground text-sm">
+                Upgrade to VBR 13 could reduce this to{" "}
+                <span className="font-mono">
+                  {upgradeResult!.data.totalStorageTB.toFixed(2)} TB
+                </span>{" "}
+                (saving {storageSavingsTB.toFixed(2)} TB)
+              </p>
+            )
           )}
         </div>
 
