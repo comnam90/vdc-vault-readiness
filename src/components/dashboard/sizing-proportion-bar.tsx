@@ -7,30 +7,38 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { formatTB } from "@/lib/format-utils";
-import type { GfsBuckets } from "@/lib/sizing-derivation";
+import type { CompositionBuckets } from "@/lib/sizing-derivation";
 
 export interface SizingProportionBarProps {
-  buckets: GfsBuckets;
+  buckets: CompositionBuckets;
   sumTB: number;
   counts: { daily: number; weekly: number; monthly: number; yearly: number };
 }
 
-type Tier = keyof GfsBuckets;
+type Segment = keyof CompositionBuckets;
 
-const TIER_ORDER: Tier[] = ["yearly", "monthly", "weekly", "daily"];
+const SEGMENT_ORDER: Segment[] = [
+  "yearly",
+  "monthly",
+  "weekly",
+  "daily",
+  "immutability",
+];
 
-const TIER_LABEL: Record<Tier, string> = {
+const SEGMENT_LABEL: Record<Segment, string> = {
   yearly: "Yearly",
   monthly: "Monthly",
   weekly: "Weekly",
   daily: "Daily",
+  immutability: "Immutability",
 };
 
-const TIER_COLOR: Record<Tier, string> = {
+const SEGMENT_COLOR: Record<Segment, string> = {
   yearly: "var(--chart-5)",
   monthly: "var(--chart-3)",
   weekly: "var(--chart-2)",
   daily: "var(--chart-1)",
+  immutability: "var(--chart-4)",
 };
 
 function formatPct(fraction: number): string {
@@ -58,9 +66,9 @@ export function SizingProportionBar({
 
   const ariaLabel =
     "Retention composition: " +
-    TIER_ORDER.map((tier) => {
-      const fraction = buckets[tier] / sumTB;
-      return `${TIER_LABEL[tier]} ${formatTB(buckets[tier])} (${formatPct(fraction)})`;
+    SEGMENT_ORDER.map((seg) => {
+      const fraction = buckets[seg] / sumTB;
+      return `${SEGMENT_LABEL[seg]} ${formatTB(buckets[seg])} (${formatPct(fraction)})`;
     }).join(", ");
 
   return (
@@ -70,29 +78,30 @@ export function SizingProportionBar({
         aria-label={ariaLabel}
         className="bg-muted relative flex h-3 w-full overflow-hidden rounded-full"
       >
-        {TIER_ORDER.map((tier) => {
-          const fraction = buckets[tier] / sumTB;
+        {SEGMENT_ORDER.map((seg) => {
+          const fraction = buckets[seg] / sumTB;
           const targetPct = fraction * 100;
           const flexBasis = mounted ? `${targetPct}%` : "0%";
+          const tooltipDetail =
+            seg === "immutability"
+              ? `${SEGMENT_LABEL[seg]} Overhead: ${formatTB(buckets[seg])} (${formatPct(fraction)})`
+              : `${SEGMENT_LABEL[seg]}: ${formatTB(buckets[seg])} (${formatPct(fraction)}, ${counts[seg]} points)`;
           return (
-            <Tooltip key={tier}>
+            <Tooltip key={seg}>
               <TooltipTrigger asChild>
                 <div
-                  data-segment={tier}
+                  data-segment={seg}
                   className={cn(
                     "h-full",
                     "motion-safe:transition-[flex-basis] motion-safe:duration-[var(--duration-slow)] motion-safe:ease-[var(--ease-out)]",
                   )}
                   style={{
                     flexBasis,
-                    backgroundColor: TIER_COLOR[tier],
+                    backgroundColor: SEGMENT_COLOR[seg],
                   }}
                 />
               </TooltipTrigger>
-              <TooltipContent>
-                {TIER_LABEL[tier]}: {formatTB(buckets[tier])} (
-                {formatPct(fraction)}, {counts[tier]} points)
-              </TooltipContent>
+              <TooltipContent>{tooltipDetail}</TooltipContent>
             </Tooltip>
           );
         })}

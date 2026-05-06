@@ -3,7 +3,6 @@ import type { VmAgentResponse } from "@/types/veeam-api";
 import { deriveSizing } from "@/lib/sizing-derivation";
 import { SizingHeroCard } from "./sizing-hero-card";
 import { SizingBaselinesCard } from "./sizing-baselines-card";
-import { SizingImmutabilityCard } from "./sizing-immutability-card";
 
 interface SizingResultsProps {
   result: VmAgentResponse;
@@ -38,16 +37,11 @@ export function SizingResults({
           showUpgrade ? upgradeSizing.totalStorageTB : null
         }
         storageSavingsTB={storageSavingsTB}
+        upgradePerfTaxGB={showUpgrade ? upgradeSizing.performanceTaxGB : null}
+        immutabilitySavingsGB={immutabilitySavingsGB}
         sobrBlocksUpgrade={sobrBlocksUpgrade}
       />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <SizingBaselinesCard sizing={sizing} />
-        <SizingImmutabilityCard
-          sizing={sizing}
-          upgradePerfTaxGB={showUpgrade ? upgradeSizing.performanceTaxGB : null}
-          immutabilitySavingsGB={immutabilitySavingsGB}
-        />
-      </div>
+      <SizingBaselinesCard sizing={sizing} />
     </div>
   );
 }

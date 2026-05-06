@@ -1,56 +1,83 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { formatTB } from "@/lib/format-utils";
-import type { DerivedSizing, GfsBuckets } from "@/lib/sizing-derivation";
+import { formatSize, formatTB } from "@/lib/format-utils";
+import type {
+  CompositionBuckets,
+  DerivedSizing,
+} from "@/lib/sizing-derivation";
 import { SizingProportionBar } from "./sizing-proportion-bar";
 
 export interface SizingHeroCardProps {
   sizing: DerivedSizing;
   upgradeTotalStorageTB: number | null;
   storageSavingsTB: number;
+  /** GB; from upgradeResult.data.performanceTierImmutabilityTaxGB. */
+  upgradePerfTaxGB: number | null;
+  /** GB; precomputed savings from caller. */
+  immutabilitySavingsGB: number;
   sobrBlocksUpgrade: boolean;
 }
 
-type Tier = keyof GfsBuckets;
+type Segment = keyof CompositionBuckets;
 
-const LEGEND_ORDER: Tier[] = ["yearly", "monthly", "weekly", "daily"];
+const LEGEND_ORDER: Segment[] = [
+  "yearly",
+  "monthly",
+  "weekly",
+  "daily",
+  "immutability",
+];
 
-const LEGEND_LABEL: Record<Tier, string> = {
+const LEGEND_LABEL: Record<Segment, string> = {
   yearly: "Yearly",
   monthly: "Monthly",
   weekly: "Weekly",
   daily: "Daily",
+  immutability: "Immutability Overhead",
 };
 
-const LEGEND_COLOR: Record<Tier, string> = {
+const LEGEND_COLOR: Record<Segment, string> = {
   yearly: "var(--chart-5)",
   monthly: "var(--chart-3)",
   weekly: "var(--chart-2)",
   daily: "var(--chart-1)",
+  immutability: "var(--chart-4)",
 };
 
 /**
  * Stagger times the legend cells to the *tail* of the bar fill — labels
  * confirm a settled bar rather than racing alongside still-growing segments.
  * Bar starts at t=0 with --duration-slow (400ms); the first label fades in at
- * 300ms (~75% through the bar) and the last completes around 850ms.
+ * 300ms (~75% through the bar) and the last completes around 950ms.
  */
-const LEGEND_DELAY_MS: Record<Tier, number> = {
+const LEGEND_DELAY_MS: Record<Segment, number> = {
   yearly: 300,
   monthly: 400,
   weekly: 500,
   daily: 600,
+  immutability: 700,
 };
+
+function formatPerfTax(gb: number): string {
+  const sized = formatSize(gb);
+  return sized ? `${sized.value} ${sized.unit}` : "N/A";
+}
 
 export function SizingHeroCard({
   sizing,
   upgradeTotalStorageTB,
   storageSavingsTB,
+  upgradePerfTaxGB,
+  immutabilitySavingsGB,
   sobrBlocksUpgrade,
 }: SizingHeroCardProps) {
   const showUpgradeCaption =
     !sobrBlocksUpgrade &&
     upgradeTotalStorageTB !== null &&
     storageSavingsTB > 0;
+  const showImmutabilitySavings =
+    !sobrBlocksUpgrade &&
+    upgradePerfTaxGB !== null &&
+    immutabilitySavingsGB > 0;
 
   return (
     <Card className="border-t-primary border-t-4">
@@ -90,32 +117,39 @@ export function SizingHeroCard({
             Composition by retention tier
           </p>
           <SizingProportionBar
-            buckets={sizing.gfsBuckets}
-            sumTB={sizing.gfsSumTB}
+            buckets={sizing.compositionBuckets}
+            sumTB={sizing.compositionTotalTB}
             counts={sizing.gfsBucketCounts}
           />
 
-          {sizing.gfsSumTB > 0 && (
+          {sizing.compositionTotalTB > 0 && (
             <>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {LEGEND_ORDER.map((tier) => (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 md:grid-cols-5">
+                {LEGEND_ORDER.map((seg) => (
                   <div
-                    key={tier}
+                    key={seg}
                     className="motion-safe:animate-in motion-safe:fade-in fill-mode-backwards flex items-baseline gap-2 motion-safe:duration-[var(--duration-normal)]"
-                    style={{ animationDelay: `${LEGEND_DELAY_MS[tier]}ms` }}
+                    style={{ animationDelay: `${LEGEND_DELAY_MS[seg]}ms` }}
                   >
                     <span
                       aria-hidden="true"
-                      className="size-2.5 rounded-sm"
-                      style={{ backgroundColor: LEGEND_COLOR[tier] }}
+                      className="size-2.5 shrink-0 rounded-sm"
+                      style={{ backgroundColor: LEGEND_COLOR[seg] }}
                     />
                     <span className="flex flex-col">
                       <span className="text-muted-foreground text-xs uppercase">
-                        {LEGEND_LABEL[tier]}
+                        {LEGEND_LABEL[seg]}
                       </span>
                       <span className="font-mono text-base tabular-nums sm:text-lg">
-                        {formatTB(sizing.gfsBuckets[tier])}
+                        {seg === "immutability"
+                          ? formatPerfTax(sizing.performanceTaxGB)
+                          : formatTB(sizing.compositionBuckets[seg])}
                       </span>
+                      {seg === "immutability" && showImmutabilitySavings && (
+                        <span className="text-muted-foreground font-mono text-xs">
+                          ↓ VBR 13: {formatPerfTax(upgradePerfTaxGB)}
+                        </span>
+                      )}
                     </span>
                   </div>
                 ))}
@@ -123,7 +157,8 @@ export function SizingHeroCard({
 
               <p className="text-muted-foreground text-xs">
                 {formatTB(sizing.gfsSumTB)} across {sizing.gfsRestorePointCount}{" "}
-                restore points
+                restore points and {formatTB(sizing.performanceTaxTB)} of
+                immutability overhead.
               </p>
             </>
           )}

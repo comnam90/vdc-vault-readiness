@@ -61,13 +61,15 @@ describe("deriveSizing", () => {
       monthly: 0,
       yearly: 0,
     });
-    expect(result.gfsProportions).toEqual({
+    expect(result.compositionProportions).toEqual({
       daily: 0,
       weekly: 0,
       monthly: 0,
       yearly: 0,
+      immutability: 0,
     });
     expect(result.gfsSumTB).toBe(0);
+    expect(result.compositionTotalTB).toBe(0);
     expect(result.gfsRestorePointCount).toBe(0);
     expect(result.initialFullTB).toBeNull();
     expect(result.dailyIncrementalTB).toBeNull();
@@ -179,17 +181,19 @@ describe("deriveSizing", () => {
     expect(result.gfsBuckets.daily).toBeCloseTo(2, 6);
   });
 
-  it("gfsProportions sum to 1 when sum > 0; sum to 0 when empty", () => {
+  it("compositionProportions sum to 1 when total > 0; sum to 0 when empty", () => {
     const empty = deriveSizing(buildData({ restorePoints: [] }));
     const emptySum =
-      empty.gfsProportions.daily +
-      empty.gfsProportions.weekly +
-      empty.gfsProportions.monthly +
-      empty.gfsProportions.yearly;
+      empty.compositionProportions.daily +
+      empty.compositionProportions.weekly +
+      empty.compositionProportions.monthly +
+      empty.compositionProportions.yearly +
+      empty.compositionProportions.immutability;
     expect(emptySum).toBe(0);
 
     const filled = deriveSizing(
       buildData({
+        performanceTierImmutabilityTaxGB: 1024, // 1 TB
         restorePoints: [
           rp({ backupCapacity: 1, flags: "D1" }),
           rp({ backupCapacity: 2, flags: "W1" }),
@@ -199,11 +203,31 @@ describe("deriveSizing", () => {
       }),
     );
     const filledSum =
-      filled.gfsProportions.daily +
-      filled.gfsProportions.weekly +
-      filled.gfsProportions.monthly +
-      filled.gfsProportions.yearly;
+      filled.compositionProportions.daily +
+      filled.compositionProportions.weekly +
+      filled.compositionProportions.monthly +
+      filled.compositionProportions.yearly +
+      filled.compositionProportions.immutability;
     expect(filledSum).toBeCloseTo(1, 6);
+    expect(filled.compositionProportions.immutability).toBeGreaterThan(0);
+  });
+
+  it("compositionTotalTB equals gfsSumTB + performanceTaxTB", () => {
+    const result = deriveSizing(
+      buildData({
+        performanceTierImmutabilityTaxGB: 2048, // 2 TB
+        restorePoints: [
+          rp({ backupCapacity: 4, flags: "D1" }),
+          rp({ backupCapacity: 6, flags: "Y1" }),
+        ],
+      }),
+    );
+    expect(result.gfsSumTB).toBeCloseTo(10, 6);
+    expect(result.performanceTaxTB).toBeCloseTo(2, 6);
+    expect(result.compositionTotalTB).toBeCloseTo(12, 6);
+    expect(result.compositionBuckets.immutability).toBeCloseTo(2, 6);
+    expect(result.compositionBuckets.daily).toBeCloseTo(4, 6);
+    expect(result.compositionBuckets.yearly).toBeCloseTo(6, 6);
   });
 
   it("derives initialFullTB from max(day) and dailyIncrementalTB from min(day) without unit conversion", () => {

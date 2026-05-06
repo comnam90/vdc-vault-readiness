@@ -14,6 +14,15 @@ export interface BucketCounts {
   yearly: number;
 }
 
+/** GFS retention buckets plus the immutability overhead — the 5 segments of the proportion bar. */
+export interface CompositionBuckets {
+  daily: number;
+  weekly: number;
+  monthly: number;
+  yearly: number;
+  immutability: number;
+}
+
 export interface DerivedSizing {
   totalStorageTB: number;
   /** TB. Largest restore point on the performance tier (max day). null when none. */
@@ -21,11 +30,9 @@ export interface DerivedSizing {
   /** TB. Smallest restore point on the performance tier (min day). null when none. */
   dailyIncrementalTB: number | null;
   gfsBuckets: GfsBuckets;
-  /** Sum of the four buckets — the proportion-bar denominator. */
+  /** Sum of the four GFS buckets in TB. */
   gfsSumTB: number;
-  /** Each bucket as a fraction of gfsSumTB (0 when sum is 0). */
-  gfsProportions: GfsBuckets;
-  /** Number of performanceTier restore points contributing to the buckets. */
+  /** Number of performanceTier restore points contributing to the GFS buckets. */
   gfsRestorePointCount: number;
   /** Per-bucket restore-point counts (used in proportion-bar tooltips). */
   gfsBucketCounts: BucketCounts;
@@ -33,6 +40,12 @@ export interface DerivedSizing {
   performanceTaxGB: number;
   /** TB; converted from performanceTierImmutabilityTaxGB. The only /1024 in this derivation. */
   performanceTaxTB: number;
+  /** TB per composition segment: GFS buckets + immutability overhead. */
+  compositionBuckets: CompositionBuckets;
+  /** Proportion-bar denominator: gfsSumTB + performanceTaxTB. */
+  compositionTotalTB: number;
+  /** Each composition bucket as a fraction of compositionTotalTB (0 when total is 0). */
+  compositionProportions: CompositionBuckets;
 }
 
 type Tier = "yearly" | "monthly" | "weekly" | "daily";
@@ -124,15 +137,31 @@ export function deriveSizing(data: VmAgentResponseData): DerivedSizing {
     gfsBuckets.monthly +
     gfsBuckets.yearly;
 
-  const gfsProportions: GfsBuckets =
-    gfsSumTB > 0
+  const performanceTaxTB = data.performanceTierImmutabilityTaxGB / 1024;
+  const compositionBuckets: CompositionBuckets = {
+    daily: gfsBuckets.daily,
+    weekly: gfsBuckets.weekly,
+    monthly: gfsBuckets.monthly,
+    yearly: gfsBuckets.yearly,
+    immutability: performanceTaxTB,
+  };
+  const compositionTotalTB = gfsSumTB + performanceTaxTB;
+  const compositionProportions: CompositionBuckets =
+    compositionTotalTB > 0
       ? {
-          daily: gfsBuckets.daily / gfsSumTB,
-          weekly: gfsBuckets.weekly / gfsSumTB,
-          monthly: gfsBuckets.monthly / gfsSumTB,
-          yearly: gfsBuckets.yearly / gfsSumTB,
+          daily: compositionBuckets.daily / compositionTotalTB,
+          weekly: compositionBuckets.weekly / compositionTotalTB,
+          monthly: compositionBuckets.monthly / compositionTotalTB,
+          yearly: compositionBuckets.yearly / compositionTotalTB,
+          immutability: compositionBuckets.immutability / compositionTotalTB,
         }
-      : { daily: 0, weekly: 0, monthly: 0, yearly: 0 };
+      : {
+          daily: 0,
+          weekly: 0,
+          monthly: 0,
+          yearly: 0,
+          immutability: 0,
+        };
 
   let initialFullTB: number | null = null;
   let dailyIncrementalTB: number | null = null;
@@ -153,10 +182,12 @@ export function deriveSizing(data: VmAgentResponseData): DerivedSizing {
     dailyIncrementalTB,
     gfsBuckets,
     gfsSumTB,
-    gfsProportions,
     gfsRestorePointCount: performancePoints.length,
     gfsBucketCounts,
     performanceTaxGB: data.performanceTierImmutabilityTaxGB,
-    performanceTaxTB: data.performanceTierImmutabilityTaxGB / 1024,
+    performanceTaxTB,
+    compositionBuckets,
+    compositionTotalTB,
+    compositionProportions,
   };
 }

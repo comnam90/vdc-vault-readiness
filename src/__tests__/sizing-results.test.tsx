@@ -88,7 +88,7 @@ describe("SizingResults", () => {
     expect(screen.queryByText(/GB RAM/i)).not.toBeInTheDocument();
   });
 
-  it("renders the performance-tier immutability tax under the immutability card", () => {
+  it("renders the performance-tier immutability inline within the hero legend", () => {
     render(
       <SizingResults
         result={buildResult({
@@ -96,10 +96,13 @@ describe("SizingResults", () => {
         })}
       />,
     );
-    expect(screen.getByText(/Immutability Tax/i)).toBeInTheDocument();
-    expect(screen.getByText(/Performance Tier/i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/Immutability Overhead/i).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText(/678\.7\s*GB/)).toBeInTheDocument();
     expect(screen.queryByText(/678\.6973/)).not.toBeInTheDocument();
+    // The standalone Immutability Tax card is removed.
+    expect(screen.queryByText(/Immutability Tax/i)).not.toBeInTheDocument();
   });
 
   it("decorates the hero card with the top accent border", () => {
@@ -109,14 +112,20 @@ describe("SizingResults", () => {
     ).not.toBeNull();
   });
 
-  it("renders the proportion bar with four data segments", () => {
+  it("renders the proportion bar with five data segments incl. immutability", () => {
     const { container } = render(<SizingResults result={MOCK_RESULT} />);
     const segments = container.querySelectorAll("[data-segment]");
-    expect(segments.length).toBe(4);
+    expect(segments.length).toBe(5);
     const tiers = Array.from(segments).map((s) =>
       s.getAttribute("data-segment"),
     );
-    expect(tiers).toEqual(["yearly", "monthly", "weekly", "daily"]);
+    expect(tiers).toEqual([
+      "yearly",
+      "monthly",
+      "weekly",
+      "daily",
+      "immutability",
+    ]);
   });
 
   it("exposes a group aria-label naming each bucket and percentage", () => {
@@ -129,21 +138,22 @@ describe("SizingResults", () => {
     expect(label).toMatch(/Monthly/);
     expect(label).toMatch(/Weekly/);
     expect(label).toMatch(/Daily/);
-  });
-
-  it("collapses the context grid to a single column on small viewports", () => {
-    const { container } = render(<SizingResults result={MOCK_RESULT} />);
-    expect(container.querySelector(".grid-cols-1")).not.toBeNull();
+    expect(label).toMatch(/Immutability/);
   });
 
   describe("empty restorePoints", () => {
     it("shows the unavailable caption and dashes for both baselines", () => {
       const { container } = render(
-        <SizingResults result={buildResult({ restorePoints: [] })} />,
+        <SizingResults
+          result={buildResult({
+            restorePoints: [],
+            performanceTierImmutabilityTaxGB: 0,
+          })}
+        />,
       );
       expect(
-        screen.getAllByText(/restore-point breakdown unavailable/i).length,
-      ).toBeGreaterThan(0);
+        screen.getByText(/restore-point breakdown unavailable/i),
+      ).toBeInTheDocument();
 
       const baselinesCard = container
         .querySelector('[data-slot="card-title"]')
