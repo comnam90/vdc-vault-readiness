@@ -474,6 +474,114 @@ describe("buildCalculatorSummary", () => {
   });
 });
 
+describe("buildCalculatorSummary with GlobalSettings retention cap", () => {
+  it("is a no-op when limitCalculationYears is null", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "Job A",
+        SourceSizeGB: 1024,
+        RetainDays: 60,
+        GfsDetails: "Weekly:60,Monthly:18,Yearly:7",
+      }),
+    ];
+    const baseline = buildCalculatorSummary(jobs, []);
+    const withSettings = buildCalculatorSummary(jobs, [], new Set(), {
+      targetCloud: "Azure",
+      growthPercent: 0,
+      growthYears: 0,
+      limitCalculationYears: null,
+    });
+    expect(withSettings).toEqual(baseline);
+  });
+
+  it("caps yearly, monthly, weekly, and RetainDays to the time horizon", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "Job A",
+        RetainDays: 500,
+        GfsDetails: "Weekly:60,Monthly:18,Yearly:7",
+      }),
+    ];
+    const result = buildCalculatorSummary(jobs, [], new Set(), {
+      targetCloud: "Azure",
+      growthPercent: 0,
+      growthYears: 0,
+      limitCalculationYears: 1,
+    });
+
+    expect(result.gfsYearly).toBe(1); // 7 → cap 1
+    expect(result.gfsMonthly).toBe(12); // 18 → cap 12
+    expect(result.gfsWeekly).toBe(52); // 60 → cap 52
+    expect(result.originalMaxRetentionDays).toBe(365); // 500 → cap 365
+    expect(result.maxRetentionDays).toBe(365);
+  });
+
+  it("leaves values below the cap untouched", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "Job A",
+        RetainDays: 90,
+        GfsDetails: "Weekly:4,Monthly:6,Yearly:1",
+      }),
+    ];
+    const result = buildCalculatorSummary(jobs, [], new Set(), {
+      targetCloud: "Azure",
+      growthPercent: 0,
+      growthYears: 0,
+      limitCalculationYears: 2,
+    });
+
+    // limit 2y → caps: yearly 2, monthly 24, weekly 104, daily 730 — all above source values
+    expect(result.gfsYearly).toBe(1);
+    expect(result.gfsMonthly).toBe(6);
+    expect(result.gfsWeekly).toBe(4);
+    expect(result.originalMaxRetentionDays).toBe(90);
+  });
+
+  it("applies caps per-job before aggregation across mixed jobs", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "Big",
+        RetainDays: 500,
+        GfsDetails: "Weekly:200,Monthly:48,Yearly:10",
+      }),
+      makeJob({
+        JobName: "Small",
+        RetainDays: 30,
+        GfsDetails: "Weekly:2,Monthly:6,Yearly:1",
+      }),
+    ];
+    const result = buildCalculatorSummary(jobs, [], new Set(), {
+      targetCloud: "Azure",
+      growthPercent: 0,
+      growthYears: 0,
+      limitCalculationYears: 1,
+    });
+
+    expect(result.gfsYearly).toBe(1); // max(min(10,1), min(1,1)) = 1
+    expect(result.gfsMonthly).toBe(12); // max(min(48,12), min(6,12)) = 12
+    expect(result.gfsWeekly).toBe(52); // max(min(200,52), min(2,52)) = 52
+    expect(result.originalMaxRetentionDays).toBe(365); // max(min(500,365), min(30,365)) = 365
+  });
+
+  it("does not crash on jobs with null GfsDetails or RetainDays", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "Empty", RetainDays: null, GfsDetails: null }),
+    ];
+    const result = buildCalculatorSummary(jobs, [], new Set(), {
+      targetCloud: "Azure",
+      growthPercent: 0,
+      growthYears: 0,
+      limitCalculationYears: 1,
+    });
+
+    expect(result.originalMaxRetentionDays).toBeNull();
+    expect(result.gfsWeekly).toBeNull();
+    expect(result.gfsMonthly).toBeNull();
+    expect(result.gfsYearly).toBeNull();
+  });
+});
+
 describe("buildCalculatorSummary with exclusions", () => {
   it("excludes jobs by name from all aggregations", () => {
     const jobs: SafeJob[] = [

@@ -1,13 +1,11 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, XCircle, Upload } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 import { CARD_LABEL, MINIMUM_VBR_VERSION } from "@/lib/constants";
 import { enrichJobs } from "@/lib/enrich-jobs";
 import { getBlockerValidations } from "@/lib/validation-selectors";
 import { isVersionAtLeast } from "@/lib/version-compare";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -23,6 +21,7 @@ import { JobTable } from "./job-table";
 import { PassingChecksList } from "./passing-checks-list";
 import { JobsCharts } from "./jobs-charts";
 import { RepositoriesTab } from "./repositories-tab";
+import { SiteHeader } from "./site-header";
 import { SuccessCelebration } from "./success-celebration";
 import { cn } from "@/lib/utils";
 
@@ -75,19 +74,7 @@ export function DashboardView({
 
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto w-full max-w-5xl space-y-6 p-6 duration-400 ease-[var(--ease-out)]">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">
-            VDC Vault Readiness
-          </h1>
-          <Badge variant="secondary">Scan Complete</Badge>
-        </div>
-        <Button variant="outline" size="sm" onClick={onReset}>
-          <Upload className="size-4" />
-          Upload New
-        </Button>
-      </div>
+      <SiteHeader onReset={onReset} />
 
       <Separator />
 

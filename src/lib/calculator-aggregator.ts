@@ -1,5 +1,6 @@
 import type { SafeJob, SafeJobSession } from "@/types/domain";
 import type { CalculatorSummary } from "@/types/calculator";
+import { DEFAULT_SETTINGS, type GlobalSettings } from "@/types/settings";
 import { MINIMUM_RETENTION_DAYS } from "./constants";
 
 interface GfsResult {
@@ -140,21 +141,77 @@ export function aggregateGfsMax(jobs: SafeJob[]): GfsResult {
   return result;
 }
 
+interface RetentionCaps {
+  yearly: number;
+  monthly: number;
+  weekly: number;
+  daily: number;
+}
+
+function capsForLimit(years: number): RetentionCaps {
+  return {
+    yearly: years,
+    monthly: years * 12,
+    weekly: years * 52,
+    daily: years * 365,
+  };
+}
+
+function serializeGfs(gfs: GfsResult): string | null {
+  const parts: string[] = [];
+  if (gfs.weekly != null) parts.push(`Weekly:${gfs.weekly}`);
+  if (gfs.monthly != null) parts.push(`Monthly:${gfs.monthly}`);
+  if (gfs.yearly != null) parts.push(`Yearly:${gfs.yearly}`);
+  return parts.length > 0 ? parts.join(",") : null;
+}
+
+function capJob(job: SafeJob, caps: RetentionCaps): SafeJob {
+  const capped: SafeJob = { ...job };
+
+  if (job.RetainDays != null) {
+    capped.RetainDays = Math.min(job.RetainDays, caps.daily);
+  }
+
+  if (job.GfsDetails) {
+    const parsed = parseGfsDetails(job.GfsDetails);
+    const cappedGfs: GfsResult = {
+      weekly:
+        parsed.weekly != null ? Math.min(parsed.weekly, caps.weekly) : null,
+      monthly:
+        parsed.monthly != null ? Math.min(parsed.monthly, caps.monthly) : null,
+      yearly:
+        parsed.yearly != null ? Math.min(parsed.yearly, caps.yearly) : null,
+    };
+    capped.GfsDetails = serializeGfs(cappedGfs);
+  }
+
+  return capped;
+}
+
 export function buildCalculatorSummary(
   jobs: SafeJob[],
   sessions: SafeJobSession[],
   excludedJobNames: Set<string> = new Set(),
+  settings: GlobalSettings = DEFAULT_SETTINGS,
 ): CalculatorSummary {
   const filteredJobs =
     excludedJobNames.size > 0
       ? jobs.filter((j) => !excludedJobNames.has(j.JobName))
       : jobs;
-  const gfs = aggregateGfsMax(filteredJobs);
-  const originalMax = getMaxRetentionDays(filteredJobs);
+
+  const cappedJobs =
+    settings.limitCalculationYears != null
+      ? filteredJobs.map((j) =>
+          capJob(j, capsForLimit(settings.limitCalculationYears as number)),
+        )
+      : filteredJobs;
+
+  const gfs = aggregateGfsMax(cappedJobs);
+  const originalMax = getMaxRetentionDays(cappedJobs);
 
   return {
-    totalSourceDataTB: calculateTotalSourceDataTB(filteredJobs),
-    weightedAvgChangeRate: calculateWeightedChangeRate(filteredJobs, sessions),
+    totalSourceDataTB: calculateTotalSourceDataTB(cappedJobs),
+    weightedAvgChangeRate: calculateWeightedChangeRate(cappedJobs, sessions),
     immutabilityDays: 30,
     maxRetentionDays:
       originalMax !== null

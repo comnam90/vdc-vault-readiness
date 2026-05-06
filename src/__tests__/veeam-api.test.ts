@@ -48,8 +48,10 @@ describe("buildVmAgentRequest", () => {
     const req = buildVmAgentRequest(MOCK_SUMMARY, 10, "13.0.1.1071");
     expect(req.Reduction).toBe(50);
     expect(req.backupWindowHours).toBe(8);
-    expect(req.GrowthRatePercent).toBe(5);
-    expect(req.GrowthRateScopeYears).toBe(1);
+    // GrowthRatePercent / GrowthRateScopeYears / blockGenerationDays now come
+    // from GlobalSettings (DEFAULT_SETTINGS: targetCloud Azure, growth 0/0).
+    expect(req.GrowthRatePercent).toBe(0);
+    expect(req.GrowthRateScopeYears).toBe(0);
     expect(req.blockGenerationDays).toBe(10);
     expect(req.Blockcloning).toBe(true);
     expect(req.ObjectStorage).toBe(true);
@@ -122,6 +124,65 @@ describe("buildVmAgentRequest", () => {
     expect(req.sourceTB).toBe(0);
     expect(req.ChangeRate).toBe(0);
     expect(req.Weeklies).toBe(0);
+  });
+});
+
+describe("buildVmAgentRequest with GlobalSettings", () => {
+  it("maps targetCloud='Azure' to blockGenerationDays=10 (default)", () => {
+    const req = buildVmAgentRequest(
+      MOCK_SUMMARY,
+      10,
+      "13.0.1.1071",
+      undefined,
+      {
+        targetCloud: "Azure",
+        growthPercent: 0,
+        growthYears: 0,
+        limitCalculationYears: null,
+      },
+    );
+    expect(req.blockGenerationDays).toBe(10);
+  });
+
+  it("maps targetCloud='AWS' to blockGenerationDays=30", () => {
+    const req = buildVmAgentRequest(
+      MOCK_SUMMARY,
+      10,
+      "13.0.1.1071",
+      undefined,
+      {
+        targetCloud: "AWS",
+        growthPercent: 0,
+        growthYears: 0,
+        limitCalculationYears: null,
+      },
+    );
+    expect(req.blockGenerationDays).toBe(30);
+  });
+
+  it("injects growthPercent and growthYears into payload", () => {
+    const req = buildVmAgentRequest(
+      MOCK_SUMMARY,
+      10,
+      "13.0.1.1071",
+      undefined,
+      {
+        targetCloud: "Azure",
+        growthPercent: 12,
+        growthYears: 3,
+        limitCalculationYears: null,
+      },
+    );
+    expect(req.GrowthRatePercent).toBe(12);
+    expect(req.GrowthRateScopeYears).toBe(3);
+  });
+
+  it("falls back to DEFAULT_SETTINGS when settings argument is omitted", () => {
+    const req = buildVmAgentRequest(MOCK_SUMMARY, 10, "13.0.1.1071");
+    // Defaults: Azure → 10, growth 0 → API receives 0
+    expect(req.blockGenerationDays).toBe(10);
+    expect(req.GrowthRatePercent).toBe(0);
+    expect(req.GrowthRateScopeYears).toBe(0);
   });
 });
 

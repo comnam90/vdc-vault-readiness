@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { ExternalLink, Loader2, RotateCcw, Calculator } from "lucide-react";
+import {
+  Calculator,
+  Clock,
+  Cloud,
+  ExternalLink,
+  Loader2,
+  RotateCcw,
+  Server,
+  TrendingUp,
+} from "lucide-react";
 import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
 import { callVmAgentApi } from "@/lib/veeam-api";
 import {
@@ -14,6 +23,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MINIMUM_RETENTION_DAYS } from "@/lib/constants";
+import { useSettings } from "@/hooks/use-settings";
 import {
   Card,
   CardContent,
@@ -34,6 +44,7 @@ export function CalculatorInputs({
   data,
   excludedJobNames = new Set(),
 }: CalculatorInputsProps) {
+  const { settings } = useSettings();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VmAgentResponse | null>(null);
   const [upgradeResult, setUpgradeResult] = useState<VmAgentResponse | null>(
@@ -46,6 +57,7 @@ export function CalculatorInputs({
     data.jobInfo,
     data.jobSessionSummary,
     excludedJobNames,
+    settings,
   );
   const activeJobCount = data.jobInfo.filter(
     (j) => !excludedJobNames.has(j.JobName),
@@ -69,13 +81,25 @@ export function CalculatorInputs({
     try {
       if (showUpgrade) {
         const [v12Res, v13Res] = await Promise.all([
-          callVmAgentApi(summary, activeJobCount, vbrVersion),
-          callVmAgentApi(summary, activeJobCount, vbrVersion, 0),
+          callVmAgentApi(
+            summary,
+            activeJobCount,
+            vbrVersion,
+            undefined,
+            settings,
+          ),
+          callVmAgentApi(summary, activeJobCount, vbrVersion, 0, settings),
         ]);
         setResult(v12Res);
         setUpgradeResult(v13Res);
       } else {
-        const res = await callVmAgentApi(summary, activeJobCount, vbrVersion);
+        const res = await callVmAgentApi(
+          summary,
+          activeJobCount,
+          vbrVersion,
+          undefined,
+          settings,
+        );
         setResult(res);
         setUpgradeResult(null);
       }
@@ -171,6 +195,44 @@ export function CalculatorInputs({
                 )}
               </p>
             </div>
+          </div>
+
+          <div
+            className="mt-6 flex flex-wrap items-center gap-1.5 border-t pt-4"
+            data-testid="settings-indicators"
+          >
+            <span className="text-muted-foreground mr-1 text-xs font-medium tracking-wider uppercase">
+              Active settings
+            </span>
+            <Badge
+              variant="outline"
+              className="text-muted-foreground gap-1 text-xs font-normal"
+            >
+              {settings.targetCloud === "AWS" ? (
+                <Server className="size-3" aria-hidden="true" />
+              ) : (
+                <Cloud className="size-3" aria-hidden="true" />
+              )}
+              Target: {settings.targetCloud}
+            </Badge>
+            {(settings.growthPercent > 0 || settings.growthYears > 0) && (
+              <Badge
+                variant="outline"
+                className="text-muted-foreground gap-1 text-xs font-normal"
+              >
+                <TrendingUp className="size-3" aria-hidden="true" />
+                Growth: {settings.growthPercent}% ({settings.growthYears}y)
+              </Badge>
+            )}
+            {settings.limitCalculationYears !== null && (
+              <Badge
+                variant="outline"
+                className="text-muted-foreground gap-1 text-xs font-normal"
+              >
+                <Clock className="size-3" aria-hidden="true" />
+                Retention cap: {settings.limitCalculationYears}y
+              </Badge>
+            )}
           </div>
         </CardContent>
         <CardFooter className="flex flex-wrap gap-2">
