@@ -594,5 +594,41 @@ describe("CalculatorInputs", () => {
         }),
       ).not.toBeInTheDocument();
     });
+
+    it("renders distinct rows without duplicate-key warnings when GFS policies share a job count", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      vi.mocked(buildCalculatorSummary).mockReturnValue({
+        ...defaultSummary,
+        gfsDistribution: [
+          { policy: "4W | 1Y", count: 3 },
+          { policy: "12M", count: 3 },
+        ],
+      });
+
+      render(<CalculatorInputs data={mockData} />);
+
+      const trigger = screen.getByRole("button", {
+        name: /show gfs distribution breakdown/i,
+      });
+      fireEvent.pointerEnter(trigger);
+
+      // Both policy rows must render — distinct keys must not collapse them.
+      expect(await screen.findByText("4W | 1Y")).toBeInTheDocument();
+      expect(screen.getByText("12M")).toBeInTheDocument();
+      // Two policies, both with count 3, share the same `left` text.
+      expect(screen.getAllByText("3 jobs")).toHaveLength(2);
+
+      const duplicateKeyWarnings = errorSpy.mock.calls.filter((args) =>
+        args.some(
+          (arg) =>
+            typeof arg === "string" &&
+            arg.includes("two children with the same key"),
+        ),
+      );
+      expect(duplicateKeyWarnings).toEqual([]);
+
+      errorSpy.mockRestore();
+    });
   });
 });
