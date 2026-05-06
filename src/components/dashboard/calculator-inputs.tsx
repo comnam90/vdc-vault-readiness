@@ -230,9 +230,17 @@ export function CalculatorInputs({
             </div>
 
             <div className="space-y-1">
-              <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+              <div className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-medium tracking-wider uppercase">
                 Retention
-              </p>
+                <BreakdownHoverCard
+                  label="Retention distribution"
+                  rows={summary.retentionDistribution.map((r) => ({
+                    key: String(r.days),
+                    left: `${r.count} job${r.count !== 1 ? "s" : ""}`,
+                    right: `${r.days} days`,
+                  }))}
+                />
+              </div>
               <div className="flex items-baseline gap-2">
                 <p className="font-mono text-2xl font-semibold">
                   {formatDays(summary.maxRetentionDays)}

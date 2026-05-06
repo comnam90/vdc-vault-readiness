@@ -402,6 +402,7 @@ describe("buildCalculatorSummary", () => {
       gfsYearly: null,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(result).toEqual(expected);
   });
@@ -882,5 +883,64 @@ describe("buildCalculatorSummary gfsDistribution", () => {
     const result = buildCalculatorSummary(jobs, [], new Set(), settings);
 
     expect(result.gfsDistribution).toEqual([{ policy: "5Y", count: 1 }]);
+  });
+});
+
+describe("buildCalculatorSummary retentionDistribution", () => {
+  it("counts jobs by RetainDays and sorts descending by count", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "A", RetainDays: 14 }),
+      makeJob({ JobName: "B", RetainDays: 14 }),
+      makeJob({ JobName: "C", RetainDays: 14 }),
+      makeJob({ JobName: "D", RetainDays: 30 }),
+      makeJob({ JobName: "E", RetainDays: 7 }),
+      makeJob({ JobName: "F", RetainDays: 7 }),
+    ];
+
+    const result = buildCalculatorSummary(jobs, []);
+
+    expect(result.retentionDistribution).toEqual([
+      { days: 14, count: 3 },
+      { days: 7, count: 2 },
+      { days: 30, count: 1 },
+    ]);
+  });
+
+  it("skips jobs with null RetainDays", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "A", RetainDays: null }),
+      makeJob({ JobName: "B", RetainDays: 14 }),
+    ];
+
+    const result = buildCalculatorSummary(jobs, []);
+
+    expect(result.retentionDistribution).toEqual([{ days: 14, count: 1 }]);
+  });
+
+  it("returns an empty array when all jobs have null RetainDays", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "A", RetainDays: null }),
+      makeJob({ JobName: "B", RetainDays: null }),
+    ];
+
+    const result = buildCalculatorSummary(jobs, []);
+
+    expect(result.retentionDistribution).toEqual([]);
+  });
+
+  it("uses capped RetainDays from the limitCalculationYears setting", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "A", RetainDays: 500 }),
+      makeJob({ JobName: "B", RetainDays: 500 }),
+      makeJob({ JobName: "C", RetainDays: 30 }),
+    ];
+    const settings = makeSettings({ limitCalculationYears: 1 });
+
+    const result = buildCalculatorSummary(jobs, [], new Set(), settings);
+
+    expect(result.retentionDistribution).toEqual([
+      { days: 365, count: 2 },
+      { days: 30, count: 1 },
+    ]);
   });
 });

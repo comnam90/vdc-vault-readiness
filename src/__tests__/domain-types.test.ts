@@ -581,6 +581,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsYearly: 5,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.totalSourceDataTB).toBe(100.5);
   });
@@ -597,6 +598,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsYearly: null,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.totalSourceDataTB).toBeNull();
   });
@@ -613,6 +615,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsYearly: 5,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.weightedAvgChangeRate).toBe(15.75);
   });
@@ -629,6 +632,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsYearly: null,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.immutabilityDays).toBe(30);
   });
@@ -645,6 +649,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsYearly: null,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.maxRetentionDays).toBe(1095);
   });
@@ -661,6 +666,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsYearly: 5,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.gfsWeekly).toBe(4);
     expect(summary.gfsMonthly).toBe(12);
@@ -679,6 +685,7 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsYearly: null,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.gfsWeekly).toBeNull();
     expect(summary.gfsMonthly).toBeNull();
@@ -697,8 +704,9 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsYearly: 7,
       sourceDataBreakdown: [{ type: "VMware Backup", tb: 250.0 }],
       gfsDistribution: [{ policy: "4W | 12M | 7Y", count: 1 }],
+      retentionDistribution: [{ days: 730, count: 1 }],
     };
     expect(summary).toBeDefined();
-    expect(Object.keys(summary)).toHaveLength(10);
+    expect(Object.keys(summary)).toHaveLength(11);
   });
 });

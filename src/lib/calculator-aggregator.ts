@@ -230,6 +230,18 @@ export function buildCalculatorSummary(
     .map(([policy, count]) => ({ policy, count }))
     .sort((a, b) => b.count - a.count);
 
+  const retentionCounts = new Map<number, number>();
+  for (const job of cappedJobs) {
+    if (job.RetainDays == null) continue;
+    retentionCounts.set(
+      job.RetainDays,
+      (retentionCounts.get(job.RetainDays) ?? 0) + 1,
+    );
+  }
+  const retentionDistribution = [...retentionCounts.entries()]
+    .map(([days, count]) => ({ days, count }))
+    .sort((a, b) => b.count - a.count);
+
   return {
     totalSourceDataTB: calculateTotalSourceDataTB(cappedJobs),
     weightedAvgChangeRate: calculateWeightedChangeRate(cappedJobs, sessions),
@@ -244,5 +256,6 @@ export function buildCalculatorSummary(
     gfsYearly: gfs.yearly,
     sourceDataBreakdown,
     gfsDistribution,
+    retentionDistribution,
   };
 }

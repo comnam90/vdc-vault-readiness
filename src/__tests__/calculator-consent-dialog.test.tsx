@@ -14,6 +14,7 @@ const defaultSummary: CalculatorSummary = {
   gfsYearly: 7,
   sourceDataBreakdown: [],
   gfsDistribution: [],
+  retentionDistribution: [],
 };
 
 const defaultProps = {
