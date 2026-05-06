@@ -1,29 +1,85 @@
 import { useCallback, useSyncExternalStore } from "react";
-import { DEFAULT_SETTINGS, type GlobalSettings } from "@/types/settings";
+import {
+  DEFAULT_SETTINGS,
+  type GlobalSettings,
+  type TargetCloud,
+} from "@/types/settings";
 
 export const STORAGE_KEY = "vdc-vault-readiness:settings";
 
 type Listener = () => void;
-const listeners = new Set<Listener>();
+
+function clampInt(
+  value: unknown,
+  min: number,
+  max: number,
+  fallback: number,
+): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+  return Math.max(min, Math.min(max, Math.trunc(value)));
+}
+
+function normalizeSettings(input: unknown): GlobalSettings {
+  if (input === null || typeof input !== "object") {
+    return { ...DEFAULT_SETTINGS };
+  }
+  const raw = input as Record<string, unknown>;
+
+  const targetCloud: TargetCloud =
+    raw.targetCloud === "AWS" || raw.targetCloud === "Azure"
+      ? raw.targetCloud
+      : DEFAULT_SETTINGS.targetCloud;
+
+  const growthPercent = clampInt(
+    raw.growthPercent,
+    0,
+    100,
+    DEFAULT_SETTINGS.growthPercent,
+  );
+  const growthYears = clampInt(
+    raw.growthYears,
+    0,
+    10,
+    DEFAULT_SETTINGS.growthYears,
+  );
+
+  // null is a valid "disabled" state; otherwise must be an integer in [1, 10].
+  let limitCalculationYears: number | null =
+    DEFAULT_SETTINGS.limitCalculationYears;
+  if (raw.limitCalculationYears === null) {
+    limitCalculationYears = null;
+  } else if (
+    typeof raw.limitCalculationYears === "number" &&
+    Number.isFinite(raw.limitCalculationYears) &&
+    Number.isInteger(raw.limitCalculationYears) &&
+    raw.limitCalculationYears >= 1 &&
+    raw.limitCalculationYears <= 10
+  ) {
+    limitCalculationYears = raw.limitCalculationYears;
+  }
+
+  return { targetCloud, growthPercent, growthYears, limitCalculationYears };
+}
 
 function safeReadStorage(): GlobalSettings {
   if (typeof window === "undefined") {
-    return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS };
   }
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      return DEFAULT_SETTINGS;
+      return { ...DEFAULT_SETTINGS };
     }
-    const parsed = JSON.parse(raw) as Partial<GlobalSettings>;
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    return normalizeSettings(JSON.parse(raw));
   } catch {
-    return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS };
   }
 }
 
 let cached: GlobalSettings = safeReadStorage();
+const listeners = new Set<Listener>();
+let storageHandlerBound = false;
 
 function notify(): void {
   for (const listener of listeners) {
@@ -31,23 +87,29 @@ function notify(): void {
   }
 }
 
+function handleStorageEvent(event: StorageEvent): void {
+  if (event.key !== STORAGE_KEY) return;
+  cached = safeReadStorage();
+  notify();
+}
+
 function subscribe(listener: Listener): () => void {
   listeners.add(listener);
 
-  const onStorage = (event: StorageEvent) => {
-    if (event.key !== STORAGE_KEY) return;
-    cached = safeReadStorage();
-    notify();
-  };
-
-  if (typeof window !== "undefined") {
-    window.addEventListener("storage", onStorage);
+  if (!storageHandlerBound && typeof window !== "undefined") {
+    window.addEventListener("storage", handleStorageEvent);
+    storageHandlerBound = true;
   }
 
   return () => {
     listeners.delete(listener);
-    if (typeof window !== "undefined") {
-      window.removeEventListener("storage", onStorage);
+    if (
+      listeners.size === 0 &&
+      storageHandlerBound &&
+      typeof window !== "undefined"
+    ) {
+      window.removeEventListener("storage", handleStorageEvent);
+      storageHandlerBound = false;
     }
   };
 }
@@ -88,7 +150,7 @@ export function useSettings() {
   }, []);
 
   const resetSettings = useCallback(() => {
-    setSettings(DEFAULT_SETTINGS);
+    setSettings({ ...DEFAULT_SETTINGS });
   }, []);
 
   return { settings, updateSettings, resetSettings };

@@ -52,6 +52,79 @@ describe("useSettings", () => {
     expect(result.current.settings).toEqual(DEFAULT_SETTINGS);
   });
 
+  it("rejects an unknown targetCloud and falls back to the default", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ targetCloud: "GCP" }),
+    );
+    __resetSettingsStoreForTests();
+
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.targetCloud).toBe(
+      DEFAULT_SETTINGS.targetCloud,
+    );
+  });
+
+  it("clamps numeric growth fields to their valid ranges", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        targetCloud: "Azure",
+        growthPercent: 250, // > 100 → 100
+        growthYears: -3, // < 0 → 0
+        limitCalculationYears: null,
+      }),
+    );
+    __resetSettingsStoreForTests();
+
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.growthPercent).toBe(100);
+    expect(result.current.settings.growthYears).toBe(0);
+  });
+
+  it("treats non-finite or non-numeric growth values as defaults", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        growthPercent: "ten",
+        growthYears: null,
+      }),
+    );
+    __resetSettingsStoreForTests();
+
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.growthPercent).toBe(
+      DEFAULT_SETTINGS.growthPercent,
+    );
+    expect(result.current.settings.growthYears).toBe(
+      DEFAULT_SETTINGS.growthYears,
+    );
+  });
+
+  it("disables the retention cap when limitCalculationYears is 0, NaN, or out of range", () => {
+    for (const bad of [0, -1, 11, NaN, "1y", 1.5]) {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ limitCalculationYears: bad }),
+      );
+      __resetSettingsStoreForTests();
+      const { result, unmount } = renderHook(() => useSettings());
+      expect(result.current.settings.limitCalculationYears).toBeNull();
+      unmount();
+    }
+  });
+
+  it("accepts a valid integer in [1, 10] for limitCalculationYears", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ limitCalculationYears: 3 }),
+    );
+    __resetSettingsStoreForTests();
+
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.limitCalculationYears).toBe(3);
+  });
+
   it("merges partial localStorage values with defaults so missing keys are filled in", () => {
     window.localStorage.setItem(
       STORAGE_KEY,
