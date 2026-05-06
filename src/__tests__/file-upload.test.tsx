@@ -1,6 +1,26 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { StoredScanSummary } from "@/lib/indexed-db";
+
+const mockRemoveScan = vi.fn(() => Promise.resolve());
+const mockRefreshScans = vi.fn(() => Promise.resolve());
+let mockRecentScans: StoredScanSummary[] = [];
+
+vi.mock("@/hooks/use-recent-scans", () => ({
+  useRecentScans: () => ({
+    recentScans: mockRecentScans,
+    removeScan: mockRemoveScan,
+    refreshScans: mockRefreshScans,
+  }),
+}));
+
 import { FileUpload } from "@/components/dashboard/file-upload";
+
+beforeEach(() => {
+  mockRecentScans = [];
+  mockRemoveScan.mockClear();
+  mockRefreshScans.mockClear();
+});
 
 describe("FileUpload", () => {
   it("renders the drop zone with instructional text", () => {
@@ -170,6 +190,112 @@ describe("FileUpload", () => {
       });
 
       expect(dropZone.className).toMatch(/motion-safe:animate-drag-pulse/);
+    });
+  });
+
+  describe("recent scans section", () => {
+    const NOW_MS = new Date("2026-05-06T14:30:00Z").getTime();
+    const RECENT_SCANS: StoredScanSummary[] = [
+      {
+        id: NOW_MS - 60 * 1000, // 1 min ago → "1 min ago"
+        filename: "alpha.json",
+        uploadedAt: new Date(NOW_MS - 60 * 1000).toISOString(),
+        jobCount: 30,
+        sourceTb: 12.5,
+        vbrVersion: "13.0.1.1071",
+      },
+      {
+        id: NOW_MS - 25 * 60 * 60 * 1000, // ~yesterday
+        filename: "beta.json",
+        uploadedAt: new Date(NOW_MS - 25 * 60 * 60 * 1000).toISOString(),
+        jobCount: 5,
+        sourceTb: null,
+        vbrVersion: null,
+      },
+    ];
+
+    it("does not render the Recent Scans section when the list is empty", () => {
+      render(<FileUpload onFileSelected={vi.fn()} />);
+      expect(
+        screen.queryByRole("region", { name: /recent scans/i }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/recent scans/i)).not.toBeInTheDocument();
+    });
+
+    it("renders the Recent Scans section when the list is non-empty", () => {
+      mockRecentScans = RECENT_SCANS;
+      render(<FileUpload onFileSelected={vi.fn()} />);
+      expect(
+        screen.getByRole("region", { name: /recent scans/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("renders one row per scan with filename, jobCount, sourceTb, and vbrVersion", () => {
+      mockRecentScans = RECENT_SCANS;
+      render(<FileUpload onFileSelected={vi.fn()} />);
+
+      expect(screen.getByText("alpha.json")).toBeInTheDocument();
+      expect(screen.getByText("beta.json")).toBeInTheDocument();
+      // jobCount
+      expect(screen.getByText(/30 jobs/i)).toBeInTheDocument();
+      expect(screen.getByText(/5 jobs/i)).toBeInTheDocument();
+      // vbrVersion (may be split across nodes — use a regex that tolerates that)
+      expect(screen.getByText(/13\.0\.1\.1071/)).toBeInTheDocument();
+    });
+
+    it("renders an em-dash placeholder when sourceTb or vbrVersion is null", () => {
+      mockRecentScans = [RECENT_SCANS[1]!];
+      render(<FileUpload onFileSelected={vi.fn()} />);
+      // beta.json has both sourceTb and vbrVersion null → at least one "—"
+      expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+    });
+
+    it("invokes onLoadRecent with the scan id when Load is clicked", () => {
+      const onLoadRecent = vi.fn();
+      mockRecentScans = [RECENT_SCANS[0]!];
+      render(
+        <FileUpload onFileSelected={vi.fn()} onLoadRecent={onLoadRecent} />,
+      );
+      const loadBtn = screen.getByRole("button", { name: /load scan alpha/i });
+      fireEvent.click(loadBtn);
+      expect(onLoadRecent).toHaveBeenCalledWith(RECENT_SCANS[0]!.id);
+    });
+
+    it("invokes removeScan with the scan id when Delete is clicked", () => {
+      mockRecentScans = [RECENT_SCANS[0]!];
+      render(<FileUpload onFileSelected={vi.fn()} onLoadRecent={vi.fn()} />);
+      const deleteBtn = screen.getByRole("button", {
+        name: /delete scan alpha/i,
+      });
+      fireEvent.click(deleteBtn);
+      expect(mockRemoveScan).toHaveBeenCalledWith(RECENT_SCANS[0]!.id);
+    });
+
+    it("disables the Load button when onLoadRecent is not provided", () => {
+      mockRecentScans = [RECENT_SCANS[0]!];
+      render(<FileUpload onFileSelected={vi.fn()} />);
+      const loadBtn = screen.getByRole("button", { name: /load scan alpha/i });
+      expect(loadBtn).toBeDisabled();
+    });
+
+    it("uses motion-safe classes on the section animation", () => {
+      mockRecentScans = RECENT_SCANS;
+      render(<FileUpload onFileSelected={vi.fn()} />);
+      const region = screen.getByRole("region", { name: /recent scans/i });
+      expect(region.className).toMatch(/motion-safe:/);
+    });
+
+    it("does not stop propagation onto the dropzone when a row button is clicked", () => {
+      const onFileSelected = vi.fn();
+      mockRecentScans = [RECENT_SCANS[0]!];
+      render(
+        <FileUpload onFileSelected={onFileSelected} onLoadRecent={vi.fn()} />,
+      );
+      const loadBtn = screen.getByRole("button", { name: /load scan alpha/i });
+      fireEvent.click(loadBtn);
+      // Dropzone click handler must not have triggered a file picker via
+      // bubbling — onFileSelected only fires from drop or input change.
+      expect(onFileSelected).not.toHaveBeenCalled();
     });
   });
 });
