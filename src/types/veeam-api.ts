@@ -72,6 +72,24 @@ export interface TransactionCosts {
   archiveTierTransactions?: MonthlyTransactions;
 }
 
+export interface RestorePoint {
+  /** Observed: "performanceTier". Capacity/archive tier values may appear in future responses. */
+  pointType: string;
+  /** 1 = newest daily; higher = older. Yearly retention has been seen as high as 1099. */
+  day: number;
+  /** TB. The API returns this already-converted; do not divide by 1024. */
+  backupCapacity: number;
+  isFull: boolean;
+  isGFS: boolean;
+  isImmutable: boolean;
+  /**
+   * Space-separated tier tokens. Each token starts with D|W|M|Y followed by an
+   * index, e.g. "D5", "W2", "M12", "Y3". Multi-tier points concatenate tokens
+   * with a space, e.g. "M12 Y1".
+   */
+  flags: string;
+}
+
 export interface VmAgentResponseData {
   totalStorageTB: number;
   proxyCompute: ComputeNode;
@@ -79,6 +97,14 @@ export interface VmAgentResponseData {
   transactions: TransactionCosts;
   performanceTierImmutabilityTaxGB: number;
   capacityTierImmutabilityTaxGB: number;
+  restorePoints?: RestorePoint[];
+  /** Other fields the API returns; typed for completeness, not currently consumed. */
+  id?: number | string;
+  name?: string;
+  siteId?: number | string;
+  siteName?: string;
+  indexResults?: unknown;
+  workspaceGB?: number;
 }
 
 export interface VmAgentResponse {
