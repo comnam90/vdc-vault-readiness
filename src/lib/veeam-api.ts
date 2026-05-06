@@ -1,7 +1,17 @@
 import type { CalculatorSummary } from "@/types/calculator";
 import type { VmAgentRequest, VmAgentResponse } from "@/types/veeam-api";
+import {
+  DEFAULT_SETTINGS,
+  type GlobalSettings,
+  type TargetCloud,
+} from "@/types/settings";
 
 const API_URL = "/api/veeam-proxy";
+
+const CLOUD_TO_BLOCK_GENERATION_DAYS: Record<TargetCloud, number> = {
+  Azure: 10,
+  AWS: 30,
+};
 
 function vbrMajorVersion(version: string): number {
   return parseInt(version.split(".")[0], 10);
@@ -12,6 +22,7 @@ export function buildVmAgentRequest(
   jobCount: number,
   vbrVersion: string,
   productVersionOverride?: number,
+  settings: GlobalSettings = DEFAULT_SETTINGS,
 ): VmAgentRequest {
   const weeklies = summary.gfsWeekly ?? 0;
   const monthlies = summary.gfsMonthly ?? 0;
@@ -24,9 +35,9 @@ export function buildVmAgentRequest(
     ChangeRate: summary.weightedAvgChangeRate ?? 0,
     Reduction: 50,
     backupWindowHours: 8,
-    GrowthRatePercent: 5,
-    GrowthRateScopeYears: 1,
-    blockGenerationDays: 10,
+    GrowthRatePercent: settings.growthPercent,
+    GrowthRateScopeYears: settings.growthYears,
+    blockGenerationDays: CLOUD_TO_BLOCK_GENERATION_DAYS[settings.targetCloud],
     retention: {
       days: shortTermDays,
       gfs: {
@@ -69,12 +80,14 @@ export async function callVmAgentApi(
   jobCount: number,
   vbrVersion: string,
   productVersionOverride?: number,
+  settings: GlobalSettings = DEFAULT_SETTINGS,
 ): Promise<VmAgentResponse> {
   const payload = buildVmAgentRequest(
     summary,
     jobCount,
     vbrVersion,
     productVersionOverride,
+    settings,
   );
   const response = await fetch(API_URL, {
     method: "POST",

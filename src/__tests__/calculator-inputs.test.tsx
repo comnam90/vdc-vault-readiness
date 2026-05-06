@@ -460,4 +460,58 @@ describe("CalculatorInputs", () => {
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(4);
     });
   });
+
+  describe("active settings indicators", () => {
+    it("renders below the metric grid (after Extended Retention)", () => {
+      render(<CalculatorInputs data={mockData} />);
+
+      const indicators = screen.getByTestId("settings-indicators");
+      const extendedRetentionLabel = screen.getByText(/extended retention/i);
+
+      // Settings indicators must follow the Extended Retention metric in DOM order.
+      const relation =
+        extendedRetentionLabel.compareDocumentPosition(indicators);
+      expect(relation & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it("shows the Target badge by default and hides growth + cap badges", async () => {
+      const { __resetSettingsStoreForTests } =
+        await import("@/hooks/use-settings");
+      window.localStorage.clear();
+      __resetSettingsStoreForTests();
+
+      render(<CalculatorInputs data={mockData} />);
+
+      const indicators = screen.getByTestId("settings-indicators");
+      expect(indicators).toHaveTextContent(/target: azure/i);
+      expect(indicators).not.toHaveTextContent(/growth:/i);
+      expect(indicators).not.toHaveTextContent(/retention cap:/i);
+    });
+
+    it("renders growth and retention-cap badges when those overrides are active", async () => {
+      const { STORAGE_KEY, __resetSettingsStoreForTests } =
+        await import("@/hooks/use-settings");
+      window.localStorage.clear();
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          targetCloud: "AWS",
+          growthPercent: 10,
+          growthYears: 3,
+          limitCalculationYears: 1,
+        }),
+      );
+      __resetSettingsStoreForTests();
+
+      render(<CalculatorInputs data={mockData} />);
+
+      const indicators = screen.getByTestId("settings-indicators");
+      expect(indicators).toHaveTextContent(/target: aws/i);
+      expect(indicators).toHaveTextContent(/growth: 10% \(3y\)/i);
+      expect(indicators).toHaveTextContent(/retention cap: 1y/i);
+
+      window.localStorage.clear();
+      __resetSettingsStoreForTests();
+    });
+  });
 });
