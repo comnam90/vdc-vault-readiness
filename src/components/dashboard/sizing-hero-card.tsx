@@ -53,7 +53,7 @@ export function SizingHeroCard({
     storageSavingsTB > 0;
 
   return (
-    <Card className="border-t-primary bg-card-tint-success border-t-4 shadow-md">
+    <Card className="border-t-primary border-t-4">
       <CardContent className="space-y-5 pt-6">
         <div className="space-y-1">
           <p className="text-muted-foreground text-xs font-semibold tracking-[0.18em] uppercase">
@@ -61,7 +61,7 @@ export function SizingHeroCard({
           </p>
           <p
             aria-label={`Total storage required: ${formatTB(sizing.totalStorageTB)}`}
-            className="text-primary motion-safe:animate-celebrate-in font-mono text-5xl tracking-tight tabular-nums sm:text-6xl lg:text-7xl"
+            className="text-foreground motion-safe:animate-celebrate-in font-mono text-5xl tracking-tight tabular-nums sm:text-6xl lg:text-7xl"
           >
             {formatTB(sizing.totalStorageTB)}
           </p>
