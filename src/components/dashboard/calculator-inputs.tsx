@@ -237,7 +237,7 @@ export function CalculatorInputs({
                   rows={summary.retentionDistribution.map((r) => ({
                     key: String(r.days),
                     left: `${r.count} job${r.count !== 1 ? "s" : ""}`,
-                    right: `${r.days} days`,
+                    right: formatDays(r.days),
                   }))}
                 />
               </div>
