@@ -49,7 +49,13 @@ function openDb(): Promise<IDBDatabase> {
     };
     request.onsuccess = () => {
       const db = request.result;
-      db.onversionchange = () => db.close();
+      db.onversionchange = () => {
+        // Another tab is upgrading the schema. Close this connection so the
+        // upgrade isn't blocked, and clear the cached promise so the next
+        // initDB() call opens a fresh connection at the new version.
+        db.close();
+        dbPromise = null;
+      };
       resolve(db);
     };
     request.onerror = () => reject(request.error);
@@ -89,17 +95,7 @@ export async function saveScan(scan: Omit<StoredScan, "id">): Promise<number> {
     return -1;
   }
   const db = await initDB();
-
-  // Find a unique id derived from Date.now(). Done in a separate read txn so we
-  // can `await` between getKey() probes without auto-committing the write txn.
-  const readTx = db.transaction(STORE_NAME, "readonly");
-  const readStore = readTx.objectStore(STORE_NAME);
-  let id = Date.now();
-  while ((await promisifyRequest(readStore.getKey(id))) !== undefined) {
-    id += 1;
-  }
-  await txComplete(readTx);
-
+  const id = Date.now();
   const record: StoredScan = { ...scan, id };
 
   const writeTx = db.transaction(STORE_NAME, "readwrite");
@@ -108,38 +104,44 @@ export async function saveScan(scan: Omit<StoredScan, "id">): Promise<number> {
   // Chain requests via onsuccess so the txn doesn't auto-commit between them.
   // After add() resolves, getAllKeys() to compute eviction list, then delete()
   // each candidate. All within the same txn microtask.
-  await new Promise<void>((resolve, reject) => {
-    const addReq = writeStore.add(record);
-    addReq.onerror = () => reject(addReq.error);
-    addReq.onsuccess = () => {
-      const keysReq = writeStore.getAllKeys();
-      keysReq.onerror = () => reject(keysReq.error);
-      keysReq.onsuccess = () => {
-        const ids = (keysReq.result as IDBValidKey[]).map((k) => Number(k));
-        const toEvict = selectIdsToEvict(ids, MAX_SCANS);
-        if (toEvict.length === 0) {
-          resolve();
-          return;
-        }
-        let remaining = toEvict.length;
-        for (const evictId of toEvict) {
-          const delReq = writeStore.delete(evictId);
-          delReq.onerror = () => reject(delReq.error);
-          delReq.onsuccess = () => {
-            remaining -= 1;
-            if (remaining === 0) resolve();
-          };
-        }
-      };
-    };
-  });
-
   try {
+    await new Promise<void>((resolve, reject) => {
+      const addReq = writeStore.add(record);
+      addReq.onerror = () => reject(addReq.error);
+      addReq.onsuccess = () => {
+        const keysReq = writeStore.getAllKeys();
+        keysReq.onerror = () => reject(keysReq.error);
+        keysReq.onsuccess = () => {
+          const ids = (keysReq.result as IDBValidKey[]).map((k) => Number(k));
+          const toEvict = selectIdsToEvict(ids, MAX_SCANS);
+          if (toEvict.length === 0) {
+            resolve();
+            return;
+          }
+          let remaining = toEvict.length;
+          for (const evictId of toEvict) {
+            const delReq = writeStore.delete(evictId);
+            delReq.onerror = () => reject(delReq.error);
+            delReq.onsuccess = () => {
+              remaining -= 1;
+              if (remaining === 0) resolve();
+            };
+          }
+        };
+      };
+    });
     await txComplete(writeTx);
   } catch (err) {
-    if (err instanceof DOMException && err.name === "QuotaExceededError") {
-      console.warn("IndexedDB quota exceeded; scan not saved.", err);
-      return -1;
+    if (err instanceof DOMException) {
+      if (err.name === "QuotaExceededError") {
+        console.warn("IndexedDB quota exceeded; scan not saved.", err);
+        return -1;
+      }
+      if (err.name === "ConstraintError") {
+        // Same-millisecond id collision. Caller can retry on the next save.
+        console.warn("IndexedDB id collision; scan not saved.", err);
+        return -1;
+      }
     }
     throw err;
   }
@@ -182,7 +184,13 @@ export async function loadScanPayload(id: number): Promise<StoredScan | null> {
     warnUnavailableOnce();
     return null;
   }
-  const db = await initDB();
+  let db: IDBDatabase;
+  try {
+    db = await initDB();
+  } catch (err) {
+    console.warn("Failed to open IndexedDB:", err);
+    return null;
+  }
   const tx = db.transaction(STORE_NAME, "readonly");
   const store = tx.objectStore(STORE_NAME);
   const result = await promisifyRequest<StoredScan | undefined>(store.get(id));

@@ -10,15 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { loadScanPayload, saveScan } from "@/lib/indexed-db";
 import { calculateTotalSourceDataTB } from "@/lib/calculator-aggregator";
-
-function readFileAsText(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.readAsText(file);
-  });
-}
+import { readFileAsText } from "@/lib/file-reader";
 
 function App() {
   const {
@@ -57,7 +49,13 @@ function App() {
 
   const handleLoadRecent = useCallback(
     async (id: number) => {
-      const scan = await loadScanPayload(id);
+      let scan;
+      try {
+        scan = await loadScanPayload(id);
+      } catch (err) {
+        console.warn("Failed to load recent scan:", err);
+        return;
+      }
       if (!scan) return;
       pendingScanRef.current = null;
       const synthetic = new File([scan.rawJson], scan.filename, {

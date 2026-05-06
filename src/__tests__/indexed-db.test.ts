@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IDBFactory } from "fake-indexeddb";
 import {
   DB_NAME,
@@ -27,14 +27,23 @@ function makeScan(
   };
 }
 
+let originalDateNow: () => number;
+
 beforeEach(() => {
   // fresh in-memory DB per test
   globalThis.indexedDB = new IDBFactory();
   __resetForTests();
+
+  // Make Date.now() monotonic so back-to-back saveScan calls don't collide
+  // on the same millisecond (which is now legitimate accepted-loss behavior).
+  originalDateNow = Date.now;
+  let counter = 1_700_000_000_000;
+  Date.now = () => counter++;
 });
 
 afterEach(() => {
   __resetForTests();
+  Date.now = originalDateNow;
 });
 
 describe("indexed-db wrapper", () => {
@@ -116,27 +125,27 @@ describe("indexed-db wrapper", () => {
     ]);
   });
 
-  it("avoids id collisions when two saves land in the same millisecond", async () => {
-    // Force Date.now() to return a fixed timestamp for two consecutive calls.
-    const fixed = 1_700_000_000_000;
-    const originalNow = Date.now;
-    let calls = 0;
-    Date.now = () => {
-      calls += 1;
-      // first two calls return same timestamp; subsequent calls advance normally
-      return calls <= 2 ? fixed : originalNow();
-    };
+  it("drops the second save and warns on same-millisecond id collision", async () => {
+    // Override the per-test monotonic Date.now: pin it to a fixed value so
+    // both saveScan calls produce the same id and collide.
+    const fixed = 1_900_000_000_000;
+    Date.now = () => fixed;
+    const consoleSpy = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
     try {
       const id1 = await saveScan(makeScan({ filename: "a.json" }));
       const id2 = await saveScan(makeScan({ filename: "b.json" }));
-      expect(id1).not.toBe(id2);
+      expect(id1).toBe(fixed);
+      expect(id2).toBe(-1);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("collision"),
+        expect.anything(),
+      );
       const summaries = await getRecentScans();
-      expect(summaries.map((s) => s.filename).sort()).toEqual([
-        "a.json",
-        "b.json",
-      ]);
+      expect(summaries.map((s) => s.filename)).toEqual(["a.json"]);
     } finally {
-      Date.now = originalNow;
+      consoleSpy.mockRestore();
     }
   });
 });

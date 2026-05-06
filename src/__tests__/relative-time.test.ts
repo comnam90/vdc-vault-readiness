@@ -61,6 +61,11 @@ describe("formatRelativeTime", () => {
     expect(formatRelativeTime(isoMinusMs(20 * DAY), NOW)).toBe("2 weeks ago");
   });
 
+  it("returns 'just now' when the timestamp is in the future (clock skew)", () => {
+    const future = new Date(NOW.getTime() + 5 * 60 * 1000).toISOString();
+    expect(formatRelativeTime(future, NOW)).toBe("just now");
+  });
+
   it("falls back to a short date format for distant timestamps", () => {
     const distant = new Date("2025-08-15T10:00:00Z").toISOString();
     const result = formatRelativeTime(distant, NOW);

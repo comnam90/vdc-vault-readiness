@@ -16,6 +16,13 @@ export function formatRelativeTime(
 ): string {
   const then = new Date(iso);
   const elapsed = now.getTime() - then.getTime();
+
+  // Future timestamps (clock skew, bad data) shouldn't render as
+  // "-1 days ago". Treat anything in the future as "just now".
+  if (elapsed < 0) {
+    return "just now";
+  }
+
   const dayDelta = calendarDayDelta(now, then);
 
   if (dayDelta === 0) {
