@@ -12,6 +12,8 @@ const defaultSummary: CalculatorSummary = {
   gfsWeekly: 4,
   gfsMonthly: 12,
   gfsYearly: 7,
+  sourceDataBreakdown: [],
+  gfsDistribution: [],
 };
 
 const defaultProps = {

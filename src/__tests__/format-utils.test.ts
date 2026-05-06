@@ -7,6 +7,7 @@ import {
   formatTB,
   formatTooltipTB,
   formatGFS,
+  formatShortGfs,
 } from "@/lib/format-utils";
 
 describe("formatSize", () => {
@@ -170,5 +171,41 @@ describe("formatCompressionRatio", () => {
 
   it("handles fractional ratios", () => {
     expect(formatCompressionRatio(1000, 750)).toBe("1.3x");
+  });
+});
+
+describe("formatShortGfs", () => {
+  it("formats all three tiers in W | M | Y order", () => {
+    expect(formatShortGfs("Weekly:4,Monthly:12,Yearly:7")).toBe(
+      "4W | 12M | 7Y",
+    );
+  });
+
+  it("renders single tier without separators", () => {
+    expect(formatShortGfs("Monthly:12")).toBe("12M");
+  });
+
+  it("skips missing tiers", () => {
+    expect(formatShortGfs("Weekly:4,Yearly:1")).toBe("4W | 1Y");
+  });
+
+  it("returns empty string for empty input", () => {
+    expect(formatShortGfs("")).toBe("");
+  });
+
+  it("returns empty string for unparseable input", () => {
+    expect(formatShortGfs("garbage")).toBe("");
+  });
+
+  it("tolerates whitespace around tokens and pairs", () => {
+    expect(formatShortGfs(" Weekly:4 , Monthly:12 ")).toBe("4W | 12M");
+  });
+
+  it("ignores tiers with non-numeric values", () => {
+    expect(formatShortGfs("Weekly:abc,Monthly:6")).toBe("6M");
+  });
+
+  it("preserves W | M | Y order regardless of input order", () => {
+    expect(formatShortGfs("Yearly:1,Weekly:4")).toBe("4W | 1Y");
   });
 });
