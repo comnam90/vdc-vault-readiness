@@ -4,6 +4,7 @@ import type { ValidationResult } from "@/types/validation";
 import { analyzeHealthcheck } from "@/lib/pipeline";
 import { PIPELINE_STEPS } from "@/lib/constants";
 import { tick } from "@/lib/delay";
+import { readFileAsText } from "@/lib/file-reader";
 
 export type AnalysisStatus = "idle" | "processing" | "success" | "error";
 
@@ -36,15 +37,6 @@ function errorState(error: string): AnalysisState {
     completedSteps: [],
     currentStep: null,
   };
-}
-
-function readFileAsText(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("Failed to read file."));
-    reader.readAsText(file);
-  });
 }
 
 interface UseAnalysisOptions {
