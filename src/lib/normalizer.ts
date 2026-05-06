@@ -1,4 +1,5 @@
 import type { NormalizerInput } from "@/types/healthcheck";
+import { EXCLUDED_JOB_TYPES } from "@/lib/constants";
 import type {
   DataError,
   NormalizedDataset,
@@ -43,6 +44,10 @@ export function normalizeHealthcheck(
       dataErrors.push(
         buildError("jobInfo", rowIndex, "JobType", "Missing required JobType"),
       );
+      return [];
+    }
+
+    if (EXCLUDED_JOB_TYPES.has(jobType)) {
       return [];
     }
 

@@ -43,6 +43,61 @@ describe("normalizeHealthcheck", () => {
     expect(result.securitySummary[0].ConfigBackupEncryptionEnabled).toBe(false);
   });
 
+  it("excludes Replica job types from normalized output", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Rep1",
+          JobType: "Replica",
+          Encrypted: "True",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "Job B",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(1);
+    expect(result.jobInfo[0].JobName).toBe("Job B");
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
+  it("excludes all Replica jobs when multiple Replica jobs exist", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Rep1",
+          JobType: "Replica",
+          Encrypted: "True",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "Rep2",
+          JobType: "Replica",
+          Encrypted: "False",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
   it("drops jobs missing required fields and logs data errors", () => {
     const raw: ParsedHealthcheckSections = {
       backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],

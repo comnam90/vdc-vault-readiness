@@ -1,16 +1,18 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-16
-**Commit:** b5fe914
-**Branch:** feature/experimental-banner
+**Generated:** 2026-02-16 (refreshed 2026-05-06)
+**Latest commit referenced:** 1cf45ef
+**Active branch:** feature/phase-4-veeam-api
+
+> Note: `CLAUDE.md` is a symlink to this file — Claude Code, OpenCode, and other agents all read these instructions.
 
 ## OVERVIEW
 
-Client-side SPA validating Veeam VBR environments against VDC Vault requirements. Parses Healthcheck JSON locally, runs pre-flight checks. React 19 + Vite 7.3 + TypeScript 5.9 + Tailwind 4.1 + shadcn 3.8.
+Client-side SPA validating Veeam VBR environments against VDC Vault requirements. Parses Healthcheck JSON locally, runs pre-flight checks. React 19 + Vite 7.3 + TypeScript 5.9 + Tailwind 4.1 + shadcn 3.8. The only outbound network call is an opt-in Veeam sizing-calculator request, proxied via a Cloudflare Pages Function.
 
-## STATUS: MVP COMPLETE + SOBR ANALYSIS
+## STATUS: MVP + SOBR + REPOSITORIES + VEEAM API
 
-Full pipeline operational: JSON upload → normalize → validate → dashboard. 555 tests across 28 test files. 11 validation rules implemented (7 original + 4 SOBR). Motion/animation system with `prefers-reduced-motion` support. Vault sizing calculator. SOBR analysis validates capacity tier encryption, immutability, archive tier edition, and capacity tier residency.
+Full pipeline operational: JSON upload → normalize → validate → dashboard. Comprehensive test suite (~41 test files in `src/__tests__/`). 11 validation rules in `src/lib/validator.ts` (7 core + 4 SOBR). Motion/animation system with `prefers-reduced-motion` support. Vault sizing calculator with optional Veeam API integration gated behind a privacy-consent dialog. Repositories tab with size and immutability charts. SOBR analysis covers capacity tier encryption, immutability, archive tier edition, and capacity tier residency.
 
 ## STRUCTURE
 
@@ -33,7 +35,11 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
 ├── .husky/                       # pre-commit (lint-staged) + commit-msg hooks
 ├── .github/workflows/
 │   ├── ci.yml                    # Lint + test on push/PR (Node 20)
+│   ├── publish.yml               # Cloudflare Pages publish workflow
 │   └── release.yml               # Release Please auto-versioning
+├── functions/
+│   └── api/
+│       └── veeam-proxy.ts        # Cloudflare Pages Function — proxies POST to calculator.veeam.com
 └── src/
     ├── main.tsx                  # React 19 entry (StrictMode)
     ├── App.tsx                   # State-machine UI (idle/processing/success/error)
@@ -48,35 +54,39 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
     ├── hooks/
     │   └── use-analysis.ts       # State machine hook w/ race condition guard + step progression
     ├── components/
-    │   ├── ui/                   # 10 shadcn primitives (card, button, badge, sheet, etc.)
-    │   └── dashboard/            # 10 components (incl. experimental-banner.tsx) → see src/components/dashboard/AGENTS.md
-    └── __tests__/                # 28 test files → see src/__tests__/AGENTS.md
+    │   ├── ui/                   # shadcn primitives (card, button, badge, sheet, dialog, etc.)
+    │   └── dashboard/            # ~21 components → see src/components/dashboard/AGENTS.md
+    └── __tests__/                # ~41 test files → see src/__tests__/AGENTS.md
 ```
 
 ## WHERE TO LOOK
 
-| Need               | Location                                      | Notes                                                                                                                                                                                      |
-| ------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Tech stack         | PRD.md §2                                     | Strict versions: Vite 7.3.1, TS 5.9.3, Tailwind 4.1.18, shadcn 3.8.3                                                                                                                       |
-| Validation rules   | PRD.md §4                                     | 11 rules: VBR version, global encryption, job encryption, AWS, agents, license, retention + 4 SOBR rules                                                                                   |
-| UI spec            | PRD.md §5                                     | Dashboard + Job Explorer table + Sizing tab                                                                                                                                                |
-| Vault limitations  | VDCVAULT-CHEETSHEET.md                        | Red flags, edition diffs, workload matrix                                                                                                                                                  |
-| Architecture       | ARCHITECTURE.md                               | Data flow, component hierarchy, design decisions                                                                                                                                           |
-| Motion/animation   | DESIGN-SYSTEM.md                              | Tokens (§4), keyframes, `motion-safe:` prefix, `prefers-reduced-motion`                                                                                                                    |
-| Contributing       | CONTRIBUTING.md                               | Branch, commit, PR, testing, code standards (authoritative for process)                                                                                                                    |
-| Input format       | veeam-healthcheck.example.json                | Headers/Rows → needs `zipSection()`                                                                                                                                                        |
-| Domain types       | src/types/                                    | healthcheck.ts (raw), domain.ts (normalized), validation.ts (results), calculator.ts (sizing), enriched-job.ts (join)                                                                      |
-| Data pipeline      | src/lib/AGENTS.md                             | Parser, normalizer, validator, calculator, enrichment, formatters, pipeline orchestrator                                                                                                   |
-| State management   | src/hooks/use-analysis.ts                     | State machine hook with race condition guard + visual step progression                                                                                                                     |
-| Dashboard UI       | src/components/dashboard/                     | 10 components: experimental-banner, file-upload, dashboard-view, blockers-list, job-table, job-detail-sheet, success-celebration, checklist-loader, passing-checks-list, calculator-inputs |
-| Sizing calculator  | src/lib/calculator-aggregator.ts              | Aggregates source TB, change rates, retention, GFS from job data                                                                                                                           |
-| Validation helpers | src/lib/validation-selectors.ts               | getBlockerValidations(), getPassingValidations(), hasBlockers(), getBlockerCount()                                                                                                         |
-| Job detail sheet   | src/components/dashboard/job-detail-sheet.tsx | Slide-out Sheet: storage, protection, config, session sections for EnrichedJob                                                                                                             |
-| Job enrichment     | src/lib/enrich-jobs.ts                        | enrichJobs() joins SafeJob[] with SafeJobSession[] via Map lookup                                                                                                                          |
-| Formatting         | src/lib/format-utils.ts                       | formatSize, formatPercent, formatDuration, formatTB, formatCompressionRatio                                                                                                                |
-| Path aliases       | tsconfig.json                                 | `@/*` → `./src/*`                                                                                                                                                                          |
-| Theme/motion       | src/index.css                                 | oklch colors, Veeam brand palette, motion duration/easing tokens, custom keyframes                                                                                                         |
-| Test patterns      | src/**tests**/AGENTS.md                       | Fixtures, helpers, mocking, a11y testing conventions                                                                                                                                       |
+| Need               | Location                                            | Notes                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------ | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tech stack         | PRD.md §2                                           | Strict versions: Vite 7.3.1, TS 5.9.3, Tailwind 4.1.18, shadcn 3.8.3                                                                                                                                                                                                                                                                                                                                  |
+| Validation rules   | PRD.md §4                                           | 11 rules: VBR version, global encryption, job encryption, AWS, agents, license, retention + 4 SOBR rules                                                                                                                                                                                                                                                                                              |
+| UI spec            | PRD.md §5                                           | Dashboard + Job Explorer table + Sizing tab                                                                                                                                                                                                                                                                                                                                                           |
+| Vault limitations  | VDCVAULT-CHEETSHEET.md                              | Red flags, edition diffs, workload matrix                                                                                                                                                                                                                                                                                                                                                             |
+| Architecture       | ARCHITECTURE.md                                     | Data flow, component hierarchy, design decisions                                                                                                                                                                                                                                                                                                                                                      |
+| Motion/animation   | DESIGN-SYSTEM.md                                    | Tokens (§4), keyframes, `motion-safe:` prefix, `prefers-reduced-motion`                                                                                                                                                                                                                                                                                                                               |
+| Contributing       | CONTRIBUTING.md                                     | Branch, commit, PR, testing, code standards (authoritative for process)                                                                                                                                                                                                                                                                                                                               |
+| Input format       | veeam-healthcheck.example.json                      | Headers/Rows → needs `zipSection()`                                                                                                                                                                                                                                                                                                                                                                   |
+| Domain types       | src/types/                                          | healthcheck.ts (raw), domain.ts (normalized), validation.ts (results), calculator.ts (sizing), enriched-job.ts (join)                                                                                                                                                                                                                                                                                 |
+| Data pipeline      | src/lib/AGENTS.md                                   | Parser, normalizer, validator, calculator, enrichment, formatters, pipeline orchestrator                                                                                                                                                                                                                                                                                                              |
+| State management   | src/hooks/use-analysis.ts                           | State machine hook with race condition guard + visual step progression                                                                                                                                                                                                                                                                                                                                |
+| Dashboard UI       | src/components/dashboard/                           | Includes experimental-banner, file-upload, dashboard-view, blockers-list, job-table, job-detail-sheet, success-celebration, checklist-loader, passing-checks-list, calculator-inputs, calculator-consent-dialog, sizing-results, jobs-charts, repositories-tab, repositories-table, repo-detail-sheet, repo-size-chart, repo-immutability-chart, sobr-detail-sheet, site-footer, detail-sheet-helpers |
+| Sizing calculator  | src/lib/calculator-aggregator.ts                    | Aggregates source TB, change rates, retention, GFS from job data                                                                                                                                                                                                                                                                                                                                      |
+| Veeam sizing API   | src/lib/veeam-api.ts + functions/api/veeam-proxy.ts | Client calls `/api/veeam-proxy`; the Cloudflare Pages Function forwards to `calculator.veeam.com/vse/api/VmAgent`. Gated by calculator-consent-dialog                                                                                                                                                                                                                                                 |
+| Repository charts  | src/lib/repo-aggregator.ts + chart-selectors.ts     | Aggregations for repositories tab and recharts visualizations                                                                                                                                                                                                                                                                                                                                         |
+| Validation helpers | src/lib/validation-selectors.ts                     | getBlockerValidations(), getPassingValidations(), hasBlockers(), getBlockerCount()                                                                                                                                                                                                                                                                                                                    |
+| Version comparison | src/lib/version-compare.ts                          | Parses and compares VBR version strings (e.g. "12.1.0.123")                                                                                                                                                                                                                                                                                                                                           |
+| Constants          | src/lib/constants.ts                                | Shared constants (thresholds, defaults)                                                                                                                                                                                                                                                                                                                                                               |
+| Job detail sheet   | src/components/dashboard/job-detail-sheet.tsx       | Slide-out Sheet: storage, protection, config, session sections for EnrichedJob                                                                                                                                                                                                                                                                                                                        |
+| Job enrichment     | src/lib/enrich-jobs.ts                              | enrichJobs() joins SafeJob[] with SafeJobSession[] via Map lookup                                                                                                                                                                                                                                                                                                                                     |
+| Formatting         | src/lib/format-utils.ts                             | formatSize, formatPercent, formatDuration, formatTB, formatCompressionRatio, formatGFS                                                                                                                                                                                                                                                                                                                |
+| Path aliases       | tsconfig.json                                       | `@/*` → `./src/*`                                                                                                                                                                                                                                                                                                                                                                                     |
+| Theme/motion       | src/index.css                                       | oklch colors, Veeam brand palette, motion duration/easing tokens, custom keyframes                                                                                                                                                                                                                                                                                                                    |
+| Test patterns      | src/**tests**/AGENTS.md                             | Fixtures, helpers, mocking, a11y testing conventions                                                                                                                                                                                                                                                                                                                                                  |
 
 ## INPUT DATA FORMAT
 
@@ -110,30 +120,31 @@ Must normalize to: `[{ "Name": "Job A", "Encrypted": "False" }]`
 
 ## ANTI-PATTERNS (FORBIDDEN)
 
-| Pattern                       | Reason                                                   |
-| ----------------------------- | -------------------------------------------------------- |
-| `fs`, `path`, `process`       | No Node.js runtime                                       |
-| `axios`, external `fetch`     | No backend calls                                         |
-| `as any`, `@ts-ignore`        | Strict TypeScript                                        |
-| `@ts-expect-error`            | Same as @ts-ignore                                       |
-| `// eslint-disable`           | Fix the lint error                                       |
-| Empty `catch(e) {}`           | Handle errors                                            |
-| Delete failing tests          | Fix them                                                 |
-| Relative imports across dirs  | Use `@/` aliases                                         |
-| Multiple components per file  | SRP — one component/file                                 |
-| Upgrading locked dependencies | Explicit approval required                               |
-| Implementing from memory      | Verify via Context7/web for React 19, Vite 7, Tailwind 4 |
+| Pattern                       | Reason                                                                                    |
+| ----------------------------- | ----------------------------------------------------------------------------------------- |
+| `fs`, `path`, `process`       | No Node.js runtime                                                                        |
+| `axios`, external `fetch`     | No backend calls — except via `src/lib/veeam-api.ts` → `/api/veeam-proxy` (consent-gated) |
+| `as any`, `@ts-ignore`        | Strict TypeScript                                                                         |
+| `@ts-expect-error`            | Same as @ts-ignore                                                                        |
+| `// eslint-disable`           | Fix the lint error                                                                        |
+| Empty `catch(e) {}`           | Handle errors                                                                             |
+| Delete failing tests          | Fix them                                                                                  |
+| Relative imports across dirs  | Use `@/` aliases                                                                          |
+| Multiple components per file  | SRP — one component/file                                                                  |
+| Upgrading locked dependencies | Explicit approval required                                                                |
+| Implementing from memory      | Verify via Context7/web for React 19, Vite 7, Tailwind 4                                  |
 
 ## CRITICAL CONSTRAINTS
 
-| Rule                  | Detail                                        |
-| --------------------- | --------------------------------------------- |
-| **VBR Version**       | Must be 12.1.2+ (parse "12.1.0.123" format)   |
-| **Encryption**        | Jobs AND config backup must be encrypted      |
-| **AWS Backup**        | Cannot target Vault directly (blocker)        |
-| **Agents**            | Need Gateway Server, no direct object storage |
-| **Community Edition** | SOBR limitations warning                      |
-| **Immutability**      | 30-day cannot be disabled                     |
+| Rule                  | Detail                                                                                                                                                               |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **VBR Version**       | Must be 12.1.2+ (parse "12.1.0.123" format)                                                                                                                          |
+| **Encryption**        | Jobs AND config backup must be encrypted                                                                                                                             |
+| **AWS Backup**        | Cannot target Vault directly (blocker)                                                                                                                               |
+| **Agents**            | Need Gateway Server, no direct object storage                                                                                                                        |
+| **Community Edition** | SOBR limitations warning                                                                                                                                             |
+| **Immutability**      | 30-day cannot be disabled                                                                                                                                            |
+| **Outbound calls**    | Only `/api/veeam-proxy` (sizing calculator), and only after explicit user consent via `calculator-consent-dialog`. No other `fetch`/`axios` permitted from app code. |
 
 ## VAULT RED FLAGS
 
@@ -191,8 +202,8 @@ Types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`. `feat:` → minor rel
 ## CI/CD
 
 - **ci.yml**: Lint + test on push to `main` and all PRs (Node 20, npm cache)
+- **publish.yml**: Cloudflare Pages publish workflow (deploys `dist/` + `functions/` to Pages)
 - **release.yml**: Release Please on push to `main` (auto-versions from Conventional Commits)
-- **Deploy**: Cloudflare Pages (not yet configured — `dist/` output)
 
 ## AGENT CAPABILITIES (MANDATORY PROTOCOLS)
 
@@ -202,9 +213,11 @@ Types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`. `feat:` → minor rel
 | --------------- | ------------------------------------------------- |
 | New feature     | `brainstorming`, `test-driven-development`        |
 | Bug fix         | `systematic-debugging`, `test-driven-development` |
-| UI work         | `frontend-ui-ux`, `web-design-guidelines`         |
+| UI work         | `frontend-design`, `web-design-guidelines`        |
 | Completing work | `verification-before-completion`                  |
-| Git operations  | `git-master`                                      |
+| Code review     | `code-reviewer`, `receiving-code-review`          |
+
+> Skill names above must match the registered skill list of the agent in use. If a skill is missing or renamed, fall back to the closest available equivalent rather than fabricating one.
 
 ### 2. External Verification (NEVER trust training data)
 
@@ -233,8 +246,10 @@ Types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`. `feat:` → minor rel
 
 ## NEXT STEPS
 
-1. ~~MVP pipeline + UI~~ ✅ Done (steps 1-18)
+1. ~~MVP pipeline + UI~~ ✅ Done
 2. ~~Motion/animation system~~ ✅ Done (checklist-loader, success-celebration, stagger, reduced-motion)
 3. ~~Vault sizing calculator~~ ✅ Done (calculator-aggregator, calculator-inputs, passing-checks-list)
-4. Polish: loading states, error recovery UX, mobile responsiveness
-5. Cloudflare Pages deployment configuration
+4. ~~Repositories tab + charts~~ ✅ Done (repo-aggregator, repositories-table, size/immutability charts)
+5. ~~Cloudflare Pages deployment~~ ✅ Done (publish.yml + functions/api/veeam-proxy.ts)
+6. Veeam sizing API integration (in progress on `feature/phase-4-veeam-api` — consent dialog landed, results card landing)
+7. Polish: loading states, error recovery UX, mobile responsiveness

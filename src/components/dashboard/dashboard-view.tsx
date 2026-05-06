@@ -180,11 +180,19 @@ export function DashboardView({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="jobs">Job Details</TabsTrigger>
-          <TabsTrigger value="sizing">Sizing</TabsTrigger>
-          <TabsTrigger value="repositories">Repositories</TabsTrigger>
+        <TabsList variant="line" className="w-full">
+          <TabsTrigger className="after:bg-primary" value="overview">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger className="after:bg-primary" value="jobs">
+            Job Details
+          </TabsTrigger>
+          <TabsTrigger className="after:bg-primary" value="sizing">
+            Sizing
+          </TabsTrigger>
+          <TabsTrigger className="after:bg-primary" value="repositories">
+            Repositories
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent
