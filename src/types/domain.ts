@@ -15,6 +15,7 @@ export interface SafeJob {
   SyntheticFullEnabled: boolean | null;
   BackupChainType: string | null;
   IndexingEnabled: boolean | null;
+  archiveOffloadDays?: number;
 }
 
 export interface SafeBackupServer {

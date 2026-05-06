@@ -6,6 +6,7 @@ import {
   formatDuration,
   formatCompressionRatio,
 } from "@/lib/format-utils";
+import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -106,8 +107,11 @@ function StorageSection({ job }: { job: EnrichedJob }) {
 }
 
 function ProtectionSection({ job }: { job: EnrichedJob }) {
+  const { settings } = useSettings();
   const gfs = parseGfsDetails(job.GfsDetails);
   const gfsEnabled = job.GfsEnabled;
+  const archiveTruncated =
+    job.archiveOffloadDays != null && !settings.ignoreArchiveTier;
 
   return (
     <div className="space-y-1">
@@ -143,6 +147,12 @@ function ProtectionSection({ job }: { job: EnrichedJob }) {
           <span className="text-muted-foreground">N/A</span>
         )}
       </PropertyRow>
+      {archiveTruncated && (
+        <p className="text-muted-foreground pt-1 text-xs">
+          GFS retention truncated to {job.archiveOffloadDays} days for sizing
+          math due to Archive Tier offload.
+        </p>
+      )}
     </div>
   );
 }

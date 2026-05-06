@@ -6,6 +6,7 @@ import type {
   SafeSobr,
 } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
+import { DEFAULT_SETTINGS, type GlobalSettings } from "@/types/settings";
 
 /**
  * Shared test fixtures — import into test files instead of re-declaring.
@@ -180,6 +181,12 @@ export function makeRepo(overrides: Partial<SafeRepo> = {}): SafeRepo {
     FreeSpacePercent: null,
     ...overrides,
   };
+}
+
+export function makeSettings(
+  overrides: Partial<GlobalSettings> = {},
+): GlobalSettings {
+  return { ...DEFAULT_SETTINGS, ...overrides };
 }
 
 export function makeSobr(overrides: Partial<SafeSobr> = {}): SafeSobr {

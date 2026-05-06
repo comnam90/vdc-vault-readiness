@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { CalculatorSummary } from "@/types/calculator";
 import { buildVmAgentRequest, callVmAgentApi } from "@/lib/veeam-api";
 import type { VmAgentResponse } from "@/types/veeam-api";
+import { makeSettings } from "./fixtures";
 
 const MOCK_SUMMARY: CalculatorSummary = {
   totalSourceDataTB: 5.0,
@@ -134,12 +135,7 @@ describe("buildVmAgentRequest with GlobalSettings", () => {
       10,
       "13.0.1.1071",
       undefined,
-      {
-        targetCloud: "Azure",
-        growthPercent: 0,
-        growthYears: 0,
-        limitCalculationYears: null,
-      },
+      makeSettings({ targetCloud: "Azure" }),
     );
     expect(req.blockGenerationDays).toBe(10);
   });
@@ -150,12 +146,7 @@ describe("buildVmAgentRequest with GlobalSettings", () => {
       10,
       "13.0.1.1071",
       undefined,
-      {
-        targetCloud: "AWS",
-        growthPercent: 0,
-        growthYears: 0,
-        limitCalculationYears: null,
-      },
+      makeSettings({ targetCloud: "AWS" }),
     );
     expect(req.blockGenerationDays).toBe(30);
   });
@@ -166,12 +157,7 @@ describe("buildVmAgentRequest with GlobalSettings", () => {
       10,
       "13.0.1.1071",
       undefined,
-      {
-        targetCloud: "Azure",
-        growthPercent: 12,
-        growthYears: 3,
-        limitCalculationYears: null,
-      },
+      makeSettings({ growthPercent: 12, growthYears: 3 }),
     );
     expect(req.GrowthRatePercent).toBe(12);
     expect(req.GrowthRateScopeYears).toBe(3);

@@ -246,6 +246,31 @@ function SettingsForm({ initial, onSave, onCancel }: SettingsFormProps) {
             </div>
           )}
         </section>
+
+        <Separator />
+
+        {/* Archive Tier Override */}
+        <section className="space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="ignore-archive" className="text-sm font-semibold">
+                Ignore Archive Tier
+              </Label>
+              <p className="text-muted-foreground text-xs">
+                Size all data for Vault, including data that would otherwise be
+                offloaded to a SOBR Archive Tier. Affects GFS retention only;
+                daily retention is never truncated by archive offload.
+              </p>
+            </div>
+            <Switch
+              id="ignore-archive"
+              checked={draft.ignoreArchiveTier}
+              onCheckedChange={(checked) =>
+                setDraft((prev) => ({ ...prev, ignoreArchiveTier: checked }))
+              }
+            />
+          </div>
+        </section>
       </div>
 
       <DialogFooter className="gap-2 sm:justify-between">

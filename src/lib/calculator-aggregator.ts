@@ -141,22 +141,6 @@ export function aggregateGfsMax(jobs: SafeJob[]): GfsResult {
   return result;
 }
 
-interface RetentionCaps {
-  yearly: number;
-  monthly: number;
-  weekly: number;
-  daily: number;
-}
-
-function capsForLimit(years: number): RetentionCaps {
-  return {
-    yearly: years,
-    monthly: years * 12,
-    weekly: years * 52,
-    daily: years * 365,
-  };
-}
-
 function serializeGfs(gfs: GfsResult): string | null {
   const parts: string[] = [];
   if (gfs.weekly != null) parts.push(`Weekly:${gfs.weekly}`);
@@ -165,22 +149,42 @@ function serializeGfs(gfs: GfsResult): string | null {
   return parts.length > 0 ? parts.join(",") : null;
 }
 
-function capJob(job: SafeJob, caps: RetentionCaps): SafeJob {
+function capJob(job: SafeJob, settings: GlobalSettings): SafeJob {
+  const globalCapDays =
+    settings.limitCalculationYears != null
+      ? settings.limitCalculationYears * 365
+      : Infinity;
+
+  const archiveCapDays =
+    job.archiveOffloadDays != null && !settings.ignoreArchiveTier
+      ? job.archiveOffloadDays
+      : Infinity;
+
+  const dailyCapDays = globalCapDays;
+  const gfsCapDays = Math.min(globalCapDays, archiveCapDays);
+
   const capped: SafeJob = { ...job };
 
-  if (job.RetainDays != null) {
-    capped.RetainDays = Math.min(job.RetainDays, caps.daily);
+  if (job.RetainDays != null && Number.isFinite(dailyCapDays)) {
+    capped.RetainDays = Math.min(job.RetainDays, dailyCapDays);
   }
 
   if (job.GfsDetails) {
     const parsed = parseGfsDetails(job.GfsDetails);
+    const yMax = Number.isFinite(gfsCapDays)
+      ? Math.floor(gfsCapDays / 365)
+      : Infinity;
+    const mMax = Number.isFinite(gfsCapDays)
+      ? Math.floor((gfsCapDays * 12) / 365)
+      : Infinity;
+    const wMax = Number.isFinite(gfsCapDays)
+      ? Math.floor((gfsCapDays * 52) / 365)
+      : Infinity;
+
     const cappedGfs: GfsResult = {
-      weekly:
-        parsed.weekly != null ? Math.min(parsed.weekly, caps.weekly) : null,
-      monthly:
-        parsed.monthly != null ? Math.min(parsed.monthly, caps.monthly) : null,
-      yearly:
-        parsed.yearly != null ? Math.min(parsed.yearly, caps.yearly) : null,
+      weekly: parsed.weekly != null ? Math.min(parsed.weekly, wMax) : null,
+      monthly: parsed.monthly != null ? Math.min(parsed.monthly, mMax) : null,
+      yearly: parsed.yearly != null ? Math.min(parsed.yearly, yMax) : null,
     };
     capped.GfsDetails = serializeGfs(cappedGfs);
   }
@@ -199,12 +203,7 @@ export function buildCalculatorSummary(
       ? jobs.filter((j) => !excludedJobNames.has(j.JobName))
       : jobs;
 
-  const cappedJobs =
-    settings.limitCalculationYears != null
-      ? filteredJobs.map((j) =>
-          capJob(j, capsForLimit(settings.limitCalculationYears as number)),
-        )
-      : filteredJobs;
+  const cappedJobs = filteredJobs.map((j) => capJob(j, settings));
 
   const gfs = aggregateGfsMax(cappedJobs);
   const originalMax = getMaxRetentionDays(cappedJobs);
