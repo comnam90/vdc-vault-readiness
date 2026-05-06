@@ -15,6 +15,7 @@ const MOCK_SUMMARY: CalculatorSummary = {
   gfsYearly: 1,
   sourceDataBreakdown: [],
   gfsDistribution: [],
+  retentionDistribution: [],
 };
 
 const MOCK_RESPONSE: VmAgentResponse = {

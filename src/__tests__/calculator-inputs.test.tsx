@@ -89,6 +89,7 @@ const defaultSummary = {
   gfsYearly: 1,
   sourceDataBreakdown: [],
   gfsDistribution: [],
+  retentionDistribution: [],
 };
 
 beforeEach(() => {
@@ -119,6 +120,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: 7,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     });
 
     render(<CalculatorInputs data={mockData} />);
@@ -154,6 +156,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     });
 
     render(<CalculatorInputs data={mockData} />);
@@ -190,6 +193,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     });
 
     const { container } = render(<CalculatorInputs data={mockData} />);
@@ -208,6 +212,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     });
 
     render(<CalculatorInputs data={mockData} />);
@@ -228,6 +233,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     });
 
     render(<CalculatorInputs data={mockData} />);
@@ -248,6 +254,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     });
 
     render(<CalculatorInputs data={mockData} />);
@@ -267,6 +274,7 @@ describe("CalculatorInputs", () => {
       gfsYearly: null,
       sourceDataBreakdown: [],
       gfsDistribution: [],
+      retentionDistribution: [],
     });
     const excluded = new Set(["Job B"]);
     render(<CalculatorInputs data={mockData} excludedJobNames={excluded} />);
@@ -629,6 +637,39 @@ describe("CalculatorInputs", () => {
       expect(duplicateKeyWarnings).toEqual([]);
 
       errorSpy.mockRestore();
+    });
+
+    it("renders the retention distribution trigger when the array is non-empty", () => {
+      vi.mocked(buildCalculatorSummary).mockReturnValue({
+        ...defaultSummary,
+        retentionDistribution: [
+          { days: 14, count: 3 },
+          { days: 7, count: 1 },
+        ],
+      });
+
+      render(<CalculatorInputs data={mockData} />);
+
+      expect(
+        screen.getByRole("button", {
+          name: /show retention distribution breakdown/i,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    it("does not render the retention distribution trigger when the array is empty", () => {
+      vi.mocked(buildCalculatorSummary).mockReturnValue({
+        ...defaultSummary,
+        retentionDistribution: [],
+      });
+
+      render(<CalculatorInputs data={mockData} />);
+
+      expect(
+        screen.queryByRole("button", {
+          name: /show retention distribution breakdown/i,
+        }),
+      ).not.toBeInTheDocument();
     });
   });
 });
