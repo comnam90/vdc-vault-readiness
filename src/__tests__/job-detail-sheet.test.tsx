@@ -246,6 +246,113 @@ describe("JobDetailSheet", () => {
       const value = within(row as HTMLElement).getByText("N/A");
       expect(value).toHaveClass("text-muted-foreground");
     });
+
+    describe("Archive Tier truncation note", () => {
+      async function setIgnoreArchiveTier(value: boolean) {
+        const { STORAGE_KEY, __resetSettingsStoreForTests } =
+          await import("@/hooks/use-settings");
+        window.localStorage.clear();
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ ignoreArchiveTier: value }),
+        );
+        __resetSettingsStoreForTests();
+      }
+
+      async function setRetentionCapYears(years: number) {
+        const { STORAGE_KEY, __resetSettingsStoreForTests } =
+          await import("@/hooks/use-settings");
+        window.localStorage.clear();
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ limitCalculationYears: years }),
+        );
+        __resetSettingsStoreForTests();
+      }
+
+      async function clearSettings() {
+        const { __resetSettingsStoreForTests } =
+          await import("@/hooks/use-settings");
+        window.localStorage.clear();
+        __resetSettingsStoreForTests();
+      }
+
+      it("renders the note when archiveOffloadDays is set and GFS is configured", async () => {
+        await clearSettings();
+        const job = createEnrichedJob({
+          GfsEnabled: true,
+          GfsDetails: "Weekly:8, Monthly:6, Yearly:2",
+          archiveOffloadDays: 28,
+        });
+        render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+        expect(
+          screen.getByText(/GFS retention truncated to 28 days/i),
+        ).toBeInTheDocument();
+      });
+
+      it("hides the note when the job has no GFS configured", async () => {
+        await clearSettings();
+        const job = createEnrichedJob({
+          GfsEnabled: false,
+          GfsDetails: null,
+          archiveOffloadDays: 28,
+        });
+        render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+        expect(
+          screen.queryByText(/GFS retention truncated/i),
+        ).not.toBeInTheDocument();
+      });
+
+      it("hides the note when ignoreArchiveTier is enabled", async () => {
+        await setIgnoreArchiveTier(true);
+        const job = createEnrichedJob({
+          GfsEnabled: true,
+          GfsDetails: "Weekly:8, Monthly:6, Yearly:2",
+          archiveOffloadDays: 28,
+        });
+        render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+        expect(
+          screen.queryByText(/GFS retention truncated/i),
+        ).not.toBeInTheDocument();
+
+        await clearSettings();
+      });
+
+      it("hides the note when global retention cap is tighter than archive offload", async () => {
+        // global cap = 1 * 365 = 365 days, archive = 1000 → global wins,
+        // so archive is not the effective constraint. Note should not claim
+        // archive-driven truncation.
+        await setRetentionCapYears(1);
+        const job = createEnrichedJob({
+          GfsEnabled: true,
+          GfsDetails: "Weekly:52, Monthly:12, Yearly:5",
+          archiveOffloadDays: 1000,
+        });
+        render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+        expect(
+          screen.queryByText(/GFS retention truncated/i),
+        ).not.toBeInTheDocument();
+
+        await clearSettings();
+      });
+
+      it("hides the note when archiveOffloadDays is undefined", async () => {
+        await clearSettings();
+        const job = createEnrichedJob({
+          GfsEnabled: true,
+          GfsDetails: "Weekly:4, Monthly:12, Yearly:1",
+        });
+        render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+        expect(
+          screen.queryByText(/GFS retention truncated/i),
+        ).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe("Configuration section", () => {
