@@ -23,6 +23,8 @@ export function normalizeHealthcheck(
 ): NormalizedDataset {
   const dataErrors: DataError[] = [];
 
+  const archiveOffloadBySobr = buildArchiveOffloadMap(asArray(raw.archextents));
+
   const jobInfo = asArray(raw.jobInfo).flatMap((job, rowIndex) => {
     if (!isRecord(job)) {
       dataErrors.push(
@@ -125,6 +127,11 @@ export function normalizeHealthcheck(
         job.IndexingEnabled as string | null | undefined,
       ),
     };
+
+    const archiveOffloadDays = archiveOffloadBySobr.get(repoName);
+    if (archiveOffloadDays != null) {
+      safeJob.archiveOffloadDays = archiveOffloadDays;
+    }
 
     return [safeJob];
   });
@@ -783,6 +790,26 @@ function normalizeCapExtents(
 }
 
 type ArchExtentRecord = Record<string, string | null | undefined>;
+
+function buildArchiveOffloadMap(rows: ArchExtentRecord[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const row of rows) {
+    if (!isRecord(row)) continue;
+    const sobrName = normalizeString(row.SobrName as string | null | undefined);
+    if (!sobrName) continue;
+    const raw = (row.OffloadPeriod ?? row.RetentionPeriod) as
+      | string
+      | null
+      | undefined;
+    if (typeof raw !== "string") continue;
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed) || parsed <= 0) continue;
+    map.set(sobrName, parsed);
+  }
+  return map;
+}
 
 function normalizeArchExtents(
   rows: ArchExtentRecord[],

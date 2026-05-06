@@ -58,7 +58,18 @@ function normalizeSettings(input: unknown): GlobalSettings {
     limitCalculationYears = raw.limitCalculationYears;
   }
 
-  return { targetCloud, growthPercent, growthYears, limitCalculationYears };
+  const ignoreArchiveTier =
+    typeof raw.ignoreArchiveTier === "boolean"
+      ? raw.ignoreArchiveTier
+      : DEFAULT_SETTINGS.ignoreArchiveTier;
+
+  return {
+    targetCloud,
+    growthPercent,
+    growthYears,
+    limitCalculationYears,
+    ignoreArchiveTier,
+  };
 }
 
 function safeReadStorage(): GlobalSettings {

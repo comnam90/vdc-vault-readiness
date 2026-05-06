@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  Archive,
   Calculator,
   Clock,
   Cloud,
@@ -231,6 +232,15 @@ export function CalculatorInputs({
               >
                 <Clock className="size-3" aria-hidden="true" />
                 Retention cap: {settings.limitCalculationYears}y
+              </Badge>
+            )}
+            {settings.ignoreArchiveTier && (
+              <Badge
+                variant="outline"
+                className="text-muted-foreground gap-1 text-xs font-normal"
+              >
+                <Archive className="size-3" aria-hidden="true" />
+                Simulating: Archive Tier Ignored
               </Badge>
             )}
           </div>

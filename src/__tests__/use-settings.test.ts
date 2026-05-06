@@ -41,6 +41,7 @@ describe("useSettings", () => {
       growthPercent: 12,
       growthYears: 3,
       limitCalculationYears: 1,
+      ignoreArchiveTier: false,
     });
   });
 

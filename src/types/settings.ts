@@ -5,6 +5,7 @@ export interface GlobalSettings {
   growthPercent: number;
   growthYears: number;
   limitCalculationYears: number | null;
+  ignoreArchiveTier: boolean;
 }
 
 export const DEFAULT_SETTINGS: GlobalSettings = {
@@ -12,4 +13,5 @@ export const DEFAULT_SETTINGS: GlobalSettings = {
   growthPercent: 0,
   growthYears: 0,
   limitCalculationYears: null,
+  ignoreArchiveTier: false,
 };

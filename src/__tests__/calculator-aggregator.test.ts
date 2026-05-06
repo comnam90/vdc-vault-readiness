@@ -9,7 +9,7 @@ import {
   aggregateGfsMax,
   buildCalculatorSummary,
 } from "@/lib/calculator-aggregator";
-import { makeJob, makeSession } from "./fixtures";
+import { makeJob, makeSession, makeSettings } from "./fixtures";
 
 describe("calculateTotalSourceDataTB", () => {
   it("sums SourceSizeGB values and converts to TB (divide by 1024)", () => {
@@ -485,12 +485,12 @@ describe("buildCalculatorSummary with GlobalSettings retention cap", () => {
       }),
     ];
     const baseline = buildCalculatorSummary(jobs, []);
-    const withSettings = buildCalculatorSummary(jobs, [], new Set(), {
-      targetCloud: "Azure",
-      growthPercent: 0,
-      growthYears: 0,
-      limitCalculationYears: null,
-    });
+    const withSettings = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({ limitCalculationYears: null }),
+    );
     expect(withSettings).toEqual(baseline);
   });
 
@@ -502,12 +502,12 @@ describe("buildCalculatorSummary with GlobalSettings retention cap", () => {
         GfsDetails: "Weekly:60,Monthly:18,Yearly:7",
       }),
     ];
-    const result = buildCalculatorSummary(jobs, [], new Set(), {
-      targetCloud: "Azure",
-      growthPercent: 0,
-      growthYears: 0,
-      limitCalculationYears: 1,
-    });
+    const result = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({ limitCalculationYears: 1 }),
+    );
 
     expect(result.gfsYearly).toBe(1); // 7 → cap 1
     expect(result.gfsMonthly).toBe(12); // 18 → cap 12
@@ -524,12 +524,12 @@ describe("buildCalculatorSummary with GlobalSettings retention cap", () => {
         GfsDetails: "Weekly:4,Monthly:6,Yearly:1",
       }),
     ];
-    const result = buildCalculatorSummary(jobs, [], new Set(), {
-      targetCloud: "Azure",
-      growthPercent: 0,
-      growthYears: 0,
-      limitCalculationYears: 2,
-    });
+    const result = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({ limitCalculationYears: 2 }),
+    );
 
     // limit 2y → caps: yearly 2, monthly 24, weekly 104, daily 730 — all above source values
     expect(result.gfsYearly).toBe(1);
@@ -551,12 +551,12 @@ describe("buildCalculatorSummary with GlobalSettings retention cap", () => {
         GfsDetails: "Weekly:2,Monthly:6,Yearly:1",
       }),
     ];
-    const result = buildCalculatorSummary(jobs, [], new Set(), {
-      targetCloud: "Azure",
-      growthPercent: 0,
-      growthYears: 0,
-      limitCalculationYears: 1,
-    });
+    const result = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({ limitCalculationYears: 1 }),
+    );
 
     expect(result.gfsYearly).toBe(1); // max(min(10,1), min(1,1)) = 1
     expect(result.gfsMonthly).toBe(12); // max(min(48,12), min(6,12)) = 12
@@ -568,17 +568,144 @@ describe("buildCalculatorSummary with GlobalSettings retention cap", () => {
     const jobs: SafeJob[] = [
       makeJob({ JobName: "Empty", RetainDays: null, GfsDetails: null }),
     ];
-    const result = buildCalculatorSummary(jobs, [], new Set(), {
-      targetCloud: "Azure",
-      growthPercent: 0,
-      growthYears: 0,
-      limitCalculationYears: 1,
-    });
+    const result = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({ limitCalculationYears: 1 }),
+    );
 
     expect(result.originalMaxRetentionDays).toBeNull();
     expect(result.gfsWeekly).toBeNull();
     expect(result.gfsMonthly).toBeNull();
     expect(result.gfsYearly).toBeNull();
+  });
+});
+
+describe("buildCalculatorSummary with archive tier truncation", () => {
+  it("truncates GFS but leaves RetainDays untouched when archiveOffloadDays is set", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "JobArchive",
+        RetainDays: 90,
+        GfsDetails: "Weekly:8,Monthly:6,Yearly:2",
+        archiveOffloadDays: 28,
+      }),
+    ];
+    const result = buildCalculatorSummary(jobs, [], new Set(), makeSettings());
+
+    // RetainDays untouched — archive cap NEVER applies to daily retention
+    expect(result.originalMaxRetentionDays).toBe(90);
+    // GFS capped by 28-day offload: floor(28/365)=0, floor(28*12/365)=0, floor(28*52/365)=3
+    expect(result.gfsWeekly).toBe(3);
+    expect(result.gfsMonthly).toBe(0);
+    expect(result.gfsYearly).toBe(0);
+  });
+
+  it("bypasses archive truncation when ignoreArchiveTier is true", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "JobArchive",
+        RetainDays: 90,
+        GfsDetails: "Weekly:8,Monthly:6,Yearly:2",
+        archiveOffloadDays: 28,
+      }),
+    ];
+    const result = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({ ignoreArchiveTier: true }),
+    );
+
+    expect(result.originalMaxRetentionDays).toBe(90);
+    expect(result.gfsWeekly).toBe(8);
+    expect(result.gfsMonthly).toBe(6);
+    expect(result.gfsYearly).toBe(2);
+  });
+
+  it("combines global cap and archive cap — archive wins on GFS, global on daily", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "JobArchive",
+        RetainDays: 90,
+        GfsDetails: "Weekly:8,Monthly:6,Yearly:2",
+        archiveOffloadDays: 28,
+      }),
+    ];
+    const result = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({ limitCalculationYears: 5 }),
+    );
+
+    // Daily cap = 5*365 = 1825; min(90, 1825) = 90
+    expect(result.originalMaxRetentionDays).toBe(90);
+    // GFS cap = min(1825, 28) = 28 → same as archive-only case
+    expect(result.gfsWeekly).toBe(3);
+    expect(result.gfsMonthly).toBe(0);
+    expect(result.gfsYearly).toBe(0);
+  });
+
+  it("leaves jobs without archiveOffloadDays untouched", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "JobNoArchive",
+        RetainDays: 90,
+        GfsDetails: "Weekly:8,Monthly:6,Yearly:2",
+      }),
+    ];
+    const result = buildCalculatorSummary(jobs, [], new Set(), makeSettings());
+
+    expect(result.originalMaxRetentionDays).toBe(90);
+    expect(result.gfsWeekly).toBe(8);
+    expect(result.gfsMonthly).toBe(6);
+    expect(result.gfsYearly).toBe(2);
+  });
+
+  it("handles null RetainDays and null GfsDetails with archiveOffloadDays", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "JobEmptyArchive",
+        RetainDays: null,
+        GfsDetails: null,
+        archiveOffloadDays: 14,
+      }),
+    ];
+    const result = buildCalculatorSummary(jobs, [], new Set(), makeSettings());
+
+    expect(result.originalMaxRetentionDays).toBeNull();
+    expect(result.gfsWeekly).toBeNull();
+    expect(result.gfsMonthly).toBeNull();
+    expect(result.gfsYearly).toBeNull();
+  });
+
+  it("aggregates correctly across mixed archive and non-archive jobs", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "Archived",
+        RetainDays: 60,
+        GfsDetails: "Weekly:10,Monthly:6,Yearly:3",
+        archiveOffloadDays: 28,
+      }),
+      makeJob({
+        JobName: "NotArchived",
+        RetainDays: 90,
+        GfsDetails: "Weekly:4,Monthly:2,Yearly:1",
+      }),
+    ];
+    const result = buildCalculatorSummary(jobs, [], new Set(), makeSettings());
+
+    // GFS aggregated max:
+    //   weekly: max(min(10,3), 4) = 4
+    //   monthly: max(min(6,0), 2) = 2
+    //   yearly: max(min(3,0), 1) = 1
+    expect(result.gfsWeekly).toBe(4);
+    expect(result.gfsMonthly).toBe(2);
+    expect(result.gfsYearly).toBe(1);
+    // Daily untouched in both
+    expect(result.originalMaxRetentionDays).toBe(90);
   });
 });
 

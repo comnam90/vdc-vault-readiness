@@ -6,6 +6,7 @@ import {
   formatDuration,
   formatCompressionRatio,
 } from "@/lib/format-utils";
+import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -106,8 +107,23 @@ function StorageSection({ job }: { job: EnrichedJob }) {
 }
 
 function ProtectionSection({ job }: { job: EnrichedJob }) {
+  const { settings } = useSettings();
   const gfs = parseGfsDetails(job.GfsDetails);
   const gfsEnabled = job.GfsEnabled;
+  // Gate the muted note on conditions where archive offload is *actually* the
+  // effective GFS cap: (a) override is off, (b) the job has GFS to cap, and
+  // (c) archive cap is tighter than any global retention horizon. This mirrors
+  // capJob's GFS branch and avoids attributing a cap to archive when
+  // `limitCalculationYears` is the binding constraint.
+  const globalCapDays =
+    settings.limitCalculationYears != null
+      ? settings.limitCalculationYears * 365
+      : Infinity;
+  const archiveTruncated =
+    job.archiveOffloadDays != null &&
+    !settings.ignoreArchiveTier &&
+    job.GfsDetails != null &&
+    job.archiveOffloadDays < globalCapDays;
 
   return (
     <div className="space-y-1">
@@ -143,6 +159,12 @@ function ProtectionSection({ job }: { job: EnrichedJob }) {
           <span className="text-muted-foreground">N/A</span>
         )}
       </PropertyRow>
+      {archiveTruncated && (
+        <p className="text-muted-foreground pt-1 text-xs">
+          GFS retention truncated to {job.archiveOffloadDays} days for sizing
+          math due to Archive Tier offload.
+        </p>
+      )}
     </div>
   );
 }
