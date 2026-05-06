@@ -223,20 +223,20 @@ describe("SizingResults", () => {
     });
   });
 
-  describe("SOBR-blocks-upgrade note", () => {
-    it("does not render the SOBR note by default", () => {
-      render(<SizingResults result={MOCK_RESULT} />);
-      expect(screen.queryByText(/SOBR Capacity Tier/i)).not.toBeInTheDocument();
-    });
-
-    it("renders the SOBR note when sobrBlocksUpgrade is true", () => {
+  describe("SOBR-blocks-upgrade copy", () => {
+    it("renders no caption when sobrBlocksUpgrade is true and no upgrade result is present", () => {
       render(<SizingResults result={MOCK_RESULT} sobrBlocksUpgrade />);
+      expect(screen.queryByText(/Potentially save/i)).not.toBeInTheDocument();
       expect(
-        screen.getByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
-      ).toBeInTheDocument();
+        screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+      ).not.toBeInTheDocument();
+      // Legacy static disclaimer is removed.
+      expect(
+        screen.queryByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+      ).not.toBeInTheDocument();
     });
 
-    it("does not show savings annotations when sobrBlocksUpgrade is true", () => {
+    it("shows actionable SOBR copy when an upgrade saves storage", () => {
       render(
         <SizingResults
           result={MOCK_RESULT}
@@ -244,13 +244,22 @@ describe("SizingResults", () => {
           sobrBlocksUpgrade
         />,
       );
+      // Standard non-SOBR copy is replaced.
       expect(
         screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
       ).not.toBeInTheDocument();
-      expect(screen.queryByText(/↓ VBR 13:/)).not.toBeInTheDocument();
+      expect(screen.getByText(/Potentially save/i)).toBeInTheDocument();
       expect(
-        screen.getByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+        screen.getByText(
+          /by upgrading to VBR 13 and transitioning SOBRs to direct Backup Copy jobs\./i,
+        ),
       ).toBeInTheDocument();
+      // Savings math (12.5 - 10.0 = 2.50 TB) appears in the caption span.
+      // Scope tightly so we don't match the "12.50 TB" hero metric.
+      expect(screen.getByText(/^2\.50 TB$/)).toBeInTheDocument();
+      // Per-segment immutability annotation also surfaces under SOBR — the
+      // savings principle applies consistently across both UI surfaces.
+      expect(screen.getByText(/↓ VBR 13:/)).toBeInTheDocument();
     });
   });
 });

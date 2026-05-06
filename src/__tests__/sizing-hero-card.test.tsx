@@ -71,7 +71,7 @@ describe("SizingHeroCard", () => {
     expect(screen.getByText(/32\.50 TB/)).toBeInTheDocument();
   });
 
-  it("shows the SOBR-blocks-upgrade note instead of the savings caption", () => {
+  it("shows the SOBR-aware actionable copy when sobrBlocksUpgrade and savings > 0", () => {
     renderDefault({
       upgradeTotalStorageTB: 32.5,
       storageSavingsTB: 5.56,
@@ -80,9 +80,29 @@ describe("SizingHeroCard", () => {
     expect(
       screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
     ).not.toBeInTheDocument();
+    // The legacy static disclaimer is removed.
     expect(
-      screen.getByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+      screen.queryByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/Potentially save/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /by upgrading to VBR 13 and transitioning SOBRs to direct Backup Copy jobs\./i,
+      ),
     ).toBeInTheDocument();
+    expect(screen.getByText(/5\.56 TB/)).toBeInTheDocument();
+  });
+
+  it("hides the SOBR-aware caption when no savings to surface", () => {
+    renderDefault({
+      upgradeTotalStorageTB: 38.06,
+      storageSavingsTB: 0,
+      sobrBlocksUpgrade: true,
+    });
+    expect(screen.queryByText(/Potentially save/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+    ).not.toBeInTheDocument();
   });
 
   it("decorates the card frame with a top accent border", () => {
@@ -117,5 +137,14 @@ describe("SizingHeroCard", () => {
   it("hides the immutability annotation when savings <= 0", () => {
     renderDefault({ upgradePerfTaxGB: 2688, immutabilitySavingsGB: 0 });
     expect(screen.queryByText(/↓ VBR 13:/)).not.toBeInTheDocument();
+  });
+
+  it("still shows the immutability annotation under sobrBlocksUpgrade", () => {
+    renderDefault({
+      upgradePerfTaxGB: 2400,
+      immutabilitySavingsGB: 288,
+      sobrBlocksUpgrade: true,
+    });
+    expect(screen.getByText(/↓ VBR 13:/)).toBeInTheDocument();
   });
 });

@@ -21,11 +21,15 @@ export function SizingResults({
     [upgradeResult],
   );
 
-  const showUpgrade = !sobrBlocksUpgrade && upgradeSizing !== null;
-  const storageSavingsTB = showUpgrade
+  // Savings are calculated whenever an upgrade comparison call exists. The
+  // sobrBlocksUpgrade flag controls how the hero presents them, not whether
+  // we compute them — under SOBR we surface them as the architectural-action
+  // value proposition instead of the direct upgrade caption.
+  const hasUpgrade = upgradeSizing !== null;
+  const storageSavingsTB = hasUpgrade
     ? Math.max(0, sizing.totalStorageTB - upgradeSizing.totalStorageTB)
     : 0;
-  const immutabilitySavingsGB = showUpgrade
+  const immutabilitySavingsGB = hasUpgrade
     ? Math.max(0, sizing.performanceTaxGB - upgradeSizing.performanceTaxGB)
     : 0;
 
@@ -33,11 +37,9 @@ export function SizingResults({
     <div className="motion-safe:animate-in motion-safe:fade-in fill-mode-backwards space-y-6 duration-500">
       <SizingHeroCard
         sizing={sizing}
-        upgradeTotalStorageTB={
-          showUpgrade ? upgradeSizing.totalStorageTB : null
-        }
+        upgradeTotalStorageTB={hasUpgrade ? upgradeSizing.totalStorageTB : null}
         storageSavingsTB={storageSavingsTB}
-        upgradePerfTaxGB={showUpgrade ? upgradeSizing.performanceTaxGB : null}
+        upgradePerfTaxGB={hasUpgrade ? upgradeSizing.performanceTaxGB : null}
         immutabilitySavingsGB={immutabilitySavingsGB}
         sobrBlocksUpgrade={sobrBlocksUpgrade}
       />

@@ -363,8 +363,10 @@ describe("CalculatorInputs", () => {
       expect(screen.queryByText(/VBR 12 to VBR 13/i)).not.toBeInTheDocument();
     });
 
-    it("does NOT render UpgradeSavings for VBR 12 with SOBRs", async () => {
-      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
+    it("makes two API calls and renders SOBR-aware copy for VBR 12 with SOBRs", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_V13_RESULT);
 
       render(<CalculatorInputs data={mockDataVbr12WithSobr} />);
       fireEvent.click(
@@ -374,28 +376,26 @@ describe("CalculatorInputs", () => {
         screen.getByRole("button", { name: /accept & calculate/i }),
       );
 
-      await screen.findByText(/12\.50 TB/);
-      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(1);
-      expect(screen.queryByText(/VBR 12 to VBR 13/i)).not.toBeInTheDocument();
-    });
-
-    it("renders the SOBR-blocks-upgrade note for VBR 12 with SOBRs", async () => {
-      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
-
-      render(<CalculatorInputs data={mockDataVbr12WithSobr} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
-      );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
+      // Hero shows the actionable SOBR copy with savings math (15 - 12.5 = 2.50 TB).
+      expect(await screen.findByText(/Potentially save/i)).toBeInTheDocument();
       expect(
-        await screen.findByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+        screen.getByText(
+          /by upgrading to VBR 13 and transitioning SOBRs to direct Backup Copy jobs\./i,
+        ),
       ).toBeInTheDocument();
+      // Two parallel calls now fire under SOBR (v12 + v13 comparison).
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(2);
+      // Standard non-SOBR copy is suppressed.
+      expect(
+        screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+      ).not.toBeInTheDocument();
+      // Legacy static disclaimer is removed.
+      expect(
+        screen.queryByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+      ).not.toBeInTheDocument();
     });
 
-    it("does NOT render the SOBR-blocks-upgrade note for VBR 12 without SOBRs", async () => {
+    it("does NOT render any upgrade copy for VBR 12 without SOBRs when SOBR copy would be wrong", async () => {
       vi.mocked(callVmAgentApi)
         .mockResolvedValueOnce(MOCK_V12_RESULT)
         .mockResolvedValueOnce(MOCK_V13_RESULT);
@@ -409,12 +409,14 @@ describe("CalculatorInputs", () => {
       );
 
       await screen.findByText(/saving 2\.50 TB/i);
+      // Standard, not SOBR-aware.
+      expect(screen.queryByText(/Potentially save/i)).not.toBeInTheDocument();
       expect(
         screen.queryByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
       ).not.toBeInTheDocument();
     });
 
-    it("does NOT render the SOBR-blocks-upgrade note for VBR 13", async () => {
+    it("does NOT render the legacy SOBR-blocks-upgrade note for VBR 13", async () => {
       vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
 
       render(<CalculatorInputs data={mockDataVbr13} />);

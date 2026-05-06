@@ -70,14 +70,12 @@ export function SizingHeroCard({
   immutabilitySavingsGB,
   sobrBlocksUpgrade,
 }: SizingHeroCardProps) {
-  const showUpgradeCaption =
-    !sobrBlocksUpgrade &&
-    upgradeTotalStorageTB !== null &&
-    storageSavingsTB > 0;
+  const hasUpgradeSavings = storageSavingsTB > 0;
+  const showStandardUpgradeCaption =
+    !sobrBlocksUpgrade && upgradeTotalStorageTB !== null && hasUpgradeSavings;
+  const showSobrActionableCaption = sobrBlocksUpgrade && hasUpgradeSavings;
   const showImmutabilitySavings =
-    !sobrBlocksUpgrade &&
-    upgradePerfTaxGB !== null &&
-    immutabilitySavingsGB > 0;
+    upgradePerfTaxGB !== null && immutabilitySavingsGB > 0;
 
   return (
     <Card className="border-t-primary border-t-4">
@@ -93,22 +91,22 @@ export function SizingHeroCard({
             {formatTB(sizing.totalStorageTB)}
           </p>
 
-          {sobrBlocksUpgrade ? (
+          {showSobrActionableCaption && (
             <p className="text-muted-foreground motion-safe:animate-in motion-safe:fade-in fill-mode-backwards text-sm motion-safe:delay-300">
-              VBR 13 storage savings only apply when Vault is targeted directly
-              (via backup or Backup Copy jobs). SOBR Capacity Tier still uses
-              VBR 12 sizing in VBR 13.0.0/13.0.1.
+              Potentially save{" "}
+              <span className="font-mono">{formatTB(storageSavingsTB)}</span> by
+              upgrading to VBR 13 and transitioning SOBRs to direct Backup Copy
+              jobs.
             </p>
-          ) : (
-            showUpgradeCaption && (
-              <p className="text-muted-foreground motion-safe:animate-in motion-safe:fade-in fill-mode-backwards text-sm motion-safe:delay-300">
-                Upgrade to VBR 13 could reduce this to{" "}
-                <span className="font-mono">
-                  {formatTB(upgradeTotalStorageTB)}
-                </span>{" "}
-                (saving {formatTB(storageSavingsTB)})
-              </p>
-            )
+          )}
+          {showStandardUpgradeCaption && (
+            <p className="text-muted-foreground motion-safe:animate-in motion-safe:fade-in fill-mode-backwards text-sm motion-safe:delay-300">
+              Upgrade to VBR 13 could reduce this to{" "}
+              <span className="font-mono">
+                {formatTB(upgradeTotalStorageTB)}
+              </span>{" "}
+              (saving {formatTB(storageSavingsTB)})
+            </p>
           )}
         </div>
 
