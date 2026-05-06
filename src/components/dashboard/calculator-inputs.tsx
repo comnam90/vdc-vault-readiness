@@ -43,6 +43,7 @@ import { SizingResults } from "./sizing-results";
 import { CalculatorConsentDialog } from "./calculator-consent-dialog";
 
 interface BreakdownRow {
+  key: string;
   left: string;
   right: string;
 }
@@ -74,7 +75,7 @@ function BreakdownHoverCard({
         <ul className="divide-border/60 divide-y">
           {rows.map((row) => (
             <li
-              key={row.left}
+              key={row.key}
               className="flex items-baseline justify-between gap-3 py-1.5 text-sm"
             >
               <span className="text-foreground">{row.left}</span>
@@ -194,6 +195,7 @@ export function CalculatorInputs({
                 <BreakdownHoverCard
                   label="Source data"
                   rows={summary.sourceDataBreakdown.map((b) => ({
+                    key: b.type,
                     left: b.type,
                     right: formatTB(b.tb),
                   }))}
@@ -250,6 +252,7 @@ export function CalculatorInputs({
                 <BreakdownHoverCard
                   label="GFS distribution"
                   rows={summary.gfsDistribution.map((g) => ({
+                    key: g.policy,
                     left: `${g.count} job${g.count !== 1 ? "s" : ""}`,
                     right: g.policy,
                   }))}
