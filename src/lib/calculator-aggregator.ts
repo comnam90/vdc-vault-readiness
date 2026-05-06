@@ -2,6 +2,7 @@ import type { SafeJob, SafeJobSession } from "@/types/domain";
 import type { CalculatorSummary } from "@/types/calculator";
 import { DEFAULT_SETTINGS, type GlobalSettings } from "@/types/settings";
 import { MINIMUM_RETENTION_DAYS } from "./constants";
+import { formatShortGfs } from "./format-utils";
 
 interface GfsResult {
   weekly: number | null;
@@ -208,6 +209,27 @@ export function buildCalculatorSummary(
   const gfs = aggregateGfsMax(cappedJobs);
   const originalMax = getMaxRetentionDays(cappedJobs);
 
+  const sourceByType = new Map<string, number>();
+  for (const job of cappedJobs) {
+    if (job.SourceSizeGB == null) continue;
+    const key = job.JobType || "Unknown";
+    sourceByType.set(key, (sourceByType.get(key) ?? 0) + job.SourceSizeGB);
+  }
+  const sourceDataBreakdown = [...sourceByType.entries()]
+    .map(([type, gb]) => ({ type, tb: gb / 1024 }))
+    .sort((a, b) => b.tb - a.tb);
+
+  const gfsCounts = new Map<string, number>();
+  for (const job of cappedJobs) {
+    if (!job.GfsDetails) continue;
+    const policy = formatShortGfs(job.GfsDetails);
+    if (!policy) continue;
+    gfsCounts.set(policy, (gfsCounts.get(policy) ?? 0) + 1);
+  }
+  const gfsDistribution = [...gfsCounts.entries()]
+    .map(([policy, count]) => ({ policy, count }))
+    .sort((a, b) => b.count - a.count);
+
   return {
     totalSourceDataTB: calculateTotalSourceDataTB(cappedJobs),
     weightedAvgChangeRate: calculateWeightedChangeRate(cappedJobs, sessions),
@@ -220,5 +242,7 @@ export function buildCalculatorSummary(
     gfsWeekly: gfs.weekly,
     gfsMonthly: gfs.monthly,
     gfsYearly: gfs.yearly,
+    sourceDataBreakdown,
+    gfsDistribution,
   };
 }

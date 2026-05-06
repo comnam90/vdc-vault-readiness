@@ -87,6 +87,8 @@ const defaultSummary = {
   gfsWeekly: 1,
   gfsMonthly: 1,
   gfsYearly: 1,
+  sourceDataBreakdown: [],
+  gfsDistribution: [],
 };
 
 beforeEach(() => {
@@ -115,6 +117,8 @@ describe("CalculatorInputs", () => {
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 7,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     });
 
     render(<CalculatorInputs data={mockData} />);
@@ -148,6 +152,8 @@ describe("CalculatorInputs", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     });
 
     render(<CalculatorInputs data={mockData} />);
@@ -182,6 +188,8 @@ describe("CalculatorInputs", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     });
 
     const { container } = render(<CalculatorInputs data={mockData} />);
@@ -198,6 +206,8 @@ describe("CalculatorInputs", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     });
 
     render(<CalculatorInputs data={mockData} />);
@@ -216,6 +226,8 @@ describe("CalculatorInputs", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     });
 
     render(<CalculatorInputs data={mockData} />);
@@ -234,6 +246,8 @@ describe("CalculatorInputs", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     });
 
     render(<CalculatorInputs data={mockData} />);
@@ -251,6 +265,8 @@ describe("CalculatorInputs", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     });
     const excluded = new Set(["Job B"]);
     render(<CalculatorInputs data={mockData} excludedJobNames={excluded} />);
@@ -512,6 +528,71 @@ describe("CalculatorInputs", () => {
 
       window.localStorage.clear();
       __resetSettingsStoreForTests();
+    });
+  });
+
+  describe("breakdown hover cards", () => {
+    it("renders the source data breakdown trigger when the array is non-empty", () => {
+      vi.mocked(buildCalculatorSummary).mockReturnValue({
+        ...defaultSummary,
+        sourceDataBreakdown: [
+          { type: "VMware Backup", tb: 0.5 },
+          { type: "Agent Backup", tb: 1.0 },
+        ],
+      });
+
+      render(<CalculatorInputs data={mockData} />);
+
+      expect(
+        screen.getByRole("button", {
+          name: /show source data breakdown/i,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    it("does not render the source data breakdown trigger when the array is empty", () => {
+      vi.mocked(buildCalculatorSummary).mockReturnValue({
+        ...defaultSummary,
+        sourceDataBreakdown: [],
+      });
+
+      render(<CalculatorInputs data={mockData} />);
+
+      expect(
+        screen.queryByRole("button", {
+          name: /show source data breakdown/i,
+        }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("renders the GFS distribution trigger when the array is non-empty", () => {
+      vi.mocked(buildCalculatorSummary).mockReturnValue({
+        ...defaultSummary,
+        gfsDistribution: [{ policy: "4W | 12M | 1Y", count: 3 }],
+      });
+
+      render(<CalculatorInputs data={mockData} />);
+
+      expect(
+        screen.getByRole("button", {
+          name: /show gfs distribution breakdown/i,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    it("does not render the GFS distribution trigger when the array is empty", () => {
+      vi.mocked(buildCalculatorSummary).mockReturnValue({
+        ...defaultSummary,
+        gfsDistribution: [],
+      });
+
+      render(<CalculatorInputs data={mockData} />);
+
+      expect(
+        screen.queryByRole("button", {
+          name: /show gfs distribution breakdown/i,
+        }),
+      ).not.toBeInTheDocument();
     });
   });
 });

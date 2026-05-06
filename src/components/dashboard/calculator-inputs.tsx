@@ -5,6 +5,7 @@ import {
   Clock,
   Cloud,
   ExternalLink,
+  Info,
   Loader2,
   RotateCcw,
   Server,
@@ -33,8 +34,60 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { SizingResults } from "./sizing-results";
 import { CalculatorConsentDialog } from "./calculator-consent-dialog";
+
+interface BreakdownRow {
+  left: string;
+  right: string;
+}
+
+function BreakdownHoverCard({
+  label,
+  rows,
+}: {
+  label: string;
+  rows: BreakdownRow[];
+}) {
+  if (rows.length === 0) return null;
+
+  return (
+    <HoverCard openDelay={150} closeDelay={100}>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Show ${label} breakdown`}
+          className="text-muted-foreground/70 hover:text-foreground inline-flex items-center justify-center motion-safe:transition-colors"
+        >
+          <Info className="size-3.5" aria-hidden="true" />
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent align="start" className="w-64 p-3">
+        <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
+          {label} breakdown
+        </p>
+        <ul className="divide-border/60 divide-y">
+          {rows.map((row) => (
+            <li
+              key={row.left}
+              className="flex items-baseline justify-between gap-3 py-1.5 text-sm"
+            >
+              <span className="text-foreground">{row.left}</span>
+              <span className="text-muted-foreground font-mono tabular-nums">
+                {row.right}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
 
 interface CalculatorInputsProps {
   data: NormalizedDataset;
@@ -136,9 +189,16 @@ export function CalculatorInputs({
         <CardContent>
           <div className="grid gap-6 sm:grid-cols-3">
             <div className="space-y-1">
-              <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+              <div className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-medium tracking-wider uppercase">
                 Source Data
-              </p>
+                <BreakdownHoverCard
+                  label="Source data"
+                  rows={summary.sourceDataBreakdown.map((b) => ({
+                    left: b.type,
+                    right: formatTB(b.tb),
+                  }))}
+                />
+              </div>
               <p className="font-mono text-2xl font-semibold">
                 {formatTB(summary.totalSourceDataTB)}
               </p>
@@ -185,9 +245,16 @@ export function CalculatorInputs({
             </div>
 
             <div className="space-y-1 sm:col-span-2">
-              <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+              <div className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-medium tracking-wider uppercase">
                 Extended Retention
-              </p>
+                <BreakdownHoverCard
+                  label="GFS distribution"
+                  rows={summary.gfsDistribution.map((g) => ({
+                    left: `${g.count} job${g.count !== 1 ? "s" : ""}`,
+                    right: g.policy,
+                  }))}
+                />
+              </div>
               <p className="font-mono text-2xl font-semibold">
                 {formatGFS(
                   summary.gfsWeekly,

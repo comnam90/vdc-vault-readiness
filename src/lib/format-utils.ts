@@ -64,6 +64,32 @@ export function formatGFS(
   return parts.length > 0 ? parts.join(", ") : "None configured";
 }
 
+export function formatShortGfs(gfsString: string): string {
+  let weekly: number | null = null;
+  let monthly: number | null = null;
+  let yearly: number | null = null;
+
+  for (const pair of gfsString.split(",")) {
+    const trimmed = pair.trim();
+    const colon = trimmed.indexOf(":");
+    if (colon === -1) continue;
+
+    const key = trimmed.substring(0, colon).trim().toLowerCase();
+    const value = Number(trimmed.substring(colon + 1).trim());
+    if (Number.isNaN(value)) continue;
+
+    if (key === "weekly") weekly = value;
+    else if (key === "monthly") monthly = value;
+    else if (key === "yearly") yearly = value;
+  }
+
+  const parts: string[] = [];
+  if (weekly !== null) parts.push(`${weekly}W`);
+  if (monthly !== null) parts.push(`${monthly}M`);
+  if (yearly !== null) parts.push(`${yearly}Y`);
+  return parts.join(" | ");
+}
+
 export function formatCompressionRatio(
   sourceGB: number | null,
   diskGB: number | null,

@@ -400,6 +400,8 @@ describe("buildCalculatorSummary", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     };
     expect(result).toEqual(expected);
   });
@@ -742,5 +744,143 @@ describe("buildCalculatorSummary with exclusions", () => {
     const jobs: SafeJob[] = [makeJob({ SourceSizeGB: 1024 })];
     const summary = buildCalculatorSummary(jobs, []);
     expect(summary.totalSourceDataTB).toBeCloseTo(1.0, 4);
+  });
+});
+
+describe("buildCalculatorSummary sourceDataBreakdown", () => {
+  it("groups source TB by JobType and sorts descending", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "JobA",
+        JobType: "VMware Backup",
+        SourceSizeGB: 200,
+      }),
+      makeJob({
+        JobName: "JobB",
+        JobType: "VMware Backup",
+        SourceSizeGB: 100,
+      }),
+      makeJob({
+        JobName: "JobC",
+        JobType: "Agent Backup",
+        SourceSizeGB: 1024,
+      }),
+    ];
+
+    const result = buildCalculatorSummary(jobs, []);
+
+    expect(result.sourceDataBreakdown).toHaveLength(2);
+    expect(result.sourceDataBreakdown[0].type).toBe("Agent Backup");
+    expect(result.sourceDataBreakdown[0].tb).toBeCloseTo(1.0, 4);
+    expect(result.sourceDataBreakdown[1].type).toBe("VMware Backup");
+    expect(result.sourceDataBreakdown[1].tb).toBeCloseTo(300 / 1024, 4);
+  });
+
+  it("buckets jobs with empty JobType under 'Unknown'", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "JobA", JobType: "", SourceSizeGB: 1024 }),
+    ];
+
+    const result = buildCalculatorSummary(jobs, []);
+
+    expect(result.sourceDataBreakdown).toEqual([{ type: "Unknown", tb: 1.0 }]);
+  });
+
+  it("skips jobs with null SourceSizeGB", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "JobA",
+        JobType: "VMware Backup",
+        SourceSizeGB: null,
+      }),
+      makeJob({ JobName: "JobB", JobType: "Agent Backup", SourceSizeGB: 512 }),
+    ];
+
+    const result = buildCalculatorSummary(jobs, []);
+
+    expect(result.sourceDataBreakdown).toHaveLength(1);
+    expect(result.sourceDataBreakdown[0].type).toBe("Agent Backup");
+  });
+
+  it("returns an empty array when no jobs report SourceSizeGB", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "JobA", SourceSizeGB: null }),
+      makeJob({ JobName: "JobB", SourceSizeGB: null }),
+    ];
+
+    const result = buildCalculatorSummary(jobs, []);
+
+    expect(result.sourceDataBreakdown).toEqual([]);
+  });
+
+  it("respects exclusions when building the breakdown", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "JobA",
+        JobType: "VMware Backup",
+        SourceSizeGB: 1024,
+      }),
+      makeJob({
+        JobName: "JobB",
+        JobType: "Agent Backup",
+        SourceSizeGB: 1024,
+      }),
+    ];
+
+    const result = buildCalculatorSummary(jobs, [], new Set(["JobB"]));
+
+    expect(result.sourceDataBreakdown).toHaveLength(1);
+    expect(result.sourceDataBreakdown[0].type).toBe("VMware Backup");
+  });
+});
+
+describe("buildCalculatorSummary gfsDistribution", () => {
+  it("counts jobs by formatted GFS policy and sorts descending by count", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "A", GfsDetails: "Weekly:4,Yearly:1" }),
+      makeJob({ JobName: "B", GfsDetails: "Weekly:4,Yearly:1" }),
+      makeJob({ JobName: "C", GfsDetails: "Weekly:4,Yearly:1" }),
+      makeJob({ JobName: "D", GfsDetails: "Monthly:12" }),
+    ];
+
+    const result = buildCalculatorSummary(jobs, []);
+
+    expect(result.gfsDistribution).toEqual([
+      { policy: "4W | 1Y", count: 3 },
+      { policy: "12M", count: 1 },
+    ]);
+  });
+
+  it("skips jobs with null GfsDetails", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "A", GfsDetails: null }),
+      makeJob({ JobName: "B", GfsDetails: "Weekly:4" }),
+    ];
+
+    const result = buildCalculatorSummary(jobs, []);
+
+    expect(result.gfsDistribution).toEqual([{ policy: "4W", count: 1 }]);
+  });
+
+  it("returns an empty array when no jobs configure GFS", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "A", GfsDetails: null }),
+      makeJob({ JobName: "B", GfsDetails: null }),
+    ];
+
+    const result = buildCalculatorSummary(jobs, []);
+
+    expect(result.gfsDistribution).toEqual([]);
+  });
+
+  it("uses capped GFS values from the limitCalculationYears setting", () => {
+    const jobs: SafeJob[] = [
+      makeJob({ JobName: "A", GfsDetails: "Yearly:10" }),
+    ];
+    const settings = makeSettings({ limitCalculationYears: 5 });
+
+    const result = buildCalculatorSummary(jobs, [], new Set(), settings);
+
+    expect(result.gfsDistribution).toEqual([{ policy: "5Y", count: 1 }]);
   });
 });

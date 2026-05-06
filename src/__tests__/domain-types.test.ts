@@ -579,6 +579,8 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 5,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     };
     expect(summary.totalSourceDataTB).toBe(100.5);
   });
@@ -593,6 +595,8 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     };
     expect(summary.totalSourceDataTB).toBeNull();
   });
@@ -607,6 +611,8 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 5,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     };
     expect(summary.weightedAvgChangeRate).toBe(15.75);
   });
@@ -621,6 +627,8 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     };
     expect(summary.immutabilityDays).toBe(30);
   });
@@ -635,6 +643,8 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     };
     expect(summary.maxRetentionDays).toBe(1095);
   });
@@ -649,6 +659,8 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 5,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     };
     expect(summary.gfsWeekly).toBe(4);
     expect(summary.gfsMonthly).toBe(12);
@@ -665,6 +677,8 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
     };
     expect(summary.gfsWeekly).toBeNull();
     expect(summary.gfsMonthly).toBeNull();
@@ -681,8 +695,10 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 7,
+      sourceDataBreakdown: [{ type: "VMware Backup", tb: 250.0 }],
+      gfsDistribution: [{ policy: "4W | 12M | 7Y", count: 1 }],
     };
     expect(summary).toBeDefined();
-    expect(Object.keys(summary)).toHaveLength(8);
+    expect(Object.keys(summary)).toHaveLength(10);
   });
 });
