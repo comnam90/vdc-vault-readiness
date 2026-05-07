@@ -63,12 +63,26 @@ function normalizeSettings(input: unknown): GlobalSettings {
       ? raw.ignoreArchiveTier
       : DEFAULT_SETTINGS.ignoreArchiveTier;
 
+  const greenfieldSimulation =
+    typeof raw.greenfieldSimulation === "boolean"
+      ? raw.greenfieldSimulation
+      : DEFAULT_SETTINGS.greenfieldSimulation;
+
+  const historicalDataYears = clampInt(
+    raw.historicalDataYears,
+    0,
+    10,
+    DEFAULT_SETTINGS.historicalDataYears,
+  );
+
   return {
     targetCloud,
     growthPercent,
     growthYears,
     limitCalculationYears,
     ignoreArchiveTier,
+    greenfieldSimulation,
+    historicalDataYears,
   };
 }
 

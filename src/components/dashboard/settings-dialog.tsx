@@ -271,6 +271,75 @@ function SettingsForm({ initial, onSave, onCancel }: SettingsFormProps) {
             />
           </div>
         </section>
+
+        <Separator />
+
+        {/* Greenfield Simulation */}
+        <section className="space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <Label
+                htmlFor="greenfield-simulation"
+                className="text-sm font-semibold"
+              >
+                Simulate greenfield growth
+              </Label>
+              <p className="text-muted-foreground text-xs">
+                When on, the multi-year projection chart builds the GFS
+                retention chain up year by year alongside data growth. When off,
+                the projection treats day 1 as fully seeded — only source data
+                grows.
+              </p>
+            </div>
+            <Switch
+              id="greenfield-simulation"
+              checked={draft.greenfieldSimulation}
+              onCheckedChange={(checked) =>
+                setDraft((prev) => ({
+                  ...prev,
+                  greenfieldSimulation: checked,
+                }))
+              }
+            />
+          </div>
+          {draft.greenfieldSimulation && (
+            <div className="motion-safe:animate-in motion-safe:slide-in-from-top-2 motion-safe:fade-in fill-mode-backwards space-y-1.5 pt-2 pl-6 duration-150 ease-[var(--ease-out)]">
+              <Label htmlFor="historical-data-years">
+                Historical data (years)
+              </Label>
+              <div className="relative max-w-[10rem]">
+                <Input
+                  id="historical-data-years"
+                  type="number"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={draft.historicalDataYears}
+                  onChange={(e) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      historicalDataYears: clamp(
+                        parseInt(e.target.value, 10),
+                        0,
+                        10,
+                      ),
+                    }))
+                  }
+                  className="pr-7 font-mono"
+                />
+                <span
+                  className="text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs"
+                  aria-hidden="true"
+                >
+                  y
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Years of existing backups to seed into the Vault on Day 1.
+              </p>
+            </div>
+          )}
+        </section>
       </div>
 
       <DialogFooter className="gap-2 sm:justify-between">

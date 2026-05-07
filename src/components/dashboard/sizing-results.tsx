@@ -1,19 +1,30 @@
 import { useMemo } from "react";
 import type { VmAgentResponse } from "@/types/veeam-api";
 import { deriveSizing } from "@/lib/sizing-derivation";
+import type { GrowthSeriesPoint } from "@/lib/growth-projector";
 import { SizingHeroCard } from "./sizing-hero-card";
 import { SizingBaselinesCard } from "./sizing-baselines-card";
+import { GrowthChart } from "./growth-chart";
 
 interface SizingResultsProps {
   result: VmAgentResponse;
   upgradeResult?: VmAgentResponse;
   sobrBlocksUpgrade?: boolean;
+  /** When provided, the multi-year growth chart renders below the hero card. */
+  growthSeries?: GrowthSeriesPoint[] | null;
+  /** Whether the growth series was generated under greenfield assumptions. */
+  greenfieldSimulation?: boolean;
+  /** Years of pre-existing backups seeded into the greenfield projection. */
+  historicalDataYears?: number;
 }
 
 export function SizingResults({
   result,
   upgradeResult,
   sobrBlocksUpgrade = false,
+  growthSeries,
+  greenfieldSimulation = false,
+  historicalDataYears = 0,
 }: SizingResultsProps) {
   const sizing = useMemo(() => deriveSizing(result.data), [result]);
   const upgradeSizing = useMemo(
@@ -21,10 +32,6 @@ export function SizingResults({
     [upgradeResult],
   );
 
-  // Savings are calculated whenever an upgrade comparison call exists. The
-  // sobrBlocksUpgrade flag controls how the hero presents them, not whether
-  // we compute them — under SOBR we surface them as the architectural-action
-  // value proposition instead of the direct upgrade caption.
   const hasUpgrade = upgradeSizing !== null;
   const storageSavingsTB = hasUpgrade
     ? Math.max(0, sizing.totalStorageTB - upgradeSizing.totalStorageTB)
@@ -43,6 +50,13 @@ export function SizingResults({
         immutabilitySavingsGB={immutabilitySavingsGB}
         sobrBlocksUpgrade={sobrBlocksUpgrade}
       />
+      {growthSeries !== undefined && (
+        <GrowthChart
+          data={growthSeries}
+          greenfield={greenfieldSimulation}
+          historicalDataYears={historicalDataYears}
+        />
+      )}
       <SizingBaselinesCard sizing={sizing} />
     </div>
   );

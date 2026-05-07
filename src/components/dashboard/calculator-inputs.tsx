@@ -14,6 +14,10 @@ import {
 import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
 import { callVmAgentApi } from "@/lib/veeam-api";
 import {
+  generateGrowthSeries,
+  type GrowthSeriesPoint,
+} from "@/lib/growth-projector";
+import {
   formatDays,
   formatGFS,
   formatPercent,
@@ -105,6 +109,9 @@ export function CalculatorInputs({
   const [upgradeResult, setUpgradeResult] = useState<VmAgentResponse | null>(
     null,
   );
+  const [growthSeries, setGrowthSeries] = useState<GrowthSeriesPoint[] | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [consentOpen, setConsentOpen] = useState(false);
 
@@ -133,9 +140,18 @@ export function CalculatorInputs({
     setError(null);
     setResult(null);
     setUpgradeResult(null);
+    setGrowthSeries(null);
+    const growthArgs = {
+      jobs: data.jobInfo,
+      sessions: data.jobSessionSummary,
+      excludedJobNames,
+      settings,
+      jobCount: activeJobCount,
+      vbrVersion,
+    };
     try {
       if (showUpgrade) {
-        const [v12Res, v13Res] = await Promise.all([
+        const [v12Res, v13Res, growth] = await Promise.all([
           callVmAgentApi(
             summary,
             activeJobCount,
@@ -144,19 +160,25 @@ export function CalculatorInputs({
             settings,
           ),
           callVmAgentApi(summary, activeJobCount, vbrVersion, 0, settings),
+          generateGrowthSeries(growthArgs),
         ]);
         setResult(v12Res);
         setUpgradeResult(v13Res);
+        setGrowthSeries(growth);
       } else {
-        const res = await callVmAgentApi(
-          summary,
-          activeJobCount,
-          vbrVersion,
-          undefined,
-          settings,
-        );
+        const [res, growth] = await Promise.all([
+          callVmAgentApi(
+            summary,
+            activeJobCount,
+            vbrVersion,
+            undefined,
+            settings,
+          ),
+          generateGrowthSeries(growthArgs),
+        ]);
         setResult(res);
         setUpgradeResult(null);
+        setGrowthSeries(growth);
       }
     } catch {
       setError(
@@ -375,6 +397,9 @@ export function CalculatorInputs({
           result={result}
           upgradeResult={upgradeResult ?? undefined}
           sobrBlocksUpgrade={isVbr12 && hasSobr}
+          growthSeries={growthSeries}
+          greenfieldSimulation={settings.greenfieldSimulation}
+          historicalDataYears={settings.historicalDataYears}
         />
       )}
 
