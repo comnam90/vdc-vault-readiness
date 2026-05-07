@@ -1,8 +1,7 @@
 import { useMemo } from "react";
 import type { VmAgentResponse } from "@/types/veeam-api";
-import type { SafeJob, SafeJobSession } from "@/types/domain";
 import { deriveSizing } from "@/lib/sizing-derivation";
-import { useSettings } from "@/hooks/use-settings";
+import type { GrowthSeriesPoint } from "@/lib/growth-projector";
 import { SizingHeroCard } from "./sizing-hero-card";
 import { SizingBaselinesCard } from "./sizing-baselines-card";
 import { GrowthChart } from "./growth-chart";
@@ -11,26 +10,19 @@ interface SizingResultsProps {
   result: VmAgentResponse;
   upgradeResult?: VmAgentResponse;
   sobrBlocksUpgrade?: boolean;
-  /** When provided alongside the rest of the projection inputs, the
-   *  multi-year growth chart renders below the hero card. */
-  jobs?: SafeJob[];
-  sessions?: SafeJobSession[];
-  excludedJobNames?: Set<string>;
-  jobCount?: number;
-  vbrVersion?: string;
+  /** When provided, the multi-year growth chart renders below the hero card. */
+  growthSeries?: GrowthSeriesPoint[] | null;
+  /** Whether the growth series was generated under greenfield assumptions. */
+  greenfieldSimulation?: boolean;
 }
 
 export function SizingResults({
   result,
   upgradeResult,
   sobrBlocksUpgrade = false,
-  jobs,
-  sessions,
-  excludedJobNames,
-  jobCount,
-  vbrVersion,
+  growthSeries,
+  greenfieldSimulation = false,
 }: SizingResultsProps) {
-  const { settings, updateSettings } = useSettings();
   const sizing = useMemo(() => deriveSizing(result.data), [result]);
   const upgradeSizing = useMemo(
     () => (upgradeResult ? deriveSizing(upgradeResult.data) : null),
@@ -55,19 +47,8 @@ export function SizingResults({
         immutabilitySavingsGB={immutabilitySavingsGB}
         sobrBlocksUpgrade={sobrBlocksUpgrade}
       />
-      {jobs && jobs.length > 0 && jobCount != null && vbrVersion != null && (
-        <GrowthChart
-          jobs={jobs}
-          sessions={sessions ?? []}
-          excludedJobNames={excludedJobNames ?? new Set()}
-          settings={settings}
-          jobCount={jobCount}
-          vbrVersion={vbrVersion}
-          greenfieldSimulation={settings.greenfieldSimulation}
-          onGreenfieldChange={(checked) =>
-            updateSettings({ greenfieldSimulation: checked })
-          }
-        />
+      {growthSeries !== undefined && (
+        <GrowthChart data={growthSeries} greenfield={greenfieldSimulation} />
       )}
       <SizingBaselinesCard sizing={sizing} />
     </div>

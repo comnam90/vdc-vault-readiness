@@ -14,7 +14,25 @@ vi.mock("@/lib/veeam-api", () => ({
   callVmAgentApi: vi.fn(),
 }));
 
+vi.mock("@/lib/growth-projector", () => ({
+  generateGrowthSeries: vi.fn(),
+}));
+
 import { callVmAgentApi } from "@/lib/veeam-api";
+import { generateGrowthSeries } from "@/lib/growth-projector";
+import type { GrowthSeriesPoint } from "@/lib/growth-projector";
+
+const SAMPLE_GROWTH: GrowthSeriesPoint[] = [
+  {
+    name: "Year 1",
+    daily: 1,
+    weekly: 0.5,
+    monthly: 0.5,
+    yearly: 0.25,
+    immutability: 0.1,
+    total: 2.35,
+  },
+];
 
 const mockData = {
   jobInfo: [],
@@ -95,6 +113,8 @@ const defaultSummary = {
 beforeEach(() => {
   vi.mocked(buildCalculatorSummary).mockReturnValue(defaultSummary);
   vi.mocked(callVmAgentApi).mockReset();
+  vi.mocked(generateGrowthSeries).mockReset();
+  vi.mocked(generateGrowthSeries).mockResolvedValue(SAMPLE_GROWTH);
 });
 
 describe("CalculatorInputs", () => {
@@ -482,6 +502,124 @@ describe("CalculatorInputs", () => {
 
       await screen.findByText(/saving 2\.50 TB/i);
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  describe("growth series integration", () => {
+    it("calls generateGrowthSeries when the user accepts the consent dialog", async () => {
+      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
+
+      render(<CalculatorInputs data={mockDataVbr13} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
+
+      await screen.findByText(/12\.50 TB/);
+      expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledTimes(1);
+    });
+
+    it("does NOT call generateGrowthSeries on settings change alone", async () => {
+      const { __resetSettingsStoreForTests } =
+        await import("@/hooks/use-settings");
+      window.localStorage.clear();
+      __resetSettingsStoreForTests();
+
+      const { rerender } = render(<CalculatorInputs data={mockDataVbr13} />);
+      // Render again to simulate a re-render from any settings tweak before
+      // the user clicks the button.
+      rerender(<CalculatorInputs data={mockDataVbr13} />);
+
+      expect(vi.mocked(generateGrowthSeries)).not.toHaveBeenCalled();
+      expect(vi.mocked(callVmAgentApi)).not.toHaveBeenCalled();
+    });
+
+    it("fires the sizing call and the growth series concurrently (Promise.all)", async () => {
+      let resolveSizing!: (v: VmAgentResponse) => void;
+      let resolveGrowth!: (v: GrowthSeriesPoint[]) => void;
+      vi.mocked(callVmAgentApi).mockImplementationOnce(
+        () =>
+          new Promise<VmAgentResponse>((resolve) => {
+            resolveSizing = resolve;
+          }),
+      );
+      vi.mocked(generateGrowthSeries).mockImplementationOnce(
+        () =>
+          new Promise<GrowthSeriesPoint[]>((resolve) => {
+            resolveGrowth = resolve;
+          }),
+      );
+
+      render(<CalculatorInputs data={mockDataVbr13} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
+
+      // Both calls must be in flight before either resolves.
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledTimes(1);
+
+      resolveSizing(MOCK_API_RESULT);
+      resolveGrowth(SAMPLE_GROWTH);
+
+      await screen.findByText(/12\.50 TB/);
+    });
+
+    it("fires v12 sizing + v13 sizing + growth series concurrently for VBR 12 + no SOBR", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_V13_RESULT);
+
+      render(<CalculatorInputs data={mockDataVbr12} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
+
+      await screen.findByText(/saving 2\.50 TB/i);
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledTimes(1);
+    });
+
+    it("renders the growth chart card after a successful estimate", async () => {
+      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
+
+      render(<CalculatorInputs data={mockDataVbr13} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
+
+      await screen.findByText(/12\.50 TB/);
+      expect(screen.getByText(/projected storage growth/i)).toBeInTheDocument();
+    });
+
+    it("propagates a growth-series rejection through the existing error path", async () => {
+      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
+      vi.mocked(generateGrowthSeries).mockRejectedValueOnce(new Error("boom"));
+
+      render(<CalculatorInputs data={mockDataVbr13} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
+
+      expect(
+        await screen.findByText(/could not retrieve sizing/i),
+      ).toBeInTheDocument();
     });
   });
 

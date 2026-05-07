@@ -42,18 +42,18 @@ describe("useSettings", () => {
       growthYears: 3,
       limitCalculationYears: 1,
       ignoreArchiveTier: false,
-      greenfieldSimulation: false,
+      greenfieldSimulation: true,
     });
   });
 
-  it("accepts a boolean greenfieldSimulation and falls back when invalid", () => {
+  it("accepts a boolean greenfieldSimulation and falls back to default when invalid", () => {
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ greenfieldSimulation: true }),
+      JSON.stringify({ greenfieldSimulation: false }),
     );
     __resetSettingsStoreForTests();
     const a = renderHook(() => useSettings());
-    expect(a.result.current.settings.greenfieldSimulation).toBe(true);
+    expect(a.result.current.settings.greenfieldSimulation).toBe(false);
     a.unmount();
 
     window.localStorage.setItem(
@@ -62,7 +62,9 @@ describe("useSettings", () => {
     );
     __resetSettingsStoreForTests();
     const b = renderHook(() => useSettings());
-    expect(b.result.current.settings.greenfieldSimulation).toBe(false);
+    expect(b.result.current.settings.greenfieldSimulation).toBe(
+      DEFAULT_SETTINGS.greenfieldSimulation,
+    );
   });
 
   it("falls back to DEFAULT_SETTINGS when localStorage holds malformed JSON", () => {

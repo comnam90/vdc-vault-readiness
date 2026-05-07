@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import {
   Bar,
   BarChart,
@@ -6,25 +6,20 @@ import {
   Legend,
   ResponsiveContainer,
   Tooltip,
+  type TooltipContentProps,
   XAxis,
   YAxis,
 } from "recharts";
 import { Loader2 } from "lucide-react";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  generateGrowthSeries,
-  type GenerateGrowthSeriesArgs,
-  type GrowthSeriesPoint,
-} from "@/lib/growth-projector";
+import { formatTB } from "@/lib/format-utils";
+import type { GrowthSeriesPoint } from "@/lib/growth-projector";
 
 const CHART_HEIGHT = 350;
 
@@ -48,45 +43,34 @@ const SEGMENTS: ChartSegment[] = [
   },
 ];
 
-export interface GrowthChartProps extends GenerateGrowthSeriesArgs {
-  greenfieldSimulation: boolean;
-  onGreenfieldChange: (next: boolean) => void;
+export interface GrowthChartProps {
+  data: GrowthSeriesPoint[] | null;
+  isLoading?: boolean;
+  error?: string | null;
+  /** Read-only label showing which simulation mode produced the data. */
+  greenfield: boolean;
 }
 
-export function GrowthChart(props: GrowthChartProps) {
-  const { greenfieldSimulation, onGreenfieldChange, ...args } = props;
-  if (args.jobs.length === 0) {
-    return (
-      <ChartShell
-        greenfieldSimulation={greenfieldSimulation}
-        onGreenfieldChange={onGreenfieldChange}
-      >
-        <div className="text-muted-foreground flex h-[350px] items-center justify-center text-sm italic">
-          Add backup jobs to see projection.
-        </div>
-      </ChartShell>
-    );
-  }
+export function GrowthChart({
+  data,
+  isLoading = false,
+  error = null,
+  greenfield,
+}: GrowthChartProps) {
   return (
-    <GrowthChartFetcher
-      args={args}
-      greenfieldSimulation={greenfieldSimulation}
-      onGreenfieldChange={onGreenfieldChange}
-    />
+    <ChartShell greenfield={greenfield}>
+      <ChartBody data={data} isLoading={isLoading} error={error} />
+    </ChartShell>
   );
 }
 
-interface ChartShellProps {
-  greenfieldSimulation: boolean;
-  onGreenfieldChange: (next: boolean) => void;
-  children: ReactNode;
-}
-
 function ChartShell({
-  greenfieldSimulation,
-  onGreenfieldChange,
+  greenfield,
   children,
-}: ChartShellProps) {
+}: {
+  greenfield: boolean;
+  children: ReactNode;
+}) {
   return (
     <Card
       className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 fill-mode-backwards duration-500"
@@ -95,117 +79,26 @@ function ChartShell({
       <CardHeader>
         <CardTitle>Projected Storage Growth</CardTitle>
         <CardDescription>
-          {greenfieldSimulation
+          {greenfield
             ? "Greenfield: source data and GFS retention chain build up year over year."
             : "Seeded: full retention chain from day 1; only source data grows."}
         </CardDescription>
-        <CardAction>
-          <Label
-            htmlFor="growth-chart-greenfield"
-            className="text-muted-foreground flex cursor-pointer items-center gap-2 text-xs font-normal"
-          >
-            Greenfield
-            <Switch
-              id="growth-chart-greenfield"
-              size="sm"
-              checked={greenfieldSimulation}
-              onCheckedChange={onGreenfieldChange}
-              aria-label="Simulate greenfield environment"
-            />
-          </Label>
-        </CardAction>
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
   );
 }
 
-interface FetchState {
+function ChartBody({
+  data,
+  isLoading,
+  error,
+}: {
   data: GrowthSeriesPoint[] | null;
-  loading: boolean;
+  isLoading: boolean;
   error: string | null;
-}
-
-interface GrowthChartFetcherProps {
-  args: GenerateGrowthSeriesArgs;
-  greenfieldSimulation: boolean;
-  onGreenfieldChange: (next: boolean) => void;
-}
-
-function GrowthChartFetcher({
-  args,
-  greenfieldSimulation,
-  onGreenfieldChange,
-}: GrowthChartFetcherProps) {
-  // Initialize loading=true so we don't need a synchronous setState in the
-  // effect to flip it. Subsequent fetches keep prior data visible (a stale-
-  // while-revalidate pattern) while the new request is in flight.
-  const [state, setState] = useState<FetchState>({
-    data: null,
-    loading: true,
-    error: null,
-  });
-  const requestIdRef = useRef(0);
-
-  const {
-    jobs,
-    sessions,
-    excludedJobNames,
-    jobCount,
-    vbrVersion,
-    productVersionOverride,
-    settings,
-  } = args;
-
-  useEffect(() => {
-    const id = ++requestIdRef.current;
-    let cancelled = false;
-    generateGrowthSeries({
-      jobs,
-      sessions,
-      excludedJobNames,
-      settings,
-      jobCount,
-      vbrVersion,
-      productVersionOverride,
-    })
-      .then((data) => {
-        if (cancelled || id !== requestIdRef.current) return;
-        setState({ data, loading: false, error: null });
-      })
-      .catch(() => {
-        if (cancelled || id !== requestIdRef.current) return;
-        setState({
-          data: null,
-          loading: false,
-          error: "Could not project storage growth. Try again later.",
-        });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    jobs,
-    sessions,
-    excludedJobNames,
-    settings,
-    jobCount,
-    vbrVersion,
-    productVersionOverride,
-  ]);
-
-  return (
-    <ChartShell
-      greenfieldSimulation={greenfieldSimulation}
-      onGreenfieldChange={onGreenfieldChange}
-    >
-      <ChartBody state={state} />
-    </ChartShell>
-  );
-}
-
-function ChartBody({ state }: { state: FetchState }) {
-  if (state.loading) {
+}) {
+  if (isLoading) {
     return (
       <div
         className="text-muted-foreground flex h-[350px] items-center justify-center gap-2 text-sm"
@@ -221,18 +114,18 @@ function ChartBody({ state }: { state: FetchState }) {
     );
   }
 
-  if (state.error) {
+  if (error) {
     return (
       <div
         className="text-muted-foreground flex h-[350px] items-center justify-center text-sm"
         role="alert"
       >
-        {state.error}
+        {error}
       </div>
     );
   }
 
-  if (!state.data || state.data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <div className="text-muted-foreground flex h-[350px] items-center justify-center text-sm italic">
         No projection available.
@@ -242,10 +135,7 @@ function ChartBody({ state }: { state: FetchState }) {
 
   return (
     <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-      <BarChart
-        data={state.data}
-        margin={{ top: 20, right: 0, left: 0, bottom: 0 }}
-      >
+      <BarChart data={data} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
         <CartesianGrid
           strokeDasharray="3 3"
           stroke="var(--border)"
@@ -266,20 +156,7 @@ function ChartBody({ state }: { state: FetchState }) {
         />
         <Tooltip
           cursor={{ fill: "var(--muted)", opacity: 0.3 }}
-          contentStyle={{
-            backgroundColor: "var(--popover)",
-            color: "var(--popover-foreground)",
-            border: "1px solid var(--border)",
-            borderRadius: "0.5rem",
-            fontSize: "12px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-          }}
-          labelStyle={{ fontWeight: 600, marginBottom: 4 }}
-          itemStyle={{ padding: 0 }}
-          formatter={(value: number | undefined, name: string | undefined) => [
-            value != null ? `${value.toFixed(2)} TB` : "—",
-            name ?? "",
-          ]}
+          content={GrowthTooltip}
         />
         <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "20px" }} />
         {SEGMENTS.map((seg) => (
@@ -295,5 +172,47 @@ function ChartBody({ state }: { state: FetchState }) {
         ))}
       </BarChart>
     </ResponsiveContainer>
+  );
+}
+
+function GrowthTooltip(props: TooltipContentProps<number, string>) {
+  const { active, payload, label } = props;
+  if (!active || !payload || payload.length === 0) return null;
+
+  // recharts hands us the original row object on each payload entry;
+  // grab `total` from the first one to render a Total row.
+  const firstPayload = payload[0]?.payload as GrowthSeriesPoint | undefined;
+  const total = firstPayload?.total ?? 0;
+
+  return (
+    <div className="bg-popover text-popover-foreground rounded-md border p-3 text-xs shadow-md">
+      <p className="mb-2 font-semibold">{label}</p>
+      <ul className="space-y-1">
+        {payload.map((entry) => {
+          const value =
+            typeof entry.value === "number"
+              ? `${entry.value.toFixed(2)} TB`
+              : "—";
+          return (
+            <li
+              key={entry.dataKey as string}
+              className="flex items-center gap-2"
+            >
+              <span
+                aria-hidden="true"
+                className="size-2.5 shrink-0 rounded-sm"
+                style={{ backgroundColor: entry.color }}
+              />
+              <span className="text-muted-foreground flex-1">{entry.name}</span>
+              <span className="font-mono tabular-nums">{value}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="border-border/60 mt-2 flex items-center gap-2 border-t pt-2 font-semibold">
+        <span className="flex-1">Total</span>
+        <span className="font-mono tabular-nums">{formatTB(total)}</span>
+      </div>
+    </div>
   );
 }

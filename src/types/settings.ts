@@ -22,5 +22,5 @@ export const DEFAULT_SETTINGS: GlobalSettings = {
   growthYears: 0,
   limitCalculationYears: null,
   ignoreArchiveTier: false,
-  greenfieldSimulation: false,
+  greenfieldSimulation: true,
 };

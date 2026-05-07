@@ -80,6 +80,24 @@ Rejected.
 - Empty / loading / error states render a muted card placeholder — the chart never crashes the Sizing tab.
 - The clamp at 10 prevents pathological projections (e.g. 50-year sliders) from inflating fan-out.
 
+## Update 2026-05-08: Auto-fetch reverted to explicit pipeline
+
+After the initial implementation shipped (PR #44), manual testing surfaced two issues that warranted a follow-up refactor:
+
+- **Settings-change auto-fetch wasted proxy budget.** The `useEffect` keyed on settings primitives meant any tweak to growth percent, retention cap, target cloud, or greenfield mode silently fired up to N+1 concurrent API calls — even mid-thought, before the user clicked "Re-calculate." This contradicted the rest of the Sizing tab's explicit-action UX, where the sizing call only fires after consent and an explicit button press.
+- **Inline Greenfield Switch added no value.** The chart card's quick-toggle Switch duplicated the Settings Dialog control without offering meaningful workflow benefit, and customer scenario research showed greenfield should be the default (most users running a build-up simulation, not a steady state).
+
+**Changes:**
+
+- `<GrowthChart>` is now purely presentational. Props: `{ data, isLoading?, error?, greenfield }`. No `useEffect`, no `useState` for fetch, no projector import.
+- `generateGrowthSeries` runs in `handleGetEstimate` (`calculator-inputs.tsx`) alongside the existing `callVmAgentApi` calls — single outer `Promise.all` so the user pays one round-trip of latency for the whole sizing payload.
+- `DEFAULT_SETTINGS.greenfieldSimulation` flipped from `false` to `true`. The boolean field stays — both modes are still first-class — but the default matches the more common scenario.
+- The Settings Dialog Switch remains as the single durable toggle. The chart card description still flips between "Greenfield: …" and "Seeded: …" so users can see which mode produced the data they're looking at.
+
+**Why the original auto-fetch design didn't survive contact:** the original ADR justified the request-id stale-response guard as a mitigation against rapid settings changes producing stale data. The deeper issue is that _firing requests on settings changes at all_ is wrong for this UX — the rest of the tab is gated on an explicit consent + button. The mitigation was treating a symptom; the right fix was to remove the auto-fetch altogether and put the projection on the same explicit pipeline as the hero sizing call.
+
+**What did NOT change:** the `generateGrowthSeries` function itself (still in `src/lib/growth-projector.ts`), the projection-years clamp logic, the per-iteration `tempSettings` construction (greenfield → vary both knobs, seeded → vary only `growthYears`), and the `var(--chart-1..5)` color tokens.
+
 ## References
 
 - `src/lib/sizing-derivation.ts` — `deriveSizing`, `CompositionBuckets`, `DerivedSizing`
