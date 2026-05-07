@@ -192,6 +192,91 @@ describe("generateGrowthSeries", () => {
     }
   });
 
+  it("offsets the GFS chain by historicalDataYears in greenfield mode", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 7,
+      greenfieldSimulation: true,
+      historicalDataYears: 3,
+    });
+    await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(7);
+    const expectedCaps: Record<number, number> = {
+      1: 3,
+      2: 4,
+      3: 5,
+      4: 6,
+      5: 7,
+      6: 7,
+      7: 7,
+    };
+    for (let year = 1; year <= 7; year++) {
+      const call = callVmAgentApi.mock.calls.find(
+        (c) => (c[4] as GlobalSettings).growthYears === year,
+      );
+      const passed = call![4] as GlobalSettings;
+      expect(passed.limitCalculationYears, `year ${year}`).toBe(
+        expectedCaps[year],
+      );
+    }
+  });
+
+  it("clamps historicalDataYears + year offset to limitCalculationYears", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 5,
+      greenfieldSimulation: true,
+      historicalDataYears: 3,
+    });
+    await generateGrowthSeries(baseArgs(settings));
+
+    const expectedCaps: Record<number, number> = {
+      1: 3,
+      2: 4,
+      3: 5,
+      4: 5,
+      5: 5,
+    };
+    for (let year = 1; year <= 5; year++) {
+      const call = callVmAgentApi.mock.calls.find(
+        (c) => (c[4] as GlobalSettings).growthYears === year,
+      );
+      const passed = call![4] as GlobalSettings;
+      expect(passed.limitCalculationYears, `year ${year}`).toBe(
+        expectedCaps[year],
+      );
+    }
+  });
+
+  it("ignores historicalDataYears when greenfieldSimulation is false", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 4,
+      greenfieldSimulation: false,
+      historicalDataYears: 3,
+    });
+    await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(4);
+    for (let year = 1; year <= 4; year++) {
+      const call = callVmAgentApi.mock.calls.find(
+        (c) => (c[4] as GlobalSettings).growthYears === year,
+      );
+      const passed = call![4] as GlobalSettings;
+      expect(passed.limitCalculationYears, `year ${year}`).toBe(4);
+    }
+  });
+
   it("produces strictly increasing totals when growth is active and the API honors it", async () => {
     // Faithful mock: scales response total by the year passed in growthYears.
     callVmAgentApi.mockImplementation(async (_s, _jc, _v, _o, settings) => {

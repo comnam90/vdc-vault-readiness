@@ -70,12 +70,19 @@ export async function generateGrowthSeries(
 
   return Promise.all(
     years.map(async (year): Promise<GrowthSeriesPoint> => {
+      let perYearLimit: number | null = settings.limitCalculationYears;
+      if (settings.greenfieldSimulation) {
+        const baseChain =
+          settings.historicalDataYears > 0
+            ? settings.historicalDataYears + year - 1
+            : year;
+        const maxChain = settings.limitCalculationYears ?? Infinity;
+        perYearLimit = Math.min(baseChain, maxChain);
+      }
       const tempSettings: GlobalSettings = {
         ...settings,
         growthYears: year,
-        limitCalculationYears: settings.greenfieldSimulation
-          ? year
-          : settings.limitCalculationYears,
+        limitCalculationYears: perYearLimit,
       };
       const summary = buildCalculatorSummary(
         jobs,

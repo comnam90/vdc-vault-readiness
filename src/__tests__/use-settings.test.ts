@@ -43,6 +43,7 @@ describe("useSettings", () => {
       limitCalculationYears: 1,
       ignoreArchiveTier: false,
       greenfieldSimulation: true,
+      historicalDataYears: 0,
     });
   });
 
@@ -146,6 +147,45 @@ describe("useSettings", () => {
 
     const { result } = renderHook(() => useSettings());
     expect(result.current.settings.limitCalculationYears).toBe(3);
+  });
+
+  it("defaults historicalDataYears to 0 when missing from storage", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ targetCloud: "Azure" }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.historicalDataYears).toBe(0);
+  });
+
+  it("accepts a valid integer in [0, 10] for historicalDataYears", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ historicalDataYears: 3 }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.historicalDataYears).toBe(3);
+  });
+
+  it("clamps and coerces invalid historicalDataYears values", () => {
+    for (const [bad, expected] of [
+      [-2, 0],
+      [25, 10],
+      [NaN, 0],
+      ["3y", 0],
+      [1.7, 1], // truncates
+    ] as const) {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ historicalDataYears: bad }),
+      );
+      __resetSettingsStoreForTests();
+      const { result, unmount } = renderHook(() => useSettings());
+      expect(result.current.settings.historicalDataYears).toBe(expected);
+      unmount();
+    }
   });
 
   it("merges partial localStorage values with defaults so missing keys are filled in", () => {

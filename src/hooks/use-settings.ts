@@ -68,6 +68,13 @@ function normalizeSettings(input: unknown): GlobalSettings {
       ? raw.greenfieldSimulation
       : DEFAULT_SETTINGS.greenfieldSimulation;
 
+  const historicalDataYears = clampInt(
+    raw.historicalDataYears,
+    0,
+    10,
+    DEFAULT_SETTINGS.historicalDataYears,
+  );
+
   return {
     targetCloud,
     growthPercent,
@@ -75,6 +82,7 @@ function normalizeSettings(input: unknown): GlobalSettings {
     limitCalculationYears,
     ignoreArchiveTier,
     greenfieldSimulation,
+    historicalDataYears,
   };
 }
 

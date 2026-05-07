@@ -14,6 +14,12 @@ export interface GlobalSettings {
    * and only source-data growth varies year over year.
    */
   greenfieldSimulation: boolean;
+  /**
+   * Brownfield seed for greenfield-mode projections. At year K the effective
+   * GFS chain depth becomes `historicalDataYears + K - 1`, clamped to
+   * `limitCalculationYears`. Ignored when `greenfieldSimulation` is false.
+   */
+  historicalDataYears: number;
 }
 
 export const DEFAULT_SETTINGS: GlobalSettings = {
@@ -23,4 +29,5 @@ export const DEFAULT_SETTINGS: GlobalSettings = {
   limitCalculationYears: null,
   ignoreArchiveTier: false,
   greenfieldSimulation: true,
+  historicalDataYears: 0,
 };

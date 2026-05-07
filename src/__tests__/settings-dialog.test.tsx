@@ -136,6 +136,39 @@ describe("SettingsDialog", () => {
     expect(finalPersisted).toEqual(DEFAULT_SETTINGS);
   });
 
+  it("shows the historical-data input when greenfield is on (default) and hides it when toggled off", () => {
+    render(<SettingsDialog open onOpenChange={vi.fn()} />);
+
+    const historicalInput = screen.getByLabelText(
+      /historical data \(years\)/i,
+    ) as HTMLInputElement;
+    expect(historicalInput).toBeInTheDocument();
+    expect(historicalInput.value).toBe("0");
+
+    fireEvent.click(
+      screen.getByRole("switch", { name: /simulate greenfield growth/i }),
+    );
+    expect(
+      screen.queryByLabelText(/historical data \(years\)/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("persists historicalDataYears via Save", () => {
+    const onOpenChange = vi.fn();
+    render(<SettingsDialog open onOpenChange={onOpenChange} />);
+
+    setNumberInput(
+      screen.getByLabelText(/historical data \(years\)/i) as HTMLInputElement,
+      "4",
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    const persisted = JSON.parse(
+      window.localStorage.getItem(STORAGE_KEY) ?? "{}",
+    );
+    expect(persisted.historicalDataYears).toBe(4);
+  });
+
   it("seeds the draft from current settings when the dialog opens", () => {
     function Harness({ open }: { open: boolean }) {
       const { updateSettings } = useSettings();
