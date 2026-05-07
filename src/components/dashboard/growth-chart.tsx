@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Loader2 } from "lucide-react";
+import { Layers, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -49,6 +49,11 @@ export interface GrowthChartProps {
   error?: string | null;
   /** Read-only label showing which simulation mode produced the data. */
   greenfield: boolean;
+  /**
+   * Years of pre-existing backups seeded into the projection on Day 1. Only
+   * surfaced as a contextual note when `greenfield` is true and value > 0.
+   */
+  historicalDataYears?: number;
 }
 
 export function GrowthChart({
@@ -56,9 +61,14 @@ export function GrowthChart({
   isLoading = false,
   error = null,
   greenfield,
+  historicalDataYears = 0,
 }: GrowthChartProps) {
+  const showSeedNote = greenfield && historicalDataYears > 0;
   return (
     <ChartShell greenfield={greenfield}>
+      {showSeedNote && (
+        <HistoricalSeedNote historicalDataYears={historicalDataYears} />
+      )}
       <ChartBody data={data} isLoading={isLoading} error={error} />
     </ChartShell>
   );
@@ -84,8 +94,37 @@ function ChartShell({
             : "Seeded: full retention chain from day 1; only source data grows."}
         </CardDescription>
       </CardHeader>
-      <CardContent>{children}</CardContent>
+      <CardContent className="space-y-4">{children}</CardContent>
     </Card>
+  );
+}
+
+function HistoricalSeedNote({
+  historicalDataYears,
+}: {
+  historicalDataYears: number;
+}) {
+  const unit = historicalDataYears === 1 ? "year" : "years";
+  return (
+    <div
+      data-testid="historical-seed-note"
+      className="border-border/70 bg-muted/40 text-muted-foreground motion-safe:animate-in motion-safe:fade-in fill-mode-backwards flex items-center gap-2.5 rounded-md border border-dashed px-3 py-2 text-xs duration-300"
+    >
+      <Layers
+        className="text-foreground/70 size-3.5 shrink-0"
+        aria-hidden="true"
+      />
+      <p>
+        <span className="text-foreground font-semibold tabular-nums">
+          Year 1
+        </span>{" "}
+        starts with{" "}
+        <span className="text-foreground font-semibold tabular-nums">
+          {historicalDataYears} {unit}
+        </span>{" "}
+        of existing backups already seeded on the Vault.
+      </p>
+    </div>
   );
 }
 

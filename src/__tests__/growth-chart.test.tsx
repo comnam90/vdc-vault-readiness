@@ -73,6 +73,37 @@ describe("GrowthChart", () => {
     expect(screen.getByText(/no projection available/i)).toBeInTheDocument();
   });
 
+  it("renders a historical-seed note when greenfield and historicalDataYears > 0", () => {
+    render(<GrowthChart data={SAMPLE} greenfield historicalDataYears={3} />);
+    const note = screen.getByTestId("historical-seed-note");
+    expect(note).toHaveTextContent(/year 1/i);
+    expect(note).toHaveTextContent(/3 years/i);
+    expect(note).toHaveTextContent(/existing backups/i);
+  });
+
+  it("renders the seed note in singular form when historicalDataYears is 1", () => {
+    render(<GrowthChart data={SAMPLE} greenfield historicalDataYears={1} />);
+    expect(screen.getByTestId("historical-seed-note")).toHaveTextContent(
+      /1 year of existing backups/i,
+    );
+  });
+
+  it("does NOT render the seed note when historicalDataYears is 0", () => {
+    render(<GrowthChart data={SAMPLE} greenfield historicalDataYears={0} />);
+    expect(
+      screen.queryByTestId("historical-seed-note"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does NOT render the seed note when greenfield is false even if historicalDataYears > 0", () => {
+    render(
+      <GrowthChart data={SAMPLE} greenfield={false} historicalDataYears={5} />,
+    );
+    expect(
+      screen.queryByTestId("historical-seed-note"),
+    ).not.toBeInTheDocument();
+  });
+
   it("renders synchronously without triggering any data-fetching side effect", () => {
     // Pure-component contract: rendering must succeed without the projector
     // module being available. We mock it to a throwing stub; if the component

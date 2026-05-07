@@ -399,6 +399,7 @@ export function CalculatorInputs({
           sobrBlocksUpgrade={isVbr12 && hasSobr}
           growthSeries={growthSeries}
           greenfieldSimulation={settings.greenfieldSimulation}
+          historicalDataYears={settings.historicalDataYears}
         />
       )}
 

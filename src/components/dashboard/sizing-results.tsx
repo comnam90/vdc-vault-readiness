@@ -14,6 +14,8 @@ interface SizingResultsProps {
   growthSeries?: GrowthSeriesPoint[] | null;
   /** Whether the growth series was generated under greenfield assumptions. */
   greenfieldSimulation?: boolean;
+  /** Years of pre-existing backups seeded into the greenfield projection. */
+  historicalDataYears?: number;
 }
 
 export function SizingResults({
@@ -22,6 +24,7 @@ export function SizingResults({
   sobrBlocksUpgrade = false,
   growthSeries,
   greenfieldSimulation = false,
+  historicalDataYears = 0,
 }: SizingResultsProps) {
   const sizing = useMemo(() => deriveSizing(result.data), [result]);
   const upgradeSizing = useMemo(
@@ -48,7 +51,11 @@ export function SizingResults({
         sobrBlocksUpgrade={sobrBlocksUpgrade}
       />
       {growthSeries !== undefined && (
-        <GrowthChart data={growthSeries} greenfield={greenfieldSimulation} />
+        <GrowthChart
+          data={growthSeries}
+          greenfield={greenfieldSimulation}
+          historicalDataYears={historicalDataYears}
+        />
       )}
       <SizingBaselinesCard sizing={sizing} />
     </div>
