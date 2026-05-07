@@ -271,6 +271,38 @@ function SettingsForm({ initial, onSave, onCancel }: SettingsFormProps) {
             />
           </div>
         </section>
+
+        <Separator />
+
+        {/* Greenfield Simulation */}
+        <section className="space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <Label
+                htmlFor="greenfield-simulation"
+                className="text-sm font-semibold"
+              >
+                Simulate greenfield growth
+              </Label>
+              <p className="text-muted-foreground text-xs">
+                When on, the multi-year projection chart builds the GFS
+                retention chain up year by year alongside data growth. When off,
+                the projection treats day 1 as fully seeded — only source data
+                grows.
+              </p>
+            </div>
+            <Switch
+              id="greenfield-simulation"
+              checked={draft.greenfieldSimulation}
+              onCheckedChange={(checked) =>
+                setDraft((prev) => ({
+                  ...prev,
+                  greenfieldSimulation: checked,
+                }))
+              }
+            />
+          </div>
+        </section>
       </div>
 
       <DialogFooter className="gap-2 sm:justify-between">

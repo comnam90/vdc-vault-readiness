@@ -42,7 +42,27 @@ describe("useSettings", () => {
       growthYears: 3,
       limitCalculationYears: 1,
       ignoreArchiveTier: false,
+      greenfieldSimulation: false,
     });
+  });
+
+  it("accepts a boolean greenfieldSimulation and falls back when invalid", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ greenfieldSimulation: true }),
+    );
+    __resetSettingsStoreForTests();
+    const a = renderHook(() => useSettings());
+    expect(a.result.current.settings.greenfieldSimulation).toBe(true);
+    a.unmount();
+
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ greenfieldSimulation: "yes" }),
+    );
+    __resetSettingsStoreForTests();
+    const b = renderHook(() => useSettings());
+    expect(b.result.current.settings.greenfieldSimulation).toBe(false);
   });
 
   it("falls back to DEFAULT_SETTINGS when localStorage holds malformed JSON", () => {

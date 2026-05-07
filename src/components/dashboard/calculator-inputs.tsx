@@ -375,6 +375,11 @@ export function CalculatorInputs({
           result={result}
           upgradeResult={upgradeResult ?? undefined}
           sobrBlocksUpgrade={isVbr12 && hasSobr}
+          jobs={data.jobInfo}
+          sessions={data.jobSessionSummary}
+          excludedJobNames={excludedJobNames}
+          jobCount={activeJobCount}
+          vbrVersion={vbrVersion}
         />
       )}
 
