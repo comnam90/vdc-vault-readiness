@@ -98,11 +98,24 @@ After the initial implementation shipped (PR #44), manual testing surfaced two i
 
 **What did NOT change:** the `generateGrowthSeries` function itself (still in `src/lib/growth-projector.ts`), the projection-years clamp logic, the per-iteration `tempSettings` construction (greenfield → vary both knobs, seeded → vary only `growthYears`), and the `var(--chart-1..5)` color tokens.
 
+## Update 2026-05-08: Month-level granularity for the retention horizon cap
+
+`limitCalculationYears` accepted whole years only ([1, 10] or `null`). Customers ran into two cases this couldn't express: short-retention shops (e.g. 3-month horizon) and quarter-aligned policies (e.g. 2y6m). A sibling field `limitCalculationMonths: number` ([0, 11], default `0`) was added; the cap math became `globalCapDays = years * 365 + months * 30`.
+
+**Two sub-decisions worth pinning here, since they outlive the PR:**
+
+- **30-day month convention.** Sizing estimates use a flat 30-day month rather than calendar months, 30.4375, or 365.25/12. The Veeam sizing engine already operates in days; a flat 30 keeps the tenant-facing math obvious ("6m = 180d") and matches the level of precision the hero retention numbers carry. Future month-denominated sizing knobs should follow the same convention.
+- **`limitCalculationYears = 0` is a valid value, not "disabled".** The normalizer's accepted range moved from `[1, 10]` to `[0, 10]`. `null` remains the only "disabled" sentinel (toggle off). `0` paired with `limitCalculationMonths > 0` expresses a sub-year cap; both fields at `0` with the toggle on is treated as a no-op cap. Existing localStorage payloads from prior versions still load — the normalizer fills `limitCalculationMonths` with `0`.
+
+**Greenfield interaction (deliberate, not addressed):** in greenfield mode with a mixed cap such as 1y6m, year 1's bar reflects the full 1y6m chain rather than ramping to 1y0m first. The per-iteration `tempSettings` keeps `limitCalculationMonths` constant across years; only `limitCalculationYears` ramps. Splitting a mixed cap back into (years, months) at each year was rejected as a problem nobody had asked us to solve — pure years-only caps still ramp identically to the original ADR. Revisit if customer reports surface visualisation confusion on mixed caps.
+
+**What did NOT change:** the API fan-out shape, the per-iteration `tempSettings` spread (still preserves all non-varied fields automatically), the explicit-pipeline UX from the previous update, and the chart palette tokens.
+
 ## References
 
 - `src/lib/sizing-derivation.ts` — `deriveSizing`, `CompositionBuckets`, `DerivedSizing`
 - `src/lib/veeam-api.ts` — `callVmAgentApi`, `buildVmAgentRequest`
-- `src/lib/calculator-aggregator.ts` — `buildCalculatorSummary`
+- `src/lib/calculator-aggregator.ts` — `buildCalculatorSummary`, `capJob` (now combines years + months)
 - `src/components/dashboard/sizing-proportion-bar.tsx` — `SEGMENT_COLOR` token mapping reused by the chart
-- `src/types/settings.ts` — `GlobalSettings`, including the new `greenfieldSimulation` field
+- `src/types/settings.ts` — `GlobalSettings`, including `greenfieldSimulation` and `limitCalculationMonths`
 - `functions/api/veeam-proxy.ts` — Cloudflare Pages Function carrying the API traffic
