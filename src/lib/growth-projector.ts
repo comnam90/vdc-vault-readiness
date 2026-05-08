@@ -4,7 +4,7 @@ import { callVmAgentApi } from "@/lib/veeam-api";
 import type { SafeJob, SafeJobSession } from "@/types/domain";
 import type { GlobalSettings } from "@/types/settings";
 
-const MAX_PROJECTION_YEARS = 10;
+const MAX_PROJECTION_YEARS = 12;
 const MIN_PROJECTION_YEARS = 1;
 const DEFAULT_PROJECTION_YEARS = 5;
 
@@ -33,16 +33,53 @@ export interface GenerateGrowthSeriesArgs {
 }
 
 /**
- * Number of years the chart will project. Bounded by [1, 10] to keep the
- * concurrent API fan-out from inflating; see ADR 0001.
+ * Number of years the chart will project. Bounded by [1, 12] so the yearly
+ * view mirrors monthly mode's 12-bar density and keeps API fan-out finite;
+ * see ADR 0001.
+ *
+ * When `limitCalculationYears` is null (cap disabled), the floor lifts to
+ * `naturalRetentionYears` derived from job data so the chart's final bar
+ * reaches the hero's horizon instead of always stopping at the 5y default.
  */
-export function getProjectionYears(settings: GlobalSettings): number {
+export function getProjectionYears(
+  settings: GlobalSettings,
+  naturalRetentionYears = 0,
+): number {
   const requested =
     settings.limitCalculationYears ??
-    Math.max(DEFAULT_PROJECTION_YEARS, settings.growthYears || 0);
+    Math.max(
+      DEFAULT_PROJECTION_YEARS,
+      settings.growthYears || 0,
+      naturalRetentionYears,
+    );
   return Math.min(
     MAX_PROJECTION_YEARS,
     Math.max(MIN_PROJECTION_YEARS, requested),
+  );
+}
+
+/**
+ * Longest retention horizon implied by the job data, in years. Considers all
+ * GFS buckets so a job with e.g. `Monthly:120` (10y of monthly retention) and
+ * no yearly points still reports a 10y horizon. Used to extend the default
+ * projection length when no explicit retention cap is set.
+ *
+ * Conversions follow Veeam's calendar conventions: 52 weeks / 12 months / 365
+ * days per year; results are rounded up to the nearest whole year so a chain
+ * that just crosses a boundary (e.g. 13 months) is reflected as the next year
+ * on the chart.
+ */
+export function naturalRetentionYears(summary: {
+  maxRetentionDays: number | null;
+  gfsWeekly: number | null;
+  gfsMonthly: number | null;
+  gfsYearly: number | null;
+}): number {
+  return Math.max(
+    Math.ceil((summary.maxRetentionDays ?? 0) / 365),
+    Math.ceil((summary.gfsWeekly ?? 0) / 52),
+    Math.ceil((summary.gfsMonthly ?? 0) / 12),
+    summary.gfsYearly ?? 0,
   );
 }
 
@@ -81,9 +118,19 @@ export async function generateGrowthSeries(
   // Boundary is intentional per spec: "12 months or less" → monthly scale,
   // so 1y 0m (and 0y 12m) routes here, not the yearly path.
   const isMonthlyScale = capActive && totalCapMonths <= 12;
+  // Natural retention is only consulted by the yearly path when the user has
+  // no cap set; skip the extra summary build in monthly mode or when an
+  // explicit cap drives the step count.
+  const needsNaturalYears =
+    !isMonthlyScale && settings.limitCalculationYears === null;
+  const naturalYears = needsNaturalYears
+    ? naturalRetentionYears(
+        buildCalculatorSummary(jobs, sessions, excludedJobNames, settings),
+      )
+    : 0;
   const stepCount = isMonthlyScale
     ? totalCapMonths
-    : getProjectionYears(settings);
+    : getProjectionYears(settings, naturalYears);
   const steps = Array.from({ length: stepCount }, (_, i) => i + 1);
 
   const projectStep = async (step: number): Promise<GrowthSeriesPoint> => {
@@ -137,9 +184,13 @@ function buildYearlySettings(
     const maxChain = settings.limitCalculationYears ?? Infinity;
     perYearLimit = Math.min(baseChain, maxChain);
   }
+  // Cap per-step growth to settings.growthYears so the chart's growth
+  // matches the global setting: 0 → flat across all bars; N → ramps to N
+  // then holds. Aligns the chart's final bar with the hero card, which
+  // also uses settings.growthYears as-is.
   return {
     ...settings,
-    growthYears: year,
+    growthYears: Math.min(year, settings.growthYears),
     limitCalculationYears: perYearLimit,
   };
 }

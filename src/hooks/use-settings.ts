@@ -43,8 +43,9 @@ function normalizeSettings(input: unknown): GlobalSettings {
     DEFAULT_SETTINGS.growthYears,
   );
 
-  // null is a valid "disabled" state; otherwise must be an integer in [0, 10].
-  // 0 is a valid value when paired with limitCalculationMonths > 0.
+  // null is a valid "disabled" state; otherwise must be an integer in [0, 20]
+  // to match the settings dialog's input bounds. 0 is a valid value when
+  // paired with limitCalculationMonths > 0.
   let limitCalculationYears: number | null =
     DEFAULT_SETTINGS.limitCalculationYears;
   if (raw.limitCalculationYears === null) {
@@ -54,7 +55,7 @@ function normalizeSettings(input: unknown): GlobalSettings {
     Number.isFinite(raw.limitCalculationYears) &&
     Number.isInteger(raw.limitCalculationYears) &&
     raw.limitCalculationYears >= 0 &&
-    raw.limitCalculationYears <= 10
+    raw.limitCalculationYears <= 20
   ) {
     limitCalculationYears = raw.limitCalculationYears;
   }

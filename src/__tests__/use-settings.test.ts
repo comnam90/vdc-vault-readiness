@@ -128,7 +128,7 @@ describe("useSettings", () => {
   });
 
   it("disables the retention cap when limitCalculationYears is NaN, non-integer, or out of range", () => {
-    for (const bad of [-1, 11, NaN, "1y", 1.5]) {
+    for (const bad of [-1, 21, NaN, "1y", 1.5]) {
       window.localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({ limitCalculationYears: bad }),
@@ -140,8 +140,8 @@ describe("useSettings", () => {
     }
   });
 
-  it("accepts a valid integer in [0, 10] for limitCalculationYears", () => {
-    for (const value of [0, 3, 10]) {
+  it("accepts a valid integer in [0, 20] for limitCalculationYears", () => {
+    for (const value of [0, 3, 10, 13, 20]) {
       window.localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({ limitCalculationYears: value }),

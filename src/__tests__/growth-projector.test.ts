@@ -95,13 +95,13 @@ describe("getProjectionYears", () => {
     ).toBe(8);
   });
 
-  it("clamps to a maximum of 10 years", () => {
+  it("clamps to a maximum of 12 years", () => {
     expect(
       getProjectionYears({
         ...makeSettings(),
         limitCalculationYears: 99,
       } as GlobalSettings),
-    ).toBe(10);
+    ).toBe(12);
   });
 
   it("clamps to a minimum of 1 year", () => {
@@ -111,6 +111,39 @@ describe("getProjectionYears", () => {
         limitCalculationYears: 0,
       } as GlobalSettings),
     ).toBe(1);
+  });
+
+  it("extends past the 5y default to match natural retention when no cap is set", () => {
+    expect(
+      getProjectionYears(
+        makeSettings({ limitCalculationYears: null, growthYears: 0 }),
+        8,
+      ),
+    ).toBe(8);
+  });
+
+  it("clamps natural retention to 12 when cap is null and natural exceeds 12", () => {
+    expect(
+      getProjectionYears(
+        makeSettings({ limitCalculationYears: null, growthYears: 0 }),
+        20,
+      ),
+    ).toBe(12);
+  });
+
+  it("keeps the 5y floor when natural retention is below the default", () => {
+    expect(
+      getProjectionYears(
+        makeSettings({ limitCalculationYears: null, growthYears: 0 }),
+        2,
+      ),
+    ).toBe(5);
+  });
+
+  it("ignores natural retention when limitCalculationYears is explicitly set", () => {
+    expect(
+      getProjectionYears(makeSettings({ limitCalculationYears: 3 }), 9),
+    ).toBe(3);
   });
 });
 
@@ -146,6 +179,165 @@ describe("generateGrowthSeries", () => {
     }
   });
 
+  it("extends to natural GFS retention (capped at 12) when no cap is set", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    // Job with high yearly GFS retention (8y), no cap → chart should
+    // extend to 8 bars instead of the 5y default.
+    const args = {
+      jobs: [
+        makeJob({
+          JobName: "Job A",
+          SourceSizeGB: 1024,
+          RetainDays: 30,
+          GfsEnabled: true,
+          GfsDetails: "Yearly:8,Monthly:12,Weekly:4",
+        }),
+      ],
+      sessions: [
+        makeSession({
+          JobName: "Job A",
+          AvgChangeRate: 5,
+          MaxDataSize: 1024 ** 3,
+        }),
+      ],
+      settings: makeSettings({
+        limitCalculationYears: null,
+        growthYears: 0,
+        greenfieldSimulation: false,
+      }),
+      jobCount: 1,
+      vbrVersion: "13.0.1.1071",
+    };
+
+    const result = await generateGrowthSeries(args);
+
+    expect(result).toHaveLength(8);
+    expect(result.map((p) => p.name)).toEqual([
+      "Year 1",
+      "Year 2",
+      "Year 3",
+      "Year 4",
+      "Year 5",
+      "Year 6",
+      "Year 7",
+      "Year 8",
+    ]);
+  });
+
+  it("derives natural retention from Monthly GFS when no Yearly is configured", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    // Monthly:120 = 10 years of monthly retention. No Yearly. With no cap
+    // set, the chart should extend to 10 bars to match that horizon.
+    const args = {
+      jobs: [
+        makeJob({
+          JobName: "Job A",
+          SourceSizeGB: 1024,
+          RetainDays: 30,
+          GfsEnabled: true,
+          GfsDetails: "Monthly:120",
+        }),
+      ],
+      sessions: [
+        makeSession({
+          JobName: "Job A",
+          AvgChangeRate: 5,
+          MaxDataSize: 1024 ** 3,
+        }),
+      ],
+      settings: makeSettings({
+        limitCalculationYears: null,
+        growthYears: 0,
+        greenfieldSimulation: false,
+      }),
+      jobCount: 1,
+      vbrVersion: "13.0.1.1071",
+    };
+
+    const result = await generateGrowthSeries(args);
+
+    expect(result).toHaveLength(10);
+  });
+
+  it("clamps to 12 bars when natural GFS retention exceeds 12 and no cap is set", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const args = {
+      jobs: [
+        makeJob({
+          JobName: "Job A",
+          SourceSizeGB: 1024,
+          RetainDays: 30,
+          GfsEnabled: true,
+          GfsDetails: "Yearly:20",
+        }),
+      ],
+      sessions: [
+        makeSession({
+          JobName: "Job A",
+          AvgChangeRate: 5,
+          MaxDataSize: 1024 ** 3,
+        }),
+      ],
+      settings: makeSettings({
+        limitCalculationYears: null,
+        growthYears: 0,
+        greenfieldSimulation: false,
+      }),
+      jobCount: 1,
+      vbrVersion: "13.0.1.1071",
+    };
+
+    const result = await generateGrowthSeries(args);
+
+    expect(result).toHaveLength(12);
+  });
+
+  it("clamps per-step growthYears to settings.growthYears (settings=0 → all 0)", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 5,
+      growthYears: 0,
+      greenfieldSimulation: false,
+    });
+    await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(5);
+    for (const call of callVmAgentApi.mock.calls) {
+      expect((call[4] as GlobalSettings).growthYears).toBe(0);
+    }
+  });
+
+  it("clamps per-step growthYears to settings.growthYears (settings=2 over 5y → 1,2,2,2,2)", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 5,
+      growthYears: 2,
+      greenfieldSimulation: false,
+    });
+    await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(5);
+    const passedGrowthYears = callVmAgentApi.mock.calls
+      .map((c) => (c[4] as GlobalSettings).growthYears)
+      .sort();
+    expect(passedGrowthYears).toEqual([1, 2, 2, 2, 2]);
+  });
+
   it("preserves limitCalculationYears across iterations when greenfieldSimulation is false", async () => {
     callVmAgentApi.mockImplementation(async () =>
       fakeResponse({ totalStorageTB: 10, daily: 1 }),
@@ -154,6 +346,7 @@ describe("generateGrowthSeries", () => {
     const settings = makeSettings({
       limitCalculationYears: 4,
       greenfieldSimulation: false,
+      growthYears: 4,
     });
     await generateGrowthSeries(baseArgs(settings));
 
@@ -177,6 +370,7 @@ describe("generateGrowthSeries", () => {
     const settings = makeSettings({
       limitCalculationYears: 5,
       greenfieldSimulation: true,
+      growthYears: 5,
     });
     await generateGrowthSeries(baseArgs(settings));
 
@@ -201,6 +395,7 @@ describe("generateGrowthSeries", () => {
       limitCalculationYears: 7,
       greenfieldSimulation: true,
       historicalDataYears: 3,
+      growthYears: 7,
     });
     await generateGrowthSeries(baseArgs(settings));
 
@@ -234,6 +429,7 @@ describe("generateGrowthSeries", () => {
       limitCalculationYears: 5,
       greenfieldSimulation: true,
       historicalDataYears: 3,
+      growthYears: 5,
     });
     await generateGrowthSeries(baseArgs(settings));
 
@@ -264,6 +460,7 @@ describe("generateGrowthSeries", () => {
       limitCalculationYears: 4,
       greenfieldSimulation: false,
       historicalDataYears: 3,
+      growthYears: 4,
     });
     await generateGrowthSeries(baseArgs(settings));
 
@@ -293,6 +490,7 @@ describe("generateGrowthSeries", () => {
 
     const settings = makeSettings({
       limitCalculationYears: 5,
+      growthYears: 5,
       growthPercent: 10,
     });
     const result = await generateGrowthSeries(baseArgs(settings));
@@ -459,6 +657,7 @@ describe("generateGrowthSeries", () => {
       limitCalculationYears: 4,
       limitCalculationMonths: 3,
       greenfieldSimulation: true,
+      growthYears: 4,
     });
     await generateGrowthSeries(baseArgs(settings));
 

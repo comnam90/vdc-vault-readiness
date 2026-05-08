@@ -16,6 +16,11 @@ interface SizingResultsProps {
   greenfieldSimulation?: boolean;
   /** Years of pre-existing backups seeded into the greenfield projection. */
   historicalDataYears?: number;
+  /**
+   * Years at which the chart's projection was clamped. When set, a notice
+   * renders below the chart explaining the truncation.
+   */
+  cappedAtYears?: number;
 }
 
 export function SizingResults({
@@ -25,6 +30,7 @@ export function SizingResults({
   growthSeries,
   greenfieldSimulation = false,
   historicalDataYears = 0,
+  cappedAtYears,
 }: SizingResultsProps) {
   const sizing = useMemo(() => deriveSizing(result.data), [result]);
   const upgradeSizing = useMemo(
@@ -55,6 +61,7 @@ export function SizingResults({
           data={growthSeries}
           greenfield={greenfieldSimulation}
           historicalDataYears={historicalDataYears}
+          cappedAtYears={cappedAtYears}
         />
       )}
       <SizingBaselinesCard sizing={sizing} />

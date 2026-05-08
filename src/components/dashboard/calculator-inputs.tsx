@@ -15,6 +15,7 @@ import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
 import { callVmAgentApi } from "@/lib/veeam-api";
 import {
   generateGrowthSeries,
+  naturalRetentionYears,
   type GrowthSeriesPoint,
 } from "@/lib/growth-projector";
 import {
@@ -128,6 +129,17 @@ export function CalculatorInputs({
   const vbrVersion = data.backupServer?.[0]?.Version ?? "";
   const isVbr12 = parseInt(vbrVersion.split(".")[0], 10) < 13;
   const hasSobr = (data.sobr?.length ?? 0) > 0;
+
+  // Cap notice fires when the effective retention horizon exceeds 12y. The
+  // cap setting wins when active; otherwise fall back to the data's natural
+  // GFS retention so cap-disabled users with long retention still see why
+  // the chart's final bar doesn't reach the hero total.
+  const effectiveRetentionYears =
+    settings.limitCalculationYears !== null
+      ? settings.limitCalculationYears +
+        (settings.limitCalculationMonths ?? 0) / 12
+      : naturalRetentionYears(summary);
+  const cappedAtYears = effectiveRetentionYears > 12 ? 12 : undefined;
   // Fire the v13 comparison call for any VBR 12 environment, including those
   // with a SOBR. Under SOBR, the savings only materialize after both upgrading
   // and transitioning to direct Backup Copy jobs — the hero card surfaces that
@@ -406,6 +418,7 @@ export function CalculatorInputs({
           growthSeries={growthSeries}
           greenfieldSimulation={settings.greenfieldSimulation}
           historicalDataYears={settings.historicalDataYears}
+          cappedAtYears={cappedAtYears}
         />
       )}
 

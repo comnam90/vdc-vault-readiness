@@ -14,9 +14,14 @@ vi.mock("@/lib/veeam-api", () => ({
   callVmAgentApi: vi.fn(),
 }));
 
-vi.mock("@/lib/growth-projector", () => ({
-  generateGrowthSeries: vi.fn(),
-}));
+vi.mock("@/lib/growth-projector", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/growth-projector")>();
+  return {
+    ...actual,
+    generateGrowthSeries: vi.fn(),
+  };
+});
 
 import { callVmAgentApi } from "@/lib/veeam-api";
 import { generateGrowthSeries } from "@/lib/growth-projector";
