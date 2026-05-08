@@ -174,9 +174,13 @@ function buildYearlySettings(
     const maxChain = settings.limitCalculationYears ?? Infinity;
     perYearLimit = Math.min(baseChain, maxChain);
   }
+  // Cap per-step growth to settings.growthYears so the chart's growth
+  // matches the global setting: 0 → flat across all bars; N → ramps to N
+  // then holds. Aligns the chart's final bar with the hero card, which
+  // also uses settings.growthYears as-is.
   return {
     ...settings,
-    growthYears: year,
+    growthYears: Math.min(year, settings.growthYears),
     limitCalculationYears: perYearLimit,
   };
 }

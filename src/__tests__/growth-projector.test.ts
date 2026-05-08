@@ -263,6 +263,43 @@ describe("generateGrowthSeries", () => {
     expect(result).toHaveLength(12);
   });
 
+  it("clamps per-step growthYears to settings.growthYears (settings=0 → all 0)", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 5,
+      growthYears: 0,
+      greenfieldSimulation: false,
+    });
+    await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(5);
+    for (const call of callVmAgentApi.mock.calls) {
+      expect((call[4] as GlobalSettings).growthYears).toBe(0);
+    }
+  });
+
+  it("clamps per-step growthYears to settings.growthYears (settings=2 over 5y → 1,2,2,2,2)", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 5,
+      growthYears: 2,
+      greenfieldSimulation: false,
+    });
+    await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(5);
+    const passedGrowthYears = callVmAgentApi.mock.calls
+      .map((c) => (c[4] as GlobalSettings).growthYears)
+      .sort();
+    expect(passedGrowthYears).toEqual([1, 2, 2, 2, 2]);
+  });
+
   it("preserves limitCalculationYears across iterations when greenfieldSimulation is false", async () => {
     callVmAgentApi.mockImplementation(async () =>
       fakeResponse({ totalStorageTB: 10, daily: 1 }),
@@ -271,6 +308,7 @@ describe("generateGrowthSeries", () => {
     const settings = makeSettings({
       limitCalculationYears: 4,
       greenfieldSimulation: false,
+      growthYears: 4,
     });
     await generateGrowthSeries(baseArgs(settings));
 
@@ -294,6 +332,7 @@ describe("generateGrowthSeries", () => {
     const settings = makeSettings({
       limitCalculationYears: 5,
       greenfieldSimulation: true,
+      growthYears: 5,
     });
     await generateGrowthSeries(baseArgs(settings));
 
@@ -318,6 +357,7 @@ describe("generateGrowthSeries", () => {
       limitCalculationYears: 7,
       greenfieldSimulation: true,
       historicalDataYears: 3,
+      growthYears: 7,
     });
     await generateGrowthSeries(baseArgs(settings));
 
@@ -351,6 +391,7 @@ describe("generateGrowthSeries", () => {
       limitCalculationYears: 5,
       greenfieldSimulation: true,
       historicalDataYears: 3,
+      growthYears: 5,
     });
     await generateGrowthSeries(baseArgs(settings));
 
@@ -381,6 +422,7 @@ describe("generateGrowthSeries", () => {
       limitCalculationYears: 4,
       greenfieldSimulation: false,
       historicalDataYears: 3,
+      growthYears: 4,
     });
     await generateGrowthSeries(baseArgs(settings));
 
@@ -410,6 +452,7 @@ describe("generateGrowthSeries", () => {
 
     const settings = makeSettings({
       limitCalculationYears: 5,
+      growthYears: 5,
       growthPercent: 10,
     });
     const result = await generateGrowthSeries(baseArgs(settings));
@@ -576,6 +619,7 @@ describe("generateGrowthSeries", () => {
       limitCalculationYears: 4,
       limitCalculationMonths: 3,
       greenfieldSimulation: true,
+      growthYears: 4,
     });
     await generateGrowthSeries(baseArgs(settings));
 
