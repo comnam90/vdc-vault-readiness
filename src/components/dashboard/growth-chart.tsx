@@ -63,7 +63,7 @@ export function GrowthChart({
   greenfield,
   historicalDataYears = 0,
 }: GrowthChartProps) {
-  const isMonthlyScale = data?.[0]?.name.startsWith("Month ") ?? false;
+  const isMonthlyScale = data?.[0]?.name?.startsWith("Month ") ?? false;
   const showSeedNote = greenfield && historicalDataYears > 0;
   return (
     <ChartShell greenfield={greenfield} isMonthlyScale={isMonthlyScale}>
