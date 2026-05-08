@@ -331,7 +331,13 @@ export function CalculatorInputs({
                 className="text-muted-foreground gap-1 text-xs font-normal"
               >
                 <Clock className="size-3" aria-hidden="true" />
-                Retention cap: {settings.limitCalculationYears}y
+                Retention cap:{" "}
+                {settings.limitCalculationYears > 0 &&
+                settings.limitCalculationMonths > 0
+                  ? `${settings.limitCalculationYears}y ${settings.limitCalculationMonths}m`
+                  : settings.limitCalculationMonths > 0
+                    ? `${settings.limitCalculationMonths}m`
+                    : `${settings.limitCalculationYears}y`}
               </Badge>
             )}
             {settings.ignoreArchiveTier && (
