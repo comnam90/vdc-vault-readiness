@@ -5,6 +5,7 @@ export interface GlobalSettings {
   growthPercent: number;
   growthYears: number;
   limitCalculationYears: number | null;
+  limitCalculationMonths: number;
   ignoreArchiveTier: boolean;
   /**
    * When true, the multi-year growth projection treats the environment as
@@ -27,6 +28,7 @@ export const DEFAULT_SETTINGS: GlobalSettings = {
   growthPercent: 0,
   growthYears: 0,
   limitCalculationYears: null,
+  limitCalculationMonths: 0,
   ignoreArchiveTier: false,
   greenfieldSimulation: true,
   historicalDataYears: 0,

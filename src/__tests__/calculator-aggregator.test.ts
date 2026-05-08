@@ -583,6 +583,84 @@ describe("buildCalculatorSummary with GlobalSettings retention cap", () => {
     expect(result.gfsMonthly).toBeNull();
     expect(result.gfsYearly).toBeNull();
   });
+
+  it("caps using months only when limitCalculationYears is 0 and months > 0", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "MonthsOnly",
+        RetainDays: 500,
+        GfsDetails: "Weekly:60,Monthly:18,Yearly:7",
+      }),
+    ];
+    const result = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({
+        limitCalculationYears: 0,
+        limitCalculationMonths: 6,
+      }),
+    );
+
+    // globalCapDays = 0*365 + 6*30 = 180
+    expect(result.originalMaxRetentionDays).toBe(180);
+    expect(result.maxRetentionDays).toBe(180);
+    // floor(180*52/365) = 25
+    expect(result.gfsWeekly).toBe(25);
+    // floor(180*12/365) = 5
+    expect(result.gfsMonthly).toBe(5);
+    // floor(180/365) = 0
+    expect(result.gfsYearly).toBe(0);
+  });
+
+  it("caps using years and months combined", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "Mixed",
+        RetainDays: 5000,
+        GfsDetails: "Weekly:300,Monthly:48,Yearly:10",
+      }),
+    ];
+    const result = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({
+        limitCalculationYears: 2,
+        limitCalculationMonths: 6,
+      }),
+    );
+
+    // globalCapDays = 2*365 + 6*30 = 910
+    expect(result.originalMaxRetentionDays).toBe(910);
+    // floor(910*52/365) = 129
+    expect(result.gfsWeekly).toBe(Math.floor((910 * 52) / 365));
+    // floor(910*12/365) = 29
+    expect(result.gfsMonthly).toBe(Math.floor((910 * 12) / 365));
+    // floor(910/365) = 2
+    expect(result.gfsYearly).toBe(2);
+  });
+
+  it("ignores the cap when toggle is on but both years and months are 0", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "Job A",
+        RetainDays: 500,
+        GfsDetails: "Weekly:60,Monthly:18,Yearly:7",
+      }),
+    ];
+    const baseline = buildCalculatorSummary(jobs, []);
+    const withZeroCap = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({
+        limitCalculationYears: 0,
+        limitCalculationMonths: 0,
+      }),
+    );
+    expect(withZeroCap).toEqual(baseline);
+  });
 });
 
 describe("buildCalculatorSummary with archive tier truncation", () => {

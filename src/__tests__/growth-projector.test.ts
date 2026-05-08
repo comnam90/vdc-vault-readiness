@@ -302,6 +302,52 @@ describe("generateGrowthSeries", () => {
     }
   });
 
+  it("preserves limitCalculationMonths on a months-only cap (years=0, months=6)", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 0,
+      limitCalculationMonths: 6,
+      greenfieldSimulation: false,
+    });
+
+    expect(getProjectionYears(settings)).toBe(1);
+
+    await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(1);
+    const passed = callVmAgentApi.mock.calls[0][4] as GlobalSettings;
+    expect(passed.limitCalculationYears).toBe(0);
+    expect(passed.limitCalculationMonths).toBe(6);
+    expect(passed.growthYears).toBe(1);
+  });
+
+  it("preserves limitCalculationMonths across all per-year iterations in greenfield mode", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 4,
+      limitCalculationMonths: 3,
+      greenfieldSimulation: true,
+    });
+    await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(4);
+    for (let year = 1; year <= 4; year++) {
+      const call = callVmAgentApi.mock.calls.find(
+        (c) => (c[4] as GlobalSettings).growthYears === year,
+      );
+      expect(call, `call for year ${year}`).toBeDefined();
+      const passed = call![4] as GlobalSettings;
+      expect(passed.limitCalculationMonths).toBe(3);
+      expect(passed.limitCalculationYears).toBe(year);
+    }
+  });
+
   it("fires all per-year API calls concurrently (Promise.all fan-out)", async () => {
     const resolvers: Array<(v: VmAgentResponse) => void> = [];
     callVmAgentApi.mockImplementation(

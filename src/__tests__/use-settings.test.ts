@@ -31,6 +31,7 @@ describe("useSettings", () => {
         growthPercent: 12,
         growthYears: 3,
         limitCalculationYears: 1,
+        limitCalculationMonths: 6,
       }),
     );
     __resetSettingsStoreForTests();
@@ -41,6 +42,7 @@ describe("useSettings", () => {
       growthPercent: 12,
       growthYears: 3,
       limitCalculationYears: 1,
+      limitCalculationMonths: 6,
       ignoreArchiveTier: false,
       greenfieldSimulation: true,
       historicalDataYears: 0,
@@ -125,8 +127,8 @@ describe("useSettings", () => {
     );
   });
 
-  it("disables the retention cap when limitCalculationYears is 0, NaN, or out of range", () => {
-    for (const bad of [0, -1, 11, NaN, "1y", 1.5]) {
+  it("disables the retention cap when limitCalculationYears is NaN, non-integer, or out of range", () => {
+    for (const bad of [-1, 11, NaN, "1y", 1.5]) {
       window.localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({ limitCalculationYears: bad }),
@@ -138,15 +140,60 @@ describe("useSettings", () => {
     }
   });
 
-  it("accepts a valid integer in [1, 10] for limitCalculationYears", () => {
+  it("accepts a valid integer in [0, 10] for limitCalculationYears", () => {
+    for (const value of [0, 3, 10]) {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ limitCalculationYears: value }),
+      );
+      __resetSettingsStoreForTests();
+
+      const { result, unmount } = renderHook(() => useSettings());
+      expect(result.current.settings.limitCalculationYears).toBe(value);
+      unmount();
+    }
+  });
+
+  it("defaults limitCalculationMonths to 0 when missing from storage", () => {
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ limitCalculationYears: 3 }),
+      JSON.stringify({ targetCloud: "Azure" }),
     );
     __resetSettingsStoreForTests();
-
     const { result } = renderHook(() => useSettings());
-    expect(result.current.settings.limitCalculationYears).toBe(3);
+    expect(result.current.settings.limitCalculationMonths).toBe(0);
+  });
+
+  it("accepts a valid integer in [0, 11] for limitCalculationMonths", () => {
+    for (const value of [0, 6, 11]) {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ limitCalculationMonths: value }),
+      );
+      __resetSettingsStoreForTests();
+      const { result, unmount } = renderHook(() => useSettings());
+      expect(result.current.settings.limitCalculationMonths).toBe(value);
+      unmount();
+    }
+  });
+
+  it("clamps and coerces invalid limitCalculationMonths values", () => {
+    for (const [bad, expected] of [
+      [-1, 0],
+      [15, 11],
+      [NaN, 0],
+      ["6m", 0],
+      [1.7, 1], // truncates
+    ] as const) {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ limitCalculationMonths: bad }),
+      );
+      __resetSettingsStoreForTests();
+      const { result, unmount } = renderHook(() => useSettings());
+      expect(result.current.settings.limitCalculationMonths).toBe(expected);
+      unmount();
+    }
   });
 
   it("defaults historicalDataYears to 0 when missing from storage", () => {

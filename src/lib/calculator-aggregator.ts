@@ -151,10 +151,11 @@ function serializeGfs(gfs: GfsResult): string | null {
 }
 
 function capJob(job: SafeJob, settings: GlobalSettings): SafeJob {
-  const globalCapDays =
-    settings.limitCalculationYears != null
-      ? settings.limitCalculationYears * 365
-      : Infinity;
+  const capYears = settings.limitCalculationYears ?? 0;
+  const capMonths = settings.limitCalculationMonths ?? 0;
+  const totalCapDays = capYears * 365 + capMonths * 30;
+  const capActive = settings.limitCalculationYears !== null && totalCapDays > 0;
+  const globalCapDays = capActive ? totalCapDays : Infinity;
 
   const archiveCapDays =
     job.archiveOffloadDays != null && !settings.ignoreArchiveTier
