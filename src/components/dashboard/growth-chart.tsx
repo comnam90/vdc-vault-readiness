@@ -63,11 +63,15 @@ export function GrowthChart({
   greenfield,
   historicalDataYears = 0,
 }: GrowthChartProps) {
+  const isMonthlyScale = data?.[0]?.name?.startsWith("Month ") ?? false;
   const showSeedNote = greenfield && historicalDataYears > 0;
   return (
-    <ChartShell greenfield={greenfield}>
+    <ChartShell greenfield={greenfield} isMonthlyScale={isMonthlyScale}>
       {showSeedNote && (
-        <HistoricalSeedNote historicalDataYears={historicalDataYears} />
+        <HistoricalSeedNote
+          historicalDataYears={historicalDataYears}
+          isMonthlyScale={isMonthlyScale}
+        />
       )}
       <ChartBody data={data} isLoading={isLoading} error={error} />
     </ChartShell>
@@ -76,9 +80,11 @@ export function GrowthChart({
 
 function ChartShell({
   greenfield,
+  isMonthlyScale,
   children,
 }: {
   greenfield: boolean;
+  isMonthlyScale: boolean;
   children: ReactNode;
 }) {
   return (
@@ -89,9 +95,7 @@ function ChartShell({
       <CardHeader>
         <CardTitle>Projected Storage Growth</CardTitle>
         <CardDescription>
-          {greenfield
-            ? "Greenfield: source data and GFS retention chain build up year over year."
-            : "Seeded: full retention chain from day 1; only source data grows."}
+          {chartDescription(greenfield, isMonthlyScale)}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">{children}</CardContent>
@@ -99,12 +103,26 @@ function ChartShell({
   );
 }
 
+function chartDescription(greenfield: boolean, isMonthlyScale: boolean) {
+  if (isMonthlyScale) {
+    return greenfield
+      ? "Greenfield: GFS retention chain builds up month over month."
+      : "Seeded: full retention chain from day 1; bars project monthly across the cap horizon.";
+  }
+  return greenfield
+    ? "Greenfield: source data and GFS retention chain build up year over year."
+    : "Seeded: full retention chain from day 1; only source data grows.";
+}
+
 function HistoricalSeedNote({
   historicalDataYears,
+  isMonthlyScale,
 }: {
   historicalDataYears: number;
+  isMonthlyScale: boolean;
 }) {
   const unit = historicalDataYears === 1 ? "year" : "years";
+  const stepLabel = isMonthlyScale ? "Month 1" : "Year 1";
   return (
     <div
       data-testid="historical-seed-note"
@@ -116,7 +134,7 @@ function HistoricalSeedNote({
       />
       <p>
         <span className="text-foreground font-semibold tabular-nums">
-          Year 1
+          {stepLabel}
         </span>{" "}
         starts with{" "}
         <span className="text-foreground font-semibold tabular-nums">

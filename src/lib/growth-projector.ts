@@ -47,10 +47,18 @@ export function getProjectionYears(settings: GlobalSettings): number {
 }
 
 /**
- * Project storage composition year-over-year by fanning out one Veeam sizing
- * API call per year (concurrently via Promise.all). Each call varies
- * `growthYears`; in greenfield mode it also varies `limitCalculationYears`
- * so the GFS chain "builds up" alongside source-data growth.
+ * Veeam sizing API allows up to 10 concurrent requests; chunk to 5 to leave
+ * headroom for any other in-flight calls (e.g. repositories tab).
+ */
+const BATCH_SIZE = 5;
+
+/**
+ * Project storage composition by fanning out Veeam sizing API calls in
+ * batches of {@link BATCH_SIZE}. When the cap retention horizon is 12 months
+ * or less the chart renders month-by-month; otherwise year-by-year. Each
+ * call varies `growthYears` (yearly) or holds it at 0 (monthly); greenfield
+ * mode additionally walks the GFS chain depth so it "builds up" alongside
+ * source-data growth.
  */
 export async function generateGrowthSeries(
   args: GenerateGrowthSeriesArgs,
@@ -65,48 +73,98 @@ export async function generateGrowthSeries(
     productVersionOverride,
   } = args;
 
-  const projectionYears = getProjectionYears(settings);
-  const years = Array.from({ length: projectionYears }, (_, i) => i + 1);
+  const capYears = settings.limitCalculationYears ?? 0;
+  const capMonths = settings.limitCalculationMonths ?? 0;
+  const totalCapMonths = capYears * 12 + capMonths;
+  const capActive =
+    settings.limitCalculationYears !== null && totalCapMonths > 0;
+  // Boundary is intentional per spec: "12 months or less" → monthly scale,
+  // so 1y 0m (and 0y 12m) routes here, not the yearly path.
+  const isMonthlyScale = capActive && totalCapMonths <= 12;
+  const stepCount = isMonthlyScale
+    ? totalCapMonths
+    : getProjectionYears(settings);
+  const steps = Array.from({ length: stepCount }, (_, i) => i + 1);
 
-  return Promise.all(
-    years.map(async (year): Promise<GrowthSeriesPoint> => {
-      let perYearLimit: number | null = settings.limitCalculationYears;
-      if (settings.greenfieldSimulation) {
-        const baseChain =
-          settings.historicalDataYears > 0
-            ? settings.historicalDataYears + year - 1
-            : year;
-        const maxChain = settings.limitCalculationYears ?? Infinity;
-        perYearLimit = Math.min(baseChain, maxChain);
-      }
-      const tempSettings: GlobalSettings = {
-        ...settings,
-        growthYears: year,
-        limitCalculationYears: perYearLimit,
-      };
-      const summary = buildCalculatorSummary(
-        jobs,
-        sessions,
-        excludedJobNames,
-        tempSettings,
-      );
-      const response = await callVmAgentApi(
-        summary,
-        jobCount,
-        vbrVersion,
-        productVersionOverride,
-        tempSettings,
-      );
-      const sizing = deriveSizing(response.data);
-      return {
-        name: `Year ${year}`,
-        daily: sizing.compositionBuckets.daily,
-        weekly: sizing.compositionBuckets.weekly,
-        monthly: sizing.compositionBuckets.monthly,
-        yearly: sizing.compositionBuckets.yearly,
-        immutability: sizing.compositionBuckets.immutability,
-        total: sizing.compositionTotalTB,
-      };
-    }),
-  );
+  const projectStep = async (step: number): Promise<GrowthSeriesPoint> => {
+    const tempSettings: GlobalSettings = isMonthlyScale
+      ? buildMonthlySettings(settings, step, totalCapMonths)
+      : buildYearlySettings(settings, step);
+    const summary = buildCalculatorSummary(
+      jobs,
+      sessions,
+      excludedJobNames,
+      tempSettings,
+    );
+    const response = await callVmAgentApi(
+      summary,
+      jobCount,
+      vbrVersion,
+      productVersionOverride,
+      tempSettings,
+    );
+    const sizing = deriveSizing(response.data);
+    return {
+      name: isMonthlyScale ? `Month ${step}` : `Year ${step}`,
+      daily: sizing.compositionBuckets.daily,
+      weekly: sizing.compositionBuckets.weekly,
+      monthly: sizing.compositionBuckets.monthly,
+      yearly: sizing.compositionBuckets.yearly,
+      immutability: sizing.compositionBuckets.immutability,
+      total: sizing.compositionTotalTB,
+    };
+  };
+
+  const results: GrowthSeriesPoint[] = [];
+  for (let start = 0; start < steps.length; start += BATCH_SIZE) {
+    const chunk = steps.slice(start, start + BATCH_SIZE);
+    const chunkResults = await Promise.all(chunk.map(projectStep));
+    results.push(...chunkResults);
+  }
+  return results;
+}
+
+function buildYearlySettings(
+  settings: GlobalSettings,
+  year: number,
+): GlobalSettings {
+  let perYearLimit: number | null = settings.limitCalculationYears;
+  if (settings.greenfieldSimulation) {
+    const baseChain =
+      settings.historicalDataYears > 0
+        ? settings.historicalDataYears + year - 1
+        : year;
+    const maxChain = settings.limitCalculationYears ?? Infinity;
+    perYearLimit = Math.min(baseChain, maxChain);
+  }
+  return {
+    ...settings,
+    growthYears: year,
+    limitCalculationYears: perYearLimit,
+  };
+}
+
+function buildMonthlySettings(
+  settings: GlobalSettings,
+  step: number,
+  totalCapMonths: number,
+): GlobalSettings {
+  if (!settings.greenfieldSimulation) {
+    return { ...settings, growthYears: 0 };
+  }
+  // Mirrors the yearly path: when there's no brownfield seed, step K means
+  // the chain has been running for K months (not K-1, which would leave step
+  // 1 at 0 months and disable capJob's cap-active check, sending the full
+  // unclamped GFS retention to the API).
+  const baseChainMonths =
+    settings.historicalDataYears > 0
+      ? settings.historicalDataYears * 12 + step - 1
+      : step;
+  const effectiveMonths = Math.min(baseChainMonths, totalCapMonths);
+  return {
+    ...settings,
+    growthYears: 0,
+    limitCalculationYears: Math.floor(effectiveMonths / 12),
+    limitCalculationMonths: effectiveMonths % 12,
+  };
 }
