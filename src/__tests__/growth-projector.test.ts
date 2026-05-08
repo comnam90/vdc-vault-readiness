@@ -227,6 +227,44 @@ describe("generateGrowthSeries", () => {
     ]);
   });
 
+  it("derives natural retention from Monthly GFS when no Yearly is configured", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    // Monthly:120 = 10 years of monthly retention. No Yearly. With no cap
+    // set, the chart should extend to 10 bars to match that horizon.
+    const args = {
+      jobs: [
+        makeJob({
+          JobName: "Job A",
+          SourceSizeGB: 1024,
+          RetainDays: 30,
+          GfsEnabled: true,
+          GfsDetails: "Monthly:120",
+        }),
+      ],
+      sessions: [
+        makeSession({
+          JobName: "Job A",
+          AvgChangeRate: 5,
+          MaxDataSize: 1024 ** 3,
+        }),
+      ],
+      settings: makeSettings({
+        limitCalculationYears: null,
+        growthYears: 0,
+        greenfieldSimulation: false,
+      }),
+      jobCount: 1,
+      vbrVersion: "13.0.1.1071",
+    };
+
+    const result = await generateGrowthSeries(args);
+
+    expect(result).toHaveLength(10);
+  });
+
   it("clamps to 12 bars when natural GFS retention exceeds 12 and no cap is set", async () => {
     callVmAgentApi.mockImplementation(async () =>
       fakeResponse({ totalStorageTB: 10, daily: 1 }),
