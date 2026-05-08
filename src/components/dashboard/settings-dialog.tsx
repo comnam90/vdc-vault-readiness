@@ -214,34 +214,66 @@ function SettingsForm({ initial, onSave, onCancel }: SettingsFormProps) {
             />
           </div>
           {capEnabled && (
-            <div className="motion-safe:animate-in motion-safe:slide-in-from-top-2 motion-safe:fade-in fill-mode-backwards space-y-1.5 duration-150 ease-[var(--ease-out)]">
-              <Label htmlFor="limit-years">Years</Label>
-              <div className="relative max-w-[10rem]">
-                <Input
-                  id="limit-years"
-                  type="number"
-                  min={1}
-                  max={10}
-                  step={1}
-                  value={draft.limitCalculationYears ?? 1}
-                  onChange={(e) =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      limitCalculationYears: clamp(
-                        parseInt(e.target.value, 10),
-                        1,
-                        10,
-                      ),
-                    }))
-                  }
-                  className="pr-7 font-mono"
-                />
-                <span
-                  className="text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs"
-                  aria-hidden="true"
-                >
-                  y
-                </span>
+            <div className="motion-safe:animate-in motion-safe:slide-in-from-top-2 motion-safe:fade-in fill-mode-backwards grid grid-cols-2 gap-3 duration-150 ease-[var(--ease-out)]">
+              <div className="space-y-1.5">
+                <Label htmlFor="limit-years">Years</Label>
+                <div className="relative">
+                  <Input
+                    id="limit-years"
+                    type="number"
+                    min={0}
+                    max={10}
+                    step={1}
+                    value={draft.limitCalculationYears ?? 0}
+                    onChange={(e) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        limitCalculationYears: clamp(
+                          parseInt(e.target.value, 10),
+                          0,
+                          10,
+                        ),
+                      }))
+                    }
+                    className="pr-7 font-mono"
+                  />
+                  <span
+                    className="text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs"
+                    aria-hidden="true"
+                  >
+                    y
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="limit-months">Months</Label>
+                <div className="relative">
+                  <Input
+                    id="limit-months"
+                    type="number"
+                    min={0}
+                    max={11}
+                    step={1}
+                    value={draft.limitCalculationMonths}
+                    onChange={(e) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        limitCalculationMonths: clamp(
+                          parseInt(e.target.value, 10),
+                          0,
+                          11,
+                        ),
+                      }))
+                    }
+                    className="pr-7 font-mono"
+                  />
+                  <span
+                    className="text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs"
+                    aria-hidden="true"
+                  >
+                    m
+                  </span>
+                </div>
               </div>
             </div>
           )}

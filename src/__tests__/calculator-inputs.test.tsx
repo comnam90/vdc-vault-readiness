@@ -675,6 +675,51 @@ describe("CalculatorInputs", () => {
       window.localStorage.clear();
       __resetSettingsStoreForTests();
     });
+
+    it("includes the months segment in the retention-cap badge when months > 0", async () => {
+      const { STORAGE_KEY, __resetSettingsStoreForTests } =
+        await import("@/hooks/use-settings");
+      window.localStorage.clear();
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          limitCalculationYears: 2,
+          limitCalculationMonths: 6,
+        }),
+      );
+      __resetSettingsStoreForTests();
+
+      render(<CalculatorInputs data={mockData} />);
+
+      const indicators = screen.getByTestId("settings-indicators");
+      expect(indicators).toHaveTextContent(/retention cap: 2y 6m/i);
+
+      window.localStorage.clear();
+      __resetSettingsStoreForTests();
+    });
+
+    it("renders the retention-cap badge with months only when years is 0", async () => {
+      const { STORAGE_KEY, __resetSettingsStoreForTests } =
+        await import("@/hooks/use-settings");
+      window.localStorage.clear();
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          limitCalculationYears: 0,
+          limitCalculationMonths: 3,
+        }),
+      );
+      __resetSettingsStoreForTests();
+
+      render(<CalculatorInputs data={mockData} />);
+
+      const indicators = screen.getByTestId("settings-indicators");
+      expect(indicators).toHaveTextContent(/retention cap: 3m/i);
+      expect(indicators).not.toHaveTextContent(/0y/i);
+
+      window.localStorage.clear();
+      __resetSettingsStoreForTests();
+    });
   });
 
   describe("breakdown hover cards", () => {

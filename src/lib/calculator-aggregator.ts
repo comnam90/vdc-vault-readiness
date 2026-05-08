@@ -151,10 +151,11 @@ function serializeGfs(gfs: GfsResult): string | null {
 }
 
 function capJob(job: SafeJob, settings: GlobalSettings): SafeJob {
-  const globalCapDays =
-    settings.limitCalculationYears != null
-      ? settings.limitCalculationYears * 365
-      : Infinity;
+  const capYears = settings.limitCalculationYears ?? 0;
+  const capMonths = settings.limitCalculationMonths ?? 0;
+  const totalCapDays = capYears * 365 + capMonths * 30;
+  const capActive = settings.limitCalculationYears !== null && totalCapDays > 0;
+  const globalCapDays = capActive ? totalCapDays : Infinity;
 
   const archiveCapDays =
     job.archiveOffloadDays != null && !settings.ignoreArchiveTier
@@ -172,14 +173,18 @@ function capJob(job: SafeJob, settings: GlobalSettings): SafeJob {
 
   if (job.GfsDetails) {
     const parsed = parseGfsDetails(job.GfsDetails);
+    // Symmetric with the input math: 365-day year, 30-day month, 7-day week.
+    // Using calendar conversions (e.g. cap_days * 12 / 365) under-counts a
+    // 3-month cap as 2 monthly slots — weeklies and monthlies coexist on the
+    // Vault, so a 3-month cap should retain 3 monthly slots.
     const yMax = Number.isFinite(gfsCapDays)
       ? Math.floor(gfsCapDays / 365)
       : Infinity;
     const mMax = Number.isFinite(gfsCapDays)
-      ? Math.floor((gfsCapDays * 12) / 365)
+      ? Math.floor(gfsCapDays / 30)
       : Infinity;
     const wMax = Number.isFinite(gfsCapDays)
-      ? Math.floor((gfsCapDays * 52) / 365)
+      ? Math.floor(gfsCapDays / 7)
       : Infinity;
 
     const cappedGfs: GfsResult = {

@@ -583,6 +583,111 @@ describe("buildCalculatorSummary with GlobalSettings retention cap", () => {
     expect(result.gfsMonthly).toBeNull();
     expect(result.gfsYearly).toBeNull();
   });
+
+  it("caps using months only when limitCalculationYears is 0 and months > 0", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "MonthsOnly",
+        RetainDays: 500,
+        GfsDetails: "Weekly:60,Monthly:18,Yearly:7",
+      }),
+    ];
+    const result = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({
+        limitCalculationYears: 0,
+        limitCalculationMonths: 6,
+      }),
+    );
+
+    // globalCapDays = 0*365 + 6*30 = 180
+    expect(result.originalMaxRetentionDays).toBe(180);
+    expect(result.maxRetentionDays).toBe(180);
+    // floor(180/7) = 25
+    expect(result.gfsWeekly).toBe(25);
+    // floor(180/30) = 6 — symmetric with the 30-day-month input convention
+    expect(result.gfsMonthly).toBe(6);
+    // floor(180/365) = 0
+    expect(result.gfsYearly).toBe(0);
+  });
+
+  it("caps a 3-month limit to 3 monthly slots, not 2 (symmetric 30-day-month convention)", () => {
+    // Regression: floor(90*12/365) = 2, but floor(90/30) = 3.
+    // Weekly + monthly retention coexist on the Vault — they aren't summed —
+    // so a 3-month cap should retain 3 monthly slots alongside the weeklies.
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "ShortCap",
+        RetainDays: 365,
+        GfsDetails: "Weekly:4,Monthly:12,Yearly:7",
+      }),
+    ];
+    const result = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({
+        limitCalculationYears: 0,
+        limitCalculationMonths: 3,
+      }),
+    );
+
+    expect(result.gfsWeekly).toBe(4); // min(4, floor(90/7)=12) = 4
+    expect(result.gfsMonthly).toBe(3); // min(12, floor(90/30)=3) = 3
+    expect(result.gfsYearly).toBe(0); // min(7, 0) = 0
+    expect(result.originalMaxRetentionDays).toBe(90);
+  });
+
+  it("caps using years and months combined", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "Mixed",
+        RetainDays: 5000,
+        GfsDetails: "Weekly:300,Monthly:48,Yearly:10",
+      }),
+    ];
+    const result = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({
+        limitCalculationYears: 2,
+        limitCalculationMonths: 6,
+      }),
+    );
+
+    // globalCapDays = 2*365 + 6*30 = 910
+    expect(result.originalMaxRetentionDays).toBe(910);
+    // floor(910/7) = 130
+    expect(result.gfsWeekly).toBe(130);
+    // floor(910/30) = 30 (matches 2y*12 + 6m = 30 monthly slots)
+    expect(result.gfsMonthly).toBe(30);
+    // floor(910/365) = 2
+    expect(result.gfsYearly).toBe(2);
+  });
+
+  it("ignores the cap when toggle is on but both years and months are 0", () => {
+    const jobs: SafeJob[] = [
+      makeJob({
+        JobName: "Job A",
+        RetainDays: 500,
+        GfsDetails: "Weekly:60,Monthly:18,Yearly:7",
+      }),
+    ];
+    const baseline = buildCalculatorSummary(jobs, []);
+    const withZeroCap = buildCalculatorSummary(
+      jobs,
+      [],
+      new Set(),
+      makeSettings({
+        limitCalculationYears: 0,
+        limitCalculationMonths: 0,
+      }),
+    );
+    expect(withZeroCap).toEqual(baseline);
+  });
 });
 
 describe("buildCalculatorSummary with archive tier truncation", () => {
@@ -599,8 +704,8 @@ describe("buildCalculatorSummary with archive tier truncation", () => {
 
     // RetainDays untouched — archive cap NEVER applies to daily retention
     expect(result.originalMaxRetentionDays).toBe(90);
-    // GFS capped by 28-day offload: floor(28/365)=0, floor(28*12/365)=0, floor(28*52/365)=3
-    expect(result.gfsWeekly).toBe(3);
+    // GFS capped by 28-day offload: floor(28/365)=0, floor(28/30)=0, floor(28/7)=4
+    expect(result.gfsWeekly).toBe(4);
     expect(result.gfsMonthly).toBe(0);
     expect(result.gfsYearly).toBe(0);
   });
@@ -646,7 +751,7 @@ describe("buildCalculatorSummary with archive tier truncation", () => {
     // Daily cap = 5*365 = 1825; min(90, 1825) = 90
     expect(result.originalMaxRetentionDays).toBe(90);
     // GFS cap = min(1825, 28) = 28 → same as archive-only case
-    expect(result.gfsWeekly).toBe(3);
+    expect(result.gfsWeekly).toBe(4);
     expect(result.gfsMonthly).toBe(0);
     expect(result.gfsYearly).toBe(0);
   });
@@ -700,8 +805,8 @@ describe("buildCalculatorSummary with archive tier truncation", () => {
     ];
     const result = buildCalculatorSummary(jobs, [], new Set(), makeSettings());
 
-    // GFS aggregated max:
-    //   weekly: max(min(10,3), 4) = 4
+    // GFS aggregated max (28-day archive cap → wMax=4, mMax=0, yMax=0):
+    //   weekly: max(min(10,4), 4) = 4
     //   monthly: max(min(6,0), 2) = 2
     //   yearly: max(min(3,0), 1) = 1
     expect(result.gfsWeekly).toBe(4);

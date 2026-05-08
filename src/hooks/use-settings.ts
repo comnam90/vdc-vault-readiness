@@ -43,7 +43,8 @@ function normalizeSettings(input: unknown): GlobalSettings {
     DEFAULT_SETTINGS.growthYears,
   );
 
-  // null is a valid "disabled" state; otherwise must be an integer in [1, 10].
+  // null is a valid "disabled" state; otherwise must be an integer in [0, 10].
+  // 0 is a valid value when paired with limitCalculationMonths > 0.
   let limitCalculationYears: number | null =
     DEFAULT_SETTINGS.limitCalculationYears;
   if (raw.limitCalculationYears === null) {
@@ -52,11 +53,18 @@ function normalizeSettings(input: unknown): GlobalSettings {
     typeof raw.limitCalculationYears === "number" &&
     Number.isFinite(raw.limitCalculationYears) &&
     Number.isInteger(raw.limitCalculationYears) &&
-    raw.limitCalculationYears >= 1 &&
+    raw.limitCalculationYears >= 0 &&
     raw.limitCalculationYears <= 10
   ) {
     limitCalculationYears = raw.limitCalculationYears;
   }
+
+  const limitCalculationMonths = clampInt(
+    raw.limitCalculationMonths,
+    0,
+    11,
+    DEFAULT_SETTINGS.limitCalculationMonths,
+  );
 
   const ignoreArchiveTier =
     typeof raw.ignoreArchiveTier === "boolean"
@@ -80,6 +88,7 @@ function normalizeSettings(input: unknown): GlobalSettings {
     growthPercent,
     growthYears,
     limitCalculationYears,
+    limitCalculationMonths,
     ignoreArchiveTier,
     greenfieldSimulation,
     historicalDataYears,

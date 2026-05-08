@@ -46,7 +46,7 @@ describe("SettingsDialog", () => {
     expect(screen.queryByLabelText(/^years$/i)).not.toBeInTheDocument();
   });
 
-  it("reveals the retention year input when the cap switch is toggled on", () => {
+  it("reveals the retention year and month inputs when the cap switch is toggled on", () => {
     render(<SettingsDialog open onOpenChange={vi.fn()} />);
 
     fireEvent.click(
@@ -56,6 +56,29 @@ describe("SettingsDialog", () => {
     const yearsInput = screen.getByLabelText(/^years$/i) as HTMLInputElement;
     expect(yearsInput).toBeInTheDocument();
     expect(yearsInput.value).toBe("1");
+
+    const monthsInput = screen.getByLabelText(/^months$/i) as HTMLInputElement;
+    expect(monthsInput).toBeInTheDocument();
+    expect(monthsInput.value).toBe("0");
+  });
+
+  it("persists both retention years and months via Save", () => {
+    const onOpenChange = vi.fn();
+    render(<SettingsDialog open onOpenChange={onOpenChange} />);
+
+    fireEvent.click(
+      screen.getByRole("switch", { name: /cap retention horizon/i }),
+    );
+
+    setNumberInput(screen.getByLabelText(/^years$/i) as HTMLInputElement, "2");
+    setNumberInput(screen.getByLabelText(/^months$/i) as HTMLInputElement, "6");
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    const persisted = JSON.parse(
+      window.localStorage.getItem(STORAGE_KEY) ?? "{}",
+    );
+    expect(persisted.limitCalculationYears).toBe(2);
+    expect(persisted.limitCalculationMonths).toBe(6);
   });
 
   it("Save commits the draft into the settings store and closes the dialog", () => {
