@@ -355,20 +355,43 @@ describe("generateGrowthSeries", () => {
       "Month 5",
       "Month 6",
     ]);
-    // Step K (1-indexed): baseChainMonths = 0 + K - 1 = K - 1; effective=K-1
-    // → limitCalculationYears=0, limitCalculationMonths=K-1
+    // Symmetric with yearly: when hist=0, step K → chain depth K months
+    // (not K-1, which would leave step 1 at 0 months and disable capJob).
+    // Step K: baseChainMonths = K → lcm = K (clamped at totalCapMonths=6).
     for (let k = 1; k <= 6; k++) {
-      const expectedMonths = k - 1;
       const call = callVmAgentApi.mock.calls.find((c) => {
         const s = c[4] as GlobalSettings;
-        return (
-          s.limitCalculationYears === 0 &&
-          s.limitCalculationMonths === expectedMonths
-        );
+        return s.limitCalculationYears === 0 && s.limitCalculationMonths === k;
       });
-      expect(call, `step ${k} expected months=${expectedMonths}`).toBeDefined();
+      expect(call, `step ${k} expected months=${k}`).toBeDefined();
       const passed = call![4] as GlobalSettings;
       expect(passed.growthYears).toBe(0);
+    }
+  });
+
+  it("step 1 of monthly greenfield produces an active cap, not lcy=0/lcm=0 (regression: Month 1 sent full GFS chain)", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 0,
+      limitCalculationMonths: 3,
+      greenfieldSimulation: true,
+      historicalDataYears: 0,
+    });
+
+    await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(3);
+    // The bug: lcy=0/lcm=0 makes capJob's `totalCapDays > 0` check false →
+    // cap inactive → full retention forwarded to the API. Every monthly step
+    // must yield a non-zero (lcy, lcm) so the cap stays active.
+    for (const call of callVmAgentApi.mock.calls) {
+      const s = call[4] as GlobalSettings;
+      const totalMonths =
+        s.limitCalculationYears! * 12 + s.limitCalculationMonths;
+      expect(totalMonths).toBeGreaterThan(0);
     }
   });
 

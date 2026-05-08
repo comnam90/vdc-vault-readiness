@@ -152,7 +152,14 @@ function buildMonthlySettings(
   if (!settings.greenfieldSimulation) {
     return { ...settings, growthYears: 0 };
   }
-  const baseChainMonths = settings.historicalDataYears * 12 + step - 1;
+  // Mirrors the yearly path: when there's no brownfield seed, step K means
+  // the chain has been running for K months (not K-1, which would leave step
+  // 1 at 0 months and disable capJob's cap-active check, sending the full
+  // unclamped GFS retention to the API).
+  const baseChainMonths =
+    settings.historicalDataYears > 0
+      ? settings.historicalDataYears * 12 + step - 1
+      : step;
   const effectiveMonths = Math.min(baseChainMonths, totalCapMonths);
   return {
     ...settings,
