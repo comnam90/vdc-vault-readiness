@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.3.0](https://github.com/comnam90/vdc-vault-readiness/compare/v1.2.3...v1.3.0) (2026-05-08)
+
+
+### Features
+
+* **api:** Veeam sizing API integration ([#33](https://github.com/comnam90/vdc-vault-readiness/issues/33)) ([e467788](https://github.com/comnam90/vdc-vault-readiness/commit/e4677887caf6eb12f8e94c9dcb83f0ec923ad55c))
+* **charts:** add recharts visuals to jobs and repos ([#32](https://github.com/comnam90/vdc-vault-readiness/issues/32)) ([50346bf](https://github.com/comnam90/vdc-vault-readiness/commit/50346bf5fb21aaf96d0b5d756285887d361a3e98))
+* **file-upload:** persist last 5 scans in IndexedDB ([#39](https://github.com/comnam90/vdc-vault-readiness/issues/39)) ([d6820c0](https://github.com/comnam90/vdc-vault-readiness/commit/d6820c0a6b0eb1f46f945e64001b91e4e9974c05))
+* job table UX improvements — truncation, filters, exclusion ([#27](https://github.com/comnam90/vdc-vault-readiness/issues/27)) ([053bfc7](https://github.com/comnam90/vdc-vault-readiness/commit/053bfc7453a1ce6954fe3c1a2647b316ef518eba))
+* **repos:** Add Repositories Tab ([#29](https://github.com/comnam90/vdc-vault-readiness/issues/29)) ([1b6f526](https://github.com/comnam90/vdc-vault-readiness/commit/1b6f52675b3b766f676bf10503f274316e9f9e4c))
+* **settings:** global settings layer for sizing scenarios ([#38](https://github.com/comnam90/vdc-vault-readiness/issues/38)) ([edf6fe2](https://github.com/comnam90/vdc-vault-readiness/commit/edf6fe20e728f3aac3423964ecf1ecca4544f6ef))
+* **settings:** month-level granularity for retention horizon cap ([#45](https://github.com/comnam90/vdc-vault-readiness/issues/45)) ([e79c29b](https://github.com/comnam90/vdc-vault-readiness/commit/e79c29b3f2d5a186386f8b456d05551424a640f7))
+* **sizing:** cap growth projection at 12 years with retention notice ([#47](https://github.com/comnam90/vdc-vault-readiness/issues/47)) ([5d2b515](https://github.com/comnam90/vdc-vault-readiness/commit/5d2b51502b2cbaed766d7d2b438b8d5a7b881740))
+* **sizing:** hover-card breakdown for daily retention ([#43](https://github.com/comnam90/vdc-vault-readiness/issues/43)) ([0349f07](https://github.com/comnam90/vdc-vault-readiness/commit/0349f076b7fc648e61e71fffdb4425c3bc7a8fed))
+* **sizing:** hover-card breakdowns for source data and GFS retention ([#42](https://github.com/comnam90/vdc-vault-readiness/issues/42)) ([7e06f24](https://github.com/comnam90/vdc-vault-readiness/commit/7e06f24037b12b6d9befb1f4a9caf51c066dcf65))
+* **sizing:** monthly-scale growth projection with batched API calls ([#46](https://github.com/comnam90/vdc-vault-readiness/issues/46)) ([e3a9988](https://github.com/comnam90/vdc-vault-readiness/commit/e3a99888879ec58711bb2bf1012f08d147fc16b6))
+* **sizing:** multi-year growth projection chart ([#44](https://github.com/comnam90/vdc-vault-readiness/issues/44)) ([4e929b3](https://github.com/comnam90/vdc-vault-readiness/commit/4e929b35d23445daf95bcb09f3a40e3c6e268ede))
+* **sizing:** truncate GFS retention by SOBR archive offload period ([#40](https://github.com/comnam90/vdc-vault-readiness/issues/40)) ([639e8be](https://github.com/comnam90/vdc-vault-readiness/commit/639e8be4910e8e3de68a9a38c0bd0d4c826ce348))
+
 ## [1.2.3](https://github.com/comnam90/vdc-vault-readiness/compare/v1.2.2...v1.2.3) (2026-02-19)
 
 
