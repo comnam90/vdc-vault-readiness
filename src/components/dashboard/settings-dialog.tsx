@@ -222,7 +222,7 @@ function SettingsForm({ initial, onSave, onCancel }: SettingsFormProps) {
                     id="limit-years"
                     type="number"
                     min={0}
-                    max={10}
+                    max={20}
                     step={1}
                     value={draft.limitCalculationYears ?? 0}
                     onChange={(e) =>
@@ -231,7 +231,7 @@ function SettingsForm({ initial, onSave, onCancel }: SettingsFormProps) {
                         limitCalculationYears: clamp(
                           parseInt(e.target.value, 10),
                           0,
-                          10,
+                          20,
                         ),
                       }))
                     }

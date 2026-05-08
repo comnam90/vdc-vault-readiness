@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Layers, Loader2 } from "lucide-react";
+import { Crop, Layers, Loader2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -54,6 +54,12 @@ export interface GrowthChartProps {
    * surfaced as a contextual note when `greenfield` is true and value > 0.
    */
   historicalDataYears?: number;
+  /**
+   * Years at which the chart's projection was clamped. When set, a notice
+   * renders below the chart explaining the truncation and pointing to the
+   * hero card for the full retention horizon.
+   */
+  cappedAtYears?: number;
 }
 
 export function GrowthChart({
@@ -62,6 +68,7 @@ export function GrowthChart({
   error = null,
   greenfield,
   historicalDataYears = 0,
+  cappedAtYears,
 }: GrowthChartProps) {
   const isMonthlyScale = data?.[0]?.name?.startsWith("Month ") ?? false;
   const showSeedNote = greenfield && historicalDataYears > 0;
@@ -74,6 +81,9 @@ export function GrowthChart({
         />
       )}
       <ChartBody data={data} isLoading={isLoading} error={error} />
+      {cappedAtYears !== undefined && data && data.length > 0 && (
+        <CapNotice cappedAtYears={cappedAtYears} />
+      )}
     </ChartShell>
   );
 }
@@ -112,6 +122,27 @@ function chartDescription(greenfield: boolean, isMonthlyScale: boolean) {
   return greenfield
     ? "Greenfield: source data and GFS retention chain build up year over year."
     : "Seeded: full retention chain from day 1; only source data grows.";
+}
+
+function CapNotice({ cappedAtYears }: { cappedAtYears: number }) {
+  return (
+    <div
+      data-testid="cap-notice"
+      className="border-border/70 bg-muted/40 text-muted-foreground motion-safe:animate-in motion-safe:fade-in fill-mode-backwards flex items-center gap-2.5 rounded-md border border-dashed px-3 py-2 text-xs duration-300"
+    >
+      <Crop
+        className="text-foreground/70 size-3.5 shrink-0"
+        aria-hidden="true"
+      />
+      <p>
+        Chart capped at{" "}
+        <span className="text-foreground font-semibold tabular-nums">
+          {cappedAtYears} years
+        </span>
+        . Total above reflects your full retention horizon.
+      </p>
+    </div>
+  );
 }
 
 function HistoricalSeedNote({

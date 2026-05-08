@@ -152,6 +152,46 @@ describe("GrowthChart", () => {
     expect(note).not.toHaveTextContent(/year 1/i);
   });
 
+  it("renders the cap notice when cappedAtYears is set and data is non-empty", () => {
+    render(<GrowthChart data={SAMPLE} greenfield={false} cappedAtYears={12} />);
+    const notice = screen.getByTestId("cap-notice");
+    expect(notice).toHaveTextContent(/capped at/i);
+    expect(notice).toHaveTextContent(/12 years/i);
+    expect(notice).toHaveTextContent(/full retention horizon/i);
+  });
+
+  it("does NOT render the cap notice when cappedAtYears is undefined", () => {
+    render(<GrowthChart data={SAMPLE} greenfield={false} />);
+    expect(screen.queryByTestId("cap-notice")).not.toBeInTheDocument();
+  });
+
+  it("does NOT render the cap notice when data is empty even if cappedAtYears is set", () => {
+    render(<GrowthChart data={[]} greenfield={false} cappedAtYears={12} />);
+    expect(screen.queryByTestId("cap-notice")).not.toBeInTheDocument();
+  });
+
+  it("does NOT render the cap notice in loading or error states", () => {
+    const { rerender } = render(
+      <GrowthChart
+        data={null}
+        greenfield={false}
+        cappedAtYears={12}
+        isLoading
+      />,
+    );
+    expect(screen.queryByTestId("cap-notice")).not.toBeInTheDocument();
+
+    rerender(
+      <GrowthChart
+        data={null}
+        greenfield={false}
+        cappedAtYears={12}
+        error="boom"
+      />,
+    );
+    expect(screen.queryByTestId("cap-notice")).not.toBeInTheDocument();
+  });
+
   it("renders synchronously without triggering any data-fetching side effect", () => {
     // Pure-component contract: rendering must succeed without the projector
     // module being available. We mock it to a throwing stub; if the component
