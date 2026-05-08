@@ -24,6 +24,27 @@ const SAMPLE: GrowthSeriesPoint[] = [
   },
 ];
 
+const MONTHLY_SAMPLE: GrowthSeriesPoint[] = [
+  {
+    name: "Month 1",
+    daily: 1,
+    weekly: 0.5,
+    monthly: 0.5,
+    yearly: 0,
+    immutability: 0.1,
+    total: 2.1,
+  },
+  {
+    name: "Month 2",
+    daily: 1,
+    weekly: 0.5,
+    monthly: 0.5,
+    yearly: 0,
+    immutability: 0.1,
+    total: 2.1,
+  },
+];
+
 describe("GrowthChart", () => {
   it("renders the card title and description matching the simulation mode", () => {
     const { rerender } = render(
@@ -102,6 +123,33 @@ describe("GrowthChart", () => {
     expect(
       screen.queryByTestId("historical-seed-note"),
     ).not.toBeInTheDocument();
+  });
+
+  it("renders a monthly-scale CardDescription when data points are 'Month N' (greenfield)", () => {
+    render(<GrowthChart data={MONTHLY_SAMPLE} greenfield />);
+    expect(
+      screen.getByText(/builds? up month over month/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/build up year over year/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders a monthly-scale CardDescription when data points are 'Month N' (seeded)", () => {
+    render(<GrowthChart data={MONTHLY_SAMPLE} greenfield={false} />);
+    expect(
+      screen.getByText(/full retention chain from day 1/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/across the cap horizon/i)).toBeInTheDocument();
+  });
+
+  it("renders the seed note prefixed 'Month 1' on monthly scale", () => {
+    render(
+      <GrowthChart data={MONTHLY_SAMPLE} greenfield historicalDataYears={1} />,
+    );
+    const note = screen.getByTestId("historical-seed-note");
+    expect(note).toHaveTextContent(/month 1/i);
+    expect(note).not.toHaveTextContent(/year 1/i);
   });
 
   it("renders synchronously without triggering any data-fetching side effect", () => {

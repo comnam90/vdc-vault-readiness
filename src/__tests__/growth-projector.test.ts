@@ -302,7 +302,7 @@ describe("generateGrowthSeries", () => {
     }
   });
 
-  it("preserves limitCalculationMonths on a months-only cap (years=0, months=6)", async () => {
+  it("renders monthly bars when totalCapMonths<=12 in seeded mode (years=0, months=6)", async () => {
     callVmAgentApi.mockImplementation(async () =>
       fakeResponse({ totalStorageTB: 10, daily: 1 }),
     );
@@ -313,15 +313,118 @@ describe("generateGrowthSeries", () => {
       greenfieldSimulation: false,
     });
 
-    expect(getProjectionYears(settings)).toBe(1);
+    const result = await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(6);
+    expect(result.map((p) => p.name)).toEqual([
+      "Month 1",
+      "Month 2",
+      "Month 3",
+      "Month 4",
+      "Month 5",
+      "Month 6",
+    ]);
+    for (const call of callVmAgentApi.mock.calls) {
+      const passed = call[4] as GlobalSettings;
+      expect(passed.growthYears).toBe(0);
+      expect(passed.limitCalculationYears).toBe(0);
+      expect(passed.limitCalculationMonths).toBe(6);
+    }
+  });
+
+  it("derives per-step caps for monthly greenfield (totalCapMonths=6, historicalDataYears=0)", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 0,
+      limitCalculationMonths: 6,
+      greenfieldSimulation: true,
+      historicalDataYears: 0,
+    });
+
+    const result = await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(6);
+    expect(result.map((p) => p.name)).toEqual([
+      "Month 1",
+      "Month 2",
+      "Month 3",
+      "Month 4",
+      "Month 5",
+      "Month 6",
+    ]);
+    // Step K (1-indexed): baseChainMonths = 0 + K - 1 = K - 1; effective=K-1
+    // → limitCalculationYears=0, limitCalculationMonths=K-1
+    for (let k = 1; k <= 6; k++) {
+      const expectedMonths = k - 1;
+      const call = callVmAgentApi.mock.calls.find((c) => {
+        const s = c[4] as GlobalSettings;
+        return (
+          s.limitCalculationYears === 0 &&
+          s.limitCalculationMonths === expectedMonths
+        );
+      });
+      expect(call, `step ${k} expected months=${expectedMonths}`).toBeDefined();
+      const passed = call![4] as GlobalSettings;
+      expect(passed.growthYears).toBe(0);
+    }
+  });
+
+  it("clamps baseChainMonths to totalCapMonths in monthly greenfield (lcy=0, lcm=4, hist=1y)", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 0,
+      limitCalculationMonths: 4,
+      greenfieldSimulation: true,
+      historicalDataYears: 1,
+    });
 
     await generateGrowthSeries(baseArgs(settings));
 
-    expect(callVmAgentApi).toHaveBeenCalledTimes(1);
-    const passed = callVmAgentApi.mock.calls[0][4] as GlobalSettings;
-    expect(passed.limitCalculationYears).toBe(0);
-    expect(passed.limitCalculationMonths).toBe(6);
-    expect(passed.growthYears).toBe(1);
+    expect(callVmAgentApi).toHaveBeenCalledTimes(4);
+    // Every step K: baseChainMonths = 12 + K - 1 = 11 + K, clamped to 4
+    // → limitCalculationYears=0, limitCalculationMonths=4
+    for (const call of callVmAgentApi.mock.calls) {
+      const passed = call[4] as GlobalSettings;
+      expect(passed.growthYears).toBe(0);
+      expect(passed.limitCalculationYears).toBe(0);
+      expect(passed.limitCalculationMonths).toBe(4);
+    }
+  });
+
+  it("routes 1y 0m (totalCapMonths=12) to monthly scale, not yearly", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({
+      limitCalculationYears: 1,
+      limitCalculationMonths: 0,
+      greenfieldSimulation: false,
+    });
+
+    const result = await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(12);
+    expect(result.map((p) => p.name)).toEqual([
+      "Month 1",
+      "Month 2",
+      "Month 3",
+      "Month 4",
+      "Month 5",
+      "Month 6",
+      "Month 7",
+      "Month 8",
+      "Month 9",
+      "Month 10",
+      "Month 11",
+      "Month 12",
+    ]);
   });
 
   it("preserves limitCalculationMonths across all per-year iterations in greenfield mode", async () => {
@@ -348,7 +451,7 @@ describe("generateGrowthSeries", () => {
     }
   });
 
-  it("fires all per-year API calls concurrently (Promise.all fan-out)", async () => {
+  it("dispatches API calls in batches of 5 (rate-limit guard)", async () => {
     const resolvers: Array<(v: VmAgentResponse) => void> = [];
     callVmAgentApi.mockImplementation(
       () =>
@@ -357,21 +460,42 @@ describe("generateGrowthSeries", () => {
         }),
     );
 
-    const settings = makeSettings({ limitCalculationYears: 5 });
+    // 7 yearly steps → batches of [5, 2]
+    const settings = makeSettings({ limitCalculationYears: 7 });
     const promise = generateGrowthSeries(baseArgs(settings));
 
-    // Yield to the microtask queue so map() can dispatch every call
-    // before we measure how many are in flight.
-    await Promise.resolve();
-    await Promise.resolve();
+    // Yield to microtask queue so the first chunk's map() dispatches.
+    for (let i = 0; i < 5; i++) await Promise.resolve();
 
     expect(callVmAgentApi).toHaveBeenCalledTimes(5);
     expect(resolvers).toHaveLength(5);
 
-    resolvers.forEach((resolve) =>
-      resolve(fakeResponse({ totalStorageTB: 1 })),
-    );
+    // Resolve the first batch — second batch must not have dispatched yet.
+    resolvers
+      .slice(0, 5)
+      .forEach((resolve) => resolve(fakeResponse({ totalStorageTB: 1 })));
+
+    // Flush microtasks so chunk 1 settles and chunk 2 dispatches.
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(7);
+    expect(resolvers).toHaveLength(7);
+
+    // Resolve the second batch.
+    resolvers
+      .slice(5)
+      .forEach((resolve) => resolve(fakeResponse({ totalStorageTB: 1 })));
+
     const result = await promise;
-    expect(result).toHaveLength(5);
+    expect(result).toHaveLength(7);
+    expect(result.map((p) => p.name)).toEqual([
+      "Year 1",
+      "Year 2",
+      "Year 3",
+      "Year 4",
+      "Year 5",
+      "Year 6",
+      "Year 7",
+    ]);
   });
 });
