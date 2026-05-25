@@ -13,7 +13,7 @@ export function validateHealthcheck(
 ): ValidationResult[] {
   return [
     validateVbrVersion(data),
-    validateGlobalEncryption(data),
+    validateConfigBackupEncryption(data),
     validateJobEncryption(data),
     validateAwsWorkload(data),
     validateAgentWorkload(data),
@@ -60,38 +60,38 @@ function validateVbrVersion(data: NormalizedDataset): ValidationResult {
   };
 }
 
-function validateGlobalEncryption(data: NormalizedDataset): ValidationResult {
+function validateConfigBackupEncryption(
+  data: NormalizedDataset,
+): ValidationResult {
   if (data.securitySummary.length === 0) {
     return {
-      ruleId: "global-encryption",
-      title: "Global Encryption Configuration",
-      status: "pass",
-      message: "No security summary found. Skipping global encryption check.",
+      ruleId: "config-backup-encryption",
+      title: "Configuration Backup Encryption",
+      status: "skipped",
+      message:
+        "Configuration backup encryption check skipped — security summary section is missing from the healthcheck data.",
       affectedItems: [],
     };
   }
 
   const summary = data.securitySummary[0];
-  const allEnabled =
-    summary.BackupFileEncryptionEnabled &&
-    summary.ConfigBackupEncryptionEnabled;
 
-  if (!allEnabled) {
+  if (!summary.ConfigBackupEncryptionEnabled) {
     return {
-      ruleId: "global-encryption",
-      title: "Global Encryption Configuration",
+      ruleId: "config-backup-encryption",
+      title: "Configuration Backup Encryption",
       status: "warning",
       message:
-        "Global encryption is disabled. VDC Vault requires all data to be encrypted. Best practice is to enable BackupFileEncryption and ConfigBackupEncryption globally to ensure compliance.",
+        "VBR configuration backup encryption is not enabled. Once VDC Vault is in use, VBR automatically disables configuration backups unless they are encrypted, so encryption becomes a requirement at that point. It is also a best practice generally — the configuration backup contains sensitive information such as credentials and certificates.",
       affectedItems: [],
     };
   }
 
   return {
-    ruleId: "global-encryption",
-    title: "Global Encryption Configuration",
+    ruleId: "config-backup-encryption",
+    title: "Configuration Backup Encryption",
     status: "pass",
-    message: "Global encryption settings are enabled.",
+    message: "VBR configuration backup encryption is enabled.",
     affectedItems: [],
   };
 }

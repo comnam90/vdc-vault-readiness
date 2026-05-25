@@ -89,8 +89,8 @@ describe("validateHealthcheck", () => {
     });
   });
 
-  describe("Rule 2: Global Encryption Check", () => {
-    it("passes when both encryption flags are true", () => {
+  describe("Rule 2: Configuration Backup Encryption Check", () => {
+    it("passes when ConfigBackupEncryptionEnabled is true", () => {
       const data: NormalizedDataset = {
         backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
         securitySummary: [
@@ -111,15 +111,16 @@ describe("validateHealthcheck", () => {
       };
 
       const results = validateHealthcheck(data);
-      const encryptionCheck = results.find(
-        (r) => r.ruleId === "global-encryption",
+      const check = results.find(
+        (r) => r.ruleId === "config-backup-encryption",
       );
 
-      expect(encryptionCheck).toBeDefined();
-      expect(encryptionCheck?.status).toBe("pass");
+      expect(check).toBeDefined();
+      expect(check?.status).toBe("pass");
+      expect(check?.title).toBe("Configuration Backup Encryption");
     });
 
-    it("warns when BackupFileEncryptionEnabled is false", () => {
+    it("ignores BackupFileEncryptionEnabled when ConfigBackup is encrypted", () => {
       const data: NormalizedDataset = {
         backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
         securitySummary: [
@@ -140,15 +141,11 @@ describe("validateHealthcheck", () => {
       };
 
       const results = validateHealthcheck(data);
-      const encryptionCheck = results.find(
-        (r) => r.ruleId === "global-encryption",
+      const check = results.find(
+        (r) => r.ruleId === "config-backup-encryption",
       );
 
-      expect(encryptionCheck).toBeDefined();
-      expect(encryptionCheck?.status).toBe("warning");
-      expect(encryptionCheck?.title).toBe("Global Encryption Configuration");
-      expect(encryptionCheck?.message).toContain("encryption");
-      expect(encryptionCheck?.message).toContain("Vault requires");
+      expect(check?.status).toBe("pass");
     });
 
     it("warns when ConfigBackupEncryptionEnabled is false", () => {
@@ -172,42 +169,17 @@ describe("validateHealthcheck", () => {
       };
 
       const results = validateHealthcheck(data);
-      const encryptionCheck = results.find(
-        (r) => r.ruleId === "global-encryption",
+      const check = results.find(
+        (r) => r.ruleId === "config-backup-encryption",
       );
 
-      expect(encryptionCheck?.status).toBe("warning");
+      expect(check?.status).toBe("warning");
+      expect(check?.title).toBe("Configuration Backup Encryption");
+      expect(check?.message).toContain("configuration backup");
+      expect(check?.message).toContain("encryption");
     });
 
-    it("warns when both encryption flags are false", () => {
-      const data: NormalizedDataset = {
-        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
-        securitySummary: [
-          {
-            BackupFileEncryptionEnabled: false,
-            ConfigBackupEncryptionEnabled: false,
-          },
-        ],
-        jobInfo: [],
-        Licenses: [],
-        dataErrors: [],
-        jobSessionSummary: [],
-        sobr: [],
-        capExtents: [],
-        extents: [],
-        archExtents: [],
-        repos: [],
-      };
-
-      const results = validateHealthcheck(data);
-      const encryptionCheck = results.find(
-        (r) => r.ruleId === "global-encryption",
-      );
-
-      expect(encryptionCheck?.status).toBe("warning");
-    });
-
-    it("passes with empty securitySummary array", () => {
+    it("returns skipped when securitySummary is empty", () => {
       const data: NormalizedDataset = {
         backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
         securitySummary: [],
@@ -223,11 +195,13 @@ describe("validateHealthcheck", () => {
       };
 
       const results = validateHealthcheck(data);
-      const encryptionCheck = results.find(
-        (r) => r.ruleId === "global-encryption",
+      const check = results.find(
+        (r) => r.ruleId === "config-backup-encryption",
       );
 
-      expect(encryptionCheck?.status).toBe("pass");
+      expect(check?.status).toBe("skipped");
+      expect(check?.message).toContain("skipped");
+      expect(check?.message).toContain("security summary");
     });
   });
 
@@ -1394,7 +1368,9 @@ describe("validateHealthcheck", () => {
 
       expect(results).toHaveLength(11);
       expect(results.map((r) => r.ruleId)).toContain("vbr-version");
-      expect(results.map((r) => r.ruleId)).toContain("global-encryption");
+      expect(results.map((r) => r.ruleId)).toContain(
+        "config-backup-encryption",
+      );
       expect(results.map((r) => r.ruleId)).toContain("job-encryption");
       expect(results.map((r) => r.ruleId)).toContain("aws-workload");
       expect(results.map((r) => r.ruleId)).toContain("agent-workload");

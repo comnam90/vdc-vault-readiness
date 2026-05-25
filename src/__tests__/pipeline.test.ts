@@ -108,9 +108,9 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(rule.status).toBe("pass");
     });
 
-    // Rule 2: Global Encryption - both True → pass
-    it("passes global encryption check (both flags True)", () => {
-      const rule = findRule(result.validations, "global-encryption");
+    // Rule 2: Configuration Backup Encryption - ConfigBackup True → pass
+    it("passes configuration backup encryption check", () => {
+      const rule = findRule(result.validations, "config-backup-encryption");
       expect(rule.status).toBe("pass");
     });
 
@@ -242,7 +242,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(rule.affectedItems).toContain("Community");
     });
 
-    it("detects disabled global encryption through the full pipeline", () => {
+    it("detects disabled config backup encryption through the full pipeline", () => {
       const input: HealthcheckRoot = {
         Sections: {
           securitySummary: {
@@ -256,7 +256,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       };
 
       const result = analyzeHealthcheck(input);
-      const rule = findRule(result.validations, "global-encryption");
+      const rule = findRule(result.validations, "config-backup-encryption");
 
       expect(rule.status).toBe("warning");
     });
