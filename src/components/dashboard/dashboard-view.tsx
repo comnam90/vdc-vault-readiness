@@ -4,7 +4,10 @@ import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 import { CARD_LABEL, MINIMUM_VBR_VERSION } from "@/lib/constants";
 import { enrichJobs } from "@/lib/enrich-jobs";
-import { getBlockerValidations } from "@/lib/validation-selectors";
+import {
+  getBlockerValidations,
+  getPassingValidations,
+} from "@/lib/validation-selectors";
 import { isVersionAtLeast } from "@/lib/version-compare";
 import {
   Card,
@@ -200,7 +203,7 @@ export function DashboardView({
             <>
               <NotesPanel validations={validations} />
               <SuccessCelebration
-                checksCount={validations.length}
+                checksCount={getPassingValidations(validations).length}
                 onViewDetails={() => setActiveTab("jobs")}
               />
             </>
