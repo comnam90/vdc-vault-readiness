@@ -34,20 +34,20 @@ HealthcheckRoot (raw JSON)
 
 ## VALIDATION RULES (12 total)
 
-| Rule ID                       | Type    | Description                                              |
-| ----------------------------- | ------- | -------------------------------------------------------- |
-| vbr-version                   | blocker | VBR must be 12.1.2+                                      |
-| config-backup-encryption      | warning | Config backup encryption should be enabled               |
-| job-encryption                | blocker | All jobs must have encryption enabled                    |
-| aws-workload                  | blocker | Cannot target Vault directly                             |
-| agent-standalone-unsupported  | blocker | Standalone agents must use Backup Copy to reach Vault    |
-| agent-policy-gateway-required | warning | Managed agent policies require a Gateway Server          |
-| license-edition               | warning | Community Edition has SOBR limitations                   |
-| retention-period              | warning | Jobs should have 30+ day retention                       |
-| sobr-cap-encryption           | warning | Capacity tier must be encrypted                          |
-| sobr-immutability             | warning | Capacity tier immutability must be enabled               |
-| archive-tier-edition          | warning | Archive tier consumes egress — consider Advanced edition |
-| capacity-tier-residency       | warning | Capacity tier residency must be 30+ days                 |
+| Rule ID                       | Type    | Description                                                              |
+| ----------------------------- | ------- | ------------------------------------------------------------------------ |
+| vbr-version                   | blocker | VBR must be 12.1.2+                                                      |
+| config-backup-encryption      | warning | Config backup must be encrypted to use Vault; skipped if summary missing |
+| job-encryption                | blocker | All jobs must have encryption enabled                                    |
+| aws-workload                  | blocker | Cannot target Vault directly                                             |
+| agent-standalone-unsupported  | blocker | Standalone agents must use Backup Copy to reach Vault                    |
+| agent-policy-gateway-required | warning | Managed agent policies require a Gateway Server                          |
+| license-edition               | info    | Community Edition is supported by Vault; lacks SOBR                      |
+| retention-period              | warning | Jobs should have 30+ day retention                                       |
+| sobr-cap-encryption           | warning | Capacity tier must be encrypted                                          |
+| sobr-immutability             | warning | Capacity tier immutability must be enabled                               |
+| archive-tier-edition          | warning | Archive tier consumes egress — consider Advanced edition                 |
+| capacity-tier-residency       | warning | Capacity tier residency must be 30+ days                                 |
 
 ## WHERE TO LOOK
 
@@ -72,7 +72,7 @@ HealthcheckRoot (raw JSON)
 - **No side effects**: All functions pure. Pipeline runs synchronously
 - **Version format**: "major.minor.patch.build" — only first 3 segments compared
 - **tick()**: Used by useAnalysis hook for visual delays; accepts AbortSignal for cleanup on unmount/re-upload
-- **PIPELINE_STEPS vs ruleIds**: Steps are presentation-layer groupings (e.g., "encryption" covers both "global-encryption" and "job-encryption" rules; "sobr-analysis" covers 4 SOBR rules)
+- **PIPELINE_STEPS vs ruleIds**: Steps are presentation-layer groupings (e.g., "encryption" covers both "config-backup-encryption" and "job-encryption" rules; "sobr-analysis" covers 4 SOBR rules)
 - **Calculator**: Aggregates from SafeJob[] and SafeJobSession[]; uses MINIMUM_RETENTION_DAYS from constants
 - **Enrichment**: `enrichJobs()` builds Map<JobName, SafeJobSession> for O(1) lookup, returns EnrichedJob[] with null session for unmatched jobs
 - **Formatters**: Pure functions. `formatSize()` returns `{ value, unit }` object for split display. `formatDuration()` parses `DD.HH:MM:SS` duration strings. `formatCompressionRatio()` handles divide-by-zero gracefully
