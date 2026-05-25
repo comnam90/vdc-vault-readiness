@@ -105,7 +105,7 @@ const MOCK_VALIDATIONS: ValidationResult[] = [
     ruleId: "config-backup-encryption",
     title: "Configuration Backup Encryption",
     status: "pass",
-    message: "Global encryption enabled.",
+    message: "VBR configuration backup encryption is enabled.",
     affectedItems: [],
   },
 ];

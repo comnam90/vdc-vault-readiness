@@ -19,18 +19,18 @@ Out of scope but flagged: `VDCVAULT-CHEETSHEET.md`'s workload matrix contradicts
 
 ## Changes Overview
 
-| Area | Change |
-|---|---|
-| `src/types/validation.ts` | Add `"skipped"` to `ValidationStatus` union. |
-| `src/lib/validation-selectors.ts` | Add `getNoteValidations()` returning `info` + `skipped` results. |
-| `src/lib/validator.ts` | Reword `validateLicenseEdition`. Rename + narrow `validateGlobalEncryption` → `validateConfigBackupEncryption`. Replace `validateAgentWorkload` with `validateAgentStandaloneUnsupported` + `validateAgentPolicyGatewayRequired`. |
-| `src/lib/CLAUDE.md` | Update rules table (11 rules → 12 rules) and rule-IDs. |
-| `docs/validation-rules.md` | Update status taxonomy with `skipped` row. Update rule entries for the four affected rules. |
-| `src/components/dashboard/` | Add Notes panel rendering `info` + `skipped` validations in a neutral/grey style. Wire into `dashboard-view.tsx` alongside blockers and passing checks. |
-| `src/__tests__/validator.test.ts` | Update describe blocks, ruleId references, and add new test cases per new rule semantics. |
-| `src/__tests__/validation-selectors.test.ts` | Add tests for `getNoteValidations()`. |
-| `src/__tests__/` (new) | Add component test file for the Notes panel. |
-| `src/lib/constants.ts` | No change — `PIPELINE_STEPS` are presentational; existing `encryption` and `agent-workload` step IDs continue to cover the renamed/split rules. |
+| Area                                         | Change                                                                                                                                                                                                                            |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/types/validation.ts`                    | Add `"skipped"` to `ValidationStatus` union.                                                                                                                                                                                      |
+| `src/lib/validation-selectors.ts`            | Add `getNoteValidations()` returning `info` + `skipped` results.                                                                                                                                                                  |
+| `src/lib/validator.ts`                       | Reword `validateLicenseEdition`. Rename + narrow `validateGlobalEncryption` → `validateConfigBackupEncryption`. Replace `validateAgentWorkload` with `validateAgentStandaloneUnsupported` + `validateAgentPolicyGatewayRequired`. |
+| `src/lib/CLAUDE.md`                          | Update rules table (11 rules → 12 rules) and rule-IDs.                                                                                                                                                                            |
+| `docs/validation-rules.md`                   | Update status taxonomy with `skipped` row. Update rule entries for the four affected rules.                                                                                                                                       |
+| `src/components/dashboard/`                  | Add Notes panel rendering `info` + `skipped` validations in a neutral/grey style. Wire into `dashboard-view.tsx` alongside blockers and passing checks.                                                                           |
+| `src/__tests__/validator.test.ts`            | Update describe blocks, ruleId references, and add new test cases per new rule semantics.                                                                                                                                         |
+| `src/__tests__/validation-selectors.test.ts` | Add tests for `getNoteValidations()`.                                                                                                                                                                                             |
+| `src/__tests__/` (new)                       | Add component test file for the Notes panel.                                                                                                                                                                                      |
+| `src/lib/constants.ts`                       | Rename `PIPELINE_STEPS` step id `agent-workload` → `agent-checks` so the presentational id matches the post-split rule grouping. `encryption` step id is unchanged.                                                               |
 
 Resulting validator count: **11 → 12 rules**.
 
@@ -38,12 +38,12 @@ Resulting validator count: **11 → 12 rules**.
 
 ### Rule 1 — `license-edition` (reframed, info only)
 
-| | |
-|---|---|
-| **Type** | Reframe (no rename) |
-| **ruleId** | `license-edition` (unchanged) |
-| **title** | `License/Edition Notes` (unchanged) |
-| **Data source** | `NormalizedDataset.Licenses` |
+|                 |                                     |
+| --------------- | ----------------------------------- |
+| **Type**        | Reframe (no rename)                 |
+| **ruleId**      | `license-edition` (unchanged)       |
+| **title**       | `License/Edition Notes` (unchanged) |
+| **Data source** | `NormalizedDataset.Licenses`        |
 
 **Behavior:**
 
@@ -52,19 +52,19 @@ Resulting validator count: **11 → 12 rules**.
 
 **Messages:**
 
-- `pass`: *"No Community or Free editions detected."*
-- `info`: *"Community or Free edition detected. VDC Vault is fully supported on Community Edition. Note: Community / Free editions do not include Scale-Out Backup Repository (SOBR), so capacity-tier offload patterns are not available."*
+- `pass`: _"No Community or Free editions detected."_
+- `info`: _"Community or Free edition detected. VDC Vault is fully supported on Community Edition. Note: Community / Free editions do not include Scale-Out Backup Repository (SOBR), so capacity-tier offload patterns are not available."_
 
 **`affectedItems`** — list of matching `Edition` strings (unchanged).
 
 ### Rule 2 — `config-backup-encryption` (renamed and narrowed)
 
-| | |
-|---|---|
-| **Type** | Rename + narrow |
-| **ruleId** | `global-encryption` → **`config-backup-encryption`** |
-| **title** | `Global Encryption Configuration` → **`Configuration Backup Encryption`** |
-| **Data source** | `NormalizedDataset.securitySummary[0].ConfigBackupEncryptionEnabled` |
+|                 |                                                                           |
+| --------------- | ------------------------------------------------------------------------- |
+| **Type**        | Rename + narrow                                                           |
+| **ruleId**      | `global-encryption` → **`config-backup-encryption`**                      |
+| **title**       | `Global Encryption Configuration` → **`Configuration Backup Encryption`** |
+| **Data source** | `NormalizedDataset.securitySummary[0].ConfigBackupEncryptionEnabled`      |
 
 `BackupFileEncryptionEnabled` is no longer read by this rule. Per-job backup file encryption remains the responsibility of `job-encryption`.
 
@@ -76,20 +76,20 @@ Resulting validator count: **11 → 12 rules**.
 
 **Messages:**
 
-- `pass`: *"VBR configuration backup encryption is enabled."*
-- `skipped`: *"Configuration backup encryption check skipped — security summary section is missing from the healthcheck data."*
-- `warning`: *"VBR configuration backup encryption is not enabled. Once VDC Vault is in use, VBR automatically disables configuration backups unless they are encrypted, so encryption becomes a requirement at that point. It is also a best practice generally — the configuration backup contains sensitive information such as credentials and certificates."*
+- `pass`: _"VBR configuration backup encryption is enabled."_
+- `skipped`: _"Configuration backup encryption check skipped — security summary section is missing from the healthcheck data."_
+- `warning`: _"VBR configuration backup encryption is not enabled. Once VDC Vault is in use, VBR automatically disables configuration backups unless they are encrypted, so encryption becomes a requirement at that point. It is also a best practice generally — the configuration backup contains sensitive information such as credentials and certificates."_
 
 **`affectedItems`** — `[]` (single-server configuration, no per-item enumeration).
 
 ### Rule 3a — `agent-standalone-unsupported` (NEW, blocker)
 
-| | |
-|---|---|
-| **Type** | New rule (split from `agent-workload`) |
-| **ruleId** | `agent-standalone-unsupported` |
-| **title** | `Standalone Agent Workloads` |
-| **Data source** | `NormalizedDataset.jobInfo[].JobType` |
+|                 |                                        |
+| --------------- | -------------------------------------- |
+| **Type**        | New rule (split from `agent-workload`) |
+| **ruleId**      | `agent-standalone-unsupported`         |
+| **title**       | `Standalone Agent Workloads`           |
+| **Data source** | `NormalizedDataset.jobInfo[].JobType`  |
 
 **Detection:** `job.JobType` equals `"Unmanaged Agent"` (case-insensitive, exact match after trim — not substring match, to avoid false positives on job names that happen to contain "agent").
 
@@ -100,19 +100,19 @@ Resulting validator count: **11 → 12 rules**.
 
 **Messages:**
 
-- `pass`: *"No standalone agent workloads detected."*
-- `fail`: *"Standalone (unmanaged) agents cannot target VDC Vault directly. To get standalone agent backups into Vault, use a Backup Copy Job with encryption enabled — that is the only supported path."*
+- `pass`: _"No standalone agent workloads detected."_
+- `fail`: _"Standalone (unmanaged) agents cannot target VDC Vault directly. To get standalone agent backups into Vault, use a Backup Copy Job with encryption enabled — that is the only supported path."_
 
 **`affectedItems`** — `JobName` values of matching jobs.
 
 ### Rule 3b — `agent-policy-gateway-required` (NEW, warning)
 
-| | |
-|---|---|
-| **Type** | New rule (split from `agent-workload`) |
-| **ruleId** | `agent-policy-gateway-required` |
-| **title** | `Managed Agent Policies` |
-| **Data source** | `NormalizedDataset.jobInfo[].JobType` |
+|                 |                                        |
+| --------------- | -------------------------------------- |
+| **Type**        | New rule (split from `agent-workload`) |
+| **ruleId**      | `agent-policy-gateway-required`        |
+| **title**       | `Managed Agent Policies`               |
+| **Data source** | `NormalizedDataset.jobInfo[].JobType`  |
 
 **Detection:** `job.JobType` equals `"EpAgentPolicy"` or `"VmbApiPolicyTempJob"` (case-insensitive, exact match after trim).
 
@@ -123,8 +123,8 @@ Resulting validator count: **11 → 12 rules**.
 
 **Messages:**
 
-- `pass`: *"No managed agent policies detected."*
-- `warning`: *"Managed agent policies require a VBR Gateway Server to reach VDC Vault — they cannot write directly to object storage. Ensure a Gateway Server is configured for these policies."*
+- `pass`: _"No managed agent policies detected."_
+- `warning`: _"Managed agent policies require a VBR Gateway Server to reach VDC Vault — they cannot write directly to object storage. Ensure a Gateway Server is configured for these policies."_
 
 **`affectedItems`** — `JobName` values of matching jobs.
 
@@ -136,13 +136,13 @@ The current `validateAgentWorkload` function is removed. Managed agent backup jo
 
 Adding a fourth display category. Updated taxonomy:
 
-| Status    | Meaning                                        | Icon / Style    | Display Location                                |
-| --------- | ---------------------------------------------- | --------------- | ----------------------------------------------- |
-| `fail`    | Hard blocker preventing Vault onboarding       | `CircleX`       | Blockers list (sorted first, red)              |
-| `warning` | Actionable concern, not a hard blocker         | `TriangleAlert` | Blockers list (after fails, amber)             |
-| `info`    | Advisory note (FYI, no action strictly needed) | neutral / grey  | **Notes panel** (new)                          |
-| `skipped` | Check could not run due to missing input data  | neutral / grey  | **Notes panel** (new)                          |
-| `pass`    | Check passed, no issues found                  | `CheckCircle2`  | Passing checks list (green)                    |
+| Status    | Meaning                                        | Icon / Style    | Display Location                   |
+| --------- | ---------------------------------------------- | --------------- | ---------------------------------- |
+| `fail`    | Hard blocker preventing Vault onboarding       | `CircleX`       | Blockers list (sorted first, red)  |
+| `warning` | Actionable concern, not a hard blocker         | `TriangleAlert` | Blockers list (after fails, amber) |
+| `info`    | Advisory note (FYI, no action strictly needed) | neutral / grey  | **Notes panel** (new)              |
+| `skipped` | Check could not run due to missing input data  | neutral / grey  | **Notes panel** (new)              |
+| `pass`    | Check passed, no issues found                  | `CheckCircle2`  | Passing checks list (green)        |
 
 Notes panel renders below blockers and above passing checks. Title: "Notes". Visual treatment: neutral grey background with a subdued icon (e.g., `Info` for `info`, `CircleSlash` or `MinusCircle` for `skipped`). Same affectedItems handling (bulleted, truncated to 5 with "+ N more").
 
