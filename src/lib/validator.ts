@@ -17,6 +17,7 @@ export function validateHealthcheck(
     validateJobEncryption(data),
     validateAwsWorkload(data),
     validateAgentWorkload(data),
+    validateAgentStandaloneUnsupported(data),
     validateLicenseEdition(data),
     validateRetentionPeriod(data),
     validateCapTierEncryption(data),
@@ -185,6 +186,33 @@ function validateAgentWorkload(data: NormalizedDataset): ValidationResult {
     title: "Agent Workload Configuration",
     status: "pass",
     message: "No agent workloads detected.",
+    affectedItems: [],
+  };
+}
+
+function validateAgentStandaloneUnsupported(
+  data: NormalizedDataset,
+): ValidationResult {
+  const matches = data.jobInfo.filter(
+    (job) => job.JobType.trim().toLowerCase() === "unmanaged agent",
+  );
+
+  if (matches.length > 0) {
+    return {
+      ruleId: "agent-standalone-unsupported",
+      title: "Standalone Agent Workloads",
+      status: "fail",
+      message:
+        "Standalone (unmanaged) agents cannot target VDC Vault directly. To get standalone agent backups into Vault, use a Backup Copy Job with encryption enabled — that is the only supported path.",
+      affectedItems: matches.map((job) => job.JobName),
+    };
+  }
+
+  return {
+    ruleId: "agent-standalone-unsupported",
+    title: "Standalone Agent Workloads",
+    status: "pass",
+    message: "No standalone agent workloads detected.",
     affectedItems: [],
   };
 }

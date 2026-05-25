@@ -824,6 +824,194 @@ describe("validateHealthcheck", () => {
     });
   });
 
+  describe("Rule 5b: Standalone Agent Workloads (agent-standalone-unsupported)", () => {
+    it("passes when no Unmanaged Agent jobs are present", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "Job A",
+            JobType: "Backup",
+            Encrypted: true,
+            RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+            OnDiskGB: null,
+            RetentionScheme: null,
+            CompressionLevel: null,
+            BlockSize: null,
+            GfsEnabled: null,
+            ActiveFullEnabled: null,
+            SyntheticFullEnabled: null,
+            BackupChainType: null,
+            IndexingEnabled: null,
+          },
+        ],
+        Licenses: [],
+        dataErrors: [],
+        jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        extents: [],
+        archExtents: [],
+        repos: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-standalone-unsupported",
+      );
+
+      expect(check).toBeDefined();
+      expect(check?.status).toBe("pass");
+      expect(check?.affectedItems).toHaveLength(0);
+    });
+
+    it("fails when an Unmanaged Agent job is detected (exact match, case-insensitive)", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "StandaloneJob",
+            JobType: "Unmanaged Agent",
+            Encrypted: true,
+            RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+            OnDiskGB: null,
+            RetentionScheme: null,
+            CompressionLevel: null,
+            BlockSize: null,
+            GfsEnabled: null,
+            ActiveFullEnabled: null,
+            SyntheticFullEnabled: null,
+            BackupChainType: null,
+            IndexingEnabled: null,
+          },
+          {
+            JobName: "lowercaseStandalone",
+            JobType: "unmanaged agent",
+            Encrypted: true,
+            RepoName: "Repo2",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+            OnDiskGB: null,
+            RetentionScheme: null,
+            CompressionLevel: null,
+            BlockSize: null,
+            GfsEnabled: null,
+            ActiveFullEnabled: null,
+            SyntheticFullEnabled: null,
+            BackupChainType: null,
+            IndexingEnabled: null,
+          },
+        ],
+        Licenses: [],
+        dataErrors: [],
+        jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        extents: [],
+        archExtents: [],
+        repos: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-standalone-unsupported",
+      );
+
+      expect(check?.status).toBe("fail");
+      expect(check?.affectedItems).toEqual([
+        "StandaloneJob",
+        "lowercaseStandalone",
+      ]);
+      expect(check?.message).toContain("Standalone");
+      expect(check?.message).toContain("Backup Copy");
+    });
+
+    it("does not fire for managed agent JobTypes (Agent Backup, EpAgentBackup)", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "Managed1",
+            JobType: "Agent Backup",
+            Encrypted: true,
+            RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+            OnDiskGB: null,
+            RetentionScheme: null,
+            CompressionLevel: null,
+            BlockSize: null,
+            GfsEnabled: null,
+            ActiveFullEnabled: null,
+            SyntheticFullEnabled: null,
+            BackupChainType: null,
+            IndexingEnabled: null,
+          },
+          {
+            JobName: "Managed2",
+            JobType: "EpAgentBackup",
+            Encrypted: true,
+            RepoName: "Repo2",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+            OnDiskGB: null,
+            RetentionScheme: null,
+            CompressionLevel: null,
+            BlockSize: null,
+            GfsEnabled: null,
+            ActiveFullEnabled: null,
+            SyntheticFullEnabled: null,
+            BackupChainType: null,
+            IndexingEnabled: null,
+          },
+        ],
+        Licenses: [],
+        dataErrors: [],
+        jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        extents: [],
+        archExtents: [],
+        repos: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-standalone-unsupported",
+      );
+
+      expect(check?.status).toBe("pass");
+      expect(check?.affectedItems).toHaveLength(0);
+    });
+  });
+
   describe("Rule 6: License/Edition Check", () => {
     it("reports info when Community edition is detected", () => {
       const data: NormalizedDataset = {
@@ -1325,7 +1513,7 @@ describe("validateHealthcheck", () => {
   });
 
   describe("All Rules Integration", () => {
-    it("returns results for all 11 rules", () => {
+    it("returns results for all 12 rules", () => {
       const data: NormalizedDataset = {
         backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
         securitySummary: [
@@ -1366,7 +1554,7 @@ describe("validateHealthcheck", () => {
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(11);
+      expect(results).toHaveLength(12);
       expect(results.map((r) => r.ruleId)).toContain("vbr-version");
       expect(results.map((r) => r.ruleId)).toContain(
         "config-backup-encryption",
@@ -1374,6 +1562,9 @@ describe("validateHealthcheck", () => {
       expect(results.map((r) => r.ruleId)).toContain("job-encryption");
       expect(results.map((r) => r.ruleId)).toContain("aws-workload");
       expect(results.map((r) => r.ruleId)).toContain("agent-workload");
+      expect(results.map((r) => r.ruleId)).toContain(
+        "agent-standalone-unsupported",
+      );
       expect(results.map((r) => r.ruleId)).toContain("license-edition");
       expect(results.map((r) => r.ruleId)).toContain("retention-period");
       expect(results.map((r) => r.ruleId)).toContain("sobr-cap-encryption");
@@ -1399,7 +1590,7 @@ describe("validateHealthcheck", () => {
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(11);
+      expect(results).toHaveLength(12);
       // Version check should fail with empty backupServer
       const versionCheck = results.find((r) => r.ruleId === "vbr-version");
       expect(versionCheck?.status).toBe("fail");
