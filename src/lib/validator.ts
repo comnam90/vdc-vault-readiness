@@ -18,6 +18,7 @@ export function validateHealthcheck(
     validateAwsWorkload(data),
     validateAgentWorkload(data),
     validateAgentStandaloneUnsupported(data),
+    validateAgentPolicyGatewayRequired(data),
     validateLicenseEdition(data),
     validateRetentionPeriod(data),
     validateCapTierEncryption(data),
@@ -213,6 +214,35 @@ function validateAgentStandaloneUnsupported(
     title: "Standalone Agent Workloads",
     status: "pass",
     message: "No standalone agent workloads detected.",
+    affectedItems: [],
+  };
+}
+
+function validateAgentPolicyGatewayRequired(
+  data: NormalizedDataset,
+): ValidationResult {
+  const POLICY_TYPES = new Set(["epagentpolicy", "vmbapipolicytempjob"]);
+
+  const matches = data.jobInfo.filter((job) =>
+    POLICY_TYPES.has(job.JobType.trim().toLowerCase()),
+  );
+
+  if (matches.length > 0) {
+    return {
+      ruleId: "agent-policy-gateway-required",
+      title: "Managed Agent Policies",
+      status: "warning",
+      message:
+        "Managed agent policies require a VBR Gateway Server to reach VDC Vault — they cannot write directly to object storage. Ensure a Gateway Server is configured for these policies.",
+      affectedItems: matches.map((job) => job.JobName),
+    };
+  }
+
+  return {
+    ruleId: "agent-policy-gateway-required",
+    title: "Managed Agent Policies",
+    status: "pass",
+    message: "No managed agent policies detected.",
     affectedItems: [],
   };
 }
