@@ -102,8 +102,8 @@ const MOCK_VALIDATIONS: ValidationResult[] = [
     affectedItems: [],
   },
   {
-    ruleId: "global-encryption",
-    title: "Global Encryption Configuration",
+    ruleId: "config-backup-encryption",
+    title: "Configuration Backup Encryption",
     status: "pass",
     message: "Global encryption enabled.",
     affectedItems: [],

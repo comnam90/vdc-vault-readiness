@@ -13,7 +13,7 @@ export const MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS = 30;
  *
  * NOTE: These are presentation-layer steps for user feedback, NOT a 1:1 mapping
  * to validation rule IDs. For example, "encryption" represents both the
- * "global-encryption" and "job-encryption" validation rules from a user's perspective.
+ * "config-backup-encryption" and "job-encryption" validation rules from a user's perspective.
  *
  * For actual validation rule IDs, see src/lib/validator.ts.
  */
