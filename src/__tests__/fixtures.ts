@@ -118,10 +118,10 @@ export const FAIL_RESULT: ValidationResult = {
 };
 
 export const WARNING_RESULT: ValidationResult = {
-  ruleId: "agent-workload",
-  title: "Agent Workload Configuration",
+  ruleId: "agent-policy-gateway-required",
+  title: "Managed Agent Policies",
   status: "warning",
-  message: "Agent workloads detected.",
+  message: "Managed agent policies detected.",
   affectedItems: ["Job B"],
 };
 

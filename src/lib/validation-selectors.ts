@@ -13,6 +13,11 @@ export const getBlockerValidations = (validations: ValidationResult[]) =>
 export const getPassingValidations = (validations: ValidationResult[]) =>
   validations.filter((result) => result.status === "pass");
 
+export const getNoteValidations = (validations: ValidationResult[]) =>
+  validations.filter(
+    (result) => result.status === "info" || result.status === "skipped",
+  );
+
 export const hasBlockers = (validations: ValidationResult[]) =>
   getBlockerValidations(validations).length > 0;
 
