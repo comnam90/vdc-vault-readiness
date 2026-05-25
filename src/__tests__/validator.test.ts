@@ -877,7 +877,8 @@ describe("validateHealthcheck", () => {
       expect(licenseCheck).toBeDefined();
       expect(licenseCheck?.status).toBe("info");
       expect(licenseCheck?.title).toBe("License/Edition Notes");
-      expect(licenseCheck?.message).toContain("SOBR limitations");
+      expect(licenseCheck?.message).toContain("Vault is fully supported");
+      expect(licenseCheck?.message).toContain("Scale-Out Backup Repository");
       expect(licenseCheck?.affectedItems).toContain("Community");
     });
 

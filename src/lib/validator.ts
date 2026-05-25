@@ -201,7 +201,7 @@ function validateLicenseEdition(data: NormalizedDataset): ValidationResult {
       title: "License/Edition Notes",
       status: "info",
       message:
-        "Community Edition detected. Ensure you are aware of SOBR limitations when designing your Vault strategy.",
+        "Community or Free edition detected. VDC Vault is fully supported on Community Edition. Note: Community / Free editions do not include Scale-Out Backup Repository (SOBR), so capacity-tier offload patterns are not available.",
       affectedItems: affectedLicenses.map((license) => license.Edition),
     };
   }
