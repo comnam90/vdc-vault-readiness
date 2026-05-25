@@ -39,7 +39,7 @@ export function NotesPanel({ validations }: NotesPanelProps) {
   return (
     <div data-testid="notes-panel" className="space-y-3">
       {notes.map((note, index) => {
-        const style = NOTE_STYLE[note.status as "info" | "skipped"];
+        const style = NOTE_STYLE[note.status];
         const visibleItems = note.affectedItems.slice(0, MAX_VISIBLE_ITEMS);
         const remaining = note.affectedItems.length - MAX_VISIBLE_ITEMS;
 
