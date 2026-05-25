@@ -640,190 +640,6 @@ describe("validateHealthcheck", () => {
     });
   });
 
-  describe("Rule 5: Agent Workload Check", () => {
-    it("passes when no agent workloads are present", () => {
-      const data: NormalizedDataset = {
-        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
-        securitySummary: [
-          {
-            BackupFileEncryptionEnabled: true,
-            ConfigBackupEncryptionEnabled: true,
-          },
-        ],
-        jobInfo: [
-          {
-            JobName: "Job A",
-            JobType: "Backup",
-            Encrypted: true,
-            RepoName: "Repo1",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-        ],
-        Licenses: [],
-        dataErrors: [],
-        jobSessionSummary: [],
-        sobr: [],
-        capExtents: [],
-        extents: [],
-        archExtents: [],
-        repos: [],
-      };
-
-      const results = validateHealthcheck(data);
-      const agentCheck = results.find((r) => r.ruleId === "agent-workload");
-
-      expect(agentCheck).toBeDefined();
-      expect(agentCheck?.status).toBe("pass");
-      expect(agentCheck?.affectedItems).toHaveLength(0);
-    });
-
-    it("warns when agent workload is detected", () => {
-      const data: NormalizedDataset = {
-        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
-        securitySummary: [
-          {
-            BackupFileEncryptionEnabled: true,
-            ConfigBackupEncryptionEnabled: true,
-          },
-        ],
-        jobInfo: [
-          {
-            JobName: "Agent Job",
-            JobType: "EpAgentBackup",
-            Encrypted: true,
-            RepoName: "Repo1",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-        ],
-        Licenses: [],
-        dataErrors: [],
-        jobSessionSummary: [],
-        sobr: [],
-        capExtents: [],
-        extents: [],
-        archExtents: [],
-        repos: [],
-      };
-
-      const results = validateHealthcheck(data);
-      const agentCheck = results.find((r) => r.ruleId === "agent-workload");
-
-      expect(agentCheck).toBeDefined();
-      expect(agentCheck?.status).toBe("warning");
-      expect(agentCheck?.title).toBe("Agent Workload Configuration");
-      expect(agentCheck?.message).toContain("Agent");
-      expect(agentCheck?.message).toContain("Gateway Server");
-      expect(agentCheck?.affectedItems).toContain("Agent Job");
-    });
-
-    it("detects various agent job type patterns", () => {
-      const data: NormalizedDataset = {
-        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
-        securitySummary: [
-          {
-            BackupFileEncryptionEnabled: true,
-            ConfigBackupEncryptionEnabled: true,
-          },
-        ],
-        jobInfo: [
-          {
-            JobName: "Job A",
-            JobType: "Agent Backup",
-            Encrypted: true,
-            RepoName: "Repo1",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-          {
-            JobName: "Job B",
-            JobType: "EpAgentPolicy",
-            Encrypted: true,
-            RepoName: "Repo2",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-          {
-            JobName: "Job C",
-            JobType: "agentbackup",
-            Encrypted: true,
-            RepoName: "Repo3",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-        ],
-        Licenses: [],
-        dataErrors: [],
-        jobSessionSummary: [],
-        sobr: [],
-        capExtents: [],
-        extents: [],
-        archExtents: [],
-        repos: [],
-      };
-
-      const results = validateHealthcheck(data);
-      const agentCheck = results.find((r) => r.ruleId === "agent-workload");
-
-      expect(agentCheck?.status).toBe("warning");
-      expect(agentCheck?.affectedItems).toHaveLength(3);
-      expect(agentCheck?.affectedItems).toContain("Job A");
-      expect(agentCheck?.affectedItems).toContain("Job B");
-      expect(agentCheck?.affectedItems).toContain("Job C");
-    });
-  });
-
   describe("Rule 5b: Standalone Agent Workloads (agent-standalone-unsupported)", () => {
     it("passes when no Unmanaged Agent jobs are present", () => {
       const data: NormalizedDataset = {
@@ -1695,7 +1511,7 @@ describe("validateHealthcheck", () => {
   });
 
   describe("All Rules Integration", () => {
-    it("returns results for all 13 rules", () => {
+    it("returns results for all 12 rules", () => {
       const data: NormalizedDataset = {
         backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
         securitySummary: [
@@ -1736,14 +1552,13 @@ describe("validateHealthcheck", () => {
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(13);
+      expect(results).toHaveLength(12);
       expect(results.map((r) => r.ruleId)).toContain("vbr-version");
       expect(results.map((r) => r.ruleId)).toContain(
         "config-backup-encryption",
       );
       expect(results.map((r) => r.ruleId)).toContain("job-encryption");
       expect(results.map((r) => r.ruleId)).toContain("aws-workload");
-      expect(results.map((r) => r.ruleId)).toContain("agent-workload");
       expect(results.map((r) => r.ruleId)).toContain(
         "agent-standalone-unsupported",
       );
@@ -1775,7 +1590,7 @@ describe("validateHealthcheck", () => {
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(13);
+      expect(results).toHaveLength(12);
       // Version check should fail with empty backupServer
       const versionCheck = results.find((r) => r.ruleId === "vbr-version");
       expect(versionCheck?.status).toBe("fail");

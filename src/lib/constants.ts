@@ -22,7 +22,7 @@ export const PIPELINE_STEPS: PipelineStep[] = [
   { id: "vbr-version", label: "Validate VBR version" },
   { id: "encryption", label: "Check encryption rules" },
   { id: "aws-workload", label: "Scan for AWS workloads" },
-  { id: "agent-workload", label: "Verify agent configuration" },
+  { id: "agent-checks", label: "Verify agent configuration" },
   { id: "license-edition", label: "Check license type" },
   { id: "sobr-analysis", label: "Analyze SOBR configuration" },
 ];

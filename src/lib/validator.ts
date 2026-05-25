@@ -16,7 +16,6 @@ export function validateHealthcheck(
     validateConfigBackupEncryption(data),
     validateJobEncryption(data),
     validateAwsWorkload(data),
-    validateAgentWorkload(data),
     validateAgentStandaloneUnsupported(data),
     validateAgentPolicyGatewayRequired(data),
     validateLicenseEdition(data),
@@ -162,31 +161,6 @@ function validateAwsWorkload(data: NormalizedDataset): ValidationResult {
     title: "AWS Workload Support",
     status: "pass",
     message: "No AWS workloads detected that would block Vault integration.",
-    affectedItems: [],
-  };
-}
-
-function validateAgentWorkload(data: NormalizedDataset): ValidationResult {
-  const agentJobs = data.jobInfo.filter((job) =>
-    job.JobType.toLowerCase().includes("agent"),
-  );
-
-  if (agentJobs.length > 0) {
-    return {
-      ruleId: "agent-workload",
-      title: "Agent Workload Configuration",
-      status: "warning",
-      message:
-        "Agent workloads detected. Veeam Agents cannot write directly to object storage. Ensure you configure a Gateway Server or use Cloud Connect to route these backups to Vault.",
-      affectedItems: agentJobs.map((job) => job.JobName),
-    };
-  }
-
-  return {
-    ruleId: "agent-workload",
-    title: "Agent Workload Configuration",
-    status: "pass",
-    message: "No agent workloads detected.",
     affectedItems: [],
   };
 }

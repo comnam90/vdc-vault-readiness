@@ -9,7 +9,7 @@ lib/
 ├── pipeline.ts            # Orchestrator: analyzeHealthcheck() → {data, validations}. Zips sobr/capextents/archextents sections
 ├── parser.ts              # zipSection(): Headers/Rows → Record[] (decoupled JSON format)
 ├── normalizer.ts          # Raw records → typed SafeJob/SafeBackupServer/SafeSobr/SafeCapExtent/SafeArchExtent/etc. with error accumulation (812 lines, highest complexity)
-├── validator.ts           # 11 validation rules against NormalizedDataset (572 lines). 7 original + 4 SOBR rules
+├── validator.ts           # 12 validation rules against NormalizedDataset. 8 original + 4 SOBR rules
 ├── calculator-aggregator.ts # Vault sizing: source TB, change rates, retention, GFS aggregation
 ├── enrich-jobs.ts         # enrichJobs(): joins SafeJob[] with SafeJobSession[] via Map lookup (19 lines)
 ├── format-utils.ts        # Shared formatters: formatSize, formatPercent, formatDuration, formatTB, formatCompressionRatio (54 lines)
@@ -27,26 +27,27 @@ HealthcheckRoot (raw JSON)
   → zipSection() per section (backupServer, securitySummary, jobInfo, sobr, capextents, archextents)
   → Licenses passed through directly (already objects)
   → normalizeHealthcheck() → NormalizedDataset + DataError[]
-  → validateHealthcheck() → ValidationResult[] (11 rules)
+  → validateHealthcheck() → ValidationResult[] (12 rules)
   → buildCalculatorSummary() → CalculatorSummary (sizing aggregation)
   → enrichJobs() → EnrichedJob[] (jobs joined with session data)
 ```
 
-## VALIDATION RULES (11 total)
+## VALIDATION RULES (12 total)
 
-| Rule ID                 | Type    | Description                                |
-| ----------------------- | ------- | ------------------------------------------ |
-| vbr-version             | blocker | VBR must be 12.1.2+                        |
-| global-encryption       | warning | Config backup encryption should be enabled |
-| job-encryption          | blocker | All jobs must have encryption enabled      |
-| aws-workload            | blocker | Cannot target Vault directly               |
-| agent-workload          | warning | Require Gateway Server configuration       |
-| license-edition         | warning | Community Edition has SOBR limitations     |
-| retention-period        | warning | Jobs should have 30+ day retention         |
-| cap-tier-encryption     | blocker | Capacity tier must be encrypted            |
-| sobr-immutability       | blocker | SOBR immutability must be enabled          |
-| archive-tier-edition    | warning | Archive tier requires Enterprise Plus      |
-| capacity-tier-residency | warning | Capacity tier residency must be 30+ days   |
+| Rule ID                       | Type    | Description                                              |
+| ----------------------------- | ------- | -------------------------------------------------------- |
+| vbr-version                   | blocker | VBR must be 12.1.2+                                      |
+| config-backup-encryption      | warning | Config backup encryption should be enabled               |
+| job-encryption                | blocker | All jobs must have encryption enabled                    |
+| aws-workload                  | blocker | Cannot target Vault directly                             |
+| agent-standalone-unsupported  | blocker | Standalone agents must use Backup Copy to reach Vault    |
+| agent-policy-gateway-required | warning | Managed agent policies require a Gateway Server          |
+| license-edition               | warning | Community Edition has SOBR limitations                   |
+| retention-period              | warning | Jobs should have 30+ day retention                       |
+| sobr-cap-encryption           | warning | Capacity tier must be encrypted                          |
+| sobr-immutability             | warning | Capacity tier immutability must be enabled               |
+| archive-tier-edition          | warning | Archive tier consumes egress — consider Advanced edition |
+| capacity-tier-residency       | warning | Capacity tier residency must be 30+ days                 |
 
 ## WHERE TO LOOK
 

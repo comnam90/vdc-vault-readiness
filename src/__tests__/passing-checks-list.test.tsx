@@ -29,7 +29,7 @@ const FAIL_RESULT: ValidationResult = {
 };
 
 const WARNING_RESULT: ValidationResult = {
-  ruleId: "agent-workload",
+  ruleId: "agent-policy-gateway-required",
   title: "Agent Workload Configuration",
   status: "warning",
   message: "Agent workloads detected.",
