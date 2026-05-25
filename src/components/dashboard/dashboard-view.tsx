@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalculatorInputs } from "@/components/dashboard/calculator-inputs";
 import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
+import { NotesPanel } from "./notes-panel";
 import { PassingChecksList } from "./passing-checks-list";
 import { JobsCharts } from "./jobs-charts";
 import { RepositoriesTab } from "./repositories-tab";
@@ -189,16 +190,20 @@ export function DashboardView({
           {hasBlockers ? (
             <>
               <BlockersList blockers={blockers} />
+              <NotesPanel validations={validations} />
               <PassingChecksList
                 validations={validations}
                 blockerCount={blockers.length}
               />
             </>
           ) : (
-            <SuccessCelebration
-              checksCount={validations.length}
-              onViewDetails={() => setActiveTab("jobs")}
-            />
+            <>
+              <NotesPanel validations={validations} />
+              <SuccessCelebration
+                checksCount={validations.length}
+                onViewDetails={() => setActiveTab("jobs")}
+              />
+            </>
           )}
         </TabsContent>
 

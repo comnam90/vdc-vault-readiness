@@ -2,6 +2,7 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import type { NormalizedDataset } from "@/types/domain";
+import type { ValidationResult } from "@/types/validation";
 import { MOCK_DATA, ALL_PASS_VALIDATIONS, MIXED_VALIDATIONS } from "./fixtures";
 import { getBlockerCount } from "@/lib/validation-selectors";
 
@@ -443,6 +444,66 @@ describe("DashboardView", () => {
       expect(cards[0].className).toMatch(/motion-safe:animate-in/);
       expect(cards[0].className).toMatch(/motion-safe:fade-in/);
     });
+  });
+
+  it("renders the Notes panel when validations include info results", () => {
+    const validations: ValidationResult[] = [
+      {
+        ruleId: "license-edition",
+        title: "License/Edition Notes",
+        status: "info",
+        message: "Community Edition detected.",
+        affectedItems: ["Community"],
+      },
+      {
+        ruleId: "vbr-version",
+        title: "VBR Version Compatibility",
+        status: "pass",
+        message: "OK.",
+        affectedItems: [],
+      },
+    ];
+
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={validations}
+        onReset={() => {}}
+      />,
+    );
+
+    expect(screen.getByTestId("notes-panel")).toBeInTheDocument();
+    expect(screen.getByText("Community Edition detected.")).toBeInTheDocument();
+  });
+
+  it("renders the Notes panel alongside blockers when both are present", () => {
+    const validations: ValidationResult[] = [
+      {
+        ruleId: "job-encryption",
+        title: "Job Encryption Audit",
+        status: "fail",
+        message: "Unencrypted jobs.",
+        affectedItems: ["Job B"],
+      },
+      {
+        ruleId: "config-backup-encryption",
+        title: "Configuration Backup Encryption",
+        status: "skipped",
+        message: "Check skipped — security summary missing.",
+        affectedItems: [],
+      },
+    ];
+
+    render(
+      <DashboardView
+        data={MOCK_DATA}
+        validations={validations}
+        onReset={() => {}}
+      />,
+    );
+
+    expect(screen.getByTestId("blockers-list")).toBeInTheDocument();
+    expect(screen.getByTestId("notes-panel")).toBeInTheDocument();
   });
 
   describe("multiple backup servers", () => {
