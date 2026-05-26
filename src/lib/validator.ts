@@ -7,6 +7,7 @@ import {
 } from "./constants";
 import { isVersionAtLeast } from "./version-compare";
 import { parseGfsDetails } from "./calculator-aggregator";
+import { classifyAgentJobType } from "./agent-classifier";
 
 export function validateHealthcheck(
   data: NormalizedDataset,
@@ -195,10 +196,8 @@ function validateAgentStandaloneUnsupported(
 function validateAgentPolicyGatewayRequired(
   data: NormalizedDataset,
 ): ValidationResult {
-  const POLICY_TYPES = new Set(["epagentpolicy", "vmbapipolicytempjob"]);
-
-  const matches = data.jobInfo.filter((job) =>
-    POLICY_TYPES.has(job.JobType.trim().toLowerCase()),
+  const matches = data.jobInfo.filter(
+    (job) => classifyAgentJobType(job.JobType)?.category === "policy",
   );
 
   if (matches.length > 0) {

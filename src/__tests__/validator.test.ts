@@ -931,6 +931,104 @@ describe("validateHealthcheck", () => {
 
       expect(check?.status).toBe("pass");
     });
+
+    it("warns when a job has 'Windows Agent Policy' as JobType (new format)", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.2067", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "Managed-WindowsAgents-Policy",
+            JobType: "Windows Agent Policy",
+            Encrypted: true,
+            RepoName: "BackupRepo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+            OnDiskGB: null,
+            RetentionScheme: null,
+            CompressionLevel: null,
+            BlockSize: null,
+            GfsEnabled: null,
+            ActiveFullEnabled: null,
+            SyntheticFullEnabled: null,
+            BackupChainType: null,
+            IndexingEnabled: null,
+          },
+        ],
+        Licenses: [],
+        jobSummary: [],
+        dataErrors: [],
+        jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        extents: [],
+        archExtents: [],
+        repos: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-policy-gateway-required",
+      );
+
+      expect(check?.status).toBe("warning");
+      expect(check?.affectedItems).toEqual(["Managed-WindowsAgents-Policy"]);
+    });
+
+    it("matches 'Linux Agent Policy' via platform-agnostic pattern", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.2067", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "LinuxPolicy",
+            JobType: "Linux Agent Policy",
+            Encrypted: true,
+            RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+            OnDiskGB: null,
+            RetentionScheme: null,
+            CompressionLevel: null,
+            BlockSize: null,
+            GfsEnabled: null,
+            ActiveFullEnabled: null,
+            SyntheticFullEnabled: null,
+            BackupChainType: null,
+            IndexingEnabled: null,
+          },
+        ],
+        Licenses: [],
+        jobSummary: [],
+        dataErrors: [],
+        jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        extents: [],
+        archExtents: [],
+        repos: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-policy-gateway-required",
+      );
+
+      expect(check?.status).toBe("warning");
+      expect(check?.affectedItems).toEqual(["LinuxPolicy"]);
+    });
   });
 
   describe("Rule 6: License/Edition Check", () => {
