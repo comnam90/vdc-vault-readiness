@@ -78,6 +78,7 @@ const MOCK_DATA: NormalizedDataset = {
   ],
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
   jobSessionSummary: [],
+  jobSummary: [],
   sobr: [],
   capExtents: [],
   extents: [],

@@ -109,20 +109,20 @@
 
 ### `agent-standalone-unsupported` -- Standalone Agent Workloads
 
-|                       |                                                      |
-| --------------------- | ---------------------------------------------------- |
-| **Status on failure** | `fail` (blocker)                                     |
-| **Data source**       | `NormalizedDataset.jobInfo[].JobType`                |
-| **Detection**         | `JobType.trim().toLowerCase() === "unmanaged agent"` |
+|                       |                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| **Status on failure** | `fail` (blocker)                                                                   |
+| **Data source**       | `NormalizedDataset.jobSummary` (`SafeJobSummary[]`)                                |
+| **Detection**         | Any row where `JobType.trim().toLowerCase() === "unmanaged agent"` and `Count > 0` |
 
 **Behavior:**
 
-- `pass` — no jobs match.
-- `fail` — one or more jobs match.
+- `pass` — no matching rows, or all matching rows have `Count === 0`.
+- `fail` — one or more rows match with `Count > 0`; total count is included in the message.
 
-**Rationale:** Standalone (unmanaged) agents cannot target VDC Vault directly. The only supported path is a Backup Copy Job with encryption enabled.
+**Rationale:** Standalone (unmanaged) agents cannot target VDC Vault directly. The only supported path is a Backup Copy Job with encryption enabled. Real-world VBR healthcheck data does not include unmanaged agent rows in `jobInfo` — they only appear in `jobSummary` — so detection must read from `jobSummary`.
 
-**Affected items:** `JobName` values of matching jobs.
+**Affected items:** none — `jobSummary` does not enumerate per-job names; the aggregate count is included in the message instead.
 
 ---
 

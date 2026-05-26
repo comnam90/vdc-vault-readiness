@@ -9,6 +9,7 @@ import type {
   SafeExtent,
   SafeJob,
   SafeJobSession,
+  SafeJobSummary,
   SafeLicense,
   SafeRepo,
   SafeSecuritySummary,
@@ -273,6 +274,7 @@ export function normalizeHealthcheck(
     jobInfo,
     Licenses,
     jobSessionSummary: normalizeJobSessions(asArray(sessionData), dataErrors),
+    jobSummary: normalizeJobSummary(asArray(raw.jobSummary), dataErrors),
     sobr: normalizeSobr(asArray(raw.sobr), dataErrors),
     extents: normalizeExtents(asArray(raw.extents), dataErrors),
     capExtents: normalizeCapExtents(asArray(raw.capextents), dataErrors),
@@ -446,6 +448,73 @@ function normalizeJobSessions(
     };
 
     return [safeSession];
+  });
+}
+
+type JobSummaryRecord = Record<string, string | null | undefined>;
+
+function normalizeJobSummary(
+  rows: JobSummaryRecord[],
+  dataErrors: DataError[],
+): SafeJobSummary[] {
+  return rows.flatMap((row, rowIndex) => {
+    if (!isRecord(row)) {
+      dataErrors.push(
+        buildError(
+          "jobSummary",
+          rowIndex,
+          "_row",
+          "Invalid row: not an object",
+        ),
+      );
+      return [];
+    }
+
+    const jobType = normalizeString(row.JobType as string | null | undefined);
+    if (!jobType) {
+      dataErrors.push(
+        buildError(
+          "jobSummary",
+          rowIndex,
+          "JobType",
+          "Missing required JobType",
+        ),
+      );
+      return [];
+    }
+
+    // Skip the aggregate "Total Jobs" row
+    if (jobType.toLowerCase() === "total jobs") {
+      return [];
+    }
+
+    const rawCount = row.Count as string | null | undefined;
+    if (typeof rawCount !== "string" || rawCount.trim().length === 0) {
+      dataErrors.push(
+        buildError("jobSummary", rowIndex, "Count", "Missing required Count"),
+      );
+      return [];
+    }
+
+    const count = parseInt(rawCount.trim(), 10);
+    if (Number.isNaN(count)) {
+      dataErrors.push(
+        buildError(
+          "jobSummary",
+          rowIndex,
+          "Count",
+          `Invalid numeric value: "${rawCount.trim()}"`,
+        ),
+      );
+      return [];
+    }
+
+    const safeJobSummary: SafeJobSummary = {
+      JobType: jobType,
+      Count: count,
+    };
+
+    return [safeJobSummary];
   });
 }
 

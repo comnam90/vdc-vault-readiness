@@ -15,6 +15,7 @@ describe("validateHealthcheck", () => {
         ],
         jobInfo: [],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -43,6 +44,7 @@ describe("validateHealthcheck", () => {
         ],
         jobInfo: [],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -73,6 +75,7 @@ describe("validateHealthcheck", () => {
         ],
         jobInfo: [],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -101,6 +104,7 @@ describe("validateHealthcheck", () => {
         ],
         jobInfo: [],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -131,6 +135,7 @@ describe("validateHealthcheck", () => {
         ],
         jobInfo: [],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -159,6 +164,7 @@ describe("validateHealthcheck", () => {
         ],
         jobInfo: [],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -185,6 +191,7 @@ describe("validateHealthcheck", () => {
         securitySummary: [],
         jobInfo: [],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -254,6 +261,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -321,6 +329,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -410,6 +419,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -441,6 +451,7 @@ describe("validateHealthcheck", () => {
         ],
         jobInfo: [],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -508,6 +519,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -573,6 +585,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -623,6 +636,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -641,8 +655,10 @@ describe("validateHealthcheck", () => {
   });
 
   describe("Rule 5b: Standalone Agent Workloads (agent-standalone-unsupported)", () => {
-    it("passes when no Unmanaged Agent jobs are present", () => {
-      const data: NormalizedDataset = {
+    function makeStandaloneData(
+      jobSummary: NormalizedDataset["jobSummary"],
+    ): NormalizedDataset {
+      return {
         backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
         securitySummary: [
           {
@@ -650,27 +666,9 @@ describe("validateHealthcheck", () => {
             ConfigBackupEncryptionEnabled: true,
           },
         ],
-        jobInfo: [
-          {
-            JobName: "Job A",
-            JobType: "Backup",
-            Encrypted: true,
-            RepoName: "Repo1",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-        ],
+        jobInfo: [],
         Licenses: [],
+        jobSummary,
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -679,6 +677,10 @@ describe("validateHealthcheck", () => {
         archExtents: [],
         repos: [],
       };
+    }
+
+    it("passes when jobSummary is empty", () => {
+      const data = makeStandaloneData([]);
 
       const results = validateHealthcheck(data);
       const check = results.find(
@@ -690,62 +692,10 @@ describe("validateHealthcheck", () => {
       expect(check?.affectedItems).toHaveLength(0);
     });
 
-    it("fails when an Unmanaged Agent job is detected (exact match, case-insensitive)", () => {
-      const data: NormalizedDataset = {
-        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
-        securitySummary: [
-          {
-            BackupFileEncryptionEnabled: true,
-            ConfigBackupEncryptionEnabled: true,
-          },
-        ],
-        jobInfo: [
-          {
-            JobName: "StandaloneJob",
-            JobType: "Unmanaged Agent",
-            Encrypted: true,
-            RepoName: "Repo1",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-          {
-            JobName: "lowercaseStandalone",
-            JobType: "unmanaged agent",
-            Encrypted: true,
-            RepoName: "Repo2",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-        ],
-        Licenses: [],
-        dataErrors: [],
-        jobSessionSummary: [],
-        sobr: [],
-        capExtents: [],
-        extents: [],
-        archExtents: [],
-        repos: [],
-      };
+    it("fails when jobSummary contains an Unmanaged Agent row with Count > 0", () => {
+      const data = makeStandaloneData([
+        { JobType: "Unmanaged Agent", Count: 1 },
+      ]);
 
       const results = validateHealthcheck(data);
       const check = results.find(
@@ -753,70 +703,13 @@ describe("validateHealthcheck", () => {
       );
 
       expect(check?.status).toBe("fail");
-      expect(check?.affectedItems).toEqual([
-        "StandaloneJob",
-        "lowercaseStandalone",
-      ]);
-      expect(check?.message).toContain("Standalone");
+      expect(check?.affectedItems).toEqual([]);
+      expect(check?.message).toContain("1 standalone");
       expect(check?.message).toContain("Backup Copy");
     });
 
-    it("does not fire for managed agent JobTypes (Agent Backup, EpAgentBackup)", () => {
-      const data: NormalizedDataset = {
-        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
-        securitySummary: [
-          {
-            BackupFileEncryptionEnabled: true,
-            ConfigBackupEncryptionEnabled: true,
-          },
-        ],
-        jobInfo: [
-          {
-            JobName: "Managed1",
-            JobType: "Agent Backup",
-            Encrypted: true,
-            RepoName: "Repo1",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-          {
-            JobName: "Managed2",
-            JobType: "EpAgentBackup",
-            Encrypted: true,
-            RepoName: "Repo2",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-        ],
-        Licenses: [],
-        dataErrors: [],
-        jobSessionSummary: [],
-        sobr: [],
-        capExtents: [],
-        extents: [],
-        archExtents: [],
-        repos: [],
-      };
+    it("passes when jobSummary contains a managed agent type (Agent Backup)", () => {
+      const data = makeStandaloneData([{ JobType: "Agent Backup", Count: 2 }]);
 
       const results = validateHealthcheck(data);
       const check = results.find(
@@ -825,6 +718,33 @@ describe("validateHealthcheck", () => {
 
       expect(check?.status).toBe("pass");
       expect(check?.affectedItems).toHaveLength(0);
+    });
+
+    it("passes when Unmanaged Agent row has Count of 0", () => {
+      const data = makeStandaloneData([
+        { JobType: "Unmanaged Agent", Count: 0 },
+      ]);
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-standalone-unsupported",
+      );
+
+      expect(check?.status).toBe("pass");
+    });
+
+    it("detects unmanaged agents case-insensitively", () => {
+      const data = makeStandaloneData([
+        { JobType: "unmanaged agent", Count: 1 },
+      ]);
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-standalone-unsupported",
+      );
+
+      expect(check?.status).toBe("fail");
+      expect(check?.message).toContain("1 standalone");
     });
   });
 
@@ -859,6 +779,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -925,6 +846,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -992,6 +914,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -1022,6 +945,7 @@ describe("validateHealthcheck", () => {
         ],
         jobInfo: [],
         Licenses: [{ Edition: "Community", Status: "Active" }],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -1053,6 +977,7 @@ describe("validateHealthcheck", () => {
         ],
         jobInfo: [],
         Licenses: [{ Edition: "Free", Status: "Active" }],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -1080,6 +1005,7 @@ describe("validateHealthcheck", () => {
         ],
         jobInfo: [],
         Licenses: [{ Edition: "Enterprise", Status: "Active" }],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -1107,6 +1033,7 @@ describe("validateHealthcheck", () => {
         ],
         jobInfo: [],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -1172,6 +1099,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -1239,6 +1167,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -1310,6 +1239,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -1394,6 +1324,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -1443,6 +1374,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -1491,6 +1423,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -1541,6 +1474,7 @@ describe("validateHealthcheck", () => {
           },
         ],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
@@ -1579,6 +1513,7 @@ describe("validateHealthcheck", () => {
         securitySummary: [],
         jobInfo: [],
         Licenses: [],
+        jobSummary: [],
         dataErrors: [],
         jobSessionSummary: [],
         sobr: [],
