@@ -30,9 +30,9 @@ const FAIL_RESULT: ValidationResult = {
 
 const WARNING_RESULT: ValidationResult = {
   ruleId: "agent-policy-gateway-required",
-  title: "Agent Workload Configuration",
+  title: "Managed Agent Policies",
   status: "warning",
-  message: "Agent workloads detected.",
+  message: "Managed agent policies require a VBR Gateway Server.",
   affectedItems: ["Agent Job 1"],
 };
 
