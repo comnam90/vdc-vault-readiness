@@ -12,7 +12,7 @@ import { classifyAgentJobType } from "./agent-classifier";
 export function validateHealthcheck(
   data: NormalizedDataset,
 ): ValidationResult[] {
-  return [
+  const results: ValidationResult[] = [
     validateVbrVersion(data),
     validateConfigBackupEncryption(data),
     validateJobEncryption(data),
@@ -26,6 +26,29 @@ export function validateHealthcheck(
     validateArchiveTierEdition(data),
     validateCapacityTierResidency(data),
   ];
+
+  // Side-scan for legacy JobType strings after rules run, so we can emit
+  // a single deprecation warning per call. Re-classifying here (in
+  // addition to the rules' own classification) is intentional and cheap
+  // for typical Veeam environments (well under 1k jobs).
+  const sawLegacy =
+    data.jobInfo.some(
+      (job) => classifyAgentJobType(job.JobType)?.legacy === true,
+    ) ||
+    data.jobSummary.some(
+      (row) => classifyAgentJobType(row.JobType)?.legacy === true,
+    );
+
+  if (sawLegacy) {
+    console.warn(
+      "[vdc-vault-readiness] Legacy agent job type strings detected " +
+        "(EpAgentBackup / EpAgentPolicy / Unmanaged Agent / VmbapiPolicyTempJob). " +
+        "These will be removed in a future release once the updated veeam-healthcheck " +
+        "tool is widely deployed. Please regenerate your healthcheck using the latest version.",
+    );
+  }
+
+  return results;
 }
 
 function validateVbrVersion(data: NormalizedDataset): ValidationResult {

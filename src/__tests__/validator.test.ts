@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { validateHealthcheck } from "@/lib/validator";
 import type { NormalizedDataset } from "@/types/domain";
 
@@ -1772,5 +1772,119 @@ describe("validateHealthcheck", () => {
       const versionCheck = results.find((r) => r.ruleId === "vbr-version");
       expect(versionCheck?.status).toBe("fail");
     });
+  });
+});
+
+describe("validateHealthcheck — legacy job type deprecation warning", () => {
+  function emptyDataset(): NormalizedDataset {
+    return {
+      backupServer: [{ Version: "13.0.1.2067", Name: "ServerA" }],
+      securitySummary: [
+        {
+          BackupFileEncryptionEnabled: true,
+          ConfigBackupEncryptionEnabled: true,
+        },
+      ],
+      jobInfo: [],
+      Licenses: [],
+      jobSummary: [],
+      dataErrors: [],
+      jobSessionSummary: [],
+      sobr: [],
+      capExtents: [],
+      extents: [],
+      archExtents: [],
+      repos: [],
+    };
+  }
+
+  function jobRow(
+    overrides: Partial<NormalizedDataset["jobInfo"][number]> = {},
+  ): NormalizedDataset["jobInfo"][number] {
+    return {
+      JobName: "Job",
+      JobType: "Backup",
+      Encrypted: true,
+      RepoName: "Repo",
+      RetainDays: null,
+      GfsDetails: null,
+      SourceSizeGB: null,
+      OnDiskGB: null,
+      RetentionScheme: null,
+      CompressionLevel: null,
+      BlockSize: null,
+      GfsEnabled: null,
+      ActiveFullEnabled: null,
+      SyntheticFullEnabled: null,
+      BackupChainType: null,
+      IndexingEnabled: null,
+      ...overrides,
+    };
+  }
+
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  it("emits one console.warn when jobInfo contains a legacy JobType", () => {
+    const data = emptyDataset();
+    data.jobInfo = [jobRow({ JobName: "P", JobType: "EpAgentPolicy" })];
+
+    validateHealthcheck(data);
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0][0]).toContain("Legacy agent job type strings");
+  });
+
+  it("emits one console.warn when jobSummary contains a legacy JobType", () => {
+    const data = emptyDataset();
+    data.jobSummary = [{ JobType: "Unmanaged Agent", Count: 1 }];
+
+    validateHealthcheck(data);
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0][0]).toContain("Legacy agent job type strings");
+  });
+
+  it("emits exactly one warn even when multiple legacy rows are present", () => {
+    const data = emptyDataset();
+    data.jobInfo = [
+      jobRow({ JobName: "A", JobType: "EpAgentPolicy" }),
+      jobRow({ JobName: "B", JobType: "VmbapiPolicyTempJob" }),
+      jobRow({ JobName: "C", JobType: "EpAgentBackup" }),
+    ];
+    data.jobSummary = [{ JobType: "Unmanaged Agent", Count: 2 }];
+
+    validateHealthcheck(data);
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("does NOT warn when only new-format agent strings are present", () => {
+    const data = emptyDataset();
+    data.jobInfo = [
+      jobRow({ JobName: "P", JobType: "Windows Agent Policy" }),
+      jobRow({ JobName: "B", JobType: "Windows Agent Backup" }),
+    ];
+    data.jobSummary = [{ JobType: "Windows Agent Standalone", Count: 1 }];
+
+    validateHealthcheck(data);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("does NOT warn when no agent rows are present at all", () => {
+    const data = emptyDataset();
+    data.jobInfo = [jobRow({ JobName: "Regular", JobType: "Backup" })];
+
+    validateHealthcheck(data);
+
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 });
