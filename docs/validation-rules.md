@@ -14,7 +14,7 @@
 | `skipped` | Check could not run due to missing input data  | `CircleSlash`   | `Skipped` | Notes panel (neutral / grey styling)      |
 | `pass`    | Check passed, no issues found                  | `CheckCircle2`  | `Passed`  | Passing checks list (green styling)       |
 
-**Sorting:** Blockers list shows `fail` results first, then `warning`, preserving order within each group. Passing checks appear below blockers when blockers exist, or a success celebration is shown when there are no blockers.
+**Sorting:** Blockers list shows `fail` results first, then `warning`, preserving order within each group. The Notes panel (`info` + `skipped`) renders below the blockers list when blockers exist, or above the success celebration when there are none. Passing checks appear below the Notes panel when blockers exist; otherwise the success celebration takes their place.
 
 **Affected items:** Displayed as a bulleted list below the message, truncated to 5 visible items with "+ N more" overflow text.
 
@@ -154,10 +154,10 @@
 
 **Conditions:**
 
-| Condition                                                                                  | Status | Message                                                                                                                               |
-| ------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Any license has `Edition` containing `"community"` or `"free"` (case-insensitive, trimmed) | `info` | `Community Edition detected. Vault is fully supported on Community Edition. Note that Community / Free editions do not include SOBR.` |
-| No community or free editions found                                                        | `pass` | `No Community or Free editions detected.`                                                                                             |
+| Condition                                                                                  | Status | Message                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any license has `Edition` containing `"community"` or `"free"` (case-insensitive, trimmed) | `info` | `Community or Free edition detected. VDC Vault is fully supported on Community Edition. Note: Community / Free editions do not include Scale-Out Backup Repository (SOBR), so capacity-tier offload patterns are not available.` |
+| No community or free editions found                                                        | `pass` | `No Community or Free editions detected.`                                                                                                                                                                                        |
 
 **Affected items:** Edition strings (`SafeLicense.Edition`) of matched licenses.
 
