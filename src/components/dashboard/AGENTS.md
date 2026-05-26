@@ -44,7 +44,7 @@ dashboard/
 - **Affected items**: Truncated at `MAX_VISIBLE_ITEMS` (5) with "+ N more" overflow
 - **Sheet pattern**: `job-detail-sheet.tsx` is fully controlled (open/onOpenChange from parent). Uses local helper components (PropertyRow, SectionHeading) — not exported
 - **Color coding**: ChangeRate: red >50%, amber 10-50%, default <10%. SuccessRate: red <80%, amber 80-95%, green >95%. Encryption: blue=yes, red=no
-- **Formatters**: job-detail-sheet and job-table use shared formatters from `@/lib/format-utils` (formatSize, formatPercent, formatDuration, formatCompressionRatio)
+- **Formatters**: job-detail-sheet and job-table use shared formatters from `@/lib/format-utils` (formatSize, formatPercent, formatDuration, formatRatio)
 - **Relative imports**: Within dashboard/ only. Cross-directory uses `@/` alias
 - **Tabs**: `dashboard-view.tsx` manages tab state with shadcn Tabs component
 

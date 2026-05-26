@@ -1313,6 +1313,8 @@ describe("normalizeHealthcheck", () => {
         Fails: null,
         AvgJobTime: null,
         MaxJobTime: null,
+        AvgDedupRatio: null,
+        AvgCompressRatio: null,
       });
     });
 
@@ -1386,6 +1388,109 @@ describe("normalizeHealthcheck", () => {
       const result = normalizeHealthcheck(raw, sessionData);
 
       expect(result.jobSessionSummary[0].AvgChangeRate).toBeNull();
+    });
+
+    describe("AvgDedupRatio and AvgCompressRatio parsing", () => {
+      it("parses 'x'-suffixed values as numbers", () => {
+        const raw = {
+          jobSessionSummaryByJob: {
+            Headers: ["JobName", "AvgDedupRatio", "AvgCompressRatio"],
+            Rows: [],
+          },
+        };
+        const sessions = [
+          {
+            JobName: "JobA",
+            AvgDedupRatio: "3.03x",
+            AvgCompressRatio: "1.56x",
+          },
+        ];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBe(3.03);
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBe(1.56);
+      });
+
+      it("parses values without 'x' suffix as numbers", () => {
+        const raw = { jobSessionSummaryByJob: { Headers: [], Rows: [] } };
+        const sessions = [
+          {
+            JobName: "JobA",
+            AvgDedupRatio: "3.03",
+            AvgCompressRatio: "1.56",
+          },
+        ];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBe(3.03);
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBe(1.56);
+      });
+
+      it("returns null for empty string without emitting a DataError", () => {
+        const raw = { jobSessionSummaryByJob: { Headers: [], Rows: [] } };
+        const sessions = [
+          {
+            JobName: "JobA",
+            AvgDedupRatio: "",
+            AvgCompressRatio: "",
+          },
+        ];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBeNull();
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBeNull();
+        expect(
+          result.dataErrors.filter((e) => e.field.includes("Ratio")),
+        ).toHaveLength(0);
+      });
+
+      it("returns null when fields are absent from the record (legacy healthcheck)", () => {
+        const raw = { jobSessionSummaryByJob: { Headers: [], Rows: [] } };
+        const sessions = [{ JobName: "JobA" }];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBeNull();
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBeNull();
+        expect(
+          result.dataErrors.filter((e) => e.field.includes("Ratio")),
+        ).toHaveLength(0);
+      });
+
+      it("returns null and emits a DataError for garbage values", () => {
+        const raw = { jobSessionSummaryByJob: { Headers: [], Rows: [] } };
+        const sessions = [
+          {
+            JobName: "JobA",
+            AvgDedupRatio: "abc",
+            AvgCompressRatio: "not-a-number",
+          },
+        ];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBeNull();
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBeNull();
+        const ratioErrors = result.dataErrors.filter((e) =>
+          e.field.includes("Ratio"),
+        );
+        expect(ratioErrors).toHaveLength(2);
+        expect(ratioErrors.map((e) => e.field).sort()).toEqual([
+          "AvgCompressRatio",
+          "AvgDedupRatio",
+        ]);
+      });
+
+      it("returns null and emits a DataError for a bare 'x' (no number)", () => {
+        const raw = { jobSessionSummaryByJob: { Headers: [], Rows: [] } };
+        const sessions = [
+          {
+            JobName: "JobA",
+            AvgDedupRatio: "x",
+            AvgCompressRatio: "X",
+          },
+        ];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBeNull();
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBeNull();
+        const ratioErrors = result.dataErrors.filter((e) =>
+          e.field.includes("Ratio"),
+        );
+        expect(ratioErrors).toHaveLength(2);
+      });
     });
 
     it("defaults MaxDataSize to null and logs DataError for non-numeric value", () => {

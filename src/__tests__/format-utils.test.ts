@@ -3,11 +3,11 @@ import {
   formatSize,
   formatPercent,
   formatDuration,
-  formatCompressionRatio,
   formatTB,
   formatTooltipTB,
   formatGFS,
   formatShortGfs,
+  formatRatio,
 } from "@/lib/format-utils";
 
 describe("formatSize", () => {
@@ -140,40 +140,6 @@ describe("formatGFS", () => {
   });
 });
 
-describe("formatCompressionRatio", () => {
-  it('returns "N/A" when both inputs are null', () => {
-    expect(formatCompressionRatio(null, null)).toBe("N/A");
-  });
-
-  it('returns "N/A" when source is null', () => {
-    expect(formatCompressionRatio(null, 512)).toBe("N/A");
-  });
-
-  it('returns "N/A" when disk is null', () => {
-    expect(formatCompressionRatio(1024, null)).toBe("N/A");
-  });
-
-  it('returns "N/A" when source is 0', () => {
-    expect(formatCompressionRatio(0, 512)).toBe("N/A");
-  });
-
-  it('returns "N/A" when disk is 0', () => {
-    expect(formatCompressionRatio(1024, 0)).toBe("N/A");
-  });
-
-  it("computes correct ratio", () => {
-    expect(formatCompressionRatio(1024, 512)).toBe("2.0x");
-  });
-
-  it("handles 1:1 ratio", () => {
-    expect(formatCompressionRatio(500, 500)).toBe("1.0x");
-  });
-
-  it("handles fractional ratios", () => {
-    expect(formatCompressionRatio(1000, 750)).toBe("1.3x");
-  });
-});
-
 describe("formatShortGfs", () => {
   it("formats all three tiers in W | M | Y order", () => {
     expect(formatShortGfs("Weekly:4,Monthly:12,Yearly:7")).toBe(
@@ -207,5 +173,23 @@ describe("formatShortGfs", () => {
 
   it("preserves W | M | Y order regardless of input order", () => {
     expect(formatShortGfs("Yearly:1,Weekly:4")).toBe("4W | 1Y");
+  });
+});
+
+describe("formatRatio", () => {
+  it("returns an em-dash for null", () => {
+    expect(formatRatio(null)).toBe("—");
+  });
+
+  it("formats positive numbers with two-decimal precision and 'x' suffix", () => {
+    expect(formatRatio(3.03)).toBe("3.03x");
+  });
+
+  it("formats whole numbers with trailing zeros", () => {
+    expect(formatRatio(1)).toBe("1.00x");
+  });
+
+  it("formats zero", () => {
+    expect(formatRatio(0)).toBe("0.00x");
   });
 });

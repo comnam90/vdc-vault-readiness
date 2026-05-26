@@ -20,7 +20,7 @@ __tests__/
 ├── validation-selectors.test.ts  # Blocker/passing filter helpers
 ├── calculator-aggregator.test.ts # Sizing aggregation: source TB, change rates, GFS, retention
 ├── enrich-jobs.test.ts           # enrichJobs(): join matching, missing sessions, empty arrays (10 tests)
-├── format-utils.test.ts          # formatSize, formatPercent, formatDuration, formatTB, formatCompressionRatio (28 tests)
+├── format-utils.test.ts          # formatSize, formatPercent, formatDuration, formatTB, formatRatio
 ├── domain-types.test.ts          # Type contract verification for SafeJob, SafeJobSession, SafeSobr, SafeCapExtent, SafeArchExtent
 ├── use-analysis.test.ts          # State machine transitions, race condition guard
 ├── app.test.tsx                  # Top-level state rendering (idle/processing/success/error)

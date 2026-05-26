@@ -92,6 +92,22 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(typeof firstSession.AvgChangeRate).toBe("number");
     });
 
+    it("normalizes legacy sample sessions with null dedup/compression ratios", () => {
+      // Sample healthcheck pre-dates AvgDedupRatio/AvgCompressRatio fields.
+      // All sessions must come through as null, with no DataErrors raised for
+      // the ratio fields.
+      expect(result.data.jobSessionSummary.length).toBeGreaterThan(0);
+      for (const session of result.data.jobSessionSummary) {
+        expect(session.AvgDedupRatio).toBeNull();
+        expect(session.AvgCompressRatio).toBeNull();
+      }
+
+      const ratioErrors = result.data.dataErrors.filter((e) =>
+        e.field.includes("Ratio"),
+      );
+      expect(ratioErrors).toHaveLength(0);
+    });
+
     it("parses Licenses directly (not from Headers/Rows)", () => {
       expect(result.data.Licenses).toHaveLength(1);
       expect(result.data.Licenses[0].Edition).toBe("EnterprisePlus");

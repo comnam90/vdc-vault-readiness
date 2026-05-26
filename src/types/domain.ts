@@ -42,6 +42,8 @@ export interface SafeJobSession {
   Fails: number | null;
   AvgJobTime: string | null;
   MaxJobTime: string | null;
+  AvgDedupRatio: number | null;
+  AvgCompressRatio: number | null;
 }
 
 export interface SafeSobr {
