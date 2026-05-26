@@ -43,6 +43,8 @@ const MOCK_JOBS: EnrichedJob[] = [
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     },
   }),
   createEnrichedJob({
@@ -61,6 +63,8 @@ const MOCK_JOBS: EnrichedJob[] = [
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     },
   }),
   createEnrichedJob({
@@ -88,6 +92,8 @@ const MOCK_JOBS: EnrichedJob[] = [
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     },
   }),
   createEnrichedJob({
@@ -424,6 +430,8 @@ describe("JobTable", () => {
             Fails: null,
             AvgJobTime: null,
             MaxJobTime: null,
+            AvgDedupRatio: null,
+            AvgCompressRatio: null,
           },
         }),
       ];
@@ -658,6 +666,8 @@ describe("JobTable", () => {
             Fails: null,
             AvgJobTime: null,
             MaxJobTime: null,
+            AvgDedupRatio: null,
+            AvgCompressRatio: null,
           },
         }),
         createEnrichedJob({
@@ -671,6 +681,8 @@ describe("JobTable", () => {
             Fails: null,
             AvgJobTime: null,
             MaxJobTime: null,
+            AvgDedupRatio: null,
+            AvgCompressRatio: null,
           },
         }),
         createEnrichedJob({
@@ -684,6 +696,8 @@ describe("JobTable", () => {
             Fails: null,
             AvgJobTime: null,
             MaxJobTime: null,
+            AvgDedupRatio: null,
+            AvgCompressRatio: null,
           },
         }),
         createEnrichedJob({ JobName: "No Session", sessionData: null }),

@@ -1313,6 +1313,8 @@ describe("normalizeHealthcheck", () => {
         Fails: null,
         AvgJobTime: null,
         MaxJobTime: null,
+        AvgDedupRatio: null,
+        AvgCompressRatio: null,
       });
     });
 

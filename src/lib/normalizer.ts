@@ -445,6 +445,8 @@ function normalizeJobSessions(
       MaxJobTime: normalizeString(
         record.MaxJobTime as string | null | undefined,
       ),
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
 
     return [safeSession];

@@ -35,6 +35,8 @@ function makeSession(overrides: Partial<SafeJobSession> = {}): SafeJobSession {
     Fails: null,
     AvgJobTime: null,
     MaxJobTime: null,
+    AvgDedupRatio: null,
+    AvgCompressRatio: null,
     ...overrides,
   };
 }

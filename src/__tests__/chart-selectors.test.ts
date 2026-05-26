@@ -55,6 +55,8 @@ describe("bucketChangeRates", () => {
         Fails: null,
         AvgJobTime: null,
         MaxJobTime: null,
+        AvgDedupRatio: null,
+        AvgCompressRatio: null,
       },
       {
         JobName: "J2",
@@ -65,6 +67,8 @@ describe("bucketChangeRates", () => {
         Fails: null,
         AvgJobTime: null,
         MaxJobTime: null,
+        AvgDedupRatio: null,
+        AvgCompressRatio: null,
       },
       {
         JobName: "J3",
@@ -75,6 +79,8 @@ describe("bucketChangeRates", () => {
         Fails: null,
         AvgJobTime: null,
         MaxJobTime: null,
+        AvgDedupRatio: null,
+        AvgCompressRatio: null,
       },
     ];
     const result = bucketChangeRates(jobs, sessions);

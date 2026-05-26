@@ -160,6 +160,8 @@ export function makeSession(
     Fails: null,
     AvgJobTime: null,
     MaxJobTime: null,
+    AvgDedupRatio: null,
+    AvgCompressRatio: null,
     ...overrides,
   };
 }

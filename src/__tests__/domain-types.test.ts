@@ -292,6 +292,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.JobName).toBe("Test Job");
   });
@@ -306,6 +308,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.MaxDataSize).toBe(2048);
   });
@@ -320,6 +324,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.MaxDataSize).toBeNull();
   });
@@ -334,6 +340,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.AvgChangeRate).toBe(12.75);
   });
@@ -348,6 +356,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.AvgChangeRate).toBeNull();
   });
@@ -362,6 +372,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.JobName).toBeDefined();
   });
@@ -376,6 +388,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.SuccessRate).toBe(100);
   });
@@ -390,6 +404,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.SuccessRate).toBeNull();
   });
@@ -404,6 +420,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: 1,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.SessionCount).toBe(8);
     expect(session.Fails).toBe(1);
@@ -419,6 +437,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: "00.08:01:24",
       MaxJobTime: "00.09:23:18",
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.AvgJobTime).toBe("00.08:01:24");
     expect(session.MaxJobTime).toBe("00.09:23:18");
@@ -434,9 +454,45 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.AvgJobTime).toBeNull();
     expect(session.MaxJobTime).toBeNull();
+  });
+
+  it("SafeJobSession accepts AvgDedupRatio and AvgCompressRatio as numbers", () => {
+    const session: SafeJobSession = {
+      JobName: "Test Job",
+      MaxDataSize: null,
+      AvgChangeRate: null,
+      SuccessRate: null,
+      SessionCount: null,
+      Fails: null,
+      AvgJobTime: null,
+      MaxJobTime: null,
+      AvgDedupRatio: 3.03,
+      AvgCompressRatio: 1.56,
+    };
+    expect(session.AvgDedupRatio).toBe(3.03);
+    expect(session.AvgCompressRatio).toBe(1.56);
+  });
+
+  it("SafeJobSession accepts AvgDedupRatio and AvgCompressRatio as null", () => {
+    const session: SafeJobSession = {
+      JobName: "Test Job",
+      MaxDataSize: null,
+      AvgChangeRate: null,
+      SuccessRate: null,
+      SessionCount: null,
+      Fails: null,
+      AvgJobTime: null,
+      MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
+    };
+    expect(session.AvgDedupRatio).toBeNull();
+    expect(session.AvgCompressRatio).toBeNull();
   });
 });
 
@@ -457,6 +513,8 @@ describe("Domain Types - NormalizedDataset extension", () => {
           Fails: null,
           AvgJobTime: null,
           MaxJobTime: null,
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       ],
       jobSummary: [],
@@ -505,6 +563,8 @@ describe("Domain Types - NormalizedDataset extension", () => {
           Fails: null,
           AvgJobTime: null,
           MaxJobTime: null,
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
         {
           JobName: "Job B",
@@ -515,6 +575,8 @@ describe("Domain Types - NormalizedDataset extension", () => {
           Fails: null,
           AvgJobTime: null,
           MaxJobTime: null,
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       ],
       jobSummary: [],

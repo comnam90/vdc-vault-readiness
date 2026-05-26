@@ -30,6 +30,8 @@ function createEnrichedJob(overrides: Partial<EnrichedJob> = {}): EnrichedJob {
       Fails: 3,
       AvgJobTime: "00.01:15:30",
       MaxJobTime: "00.03:45:10",
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     },
     ...overrides,
   };
@@ -129,6 +131,8 @@ describe("JobDetailSheet", () => {
           Fails: null,
           AvgJobTime: null,
           MaxJobTime: null,
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -148,6 +152,8 @@ describe("JobDetailSheet", () => {
           Fails: null,
           AvgJobTime: null,
           MaxJobTime: null,
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -167,6 +173,8 @@ describe("JobDetailSheet", () => {
           Fails: null,
           AvgJobTime: null,
           MaxJobTime: null,
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -404,6 +412,8 @@ describe("JobDetailSheet", () => {
           Fails: 3,
           AvgJobTime: "00.01:15:30",
           MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -423,6 +433,8 @@ describe("JobDetailSheet", () => {
           Fails: 30,
           AvgJobTime: "00.01:15:30",
           MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -442,6 +454,8 @@ describe("JobDetailSheet", () => {
           Fails: 50,
           AvgJobTime: "00.01:15:30",
           MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -461,6 +475,8 @@ describe("JobDetailSheet", () => {
           Fails: 3,
           AvgJobTime: "00.01:15:30",
           MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -482,6 +498,8 @@ describe("JobDetailSheet", () => {
           Fails: 3,
           AvgJobTime: "00.01:15:30",
           MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
