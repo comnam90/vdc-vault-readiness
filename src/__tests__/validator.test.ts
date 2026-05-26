@@ -679,6 +679,55 @@ describe("validateHealthcheck", () => {
       };
     }
 
+    function makeStandaloneDataWithJobs(
+      jobSummary: NormalizedDataset["jobSummary"],
+      jobInfo: NormalizedDataset["jobInfo"],
+    ): NormalizedDataset {
+      return {
+        backupServer: [{ Version: "13.0.1.2067", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo,
+        Licenses: [],
+        jobSummary,
+        dataErrors: [],
+        jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        extents: [],
+        archExtents: [],
+        repos: [],
+      };
+    }
+
+    function makeJobRow(
+      overrides: Partial<NormalizedDataset["jobInfo"][number]> = {},
+    ): NormalizedDataset["jobInfo"][number] {
+      return {
+        JobName: "TestJob",
+        JobType: "Backup",
+        Encrypted: true,
+        RepoName: "Repo1",
+        RetainDays: null,
+        GfsDetails: null,
+        SourceSizeGB: null,
+        OnDiskGB: null,
+        RetentionScheme: null,
+        CompressionLevel: null,
+        BlockSize: null,
+        GfsEnabled: null,
+        ActiveFullEnabled: null,
+        SyntheticFullEnabled: null,
+        BackupChainType: null,
+        IndexingEnabled: null,
+        ...overrides,
+      };
+    }
+
     it("passes when jobSummary is empty", () => {
       const data = makeStandaloneData([]);
 
@@ -745,6 +794,101 @@ describe("validateHealthcheck", () => {
 
       expect(check?.status).toBe("fail");
       expect(check?.message).toContain("1 standalone");
+    });
+
+    it("fails when jobSummary has 'Windows Agent Standalone' (new-format, count-only fallback)", () => {
+      const data = makeStandaloneData([
+        { JobType: "Windows Agent Standalone", Count: 3 },
+      ]);
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-standalone-unsupported",
+      );
+
+      expect(check?.status).toBe("fail");
+      expect(check?.affectedItems).toEqual([]);
+      expect(check?.message).toContain("3 standalone");
+      expect(check?.message).toContain("jobs detected");
+    });
+
+    it("fails with named affectedItems when jobInfo has 'Windows Agent Standalone' rows", () => {
+      const data = makeStandaloneDataWithJobs(
+        [],
+        [
+          makeJobRow({
+            JobName: "Unmanaged-WindowsAgents-VTESTVM03",
+            JobType: "Windows Agent Standalone",
+          }),
+          makeJobRow({
+            JobName: "Unmanaged-WindowsAgents-VTESTVM04",
+            JobType: "Windows Agent Standalone",
+          }),
+        ],
+      );
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-standalone-unsupported",
+      );
+
+      expect(check?.status).toBe("fail");
+      expect(check?.affectedItems).toEqual([
+        "Unmanaged-WindowsAgents-VTESTVM03",
+        "Unmanaged-WindowsAgents-VTESTVM04",
+      ]);
+      expect(check?.message).toContain("2 standalone");
+    });
+
+    it("uses singular grammar when exactly one standalone job is in jobInfo", () => {
+      const data = makeStandaloneDataWithJobs(
+        [],
+        [
+          makeJobRow({
+            JobName: "Unmanaged-WindowsAgents-Solo",
+            JobType: "Linux Agent Standalone",
+          }),
+        ],
+      );
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-standalone-unsupported",
+      );
+
+      expect(check?.status).toBe("fail");
+      expect(check?.message).toContain("1 standalone");
+      expect(check?.message).toContain("job detected");
+    });
+
+    it("when both sources have standalone matches, jobInfo wins (same-data assumption)", () => {
+      // In real healthchecks, jobInfo and jobSummary describe the same
+      // standalone agents in two views. This synthetic case (legacy
+      // summary + new-format jobInfo) doesn't occur in practice, but
+      // pins down the precedence so future regressions are caught.
+      const data = makeStandaloneDataWithJobs(
+        [{ JobType: "Unmanaged Agent", Count: 9 }],
+        [
+          makeJobRow({
+            JobName: "NamedStandaloneJob",
+            JobType: "Windows Agent Standalone",
+          }),
+        ],
+      );
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-standalone-unsupported",
+      );
+
+      expect(check?.status).toBe("fail");
+      expect(check?.affectedItems).toEqual(["NamedStandaloneJob"]);
+      // The legacy summary count (9) is ignored; the message reports only
+      // the jobInfo count (1). Pin this exactly so a future sum-both
+      // refactor that double-counts would fail the assertion.
+      expect(check?.message).toMatch(/^1 standalone /);
+      expect(check?.message).not.toContain("9");
+      expect(check?.message).not.toContain("10");
     });
   });
 
