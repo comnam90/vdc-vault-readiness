@@ -365,6 +365,20 @@ function parseNumeric(
   return parsed;
 }
 
+function parseRatio(
+  value: string | null | undefined,
+  section: DataError["section"],
+  rowIndex: number,
+  field: string,
+  dataErrors: DataError[],
+): number | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  const stripped = trimmed.replace(/[xX]$/, "");
+  return parseNumeric(stripped, section, rowIndex, field, dataErrors);
+}
+
 function normalizeJobSessions(
   sessionData: SessionRecord[],
   dataErrors: DataError[],
@@ -445,8 +459,20 @@ function normalizeJobSessions(
       MaxJobTime: normalizeString(
         record.MaxJobTime as string | null | undefined,
       ),
-      AvgDedupRatio: null,
-      AvgCompressRatio: null,
+      AvgDedupRatio: parseRatio(
+        record.AvgDedupRatio as string | null | undefined,
+        "jobSessionSummaryByJob",
+        rowIndex,
+        "AvgDedupRatio",
+        dataErrors,
+      ),
+      AvgCompressRatio: parseRatio(
+        record.AvgCompressRatio as string | null | undefined,
+        "jobSessionSummaryByJob",
+        rowIndex,
+        "AvgCompressRatio",
+        dataErrors,
+      ),
     };
 
     return [safeSession];
