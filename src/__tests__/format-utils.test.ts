@@ -3,7 +3,6 @@ import {
   formatSize,
   formatPercent,
   formatDuration,
-  formatCompressionRatio,
   formatTB,
   formatTooltipTB,
   formatGFS,
@@ -138,40 +137,6 @@ describe("formatGFS", () => {
 
   it("formats weekly and monthly without yearly", () => {
     expect(formatGFS(4, 12, null)).toBe("Weekly: 4, Monthly: 12");
-  });
-});
-
-describe("formatCompressionRatio", () => {
-  it('returns "N/A" when both inputs are null', () => {
-    expect(formatCompressionRatio(null, null)).toBe("N/A");
-  });
-
-  it('returns "N/A" when source is null', () => {
-    expect(formatCompressionRatio(null, 512)).toBe("N/A");
-  });
-
-  it('returns "N/A" when disk is null', () => {
-    expect(formatCompressionRatio(1024, null)).toBe("N/A");
-  });
-
-  it('returns "N/A" when source is 0', () => {
-    expect(formatCompressionRatio(0, 512)).toBe("N/A");
-  });
-
-  it('returns "N/A" when disk is 0', () => {
-    expect(formatCompressionRatio(1024, 0)).toBe("N/A");
-  });
-
-  it("computes correct ratio", () => {
-    expect(formatCompressionRatio(1024, 512)).toBe("2.0x");
-  });
-
-  it("handles 1:1 ratio", () => {
-    expect(formatCompressionRatio(500, 500)).toBe("1.0x");
-  });
-
-  it("handles fractional ratios", () => {
-    expect(formatCompressionRatio(1000, 750)).toBe("1.3x");
   });
 });
 

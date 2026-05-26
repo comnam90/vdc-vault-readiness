@@ -4,8 +4,9 @@ import {
   formatSize,
   formatPercent,
   formatDuration,
-  formatCompressionRatio,
+  formatRatio,
 } from "@/lib/format-utils";
+import { Info } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,12 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { PropertyRow, SectionHeading } from "./detail-sheet-helpers";
 
 interface JobDetailSheetProps {
@@ -84,6 +91,28 @@ function NullableValue({ value }: { value: string | number | null }) {
   return <span>{String(value)}</span>;
 }
 
+function RatioValue({ value }: { value: number | null }) {
+  if (value === null) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="text-muted-foreground inline-flex cursor-help items-center gap-1">
+            —
+            <Info aria-hidden="true" className="size-3" />
+            <span className="sr-only">
+              Not reported by this healthcheck version
+            </span>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          Not reported by this healthcheck version
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  return <span>{formatRatio(value)}</span>;
+}
+
 function StorageSection({ job }: { job: EnrichedJob }) {
   return (
     <div className="space-y-1">
@@ -94,10 +123,11 @@ function StorageSection({ job }: { job: EnrichedJob }) {
       <PropertyRow label="On-Disk Size">
         <FormatSizeDisplay gb={job.OnDiskGB} />
       </PropertyRow>
+      <PropertyRow label="Dedup Ratio">
+        <RatioValue value={job.sessionData?.AvgDedupRatio ?? null} />
+      </PropertyRow>
       <PropertyRow label="Compression Ratio">
-        <NullableValue
-          value={formatCompressionRatio(job.SourceSizeGB, job.OnDiskGB)}
-        />
+        <RatioValue value={job.sessionData?.AvgCompressRatio ?? null} />
       </PropertyRow>
       <PropertyRow label="Change Rate">
         <ChangeRateValue rate={job.sessionData?.AvgChangeRate ?? null} />
@@ -260,15 +290,17 @@ export function JobDetailSheet({
         </SheetHeader>
 
         <ScrollArea className="min-h-0 flex-1 px-4 pb-4">
-          <div className="space-y-5">
-            <StorageSection job={job} />
-            <Separator />
-            <ProtectionSection job={job} />
-            <Separator />
-            <ConfigurationSection job={job} />
-            <Separator />
-            <SessionSection job={job} />
-          </div>
+          <TooltipProvider>
+            <div className="space-y-5">
+              <StorageSection job={job} />
+              <Separator />
+              <ProtectionSection job={job} />
+              <Separator />
+              <ConfigurationSection job={job} />
+              <Separator />
+              <SessionSection job={job} />
+            </div>
+          </TooltipProvider>
         </ScrollArea>
       </SheetContent>
     </Sheet>

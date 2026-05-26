@@ -90,15 +90,6 @@ export function formatShortGfs(gfsString: string): string {
   return parts.join(" | ");
 }
 
-export function formatCompressionRatio(
-  sourceGB: number | null,
-  diskGB: number | null,
-): string {
-  if (sourceGB === null || diskGB === null) return "N/A";
-  if (sourceGB === 0 || diskGB === 0) return "N/A";
-  return `${(sourceGB / diskGB).toFixed(1)}x`;
-}
-
 export function formatRatio(value: number | null): string {
   if (value === null) return "—";
   return `${value.toFixed(2)}x`;

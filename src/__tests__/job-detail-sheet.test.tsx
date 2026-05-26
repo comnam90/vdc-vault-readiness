@@ -96,28 +96,86 @@ describe("JobDetailSheet", () => {
       expect(screen.getByText("512 GB")).toBeInTheDocument();
     });
 
-    it("renders compression ratio when both sizes available", () => {
+    it("renders dedup ratio from session data", () => {
       const job = createEnrichedJob({
-        SourceSizeGB: 1024,
-        OnDiskGB: 512,
+        sessionData: {
+          JobName: "Test Job",
+          MaxDataSize: null,
+          AvgChangeRate: 5.2,
+          SuccessRate: 98.5,
+          SessionCount: 200,
+          Fails: 3,
+          AvgJobTime: "00.01:15:30",
+          MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: 3.03,
+          AvgCompressRatio: null,
+        },
+      });
+      render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+      expect(screen.getByText("Dedup Ratio")).toBeInTheDocument();
+      expect(screen.getByText("3.03x")).toBeInTheDocument();
+    });
+
+    it("renders compression ratio from session data", () => {
+      const job = createEnrichedJob({
+        sessionData: {
+          JobName: "Test Job",
+          MaxDataSize: null,
+          AvgChangeRate: 5.2,
+          SuccessRate: 98.5,
+          SessionCount: 200,
+          Fails: 3,
+          AvgJobTime: "00.01:15:30",
+          MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: 1.56,
+        },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
 
       expect(screen.getByText("Compression Ratio")).toBeInTheDocument();
-      expect(screen.getByText("2.0x")).toBeInTheDocument();
+      expect(screen.getByText("1.56x")).toBeInTheDocument();
     });
 
-    it("renders muted N/A compression ratio when sizes missing", () => {
+    it("renders muted em-dash with explanation when ratios are null", () => {
       const job = createEnrichedJob({
-        SourceSizeGB: null,
-        OnDiskGB: null,
+        sessionData: {
+          JobName: "Test Job",
+          MaxDataSize: null,
+          AvgChangeRate: 5.2,
+          SuccessRate: 98.5,
+          SessionCount: 200,
+          Fails: 3,
+          AvgJobTime: "00.01:15:30",
+          MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
+        },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
 
-      const row = screen.getByText("Compression Ratio").closest("div");
-      expect(row).not.toBeNull();
-      const value = within(row as HTMLElement).getByText("N/A");
-      expect(value).toHaveClass("text-muted-foreground");
+      // The em-dash should appear at least twice (once per ratio row).
+      const dashes = screen.getAllByText("—");
+      expect(dashes.length).toBeGreaterThanOrEqual(2);
+
+      // Screen-reader text spelling out the reason is rendered for accessibility.
+      const explanations = screen.getAllByText(
+        "Not reported by this healthcheck version",
+      );
+      expect(explanations.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("renders muted em-dash when sessionData is null", () => {
+      const job = createEnrichedJob({ sessionData: null });
+      render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+      const dashes = screen.getAllByText("—");
+      expect(dashes.length).toBeGreaterThanOrEqual(2);
+      const explanations = screen.getAllByText(
+        "Not reported by this healthcheck version",
+      );
+      expect(explanations.length).toBeGreaterThanOrEqual(2);
     });
 
     it("renders change rate from session data", () => {
