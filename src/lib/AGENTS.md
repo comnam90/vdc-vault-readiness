@@ -12,7 +12,7 @@ lib/
 ├── validator.ts           # 12 validation rules against NormalizedDataset. 8 original + 4 SOBR rules
 ├── calculator-aggregator.ts # Vault sizing: source TB, change rates, retention, GFS aggregation
 ├── enrich-jobs.ts         # enrichJobs(): joins SafeJob[] with SafeJobSession[] via Map lookup
-├── format-utils.ts        # Shared formatters: formatSize, formatPercent, formatDuration, formatTB, formatCompressionRatio
+├── format-utils.ts        # Shared formatters: formatSize, formatPercent, formatDuration, formatTB, formatRatio
 ├── validation-selectors.ts  # Filter helpers: getBlockerValidations(), getPassingValidations(), hasBlockers(), getBlockerCount()
 ├── version-compare.ts    # isVersionAtLeast() — semver-like "12.1.2.456" comparison (ignores 4th segment)
 ├── constants.ts           # MINIMUM_VBR_VERSION ("12.1.2"), MINIMUM_RETENTION_DAYS (30), MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS (30), PIPELINE_STEPS
@@ -52,20 +52,20 @@ HealthcheckRoot (raw JSON)
 
 ## WHERE TO LOOK
 
-| Need                     | File                     | Notes                                                                                                      |
-| ------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| Add validation rule      | validator.ts             | Add function, append to return array in validateHealthcheck()                                              |
-| Change version minimum   | constants.ts             | MINIMUM_VBR_VERSION — tests reference this constant                                                        |
-| Change retention minimum | constants.ts             | MINIMUM_RETENTION_DAYS — used by validator + calculator                                                    |
-| Change residency minimum | constants.ts             | MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS — used by SOBR validator                                              |
-| Parse new section        | parser.ts                | zipSection() handles any Headers/Rows section                                                              |
-| Add normalized field     | normalizer.ts            | Add extraction + error accumulation using flatMap/buildError                                               |
-| Add SOBR normalization   | normalizer.ts            | normalizeSobr(), normalizeCapExtent(), normalizeArchExtent() at bottom of file                             |
-| UI step labels           | constants.ts             | PIPELINE_STEPS — NOT 1:1 with validator ruleIds. Includes "sobr-analysis" step                             |
-| Filter validations       | validation-selectors.ts  | Blocker/passing splits consumed by dashboard components                                                    |
-| Vault sizing inputs      | calculator-aggregator.ts | buildCalculatorSummary() is main entry; 6 exported functions                                               |
-| Join jobs + sessions     | enrich-jobs.ts           | enrichJobs() → EnrichedJob[] via Map<JobName, SafeJobSession>                                              |
-| Display formatting       | format-utils.ts          | formatSize (GB→TB/GB), formatPercent, formatDuration (DD.HH:MM:SS→human), formatTB, formatCompressionRatio |
+| Need                     | File                     | Notes                                                                                           |
+| ------------------------ | ------------------------ | ----------------------------------------------------------------------------------------------- |
+| Add validation rule      | validator.ts             | Add function, append to return array in validateHealthcheck()                                   |
+| Change version minimum   | constants.ts             | MINIMUM_VBR_VERSION — tests reference this constant                                             |
+| Change retention minimum | constants.ts             | MINIMUM_RETENTION_DAYS — used by validator + calculator                                         |
+| Change residency minimum | constants.ts             | MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS — used by SOBR validator                                   |
+| Parse new section        | parser.ts                | zipSection() handles any Headers/Rows section                                                   |
+| Add normalized field     | normalizer.ts            | Add extraction + error accumulation using flatMap/buildError                                    |
+| Add SOBR normalization   | normalizer.ts            | normalizeSobr(), normalizeCapExtent(), normalizeArchExtent() at bottom of file                  |
+| UI step labels           | constants.ts             | PIPELINE_STEPS — NOT 1:1 with validator ruleIds. Includes "sobr-analysis" step                  |
+| Filter validations       | validation-selectors.ts  | Blocker/passing splits consumed by dashboard components                                         |
+| Vault sizing inputs      | calculator-aggregator.ts | buildCalculatorSummary() is main entry; 6 exported functions                                    |
+| Join jobs + sessions     | enrich-jobs.ts           | enrichJobs() → EnrichedJob[] via Map<JobName, SafeJobSession>                                   |
+| Display formatting       | format-utils.ts          | formatSize (GB→TB/GB), formatPercent, formatDuration (DD.HH:MM:SS→human), formatTB, formatRatio |
 
 ## CONVENTIONS
 
@@ -76,7 +76,7 @@ HealthcheckRoot (raw JSON)
 - **PIPELINE_STEPS vs ruleIds**: Steps are presentation-layer groupings (e.g., "encryption" covers both "config-backup-encryption" and "job-encryption" rules; "sobr-analysis" covers 4 SOBR rules)
 - **Calculator**: Aggregates from SafeJob[] and SafeJobSession[]; uses MINIMUM_RETENTION_DAYS from constants
 - **Enrichment**: `enrichJobs()` builds Map<JobName, SafeJobSession> for O(1) lookup, returns EnrichedJob[] with null session for unmatched jobs
-- **Formatters**: Pure functions. `formatSize()` returns `{ value, unit }` object for split display. `formatDuration()` parses `DD.HH:MM:SS` duration strings. `formatCompressionRatio()` handles divide-by-zero gracefully
+- **Formatters**: Pure functions. `formatSize()` returns `{ value, unit }` object for split display. `formatDuration()` parses `DD.HH:MM:SS` duration strings. `formatRatio()` renders numeric ratios as `"3.03x"` and returns an em-dash for `null`
 - **SOBR normalization**: `normalizeSobr()`, `normalizeCapExtent()`, `normalizeArchExtent()` follow same flatMap + error accumulation pattern as job normalization
 
 ## ANTI-PATTERNS
