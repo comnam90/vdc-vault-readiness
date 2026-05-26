@@ -8,11 +8,11 @@ Synchronous pipeline: raw JSON → parse → normalize → validate → results.
 lib/
 ├── pipeline.ts            # Orchestrator: analyzeHealthcheck() → {data, validations}. Zips sobr/capextents/archextents sections
 ├── parser.ts              # zipSection(): Headers/Rows → Record[] (decoupled JSON format)
-├── normalizer.ts          # Raw records → typed SafeJob/SafeBackupServer/SafeSobr/SafeCapExtent/SafeArchExtent/etc. with error accumulation (812 lines, highest complexity)
+├── normalizer.ts          # Raw records → typed SafeJob/SafeBackupServer/SafeSobr/SafeCapExtent/SafeArchExtent/SafeJobSummary/etc. with error accumulation (highest complexity)
 ├── validator.ts           # 12 validation rules against NormalizedDataset. 8 original + 4 SOBR rules
 ├── calculator-aggregator.ts # Vault sizing: source TB, change rates, retention, GFS aggregation
-├── enrich-jobs.ts         # enrichJobs(): joins SafeJob[] with SafeJobSession[] via Map lookup (19 lines)
-├── format-utils.ts        # Shared formatters: formatSize, formatPercent, formatDuration, formatTB, formatCompressionRatio (54 lines)
+├── enrich-jobs.ts         # enrichJobs(): joins SafeJob[] with SafeJobSession[] via Map lookup
+├── format-utils.ts        # Shared formatters: formatSize, formatPercent, formatDuration, formatTB, formatCompressionRatio
 ├── validation-selectors.ts  # Filter helpers: getBlockerValidations(), getPassingValidations(), hasBlockers(), getBlockerCount()
 ├── version-compare.ts    # isVersionAtLeast() — semver-like "12.1.2.456" comparison (ignores 4th segment)
 ├── constants.ts           # MINIMUM_VBR_VERSION ("12.1.2"), MINIMUM_RETENTION_DAYS (30), MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS (30), PIPELINE_STEPS
@@ -24,7 +24,8 @@ lib/
 
 ```
 HealthcheckRoot (raw JSON)
-  → zipSection() per section (backupServer, securitySummary, jobInfo, sobr, capextents, archextents)
+  → zipSection() per section (backupServer, securitySummary, jobInfo, jobSummary, sobr, extents, capextents, archextents, repos)
+  → zipSection(jobSessionSummaryByJob) for session data
   → Licenses passed through directly (already objects)
   → normalizeHealthcheck() → NormalizedDataset + DataError[]
   → validateHealthcheck() → ValidationResult[] (12 rules)

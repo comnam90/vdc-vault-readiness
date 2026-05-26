@@ -90,21 +90,21 @@ Resulting validator count: **11 → 12 rules**.
 | **Type**        | New rule (split from `agent-workload`) |
 | **ruleId**      | `agent-standalone-unsupported`         |
 | **title**       | `Standalone Agent Workloads`           |
-| **Data source** | `NormalizedDataset.jobInfo[].JobType`  |
+| **Data source** | `NormalizedDataset.jobSummary[]`       |
 
-**Detection:** `job.JobType` equals `"Unmanaged Agent"` (case-insensitive, exact match after trim — not substring match, to avoid false positives on job names that happen to contain "agent").
+**Detection:** any `jobSummary` row whose `JobType` equals `"Unmanaged Agent"` (case-insensitive, exact match after trim) AND `Count > 0`. `jobSummary` is used instead of `jobInfo` because VBR does NOT include unmanaged agent rows in `jobInfo` — they only appear in the `jobSummary` aggregate.
 
 **Behavior:**
 
-- **`pass`** — no jobs match.
-- **`fail`** — one or more jobs match.
+- **`pass`** — no matching row, or matching row has `Count === 0`.
+- **`fail`** — at least one matching row with `Count > 0`.
 
 **Messages:**
 
 - `pass`: _"No standalone agent workloads detected."_
-- `fail`: _"Standalone (unmanaged) agents cannot target VDC Vault directly. To get standalone agent backups into Vault, use a Backup Copy Job with encryption enabled — that is the only supported path."_
+- `fail`: _"{count} standalone (unmanaged) agent {job|jobs} detected. Standalone agents cannot target VDC Vault directly. Use a Backup Copy Job with encryption enabled to land their backups in Vault — that is the only supported path."_ (count and pluralisation are interpolated.)
 
-**`affectedItems`** — `JobName` values of matching jobs.
+**`affectedItems`** — `[]`. `jobSummary` does not enumerate per-job names, so the detected count is conveyed in the message instead.
 
 ### Rule 3b — `agent-policy-gateway-required` (NEW, warning)
 
