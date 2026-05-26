@@ -16,7 +16,7 @@
 
 **Sorting:** Blockers list shows `fail` results first, then `warning`, preserving order within each group. The Notes panel (`info` + `skipped`) renders below the blockers list when blockers exist, or above the success celebration when there are none. Passing checks appear below the Notes panel when blockers exist; otherwise the success celebration takes their place.
 
-**Affected items:** Displayed as a bulleted list below the message, truncated to 5 visible items with "+ N more" overflow text.
+**Affected items:** Displayed as a bulleted list below the message, truncated to 5 visible items with "and N more" overflow text.
 
 ---
 
