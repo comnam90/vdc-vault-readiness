@@ -7,6 +7,12 @@ import { cn } from "@/lib/utils";
 
 interface NotesPanelProps {
   validations: ValidationResult[];
+  /**
+   * Stagger offset for the entrance animation. When the panel is rendered
+   * after other animated lists (e.g. BlockersList), pass the count of items
+   * already animating so notes start after them rather than concurrently.
+   */
+  precedingItemsCount?: number;
 }
 
 const MAX_VISIBLE_ITEMS = 5;
@@ -29,7 +35,10 @@ const NOTE_STYLE: Record<
   },
 };
 
-export function NotesPanel({ validations }: NotesPanelProps) {
+export function NotesPanel({
+  validations,
+  precedingItemsCount = 0,
+}: NotesPanelProps) {
   const notes = getNoteValidations(validations);
 
   if (notes.length === 0) {
@@ -51,7 +60,9 @@ export function NotesPanel({ validations }: NotesPanelProps) {
               "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards duration-300",
               "border-l-muted-foreground/30 bg-muted/40 border-l-4",
             )}
-            style={{ animationDelay: `${index * STAGGER_DELAY_MS}ms` }}
+            style={{
+              animationDelay: `${(precedingItemsCount + index) * STAGGER_DELAY_MS}ms`,
+            }}
           >
             <style.Icon
               className="text-muted-foreground !size-5"

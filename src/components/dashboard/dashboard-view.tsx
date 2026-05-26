@@ -6,6 +6,7 @@ import { CARD_LABEL, MINIMUM_VBR_VERSION } from "@/lib/constants";
 import { enrichJobs } from "@/lib/enrich-jobs";
 import {
   getBlockerValidations,
+  getNoteValidations,
   getPassingValidations,
 } from "@/lib/validation-selectors";
 import { isVersionAtLeast } from "@/lib/version-compare";
@@ -74,6 +75,7 @@ export function DashboardView({
   const hasFail = validations.some((v) => v.status === "fail");
   const allChecksPass = validations.every((v) => v.status === "pass");
   const blockers = getBlockerValidations(validations);
+  const notes = getNoteValidations(validations);
   const hasBlockers = blockers.length > 0;
 
   return (
@@ -193,10 +195,13 @@ export function DashboardView({
           {hasBlockers ? (
             <>
               <BlockersList blockers={blockers} />
-              <NotesPanel validations={validations} />
+              <NotesPanel
+                validations={validations}
+                precedingItemsCount={blockers.length}
+              />
               <PassingChecksList
                 validations={validations}
-                blockerCount={blockers.length}
+                precedingItemsCount={blockers.length + notes.length}
               />
             </>
           ) : (

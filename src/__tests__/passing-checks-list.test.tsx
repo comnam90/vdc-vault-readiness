@@ -123,11 +123,11 @@ describe("PassingChecksList", () => {
     expect(items[1].style.animationDelay).toBe("100ms");
   });
 
-  it("offsets stagger delay when blockerCount is provided", () => {
+  it("offsets stagger delay when precedingItemsCount is provided", () => {
     render(
       <PassingChecksList
         validations={[PASS_VBR, PASS_ENCRYPTION]}
-        blockerCount={getBlockerCount([
+        precedingItemsCount={getBlockerCount([
           FAIL_RESULT,
           WARNING_RESULT,
           INFO_RESULT,
