@@ -376,6 +376,17 @@ function parseRatio(
   const trimmed = value.trim();
   if (trimmed.length === 0) return null;
   const stripped = trimmed.replace(/[xX]$/, "");
+  if (stripped.length === 0) {
+    dataErrors.push(
+      buildError(
+        section,
+        rowIndex,
+        field,
+        `Invalid numeric value: "${trimmed}"`,
+      ),
+    );
+    return null;
+  }
   return parseNumeric(stripped, section, rowIndex, field, dataErrors);
 }
 

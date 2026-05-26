@@ -1473,6 +1473,24 @@ describe("normalizeHealthcheck", () => {
           "AvgDedupRatio",
         ]);
       });
+
+      it("returns null and emits a DataError for a bare 'x' (no number)", () => {
+        const raw = { jobSessionSummaryByJob: { Headers: [], Rows: [] } };
+        const sessions = [
+          {
+            JobName: "JobA",
+            AvgDedupRatio: "x",
+            AvgCompressRatio: "X",
+          },
+        ];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBeNull();
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBeNull();
+        const ratioErrors = result.dataErrors.filter((e) =>
+          e.field.includes("Ratio"),
+        );
+        expect(ratioErrors).toHaveLength(2);
+      });
     });
 
     it("defaults MaxDataSize to null and logs DataError for non-numeric value", () => {
