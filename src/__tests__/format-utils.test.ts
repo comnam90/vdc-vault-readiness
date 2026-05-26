@@ -8,6 +8,7 @@ import {
   formatTooltipTB,
   formatGFS,
   formatShortGfs,
+  formatRatio,
 } from "@/lib/format-utils";
 
 describe("formatSize", () => {
@@ -207,5 +208,23 @@ describe("formatShortGfs", () => {
 
   it("preserves W | M | Y order regardless of input order", () => {
     expect(formatShortGfs("Yearly:1,Weekly:4")).toBe("4W | 1Y");
+  });
+});
+
+describe("formatRatio", () => {
+  it("returns an em-dash for null", () => {
+    expect(formatRatio(null)).toBe("—");
+  });
+
+  it("formats positive numbers with two-decimal precision and 'x' suffix", () => {
+    expect(formatRatio(3.03)).toBe("3.03x");
+  });
+
+  it("formats whole numbers with trailing zeros", () => {
+    expect(formatRatio(1)).toBe("1.00x");
+  });
+
+  it("formats zero", () => {
+    expect(formatRatio(0)).toBe("0.00x");
   });
 });

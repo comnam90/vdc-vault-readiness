@@ -98,3 +98,8 @@ export function formatCompressionRatio(
   if (sourceGB === 0 || diskGB === 0) return "N/A";
   return `${(sourceGB / diskGB).toFixed(1)}x`;
 }
+
+export function formatRatio(value: number | null): string {
+  if (value === null) return "—";
+  return `${value.toFixed(2)}x`;
+}
