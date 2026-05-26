@@ -152,6 +152,7 @@ describe("normalizeHealthcheck", () => {
       jobInfo: [],
       Licenses: [],
       jobSessionSummary: [],
+      jobSummary: [],
       sobr: [],
       capExtents: [],
       extents: [],
@@ -200,6 +201,7 @@ describe("normalizeHealthcheck", () => {
       ],
       Licenses: [],
       jobSessionSummary: [],
+      jobSummary: [],
       sobr: [],
       capExtents: [],
       extents: [],
@@ -222,6 +224,7 @@ describe("normalizeHealthcheck", () => {
       jobInfo: [],
       Licenses: [],
       jobSessionSummary: [],
+      jobSummary: [],
       sobr: [],
       capExtents: [],
       extents: [],
@@ -2290,5 +2293,67 @@ describe("normalizeRepos — extended fields", () => {
     expect(repo.TotalSpaceTB).toBe(5.0);
     expect(repo.FreeSpaceTB).toBe(2.0);
     expect(repo.Type).toBe("LinuxHardened");
+  });
+});
+
+describe("normalizeJobSummary (via normalizeHealthcheck)", () => {
+  it("parses well-formed rows and skips the Total Jobs aggregate row", () => {
+    const result = normalizeHealthcheck({
+      jobSummary: [
+        { JobType: "Agent Backup", Count: "4" },
+        { JobType: "Unmanaged Agent", Count: "1" },
+        { JobType: "Total Jobs", Count: "5" },
+      ],
+    });
+
+    expect(result.jobSummary).toHaveLength(2);
+    expect(result.jobSummary[0]).toEqual({ JobType: "Agent Backup", Count: 4 });
+    expect(result.jobSummary[1]).toEqual({
+      JobType: "Unmanaged Agent",
+      Count: 1,
+    });
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
+  it("skips rows with missing or empty JobType and accumulates a DataError", () => {
+    const result = normalizeHealthcheck({
+      jobSummary: [
+        { JobType: "", Count: "3" },
+        { JobType: "Agent Backup", Count: "2" },
+      ],
+    });
+
+    expect(result.jobSummary).toHaveLength(1);
+    expect(result.jobSummary[0].JobType).toBe("Agent Backup");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "jobSummary",
+      field: "JobType",
+    });
+  });
+
+  it("skips rows with non-numeric Count and accumulates a DataError", () => {
+    const result = normalizeHealthcheck({
+      jobSummary: [
+        { JobType: "Agent Backup", Count: "not-a-number" },
+        { JobType: "Unmanaged Agent", Count: "1" },
+      ],
+    });
+
+    expect(result.jobSummary).toHaveLength(1);
+    expect(result.jobSummary[0].JobType).toBe("Unmanaged Agent");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "jobSummary",
+      field: "Count",
+    });
+  });
+
+  it("returns empty array when jobSummary section is missing entirely", () => {
+    const result = normalizeHealthcheck({});
+    expect(result.jobSummary).toEqual([]);
+    expect(result.dataErrors).toHaveLength(0);
   });
 });

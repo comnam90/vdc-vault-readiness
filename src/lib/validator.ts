@@ -13,10 +13,11 @@ export function validateHealthcheck(
 ): ValidationResult[] {
   return [
     validateVbrVersion(data),
-    validateGlobalEncryption(data),
+    validateConfigBackupEncryption(data),
     validateJobEncryption(data),
     validateAwsWorkload(data),
-    validateAgentWorkload(data),
+    validateAgentStandaloneUnsupported(data),
+    validateAgentPolicyGatewayRequired(data),
     validateLicenseEdition(data),
     validateRetentionPeriod(data),
     validateCapTierEncryption(data),
@@ -60,38 +61,38 @@ function validateVbrVersion(data: NormalizedDataset): ValidationResult {
   };
 }
 
-function validateGlobalEncryption(data: NormalizedDataset): ValidationResult {
+function validateConfigBackupEncryption(
+  data: NormalizedDataset,
+): ValidationResult {
   if (data.securitySummary.length === 0) {
     return {
-      ruleId: "global-encryption",
-      title: "Global Encryption Configuration",
-      status: "pass",
-      message: "No security summary found. Skipping global encryption check.",
+      ruleId: "config-backup-encryption",
+      title: "Configuration Backup Encryption",
+      status: "skipped",
+      message:
+        "Configuration backup encryption check skipped — security summary section is missing from the healthcheck data.",
       affectedItems: [],
     };
   }
 
   const summary = data.securitySummary[0];
-  const allEnabled =
-    summary.BackupFileEncryptionEnabled &&
-    summary.ConfigBackupEncryptionEnabled;
 
-  if (!allEnabled) {
+  if (!summary.ConfigBackupEncryptionEnabled) {
     return {
-      ruleId: "global-encryption",
-      title: "Global Encryption Configuration",
+      ruleId: "config-backup-encryption",
+      title: "Configuration Backup Encryption",
       status: "warning",
       message:
-        "Global encryption is disabled. VDC Vault requires all data to be encrypted. Best practice is to enable BackupFileEncryption and ConfigBackupEncryption globally to ensure compliance.",
+        "VBR configuration backup encryption is not enabled. Once VDC Vault is in use, VBR automatically disables configuration backups unless they are encrypted, so encryption becomes a requirement at that point. It is also a best practice generally — the configuration backup contains sensitive information such as credentials and certificates.",
       affectedItems: [],
     };
   }
 
   return {
-    ruleId: "global-encryption",
-    title: "Global Encryption Configuration",
+    ruleId: "config-backup-encryption",
+    title: "Configuration Backup Encryption",
     status: "pass",
-    message: "Global encryption settings are enabled.",
+    message: "VBR configuration backup encryption is enabled.",
     affectedItems: [],
   };
 }
@@ -164,27 +165,58 @@ function validateAwsWorkload(data: NormalizedDataset): ValidationResult {
   };
 }
 
-function validateAgentWorkload(data: NormalizedDataset): ValidationResult {
-  const agentJobs = data.jobInfo.filter((job) =>
-    job.JobType.toLowerCase().includes("agent"),
+function validateAgentStandaloneUnsupported(
+  data: NormalizedDataset,
+): ValidationResult {
+  const matches = data.jobSummary.filter(
+    (s) => s.JobType.trim().toLowerCase() === "unmanaged agent" && s.Count > 0,
   );
 
-  if (agentJobs.length > 0) {
+  if (matches.length > 0) {
+    const totalCount = matches.reduce((sum, m) => sum + m.Count, 0);
     return {
-      ruleId: "agent-workload",
-      title: "Agent Workload Configuration",
-      status: "warning",
-      message:
-        "Agent workloads detected. Veeam Agents cannot write directly to object storage. Ensure you configure a Gateway Server or use Cloud Connect to route these backups to Vault.",
-      affectedItems: agentJobs.map((job) => job.JobName),
+      ruleId: "agent-standalone-unsupported",
+      title: "Standalone Agent Workloads",
+      status: "fail",
+      message: `${totalCount} standalone (unmanaged) agent ${totalCount === 1 ? "job" : "jobs"} detected. Standalone agents cannot target VDC Vault directly. Use a Backup Copy Job with encryption enabled to land their backups in Vault — that is the only supported path.`,
+      affectedItems: [],
     };
   }
 
   return {
-    ruleId: "agent-workload",
-    title: "Agent Workload Configuration",
+    ruleId: "agent-standalone-unsupported",
+    title: "Standalone Agent Workloads",
     status: "pass",
-    message: "No agent workloads detected.",
+    message: "No standalone agent workloads detected.",
+    affectedItems: [],
+  };
+}
+
+function validateAgentPolicyGatewayRequired(
+  data: NormalizedDataset,
+): ValidationResult {
+  const POLICY_TYPES = new Set(["epagentpolicy", "vmbapipolicytempjob"]);
+
+  const matches = data.jobInfo.filter((job) =>
+    POLICY_TYPES.has(job.JobType.trim().toLowerCase()),
+  );
+
+  if (matches.length > 0) {
+    return {
+      ruleId: "agent-policy-gateway-required",
+      title: "Managed Agent Policies",
+      status: "warning",
+      message:
+        "Managed agent policies require a VBR Gateway Server to reach VDC Vault — they cannot write directly to object storage. Ensure a Gateway Server is configured for these policies.",
+      affectedItems: matches.map((job) => job.JobName),
+    };
+  }
+
+  return {
+    ruleId: "agent-policy-gateway-required",
+    title: "Managed Agent Policies",
+    status: "pass",
+    message: "No managed agent policies detected.",
     affectedItems: [],
   };
 }
@@ -201,7 +233,7 @@ function validateLicenseEdition(data: NormalizedDataset): ValidationResult {
       title: "License/Edition Notes",
       status: "info",
       message:
-        "Community Edition detected. Ensure you are aware of SOBR limitations when designing your Vault strategy.",
+        "Community or Free edition detected. VDC Vault is fully supported on Community Edition. Note: Community / Free editions do not include Scale-Out Backup Repository (SOBR), so capacity-tier offload patterns are not available.",
       affectedItems: affectedLicenses.map((license) => license.Edition),
     };
   }

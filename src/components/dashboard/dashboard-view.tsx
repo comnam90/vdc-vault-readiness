@@ -4,7 +4,11 @@ import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 import { CARD_LABEL, MINIMUM_VBR_VERSION } from "@/lib/constants";
 import { enrichJobs } from "@/lib/enrich-jobs";
-import { getBlockerValidations } from "@/lib/validation-selectors";
+import {
+  getBlockerValidations,
+  getNoteValidations,
+  getPassingValidations,
+} from "@/lib/validation-selectors";
 import { isVersionAtLeast } from "@/lib/version-compare";
 import {
   Card,
@@ -18,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalculatorInputs } from "@/components/dashboard/calculator-inputs";
 import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
+import { NotesPanel } from "./notes-panel";
 import { PassingChecksList } from "./passing-checks-list";
 import { JobsCharts } from "./jobs-charts";
 import { RepositoriesTab } from "./repositories-tab";
@@ -70,6 +75,7 @@ export function DashboardView({
   const hasFail = validations.some((v) => v.status === "fail");
   const allChecksPass = validations.every((v) => v.status === "pass");
   const blockers = getBlockerValidations(validations);
+  const notes = getNoteValidations(validations);
   const hasBlockers = blockers.length > 0;
 
   return (
@@ -189,16 +195,23 @@ export function DashboardView({
           {hasBlockers ? (
             <>
               <BlockersList blockers={blockers} />
+              <NotesPanel
+                validations={validations}
+                precedingItemsCount={blockers.length}
+              />
               <PassingChecksList
                 validations={validations}
-                blockerCount={blockers.length}
+                precedingItemsCount={blockers.length + notes.length}
               />
             </>
           ) : (
-            <SuccessCelebration
-              checksCount={validations.length}
-              onViewDetails={() => setActiveTab("jobs")}
-            />
+            <>
+              <NotesPanel validations={validations} />
+              <SuccessCelebration
+                checksCount={getPassingValidations(validations).length}
+                onViewDetails={() => setActiveTab("jobs")}
+              />
+            </>
           )}
         </TabsContent>
 

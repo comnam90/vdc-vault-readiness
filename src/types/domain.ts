@@ -120,6 +120,11 @@ export interface SafeRepo {
   FreeSpacePercent: number | null;
 }
 
+export interface SafeJobSummary {
+  JobType: string;
+  Count: number;
+}
+
 export type DataError = {
   level: "Data Error";
   section:
@@ -128,6 +133,7 @@ export type DataError = {
     | "jobInfo"
     | "Licenses"
     | "jobSessionSummaryByJob"
+    | "jobSummary"
     | "sobr"
     | "capextents"
     | "archextents"
@@ -144,6 +150,7 @@ export interface NormalizedDataset {
   jobInfo: SafeJob[];
   Licenses: SafeLicense[];
   jobSessionSummary: SafeJobSession[];
+  jobSummary: SafeJobSummary[];
   sobr: SafeSobr[];
   extents: SafeExtent[];
   capExtents: SafeCapExtent[];

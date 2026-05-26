@@ -46,7 +46,8 @@ export function SuccessCelebration({
         >
           Your Veeam environment is fully compatible with VDC Vault.
           <br />
-          All {checksCount} validation checks passed successfully.
+          {checksCount} validation {checksCount === 1 ? "check" : "checks"}{" "}
+          passed successfully.
         </p>
 
         <Button

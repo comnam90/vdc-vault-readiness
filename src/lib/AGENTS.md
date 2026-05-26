@@ -8,11 +8,11 @@ Synchronous pipeline: raw JSON → parse → normalize → validate → results.
 lib/
 ├── pipeline.ts            # Orchestrator: analyzeHealthcheck() → {data, validations}. Zips sobr/capextents/archextents sections
 ├── parser.ts              # zipSection(): Headers/Rows → Record[] (decoupled JSON format)
-├── normalizer.ts          # Raw records → typed SafeJob/SafeBackupServer/SafeSobr/SafeCapExtent/SafeArchExtent/etc. with error accumulation (812 lines, highest complexity)
-├── validator.ts           # 11 validation rules against NormalizedDataset (572 lines). 7 original + 4 SOBR rules
+├── normalizer.ts          # Raw records → typed SafeJob/SafeBackupServer/SafeSobr/SafeCapExtent/SafeArchExtent/SafeJobSummary/etc. with error accumulation (highest complexity)
+├── validator.ts           # 12 validation rules against NormalizedDataset. 8 original + 4 SOBR rules
 ├── calculator-aggregator.ts # Vault sizing: source TB, change rates, retention, GFS aggregation
-├── enrich-jobs.ts         # enrichJobs(): joins SafeJob[] with SafeJobSession[] via Map lookup (19 lines)
-├── format-utils.ts        # Shared formatters: formatSize, formatPercent, formatDuration, formatTB, formatCompressionRatio (54 lines)
+├── enrich-jobs.ts         # enrichJobs(): joins SafeJob[] with SafeJobSession[] via Map lookup
+├── format-utils.ts        # Shared formatters: formatSize, formatPercent, formatDuration, formatTB, formatCompressionRatio
 ├── validation-selectors.ts  # Filter helpers: getBlockerValidations(), getPassingValidations(), hasBlockers(), getBlockerCount()
 ├── version-compare.ts    # isVersionAtLeast() — semver-like "12.1.2.456" comparison (ignores 4th segment)
 ├── constants.ts           # MINIMUM_VBR_VERSION ("12.1.2"), MINIMUM_RETENTION_DAYS (30), MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS (30), PIPELINE_STEPS
@@ -24,29 +24,31 @@ lib/
 
 ```
 HealthcheckRoot (raw JSON)
-  → zipSection() per section (backupServer, securitySummary, jobInfo, sobr, capextents, archextents)
+  → zipSection() per section (backupServer, securitySummary, jobInfo, jobSummary, sobr, extents, capextents, archextents, repos)
+  → zipSection(jobSessionSummaryByJob) for session data
   → Licenses passed through directly (already objects)
   → normalizeHealthcheck() → NormalizedDataset + DataError[]
-  → validateHealthcheck() → ValidationResult[] (11 rules)
+  → validateHealthcheck() → ValidationResult[] (12 rules)
   → buildCalculatorSummary() → CalculatorSummary (sizing aggregation)
   → enrichJobs() → EnrichedJob[] (jobs joined with session data)
 ```
 
-## VALIDATION RULES (11 total)
+## VALIDATION RULES (12 total)
 
-| Rule ID                 | Type    | Description                                |
-| ----------------------- | ------- | ------------------------------------------ |
-| vbr-version             | blocker | VBR must be 12.1.2+                        |
-| global-encryption       | warning | Config backup encryption should be enabled |
-| job-encryption          | blocker | All jobs must have encryption enabled      |
-| aws-workload            | blocker | Cannot target Vault directly               |
-| agent-workload          | warning | Require Gateway Server configuration       |
-| license-edition         | warning | Community Edition has SOBR limitations     |
-| retention-period        | warning | Jobs should have 30+ day retention         |
-| cap-tier-encryption     | blocker | Capacity tier must be encrypted            |
-| sobr-immutability       | blocker | SOBR immutability must be enabled          |
-| archive-tier-edition    | warning | Archive tier requires Enterprise Plus      |
-| capacity-tier-residency | warning | Capacity tier residency must be 30+ days   |
+| Rule ID                       | Type    | Description                                                              |
+| ----------------------------- | ------- | ------------------------------------------------------------------------ |
+| vbr-version                   | blocker | VBR must be 12.1.2+                                                      |
+| config-backup-encryption      | warning | Config backup must be encrypted to use Vault; skipped if summary missing |
+| job-encryption                | blocker | All jobs must have encryption enabled                                    |
+| aws-workload                  | blocker | Cannot target Vault directly                                             |
+| agent-standalone-unsupported  | blocker | Standalone agents must use Backup Copy to reach Vault                    |
+| agent-policy-gateway-required | warning | Managed agent policies require a Gateway Server                          |
+| license-edition               | info    | Community Edition is supported by Vault; lacks SOBR                      |
+| retention-period              | warning | Jobs should have 30+ day retention                                       |
+| sobr-cap-encryption           | warning | Capacity tier must be encrypted                                          |
+| sobr-immutability             | warning | Capacity tier immutability must be enabled                               |
+| archive-tier-edition          | warning | Archive tier consumes egress — consider Advanced edition                 |
+| capacity-tier-residency       | warning | Capacity tier residency must be 30+ days                                 |
 
 ## WHERE TO LOOK
 
@@ -71,7 +73,7 @@ HealthcheckRoot (raw JSON)
 - **No side effects**: All functions pure. Pipeline runs synchronously
 - **Version format**: "major.minor.patch.build" — only first 3 segments compared
 - **tick()**: Used by useAnalysis hook for visual delays; accepts AbortSignal for cleanup on unmount/re-upload
-- **PIPELINE_STEPS vs ruleIds**: Steps are presentation-layer groupings (e.g., "encryption" covers both "global-encryption" and "job-encryption" rules; "sobr-analysis" covers 4 SOBR rules)
+- **PIPELINE_STEPS vs ruleIds**: Steps are presentation-layer groupings (e.g., "encryption" covers both "config-backup-encryption" and "job-encryption" rules; "sobr-analysis" covers 4 SOBR rules)
 - **Calculator**: Aggregates from SafeJob[] and SafeJobSession[]; uses MINIMUM_RETENTION_DAYS from constants
 - **Enrichment**: `enrichJobs()` builds Map<JobName, SafeJobSession> for O(1) lookup, returns EnrichedJob[] with null session for unmatched jobs
 - **Formatters**: Pure functions. `formatSize()` returns `{ value, unit }` object for split display. `formatDuration()` parses `DD.HH:MM:SS` duration strings. `formatCompressionRatio()` handles divide-by-zero gracefully

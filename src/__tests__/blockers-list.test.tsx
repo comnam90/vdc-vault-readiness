@@ -12,10 +12,10 @@ const FAIL_RESULT: ValidationResult = {
 };
 
 const WARNING_RESULT: ValidationResult = {
-  ruleId: "agent-workload",
-  title: "Agent Workload Configuration",
+  ruleId: "agent-policy-gateway-required",
+  title: "Managed Agent Policies",
   status: "warning",
-  message: "Agent workloads detected.",
+  message: "Managed agent policies require a VBR Gateway Server.",
   affectedItems: ["Agent Job 1"],
 };
 
@@ -32,10 +32,10 @@ describe("BlockersList", () => {
   it("renders warning validations", () => {
     render(<BlockersList blockers={[WARNING_RESULT]} />);
 
+    expect(screen.getByText("Managed Agent Policies")).toBeInTheDocument();
     expect(
-      screen.getByText("Agent Workload Configuration"),
+      screen.getByText("Managed agent policies require a VBR Gateway Server."),
     ).toBeInTheDocument();
-    expect(screen.getByText("Agent workloads detected.")).toBeInTheDocument();
   });
 
   it("does not render pass or info validations", () => {
@@ -51,7 +51,7 @@ describe("BlockersList", () => {
     render(<BlockersList blockers={[WARNING_RESULT, FAIL_RESULT]} />);
 
     const titles = screen.getAllByTestId("blocker-title");
-    expect(titles[0]).toHaveTextContent("Agent Workload Configuration");
+    expect(titles[0]).toHaveTextContent("Managed Agent Policies");
     expect(titles[1]).toHaveTextContent("Job Encryption Audit");
   });
 

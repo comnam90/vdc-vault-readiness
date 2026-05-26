@@ -25,7 +25,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
     it("returns normalized data and validation results", () => {
       expect(result).toHaveProperty("data");
       expect(result).toHaveProperty("validations");
-      expect(result.validations).toHaveLength(11);
+      expect(result.validations).toHaveLength(12);
     });
 
     it("parses the backup server from Headers/Rows", () => {
@@ -108,9 +108,9 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(rule.status).toBe("pass");
     });
 
-    // Rule 2: Global Encryption - both True → pass
-    it("passes global encryption check (both flags True)", () => {
-      const rule = findRule(result.validations, "global-encryption");
+    // Rule 2: Configuration Backup Encryption - ConfigBackup True → pass
+    it("passes configuration backup encryption check", () => {
+      const rule = findRule(result.validations, "config-backup-encryption");
       expect(rule.status).toBe("pass");
     });
 
@@ -127,9 +127,18 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(rule.status).toBe("pass");
     });
 
-    // Rule 5: Agent Workloads - EpAgentBackup/EpAgentPolicy → warning
-    it("warns on agent workloads (EpAgentBackup, EpAgentPolicy)", () => {
-      const rule = findRule(result.validations, "agent-workload");
+    // Rule 5b: Standalone Agents - none in sample → pass
+    it("passes standalone agent check (no Unmanaged Agent in sample)", () => {
+      const rule = findRule(result.validations, "agent-standalone-unsupported");
+      expect(rule.status).toBe("pass");
+    });
+
+    // Rule 5c: Managed Agent Policies - EpAgentPolicy present in sample jobInfo → warning
+    it("warns on managed agent policies (EpAgentPolicy present in sample)", () => {
+      const rule = findRule(
+        result.validations,
+        "agent-policy-gateway-required",
+      );
       expect(rule.status).toBe("warning");
       expect(rule.affectedItems.length).toBeGreaterThan(0);
     });
@@ -153,7 +162,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(result.data.securitySummary).toEqual([]);
       expect(result.data.jobInfo).toEqual([]);
       expect(result.data.Licenses).toEqual([]);
-      expect(result.validations).toHaveLength(11);
+      expect(result.validations).toHaveLength(12);
     });
 
     it("handles missing Sections key gracefully", () => {
@@ -163,7 +172,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
 
       expect(result.data.backupServer).toEqual([]);
       expect(result.data.jobInfo).toEqual([]);
-      expect(result.validations).toHaveLength(11);
+      expect(result.validations).toHaveLength(12);
     });
   });
 
@@ -209,7 +218,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(rule.affectedItems).toEqual(["PlainJob"]);
     });
 
-    it("detects agent jobs through the full pipeline", () => {
+    it("does not warn on managed agent backup jobs (EpAgentBackup)", () => {
       const input: HealthcheckRoot = {
         Sections: {
           jobInfo: {
@@ -223,10 +232,17 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       };
 
       const result = analyzeHealthcheck(input);
-      const rule = findRule(result.validations, "agent-workload");
+      const standalone = findRule(
+        result.validations,
+        "agent-standalone-unsupported",
+      );
+      const policy = findRule(
+        result.validations,
+        "agent-policy-gateway-required",
+      );
 
-      expect(rule.status).toBe("warning");
-      expect(rule.affectedItems).toEqual(["AgentJob1"]);
+      expect(standalone.status).toBe("pass");
+      expect(policy.status).toBe("pass");
     });
 
     it("detects community license through the full pipeline", () => {
@@ -242,7 +258,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(rule.affectedItems).toContain("Community");
     });
 
-    it("detects disabled global encryption through the full pipeline", () => {
+    it("detects disabled config backup encryption through the full pipeline", () => {
       const input: HealthcheckRoot = {
         Sections: {
           securitySummary: {
@@ -256,7 +272,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       };
 
       const result = analyzeHealthcheck(input);
-      const rule = findRule(result.validations, "global-encryption");
+      const rule = findRule(result.validations, "config-backup-encryption");
 
       expect(rule.status).toBe("warning");
     });
