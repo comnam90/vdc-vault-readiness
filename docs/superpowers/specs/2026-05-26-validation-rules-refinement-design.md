@@ -15,7 +15,7 @@ The MVP shipped 11 validation rules in `src/lib/validator.ts`. Three were genera
    - **Managed Agent Policies** (`EpAgentPolicy`, `VmbApiPolicyTempJob`) — can target Vault only via a Gateway Server.
    - **Standalone Agents** (`Unmanaged Agent`) — cannot target Vault directly. Must use a Backup Copy Job.
 
-Out of scope but flagged: `VDCVAULT-CHEETSHEET.md`'s workload matrix contradicts the categorisation above (it claims managed jobs need a Gateway and that managed policies cannot target Vault at all). The product owner has authoritatively stated the matrix is stale. A separate documentation update should follow.
+During brainstorming, the matrix in `VDCVAULT-CHEETSHEET.md` was found to contradict the categorisation above (it claimed managed jobs need a Gateway and that managed policies cannot target Vault at all). The product owner authoritatively stated the matrix was stale. The cheatsheet update was originally flagged as out-of-scope but was ultimately folded into this PR — see Changes Overview below.
 
 ## Changes Overview
 
@@ -31,6 +31,7 @@ Out of scope but flagged: `VDCVAULT-CHEETSHEET.md`'s workload matrix contradicts
 | `src/__tests__/validation-selectors.test.ts` | Add tests for `getNoteValidations()`.                                                                                                                                                                                             |
 | `src/__tests__/` (new)                       | Add component test file for the Notes panel.                                                                                                                                                                                      |
 | `src/lib/constants.ts`                       | Rename `PIPELINE_STEPS` step id `agent-workload` → `agent-checks` so the presentational id matches the post-split rule grouping. `encryption` step id is unchanged.                                                               |
+| `VDCVAULT-CHEETSHEET.md`                     | Correct the "Agents Can't Go Direct" red flag and the workload matrix row for managed agents so the cheatsheet matches the new agent-job categorisation.                                                                          |
 
 Resulting validator count: **11 → 12 rules**.
 
@@ -202,7 +203,6 @@ All test changes follow the existing project conventions (TDD, query priority `g
 
 ## Out of Scope
 
-- Updating `VDCVAULT-CHEETSHEET.md`'s workload matrix. Tracked separately. The cheatsheet is currently incorrect on managed-agent-jobs (claims Gateway required) and managed-agent-policies (claims they cannot target Vault).
 - Adding an `info` entry for managed agent backup jobs (`Agent Backup`, `EpAgentBackup`). They are silently fine in this design.
 - Visual design polish beyond a basic neutral panel (e.g., motion treatments, sub-headings, expand/collapse).
 - Any other validation rule (vbr-version, job-encryption, aws-workload, retention-period, the four SOBR rules) — out of scope per agreed "only the three flagged" scope.
