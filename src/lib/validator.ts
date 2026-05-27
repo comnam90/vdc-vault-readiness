@@ -7,11 +7,12 @@ import {
 } from "./constants";
 import { isVersionAtLeast } from "./version-compare";
 import { parseGfsDetails } from "./calculator-aggregator";
+import { classifyAgentJobType } from "./agent-classifier";
 
 export function validateHealthcheck(
   data: NormalizedDataset,
 ): ValidationResult[] {
-  return [
+  const results: ValidationResult[] = [
     validateVbrVersion(data),
     validateConfigBackupEncryption(data),
     validateJobEncryption(data),
@@ -25,6 +26,29 @@ export function validateHealthcheck(
     validateArchiveTierEdition(data),
     validateCapacityTierResidency(data),
   ];
+
+  // Side-scan for legacy JobType strings after rules run, so we can emit
+  // a single deprecation warning per call. Re-classifying here (in
+  // addition to the rules' own classification) is intentional and cheap
+  // for typical Veeam environments (well under 1k jobs).
+  const sawLegacy =
+    data.jobInfo.some(
+      (job) => classifyAgentJobType(job.JobType)?.legacy === true,
+    ) ||
+    data.jobSummary.some(
+      (row) => classifyAgentJobType(row.JobType)?.legacy === true,
+    );
+
+  if (sawLegacy) {
+    console.warn(
+      "[vdc-vault-readiness] Legacy agent job type strings detected " +
+        "(EpAgentBackup / EpAgentPolicy / Unmanaged Agent / VmbapiPolicyTempJob). " +
+        "These will be removed in a future release once the updated veeam-healthcheck " +
+        "tool is widely deployed. Please regenerate your healthcheck using the latest version.",
+    );
+  }
+
+  return results;
 }
 
 function validateVbrVersion(data: NormalizedDataset): ValidationResult {
@@ -168,18 +192,34 @@ function validateAwsWorkload(data: NormalizedDataset): ValidationResult {
 function validateAgentStandaloneUnsupported(
   data: NormalizedDataset,
 ): ValidationResult {
-  const matches = data.jobSummary.filter(
-    (s) => s.JobType.trim().toLowerCase() === "unmanaged agent" && s.Count > 0,
+  const jobInfoMatches = data.jobInfo.filter(
+    (job) => classifyAgentJobType(job.JobType)?.category === "standalone",
   );
 
-  if (matches.length > 0) {
-    const totalCount = matches.reduce((sum, m) => sum + m.Count, 0);
+  const summaryCount = data.jobSummary
+    .filter(
+      (s) =>
+        classifyAgentJobType(s.JobType)?.category === "standalone" &&
+        s.Count > 0,
+    )
+    .reduce((sum, s) => sum + s.Count, 0);
+
+  // jobInfo and jobSummary describe the same set of agents — jobInfo is
+  // a per-job view, jobSummary is an aggregate count by JobType. Prefer
+  // jobInfo when present (new-format healthchecks) so we can list named
+  // jobs; fall back to the jobSummary count otherwise (old-format
+  // healthchecks expose standalone agents via the count only). We never
+  // sum the two sources, which would double-count when both are populated.
+  const useJobInfo = jobInfoMatches.length > 0;
+  const totalCount = useJobInfo ? jobInfoMatches.length : summaryCount;
+
+  if (totalCount > 0) {
     return {
       ruleId: "agent-standalone-unsupported",
       title: "Standalone Agent Workloads",
       status: "fail",
       message: `${totalCount} standalone (unmanaged) agent ${totalCount === 1 ? "job" : "jobs"} detected. Standalone agents cannot target VDC Vault directly. Use a Backup Copy Job with encryption enabled to land their backups in Vault — that is the only supported path.`,
-      affectedItems: [],
+      affectedItems: useJobInfo ? jobInfoMatches.map((j) => j.JobName) : [],
     };
   }
 
@@ -195,10 +235,8 @@ function validateAgentStandaloneUnsupported(
 function validateAgentPolicyGatewayRequired(
   data: NormalizedDataset,
 ): ValidationResult {
-  const POLICY_TYPES = new Set(["epagentpolicy", "vmbapipolicytempjob"]);
-
-  const matches = data.jobInfo.filter((job) =>
-    POLICY_TYPES.has(job.JobType.trim().toLowerCase()),
+  const matches = data.jobInfo.filter(
+    (job) => classifyAgentJobType(job.JobType)?.category === "policy",
   );
 
   if (matches.length > 0) {

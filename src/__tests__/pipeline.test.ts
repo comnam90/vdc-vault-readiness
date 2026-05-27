@@ -1,4 +1,13 @@
-import { describe, it, expect } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+  vi,
+} from "vitest";
 import { analyzeHealthcheck } from "@/lib/pipeline";
 import type { HealthcheckRoot } from "@/types/healthcheck";
 import type { ValidationStatus } from "@/types/validation";
@@ -20,7 +29,17 @@ function findRule(
 
 describe("analyzeHealthcheck (full pipeline)", () => {
   describe("with sample healthcheck JSON", () => {
-    const result = analyzeHealthcheck(sampleData as HealthcheckRoot);
+    let result: ReturnType<typeof analyzeHealthcheck>;
+    let warnSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeAll(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      result = analyzeHealthcheck(sampleData as HealthcheckRoot);
+    });
+
+    afterAll(() => {
+      warnSpy.mockRestore();
+    });
 
     it("returns normalized data and validation results", () => {
       expect(result).toHaveProperty("data");
@@ -234,31 +253,46 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       expect(rule.affectedItems).toEqual(["PlainJob"]);
     });
 
-    it("does not warn on managed agent backup jobs (EpAgentBackup)", () => {
-      const input: HealthcheckRoot = {
-        Sections: {
-          jobInfo: {
-            Headers: ["JobName", "JobType", "Encrypted", "RepoName"],
-            Rows: [
-              ["AgentJob1", "EpAgentBackup", "True", "Repo1"],
-              ["RegularJob", "Backup", "True", "Repo2"],
-            ],
+    it("emits deprecation warning for legacy EpAgentBackup but keeps agent rules passing", () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      try {
+        const input: HealthcheckRoot = {
+          Sections: {
+            jobInfo: {
+              Headers: ["JobName", "JobType", "Encrypted", "RepoName"],
+              Rows: [
+                ["AgentJob1", "EpAgentBackup", "True", "Repo1"],
+                ["RegularJob", "Backup", "True", "Repo2"],
+              ],
+            },
           },
-        },
-      };
+        };
 
-      const result = analyzeHealthcheck(input);
-      const standalone = findRule(
-        result.validations,
-        "agent-standalone-unsupported",
-      );
-      const policy = findRule(
-        result.validations,
-        "agent-policy-gateway-required",
-      );
+        const result = analyzeHealthcheck(input);
+        const standalone = findRule(
+          result.validations,
+          "agent-standalone-unsupported",
+        );
+        const policy = findRule(
+          result.validations,
+          "agent-policy-gateway-required",
+        );
 
-      expect(standalone.status).toBe("pass");
-      expect(policy.status).toBe("pass");
+        expect(standalone.status).toBe("pass");
+        expect(policy.status).toBe("pass");
+
+        // EpAgentBackup is a legacy managed-backup string — the rules
+        // remain "pass" (managed backups are fine), but the validator
+        // still emits one deprecation warning per pipeline run because
+        // the legacy string was detected.
+        expect(warnSpy).toHaveBeenCalledTimes(1);
+        expect(warnSpy.mock.calls[0][0]).toContain(
+          "Legacy agent job type strings",
+        );
+      } finally {
+        warnSpy.mockRestore();
+      }
     });
 
     it("detects community license through the full pipeline", () => {
@@ -320,6 +354,130 @@ describe("analyzeHealthcheck (full pipeline)", () => {
 
       expect(statuses.every((s: ValidationStatus) => s === "pass")).toBe(true);
       expect(result.data.dataErrors).toHaveLength(0);
+    });
+  });
+
+  describe("new-format agent job types (end-to-end through the pipeline)", () => {
+    let warnSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    it("flags 'Windows Agent Standalone' rows from jobInfo with named affectedItems", () => {
+      const input: HealthcheckRoot = {
+        Sections: {
+          jobInfo: {
+            Headers: ["JobName", "JobType", "Encrypted", "RepoName"],
+            Rows: [
+              [
+                "Unmanaged-WindowsAgents-VTESTVM03",
+                "Windows Agent Standalone",
+                "True",
+                "Repo1",
+              ],
+            ],
+          },
+        },
+      };
+
+      const result = analyzeHealthcheck(input);
+      const standalone = findRule(
+        result.validations,
+        "agent-standalone-unsupported",
+      );
+
+      expect(standalone.status).toBe("fail");
+      expect(standalone.affectedItems).toEqual([
+        "Unmanaged-WindowsAgents-VTESTVM03",
+      ]);
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it("flags 'Windows Agent Policy' as policy-gateway warning", () => {
+      const input: HealthcheckRoot = {
+        Sections: {
+          jobInfo: {
+            Headers: ["JobName", "JobType", "Encrypted", "RepoName"],
+            Rows: [
+              [
+                "Managed-WindowsAgents-Policy",
+                "Windows Agent Policy",
+                "True",
+                "BackupRepo1",
+              ],
+            ],
+          },
+        },
+      };
+
+      const result = analyzeHealthcheck(input);
+      const policy = findRule(
+        result.validations,
+        "agent-policy-gateway-required",
+      );
+
+      expect(policy.status).toBe("warning");
+      expect(policy.affectedItems).toEqual(["Managed-WindowsAgents-Policy"]);
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it("treats 'Windows Agent Backup' (managed) as a passing job — no warnings, no fails", () => {
+      const input: HealthcheckRoot = {
+        Sections: {
+          jobInfo: {
+            Headers: ["JobName", "JobType", "Encrypted", "RepoName"],
+            Rows: [
+              [
+                "Managed-WindowsAgents-Job",
+                "Windows Agent Backup",
+                "True",
+                "BackupRepo1",
+              ],
+            ],
+          },
+        },
+      };
+
+      const result = analyzeHealthcheck(input);
+      const standalone = findRule(
+        result.validations,
+        "agent-standalone-unsupported",
+      );
+      const policy = findRule(
+        result.validations,
+        "agent-policy-gateway-required",
+      );
+
+      expect(standalone.status).toBe("pass");
+      expect(policy.status).toBe("pass");
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it("flags new-format standalone count from jobSummary even when jobInfo is empty", () => {
+      const input: HealthcheckRoot = {
+        Sections: {
+          jobSummary: {
+            Headers: ["JobType", "Count"],
+            Rows: [["Windows Agent Standalone", "2"]],
+          },
+        },
+      };
+
+      const result = analyzeHealthcheck(input);
+      const standalone = findRule(
+        result.validations,
+        "agent-standalone-unsupported",
+      );
+
+      expect(standalone.status).toBe("fail");
+      expect(standalone.affectedItems).toEqual([]);
+      expect(standalone.message).toContain("2 standalone");
+      expect(warnSpy).not.toHaveBeenCalled();
     });
   });
 });
