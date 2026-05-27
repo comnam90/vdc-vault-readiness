@@ -5,6 +5,8 @@ export interface AgentClassification {
   legacy: boolean;
 }
 
+// "Agent Backup" is intentionally absent — it's an old-format jobSummary
+// aggregate label (not a per-job JobType); per-job rows use EpAgentBackup.
 const LEGACY_EXACT: ReadonlyMap<string, AgentCategory> = new Map([
   ["unmanaged agent", "standalone"],
   ["epagentpolicy", "policy"],
