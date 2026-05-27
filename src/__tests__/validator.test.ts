@@ -1011,69 +1011,75 @@ describe("validateHealthcheck", () => {
     });
 
     it("does not fire for managed agent backup JobTypes", () => {
-      const data: NormalizedDataset = {
-        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
-        securitySummary: [
-          {
-            BackupFileEncryptionEnabled: true,
-            ConfigBackupEncryptionEnabled: true,
-          },
-        ],
-        jobInfo: [
-          {
-            JobName: "Job A",
-            JobType: "Agent Backup",
-            Encrypted: true,
-            RepoName: "Repo1",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-          {
-            JobName: "Job B",
-            JobType: "EpAgentBackup",
-            Encrypted: true,
-            RepoName: "Repo2",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-        ],
-        Licenses: [],
-        jobSummary: [],
-        dataErrors: [],
-        jobSessionSummary: [],
-        sobr: [],
-        capExtents: [],
-        extents: [],
-        archExtents: [],
-        repos: [],
-      };
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-      const results = validateHealthcheck(data);
-      const check = results.find(
-        (r) => r.ruleId === "agent-policy-gateway-required",
-      );
+      try {
+        const data: NormalizedDataset = {
+          backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+          securitySummary: [
+            {
+              BackupFileEncryptionEnabled: true,
+              ConfigBackupEncryptionEnabled: true,
+            },
+          ],
+          jobInfo: [
+            {
+              JobName: "Job A",
+              JobType: "Agent Backup",
+              Encrypted: true,
+              RepoName: "Repo1",
+              RetainDays: null,
+              GfsDetails: null,
+              SourceSizeGB: null,
+              OnDiskGB: null,
+              RetentionScheme: null,
+              CompressionLevel: null,
+              BlockSize: null,
+              GfsEnabled: null,
+              ActiveFullEnabled: null,
+              SyntheticFullEnabled: null,
+              BackupChainType: null,
+              IndexingEnabled: null,
+            },
+            {
+              JobName: "Job B",
+              JobType: "EpAgentBackup",
+              Encrypted: true,
+              RepoName: "Repo2",
+              RetainDays: null,
+              GfsDetails: null,
+              SourceSizeGB: null,
+              OnDiskGB: null,
+              RetentionScheme: null,
+              CompressionLevel: null,
+              BlockSize: null,
+              GfsEnabled: null,
+              ActiveFullEnabled: null,
+              SyntheticFullEnabled: null,
+              BackupChainType: null,
+              IndexingEnabled: null,
+            },
+          ],
+          Licenses: [],
+          jobSummary: [],
+          dataErrors: [],
+          jobSessionSummary: [],
+          sobr: [],
+          capExtents: [],
+          extents: [],
+          archExtents: [],
+          repos: [],
+        };
 
-      expect(check?.status).toBe("pass");
+        const results = validateHealthcheck(data);
+        const check = results.find(
+          (r) => r.ruleId === "agent-policy-gateway-required",
+        );
+
+        expect(check?.status).toBe("pass");
+      } finally {
+        warnSpy.mockRestore();
+      }
     });
 
     it("warns when a job has 'Windows Agent Policy' as JobType (new format)", () => {

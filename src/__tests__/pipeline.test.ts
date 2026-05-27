@@ -1,4 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+  vi,
+} from "vitest";
 import { analyzeHealthcheck } from "@/lib/pipeline";
 import type { HealthcheckRoot } from "@/types/healthcheck";
 import type { ValidationStatus } from "@/types/validation";
@@ -20,7 +29,17 @@ function findRule(
 
 describe("analyzeHealthcheck (full pipeline)", () => {
   describe("with sample healthcheck JSON", () => {
-    const result = analyzeHealthcheck(sampleData as HealthcheckRoot);
+    let result: ReturnType<typeof analyzeHealthcheck>;
+    let warnSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeAll(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      result = analyzeHealthcheck(sampleData as HealthcheckRoot);
+    });
+
+    afterAll(() => {
+      warnSpy.mockRestore();
+    });
 
     it("returns normalized data and validation results", () => {
       expect(result).toHaveProperty("data");
