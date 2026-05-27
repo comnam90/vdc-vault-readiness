@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.1](https://github.com/comnam90/vdc-vault-readiness/compare/v1.3.0...v1.3.1) (2026-05-27)
+
+
+### Bug Fixes
+
+* replace conflated compression ratio with Dedup + Compression rows ([#53](https://github.com/comnam90/vdc-vault-readiness/issues/53)) ([c256dbc](https://github.com/comnam90/vdc-vault-readiness/commit/c256dbc80c65c3976103e381cd1d62fd8f74be9e))
+* **validator:** refine license, encryption, and agent rules ([#51](https://github.com/comnam90/vdc-vault-readiness/issues/51)) ([5db0d8a](https://github.com/comnam90/vdc-vault-readiness/commit/5db0d8ad2dfb835a8692c19f2ca39c8282462d6c))
+* **validator:** support new agent JobType vocabulary from veeam-healthcheck ([#54](https://github.com/comnam90/vdc-vault-readiness/issues/54)) ([e2380a7](https://github.com/comnam90/vdc-vault-readiness/commit/e2380a7a967537c1696414ab436b352be945c008))
+
 ## [1.3.0](https://github.com/comnam90/vdc-vault-readiness/compare/v1.2.3...v1.3.0) (2026-05-25)
 
 
