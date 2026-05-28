@@ -123,8 +123,19 @@ beforeEach(() => {
 });
 
 describe("CalculatorInputs", () => {
+  const defaultControlledProps = {
+    result: null as VmAgentResponse | null,
+    upgradeResult: null as VmAgentResponse | null,
+    growthSeries: null as GrowthSeriesPoint[] | null,
+    error: null as string | null,
+    loading: false,
+    hasConsented: false,
+    onConsentGiven: vi.fn(),
+    onCalculate: vi.fn().mockResolvedValue(undefined),
+  };
+
   it("renders all 5 calculator input labels", () => {
-    render(<CalculatorInputs data={mockData} />);
+    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
     expect(screen.getByText("Source Data")).toBeInTheDocument();
     expect(screen.getByText("Daily Change Rate")).toBeInTheDocument();
@@ -148,7 +159,7 @@ describe("CalculatorInputs", () => {
       retentionDistribution: [],
     });
 
-    render(<CalculatorInputs data={mockData} />);
+    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
     // Source Data: 2 decimal places
     expect(screen.getByText("123.46 TB")).toBeInTheDocument();
@@ -184,7 +195,7 @@ describe("CalculatorInputs", () => {
       retentionDistribution: [],
     });
 
-    render(<CalculatorInputs data={mockData} />);
+    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
     const naElements = screen.getAllByText("N/A");
     expect(naElements.length).toBeGreaterThan(0); // Should appear multiple times
@@ -193,7 +204,7 @@ describe("CalculatorInputs", () => {
   });
 
   it("renders the advanced calculator link correctly", () => {
-    render(<CalculatorInputs data={mockData} />);
+    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
     const link = screen.getByRole("link", {
       name: /advanced calculator/i,
@@ -221,7 +232,9 @@ describe("CalculatorInputs", () => {
       retentionDistribution: [],
     });
 
-    const { container } = render(<CalculatorInputs data={mockData} />);
+    const { container } = render(
+      <CalculatorInputs data={mockData} {...defaultControlledProps} />,
+    );
     expect(container).toBeInTheDocument();
   });
 
@@ -240,7 +253,7 @@ describe("CalculatorInputs", () => {
       retentionDistribution: [],
     });
 
-    render(<CalculatorInputs data={mockData} />);
+    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
     expect(screen.getAllByText("30 days").length).toBeGreaterThan(0);
     expect(screen.getByText("(current: 14 days)")).toBeInTheDocument();
@@ -261,7 +274,7 @@ describe("CalculatorInputs", () => {
       retentionDistribution: [],
     });
 
-    render(<CalculatorInputs data={mockData} />);
+    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
     expect(screen.getByText("45 days")).toBeInTheDocument();
     expect(screen.queryByText(/current:/)).not.toBeInTheDocument();
@@ -282,7 +295,7 @@ describe("CalculatorInputs", () => {
       retentionDistribution: [],
     });
 
-    render(<CalculatorInputs data={mockData} />);
+    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
     expect(screen.queryByText(/current:/)).not.toBeInTheDocument();
   });
@@ -302,335 +315,160 @@ describe("CalculatorInputs", () => {
       retentionDistribution: [],
     });
     const excluded = new Set(["Job B"]);
-    render(<CalculatorInputs data={mockData} excludedJobNames={excluded} />);
+    render(
+      <CalculatorInputs
+        data={mockData}
+        excludedJobNames={excluded}
+        {...defaultControlledProps}
+      />,
+    );
     // Only Job A: 1024 GB = 1 TB
     expect(screen.getByText("1.00 TB")).toBeInTheDocument();
   });
 
   it("shows Get Sizing Estimate button", () => {
-    render(<CalculatorInputs data={mockData} />);
+    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
     expect(
       screen.getByRole("button", { name: /get sizing estimate/i }),
     ).toBeInTheDocument();
   });
 
   it("opens consent dialog when button clicked (no API call yet)", () => {
-    render(<CalculatorInputs data={mockData} />);
+    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
     fireEvent.click(
       screen.getByRole("button", { name: /get sizing estimate/i }),
     );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(vi.mocked(callVmAgentApi)).not.toHaveBeenCalled();
+    expect(defaultControlledProps.onCalculate).not.toHaveBeenCalled();
   });
 
-  it("does not call API when Decline is clicked", () => {
-    render(<CalculatorInputs data={mockData} />);
-    fireEvent.click(
-      screen.getByRole("button", { name: /get sizing estimate/i }),
+  it("shows sizing results when result prop is provided", () => {
+    render(
+      <CalculatorInputs
+        data={mockData}
+        {...defaultControlledProps}
+        result={MOCK_API_RESULT}
+      />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /decline/i }));
-    expect(vi.mocked(callVmAgentApi)).not.toHaveBeenCalled();
+    expect(screen.getByText(/12\.50 TB/)).toBeInTheDocument();
   });
 
-  it("shows sizing results after accepting consent dialog", async () => {
-    vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
-    render(<CalculatorInputs data={mockData} />);
-    fireEvent.click(
-      screen.getByRole("button", { name: /get sizing estimate/i }),
+  it("shows error message when error prop is provided", () => {
+    render(
+      <CalculatorInputs
+        data={mockData}
+        {...defaultControlledProps}
+        error="Could not retrieve sizing estimate. Check your connection and try again."
+      />,
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: /accept & calculate/i }),
-    );
-    expect(await screen.findByText(/12.50 TB/)).toBeInTheDocument();
-  });
-
-  it("shows error message on API failure after accepting consent", async () => {
-    vi.mocked(callVmAgentApi).mockRejectedValueOnce(new Error("Network error"));
-    render(<CalculatorInputs data={mockData} />);
-    fireEvent.click(
-      screen.getByRole("button", { name: /get sizing estimate/i }),
-    );
-    fireEvent.click(
-      screen.getByRole("button", { name: /accept & calculate/i }),
-    );
-    expect(
-      await screen.findByText(/could not retrieve sizing/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/could not retrieve sizing/i)).toBeInTheDocument();
   });
 
   describe("VBR upgrade savings comparison", () => {
-    it("renders inline upgrade annotation when VBR 12 + no SOBRs + API succeeds", async () => {
-      vi.mocked(callVmAgentApi)
-        .mockResolvedValueOnce(MOCK_V12_RESULT)
-        .mockResolvedValueOnce(MOCK_V13_RESULT);
-
-      render(<CalculatorInputs data={mockDataVbr12} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
+    it("renders inline upgrade annotation when result and upgradeResult are provided for VBR 12", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr12}
+          {...defaultControlledProps}
+          result={MOCK_V12_RESULT}
+          upgradeResult={MOCK_V13_RESULT}
+        />,
       );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
-      // Inline hero annotation: "Upgrade to VBR 13 could reduce this to 12.50 TB (saving 2.50 TB)"
       expect(
-        await screen.findByText(/upgrade to VBR 13 could reduce this to/i),
+        screen.getByText(/upgrade to VBR 13 could reduce this to/i),
       ).toBeInTheDocument();
       expect(screen.getByText(/saving 2\.50 TB/i)).toBeInTheDocument();
     });
 
-    it("makes two API calls for VBR 12 + no SOBRs", async () => {
-      vi.mocked(callVmAgentApi)
-        .mockResolvedValueOnce(MOCK_V12_RESULT)
-        .mockResolvedValueOnce(MOCK_V13_RESULT);
-
-      render(<CalculatorInputs data={mockDataVbr12} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
+    it("does NOT render UpgradeSavings for VBR 13 (upgradeResult is null)", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...defaultControlledProps}
+          result={MOCK_API_RESULT}
+          upgradeResult={null}
+        />,
       );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
-      await screen.findAllByText(/15\.00 TB/);
-      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(2);
-    });
-
-    it("does NOT render UpgradeSavings for VBR 13", async () => {
-      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
-
-      render(<CalculatorInputs data={mockDataVbr13} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
-      );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
-      await screen.findByText(/12\.50 TB/);
-      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(1);
+      expect(screen.getByText(/12\.50 TB/)).toBeInTheDocument();
       expect(screen.queryByText(/VBR 12 to VBR 13/i)).not.toBeInTheDocument();
     });
 
-    it("makes two API calls and renders SOBR-aware copy for VBR 12 with SOBRs", async () => {
-      vi.mocked(callVmAgentApi)
-        .mockResolvedValueOnce(MOCK_V12_RESULT)
-        .mockResolvedValueOnce(MOCK_V13_RESULT);
-
-      render(<CalculatorInputs data={mockDataVbr12WithSobr} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
+    it("renders SOBR-aware upgrade copy for VBR 12 with SOBRs", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr12WithSobr}
+          {...defaultControlledProps}
+          result={MOCK_V12_RESULT}
+          upgradeResult={MOCK_V13_RESULT}
+        />,
       );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
-      // Hero shows the actionable SOBR copy with savings math (15 - 12.5 = 2.50 TB).
-      expect(await screen.findByText(/Potentially save/i)).toBeInTheDocument();
+      expect(screen.getByText(/Potentially save/i)).toBeInTheDocument();
       expect(
         screen.getByText(
           /by upgrading to VBR 13 and transitioning SOBRs to direct Backup Copy jobs\./i,
         ),
       ).toBeInTheDocument();
-      // Two parallel calls now fire under SOBR (v12 + v13 comparison).
-      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(2);
-      // Standard non-SOBR copy is suppressed.
       expect(
         screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
       ).not.toBeInTheDocument();
-      // Legacy static disclaimer is removed.
+    });
+
+    it("does NOT render legacy SOBR-blocks-upgrade note for VBR 13", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...defaultControlledProps}
+          result={MOCK_API_RESULT}
+        />,
+      );
       expect(
         screen.queryByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
       ).not.toBeInTheDocument();
-    });
-
-    it("does NOT render any upgrade copy for VBR 12 without SOBRs when SOBR copy would be wrong", async () => {
-      vi.mocked(callVmAgentApi)
-        .mockResolvedValueOnce(MOCK_V12_RESULT)
-        .mockResolvedValueOnce(MOCK_V13_RESULT);
-
-      render(<CalculatorInputs data={mockDataVbr12} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
-      );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
-      await screen.findByText(/saving 2\.50 TB/i);
-      // Standard, not SOBR-aware.
-      expect(screen.queryByText(/Potentially save/i)).not.toBeInTheDocument();
-      expect(
-        screen.queryByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
-      ).not.toBeInTheDocument();
-    });
-
-    it("does NOT render the legacy SOBR-blocks-upgrade note for VBR 13", async () => {
-      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
-
-      render(<CalculatorInputs data={mockDataVbr13} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
-      );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
-      await screen.findByText(/12\.50 TB/);
-      expect(
-        screen.queryByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
-      ).not.toBeInTheDocument();
-    });
-
-    it("resets upgrade result when re-calculating", async () => {
-      vi.mocked(callVmAgentApi)
-        .mockResolvedValueOnce(MOCK_V12_RESULT)
-        .mockResolvedValueOnce(MOCK_V13_RESULT)
-        .mockResolvedValueOnce(MOCK_V12_RESULT)
-        .mockResolvedValueOnce(MOCK_V13_RESULT);
-
-      render(<CalculatorInputs data={mockDataVbr12} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
-      );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
-      await screen.findByText(/saving 2\.50 TB/i);
-
-      // Re-calculate (button text changes after first result)
-      fireEvent.click(screen.getByRole("button", { name: /re-calculate/i }));
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
-      await screen.findByText(/saving 2\.50 TB/i);
-      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(4);
     });
   });
 
-  describe("growth series integration", () => {
-    it("calls generateGrowthSeries when the user accepts the consent dialog", async () => {
-      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
-
-      render(<CalculatorInputs data={mockDataVbr13} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
+  describe("growth series display", () => {
+    it("renders the growth chart card when growthSeries prop is provided", () => {
+      const growthSeries = [
+        {
+          name: "Year 1",
+          daily: 1,
+          weekly: 0.5,
+          monthly: 0.5,
+          yearly: 0.25,
+          immutability: 0.1,
+          total: 2.35,
+        },
+      ];
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...defaultControlledProps}
+          result={MOCK_API_RESULT}
+          growthSeries={growthSeries}
+        />,
       );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
-      await screen.findByText(/12\.50 TB/);
-      expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledTimes(1);
-    });
-
-    it("does NOT call generateGrowthSeries on settings change alone", async () => {
-      const { __resetSettingsStoreForTests } =
-        await import("@/hooks/use-settings");
-      window.localStorage.clear();
-      __resetSettingsStoreForTests();
-
-      const { rerender } = render(<CalculatorInputs data={mockDataVbr13} />);
-      // Render again to simulate a re-render from any settings tweak before
-      // the user clicks the button.
-      rerender(<CalculatorInputs data={mockDataVbr13} />);
-
-      expect(vi.mocked(generateGrowthSeries)).not.toHaveBeenCalled();
-      expect(vi.mocked(callVmAgentApi)).not.toHaveBeenCalled();
-    });
-
-    it("fires the sizing call and the growth series concurrently (Promise.all)", async () => {
-      let resolveSizing!: (v: VmAgentResponse) => void;
-      let resolveGrowth!: (v: GrowthSeriesPoint[]) => void;
-      vi.mocked(callVmAgentApi).mockImplementationOnce(
-        () =>
-          new Promise<VmAgentResponse>((resolve) => {
-            resolveSizing = resolve;
-          }),
-      );
-      vi.mocked(generateGrowthSeries).mockImplementationOnce(
-        () =>
-          new Promise<GrowthSeriesPoint[]>((resolve) => {
-            resolveGrowth = resolve;
-          }),
-      );
-
-      render(<CalculatorInputs data={mockDataVbr13} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
-      );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
-      // Both calls must be in flight before either resolves.
-      await Promise.resolve();
-      await Promise.resolve();
-      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(1);
-      expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledTimes(1);
-
-      resolveSizing(MOCK_API_RESULT);
-      resolveGrowth(SAMPLE_GROWTH);
-
-      await screen.findByText(/12\.50 TB/);
-    });
-
-    it("fires v12 sizing + v13 sizing + growth series concurrently for VBR 12 + no SOBR", async () => {
-      vi.mocked(callVmAgentApi)
-        .mockResolvedValueOnce(MOCK_V12_RESULT)
-        .mockResolvedValueOnce(MOCK_V13_RESULT);
-
-      render(<CalculatorInputs data={mockDataVbr12} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
-      );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
-      await screen.findByText(/saving 2\.50 TB/i);
-      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(2);
-      expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledTimes(1);
-    });
-
-    it("renders the growth chart card after a successful estimate", async () => {
-      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
-
-      render(<CalculatorInputs data={mockDataVbr13} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
-      );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
-      await screen.findByText(/12\.50 TB/);
       expect(screen.getByText(/projected storage growth/i)).toBeInTheDocument();
     });
 
-    it("propagates a growth-series rejection through the existing error path", async () => {
-      vi.mocked(callVmAgentApi).mockResolvedValueOnce(MOCK_API_RESULT);
-      vi.mocked(generateGrowthSeries).mockRejectedValueOnce(new Error("boom"));
-
-      render(<CalculatorInputs data={mockDataVbr13} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: /get sizing estimate/i }),
+    it("does not render growth chart when growthSeries prop is null", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...defaultControlledProps}
+          result={MOCK_API_RESULT}
+          growthSeries={null}
+        />,
       );
-      fireEvent.click(
-        screen.getByRole("button", { name: /accept & calculate/i }),
-      );
-
       expect(
-        await screen.findByText(/could not retrieve sizing/i),
-      ).toBeInTheDocument();
+        screen.queryByText(/projected storage growth/i),
+      ).not.toBeInTheDocument();
     });
   });
 
   describe("active settings indicators", () => {
     it("renders below the metric grid (after Extended Retention)", () => {
-      render(<CalculatorInputs data={mockData} />);
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
       const indicators = screen.getByTestId("settings-indicators");
       const extendedRetentionLabel = screen.getByText(/extended retention/i);
@@ -647,7 +485,7 @@ describe("CalculatorInputs", () => {
       window.localStorage.clear();
       __resetSettingsStoreForTests();
 
-      render(<CalculatorInputs data={mockData} />);
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
       const indicators = screen.getByTestId("settings-indicators");
       expect(indicators).toHaveTextContent(/target: azure/i);
@@ -670,7 +508,7 @@ describe("CalculatorInputs", () => {
       );
       __resetSettingsStoreForTests();
 
-      render(<CalculatorInputs data={mockData} />);
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
       const indicators = screen.getByTestId("settings-indicators");
       expect(indicators).toHaveTextContent(/target: aws/i);
@@ -694,7 +532,7 @@ describe("CalculatorInputs", () => {
       );
       __resetSettingsStoreForTests();
 
-      render(<CalculatorInputs data={mockData} />);
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
       const indicators = screen.getByTestId("settings-indicators");
       expect(indicators).toHaveTextContent(/retention cap: 2y 6m/i);
@@ -716,7 +554,7 @@ describe("CalculatorInputs", () => {
       );
       __resetSettingsStoreForTests();
 
-      render(<CalculatorInputs data={mockData} />);
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
       const indicators = screen.getByTestId("settings-indicators");
       expect(indicators).toHaveTextContent(/retention cap: 3m/i);
@@ -737,7 +575,7 @@ describe("CalculatorInputs", () => {
         ],
       });
 
-      render(<CalculatorInputs data={mockData} />);
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
       expect(
         screen.getByRole("button", {
@@ -752,7 +590,7 @@ describe("CalculatorInputs", () => {
         sourceDataBreakdown: [],
       });
 
-      render(<CalculatorInputs data={mockData} />);
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
       expect(
         screen.queryByRole("button", {
@@ -767,7 +605,7 @@ describe("CalculatorInputs", () => {
         gfsDistribution: [{ policy: "4W | 12M | 1Y", count: 3 }],
       });
 
-      render(<CalculatorInputs data={mockData} />);
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
       expect(
         screen.getByRole("button", {
@@ -782,7 +620,7 @@ describe("CalculatorInputs", () => {
         gfsDistribution: [],
       });
 
-      render(<CalculatorInputs data={mockData} />);
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
       expect(
         screen.queryByRole("button", {
@@ -802,7 +640,7 @@ describe("CalculatorInputs", () => {
         ],
       });
 
-      render(<CalculatorInputs data={mockData} />);
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
       const trigger = screen.getByRole("button", {
         name: /show gfs distribution breakdown/i,
@@ -836,7 +674,7 @@ describe("CalculatorInputs", () => {
         ],
       });
 
-      render(<CalculatorInputs data={mockData} />);
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
       expect(
         screen.getByRole("button", {
@@ -851,13 +689,189 @@ describe("CalculatorInputs", () => {
         retentionDistribution: [],
       });
 
-      render(<CalculatorInputs data={mockData} />);
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
 
       expect(
         screen.queryByRole("button", {
           name: /show retention distribution breakdown/i,
         }),
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("controlled consent behavior (new prop interface)", () => {
+    const onConsentGiven = vi.fn();
+    const onCalculate = vi.fn().mockResolvedValue(undefined);
+
+    const baseControlledProps = {
+      result: null as VmAgentResponse | null,
+      upgradeResult: null as VmAgentResponse | null,
+      growthSeries: null as GrowthSeriesPoint[] | null,
+      error: null as string | null,
+      loading: false,
+      hasConsented: false,
+      onConsentGiven,
+      onCalculate,
+    };
+
+    beforeEach(() => {
+      onConsentGiven.mockClear();
+      onCalculate.mockClear();
+    });
+
+    it("shows 'Get Sizing Estimate' when result is null", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...baseControlledProps}
+          result={null}
+        />,
+      );
+      expect(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("shows 'Re-calculate' when result is non-null", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...baseControlledProps}
+          result={MOCK_API_RESULT}
+        />,
+      );
+      expect(
+        screen.getByRole("button", { name: /re-calculate/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("opens consent dialog when hasConsented is false and button is clicked", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...baseControlledProps}
+          hasConsented={false}
+        />,
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+      expect(onCalculate).not.toHaveBeenCalled();
+    });
+
+    it("calls onConsentGiven and onCalculate when consent dialog is accepted", async () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...baseControlledProps}
+          hasConsented={false}
+        />,
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /accept & calculate/i }),
+      );
+      expect(onConsentGiven).toHaveBeenCalledTimes(1);
+      expect(onCalculate).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not call onCalculate when consent dialog is declined", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...baseControlledProps}
+          hasConsented={false}
+        />,
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: /decline/i }));
+      expect(onCalculate).not.toHaveBeenCalled();
+      expect(onConsentGiven).not.toHaveBeenCalled();
+    });
+
+    it("calls onCalculate directly without dialog when hasConsented is true", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...baseControlledProps}
+          result={MOCK_API_RESULT}
+          hasConsented={true}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /re-calculate/i }));
+      expect(onCalculate).toHaveBeenCalledTimes(1);
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("does not call onConsentGiven when already consented and Re-calculate is clicked", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...baseControlledProps}
+          result={MOCK_API_RESULT}
+          hasConsented={true}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /re-calculate/i }));
+      expect(onConsentGiven).not.toHaveBeenCalled();
+    });
+
+    it("shows SizingResults when result prop is non-null", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...baseControlledProps}
+          result={MOCK_API_RESULT}
+        />,
+      );
+      expect(screen.getByText(/12\.50 TB/)).toBeInTheDocument();
+    });
+
+    it("shows error alert when error prop is non-null", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...baseControlledProps}
+          error="Could not retrieve sizing estimate. Check your connection and try again."
+        />,
+      );
+      expect(
+        screen.getByText(/could not retrieve sizing/i),
+      ).toBeInTheDocument();
+    });
+
+    it("shows 'Calculating…' and disables button when loading is true", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...baseControlledProps}
+          loading={true}
+        />,
+      );
+      expect(screen.getByText(/calculating/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /calculating/i }),
+      ).toBeDisabled();
+    });
+
+    it("renders VBR 12 upgrade annotation when upgradeResult is non-null", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr12}
+          {...baseControlledProps}
+          result={MOCK_V12_RESULT}
+          upgradeResult={MOCK_V13_RESULT}
+        />,
+      );
+      expect(
+        screen.getByText(/upgrade to VBR 13 could reduce this to/i),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/saving 2\.50 TB/i)).toBeInTheDocument();
     });
   });
 });

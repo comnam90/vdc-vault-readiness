@@ -56,7 +56,7 @@ export function SizingResults({
         immutabilitySavingsGB={immutabilitySavingsGB}
         sobrBlocksUpgrade={sobrBlocksUpgrade}
       />
-      {growthSeries !== undefined && (
+      {growthSeries != null && (
         <GrowthChart
           data={growthSeries}
           greenfield={greenfieldSimulation}
