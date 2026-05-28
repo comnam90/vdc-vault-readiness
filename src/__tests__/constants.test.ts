@@ -3,6 +3,7 @@ import {
   MINIMUM_VBR_VERSION,
   MINIMUM_RETENTION_DAYS,
   MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS,
+  DEFAULT_IMMUTABILITY_DAYS,
   EXCLUDED_JOB_TYPES,
   PIPELINE_STEPS,
 } from "@/lib/constants";
@@ -18,6 +19,10 @@ describe("constants", () => {
 
   it("MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS is 30", () => {
     expect(MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS).toBe(30);
+  });
+
+  it("DEFAULT_IMMUTABILITY_DAYS is 30", () => {
+    expect(DEFAULT_IMMUTABILITY_DAYS).toBe(30);
   });
 
   it("EXCLUDED_JOB_TYPES contains Replica", () => {

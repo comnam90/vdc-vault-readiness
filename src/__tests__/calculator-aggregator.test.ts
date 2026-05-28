@@ -10,6 +10,7 @@ import {
   buildCalculatorSummary,
 } from "@/lib/calculator-aggregator";
 import { makeJob, makeSession, makeSettings } from "./fixtures";
+import { DEFAULT_IMMUTABILITY_DAYS } from "@/lib/constants";
 
 describe("calculateTotalSourceDataTB", () => {
   it("sums SourceSizeGB values and converts to TB (divide by 1024)", () => {
@@ -423,12 +424,12 @@ describe("buildCalculatorSummary", () => {
     expect(result.gfsYearly).toBeNull();
   });
 
-  it("always sets immutabilityDays to 30", () => {
+  it("sets immutabilityDays to DEFAULT_IMMUTABILITY_DAYS", () => {
     const result = buildCalculatorSummary(
       [makeJob({ RetainDays: 365 })],
       [makeSession({ MaxDataSize: 100 })],
     );
-    expect(result.immutabilityDays).toBe(30);
+    expect(result.immutabilityDays).toBe(DEFAULT_IMMUTABILITY_DAYS);
   });
 
   describe("buildCalculatorSummary retention floor", () => {
