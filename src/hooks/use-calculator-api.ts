@@ -62,6 +62,7 @@ export function useCalculatorApi({
     setUpgradeResult(null);
     setGrowthSeries(null);
     setError(null);
+    setLoading(false);
   }, [inputKey]);
 
   const grantConsent = useCallback(() => {
@@ -70,7 +71,8 @@ export function useCalculatorApi({
 
   const calculate = useCallback(async () => {
     const vbrVersion = data.backupServer?.[0]?.Version ?? "";
-    const isVbr12 = !isVersionAtLeast(vbrVersion, "13.0.0");
+    const isVbr12 =
+      vbrVersion !== "" && !isVersionAtLeast(vbrVersion, "13.0.0");
     const activeJobCount = data.jobInfo.filter(
       (j) => !excludedJobNames.has(j.JobName),
     ).length;
@@ -137,7 +139,9 @@ export function useCalculatorApi({
         );
       }
     } finally {
-      setLoading(false);
+      if (!isStale()) {
+        setLoading(false);
+      }
     }
   }, [data, excludedJobNames, settings]);
 

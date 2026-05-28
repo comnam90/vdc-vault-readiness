@@ -104,6 +104,13 @@ const mockDataVbr12 = {
   sobr: [],
 } as unknown as NormalizedDataset;
 
+const mockDataNoServer = {
+  jobInfo: [],
+  jobSessionSummary: [],
+  backupServer: [],
+  sobr: [],
+} as unknown as NormalizedDataset;
+
 const baseProps: UseCalculatorApiOptions = {
   data: mockDataVbr13,
   excludedJobNames: new Set<string>(),
@@ -306,6 +313,41 @@ describe("useCalculatorApi", () => {
 
       // Stale result should NOT have been written
       expect(result.current.result).toBeNull();
+      // loading must also be cleared — stale finally cannot leave it stuck
+      expect(result.current.loading).toBe(false);
+    });
+
+    it("clears loading immediately when inputs change mid-flight (no re-calculate)", async () => {
+      let resolveApi!: (v: VmAgentResponse) => void;
+      vi.mocked(callVmAgentApi).mockImplementationOnce(
+        () =>
+          new Promise<VmAgentResponse>((resolve) => {
+            resolveApi = resolve;
+          }),
+      );
+
+      const { result, rerender } = renderHook(
+        (props: UseCalculatorApiOptions) => useCalculatorApi(props),
+        { initialProps: baseProps },
+      );
+
+      act(() => {
+        void result.current.calculate();
+      });
+      expect(result.current.loading).toBe(true);
+
+      // Change inputs without calling calculate() again
+      act(() => {
+        rerender({ ...baseProps, excludedJobNames: new Set(["Job A"]) });
+      });
+
+      // Invalidation effect must clear loading without waiting for the old request
+      expect(result.current.loading).toBe(false);
+
+      // Resolve the stale request so it doesn't leak
+      await act(async () => {
+        resolveApi(MOCK_API_RESULT);
+      });
     });
 
     it("does NOT clear hasConsented when inputs change", async () => {
@@ -373,6 +415,19 @@ describe("useCalculatorApi", () => {
         DEFAULT_SETTINGS,
       );
       expect(result.current.result).toEqual(MOCK_API_RESULT);
+      expect(result.current.upgradeResult).toBeNull();
+    });
+
+    it("calls callVmAgentApi once when backupServer is empty (unknown version, not VBR 12)", async () => {
+      const { result } = renderHook(() =>
+        useCalculatorApi({ ...baseProps, data: mockDataNoServer }),
+      );
+
+      await act(async () => {
+        await result.current.calculate();
+      });
+
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(1);
       expect(result.current.upgradeResult).toBeNull();
     });
 
