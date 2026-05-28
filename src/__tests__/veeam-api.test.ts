@@ -68,6 +68,16 @@ describe("buildVmAgentRequest", () => {
     expect(req.productVersion).toBe(0);
   });
 
+  it("reads immutablePerfDays and immutableCapDays from summary.immutabilityDays", () => {
+    const customSummary: CalculatorSummary = {
+      ...MOCK_SUMMARY,
+      immutabilityDays: 14,
+    };
+    const req = buildVmAgentRequest(customSummary, 10, "13.0.1.1071");
+    expect(req.immutablePerfDays).toBe(14);
+    expect(req.immutableCapDays).toBe(14);
+  });
+
   it("sets productVersion=0 for VBR 13+", () => {
     const req = buildVmAgentRequest(MOCK_SUMMARY, 10, "13.0.1.1071");
     expect(req.productVersion).toBe(0);
