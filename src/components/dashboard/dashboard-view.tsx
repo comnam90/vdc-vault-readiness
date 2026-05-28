@@ -10,6 +10,8 @@ import {
   getPassingValidations,
 } from "@/lib/validation-selectors";
 import { isVersionAtLeast } from "@/lib/version-compare";
+import { useSettings } from "@/hooks/use-settings";
+import { useCalculatorApi } from "@/hooks/use-calculator-api";
 import {
   Card,
   CardContent,
@@ -48,6 +50,17 @@ export function DashboardView({
   const [excludedJobNames, setExcludedJobNames] = useState<Set<string>>(
     new Set(),
   );
+  const { settings } = useSettings();
+  const {
+    result: calcResult,
+    upgradeResult: calcUpgradeResult,
+    growthSeries: calcGrowthSeries,
+    error: calcError,
+    loading: calcLoading,
+    hasConsented,
+    grantConsent,
+    calculate,
+  } = useCalculatorApi({ data, excludedJobNames, settings });
   const enrichedJobs = useMemo(
     () => enrichJobs(data.jobInfo, data.jobSessionSummary),
     [data.jobInfo, data.jobSessionSummary],
@@ -233,7 +246,18 @@ export function DashboardView({
           value="sizing"
           className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
         >
-          <CalculatorInputs data={data} excludedJobNames={excludedJobNames} />
+          <CalculatorInputs
+            data={data}
+            excludedJobNames={excludedJobNames}
+            result={calcResult}
+            upgradeResult={calcUpgradeResult}
+            growthSeries={calcGrowthSeries}
+            error={calcError}
+            loading={calcLoading}
+            hasConsented={hasConsented}
+            onConsentGiven={grantConsent}
+            onCalculate={calculate}
+          />
         </TabsContent>
 
         <TabsContent
