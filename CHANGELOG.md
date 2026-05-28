@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.2](https://github.com/comnam90/vdc-vault-readiness/compare/v1.3.1...v1.3.2) (2026-05-28)
+
+
+### Bug Fixes
+
+* **calculator:** make immutability period editable inline ([#57](https://github.com/comnam90/vdc-vault-readiness/issues/57)) ([12349e7](https://github.com/comnam90/vdc-vault-readiness/commit/12349e783ee93b72e86a4dc3f55e8529063d73f1))
+* **sizing:** persist calculator results across tab navigation ([#55](https://github.com/comnam90/vdc-vault-readiness/issues/55)) ([4bdc213](https://github.com/comnam90/vdc-vault-readiness/commit/4bdc213c6cc10d9d324a3104149ec0470b4f8d4f))
+
 ## [1.3.1](https://github.com/comnam90/vdc-vault-readiness/compare/v1.3.0...v1.3.1) (2026-05-27)
 
 
