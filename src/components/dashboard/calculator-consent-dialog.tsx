@@ -141,9 +141,12 @@ export function CalculatorConsentDialog({
                 <DataRow label="Annual Growth Rate" value="5%" />
                 <DataRow
                   label="Immutability (performance tier)"
-                  value="30 days"
+                  value={formatDays(summary.immutabilityDays)}
                 />
-                <DataRow label="Immutability (capacity tier)" value="30 days" />
+                <DataRow
+                  label="Immutability (capacity tier)"
+                  value={formatDays(summary.immutabilityDays)}
+                />
                 <DataRow label="Block Cloning" value="Enabled" />
                 <DataRow label="Object Storage" value="Enabled" />
                 <DataRow label="Archive Tier" value="Disabled" />

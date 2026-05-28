@@ -486,7 +486,7 @@ export function CalculatorInputs({
           void onCalculate(immutabilityDays);
         }}
         onDecline={() => {}}
-        summary={summary}
+        summary={{ ...summary, immutabilityDays }}
         activeJobCount={activeJobCount}
         vbrVersion={vbrVersion}
       />
