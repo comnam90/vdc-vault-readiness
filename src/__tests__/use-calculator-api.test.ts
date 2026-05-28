@@ -512,5 +512,17 @@ describe("useCalculatorApi", () => {
         DEFAULT_SETTINGS,
       );
     });
+
+    it("forwards immutabilityDays to generateGrowthSeries", async () => {
+      const { result } = renderHook(() => useCalculatorApi(baseProps));
+
+      await act(async () => {
+        await result.current.calculate(14);
+      });
+
+      expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledWith(
+        expect.objectContaining({ immutabilityDays: 14 }),
+      );
+    });
   });
 });

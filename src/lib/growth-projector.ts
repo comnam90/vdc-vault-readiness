@@ -30,6 +30,7 @@ export interface GenerateGrowthSeriesArgs {
   jobCount: number;
   vbrVersion: string;
   productVersionOverride?: number;
+  immutabilityDays?: number;
 }
 
 /**
@@ -108,6 +109,7 @@ export async function generateGrowthSeries(
     jobCount,
     vbrVersion,
     productVersionOverride,
+    immutabilityDays,
   } = args;
 
   const capYears = settings.limitCalculationYears ?? 0;
@@ -143,8 +145,12 @@ export async function generateGrowthSeries(
       excludedJobNames,
       tempSettings,
     );
+    const patchedSummary =
+      immutabilityDays !== undefined
+        ? { ...summary, immutabilityDays }
+        : summary;
     const response = await callVmAgentApi(
-      summary,
+      patchedSummary,
       jobCount,
       vbrVersion,
       productVersionOverride,

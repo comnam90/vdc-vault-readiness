@@ -91,6 +91,7 @@ export function useCalculatorApi({
         settings,
         jobCount: activeJobCount,
         vbrVersion,
+        immutabilityDays,
       };
 
       const capturedId = ++requestIdRef.current;
