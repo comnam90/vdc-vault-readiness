@@ -176,7 +176,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
 
       expect(result.current.result).toEqual(MOCK_API_RESULT);
@@ -193,7 +193,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
 
       expect(result.current.growthSeries).toEqual(SAMPLE_GROWTH);
@@ -212,7 +212,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
       expect(result.current.result).not.toBeNull();
 
@@ -230,7 +230,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
       expect(result.current.growthSeries).not.toBeNull();
 
@@ -248,7 +248,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
       expect(result.current.result).not.toBeNull();
 
@@ -271,7 +271,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
       expect(result.current.error).not.toBeNull();
 
@@ -298,7 +298,7 @@ describe("useCalculatorApi", () => {
 
       // Start calculate but don't await it yet
       act(() => {
-        void result.current.calculate();
+        void result.current.calculate(30);
       });
 
       // Change inputs while calculate is in flight — this should cancel the in-flight call
@@ -332,7 +332,7 @@ describe("useCalculatorApi", () => {
       );
 
       act(() => {
-        void result.current.calculate();
+        void result.current.calculate(30);
       });
       expect(result.current.loading).toBe(true);
 
@@ -384,7 +384,7 @@ describe("useCalculatorApi", () => {
 
       let calculatePromise!: Promise<void>;
       act(() => {
-        calculatePromise = result.current.calculate();
+        calculatePromise = result.current.calculate(30);
       });
 
       expect(result.current.loading).toBe(true);
@@ -403,12 +403,12 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
 
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(1);
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
-        DEFAULT_SUMMARY,
+        { ...DEFAULT_SUMMARY, immutabilityDays: 30 },
         0,
         "13.0.1.1071",
         undefined,
@@ -424,7 +424,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
 
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(1);
@@ -441,7 +441,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
 
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(2);
@@ -455,7 +455,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
 
       expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledTimes(1);
@@ -468,7 +468,7 @@ describe("useCalculatorApi", () => {
       const { result } = renderHook(() => useCalculatorApi(baseProps));
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
 
       expect(result.current.result).toBeNull();
@@ -485,16 +485,44 @@ describe("useCalculatorApi", () => {
       const { result } = renderHook(() => useCalculatorApi(baseProps));
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
       expect(result.current.error).not.toBeNull();
 
       await act(async () => {
-        await result.current.calculate();
+        await result.current.calculate(30);
       });
 
       expect(result.current.error).toBeNull();
       expect(result.current.result).toEqual(MOCK_API_RESULT);
+    });
+
+    it("patches summary with the provided immutabilityDays before calling callVmAgentApi", async () => {
+      const { result } = renderHook(() => useCalculatorApi(baseProps));
+
+      await act(async () => {
+        await result.current.calculate(14);
+      });
+
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
+        { ...DEFAULT_SUMMARY, immutabilityDays: 14 },
+        expect.any(Number),
+        expect.any(String),
+        undefined,
+        DEFAULT_SETTINGS,
+      );
+    });
+
+    it("forwards immutabilityDays to generateGrowthSeries", async () => {
+      const { result } = renderHook(() => useCalculatorApi(baseProps));
+
+      await act(async () => {
+        await result.current.calculate(14);
+      });
+
+      expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledWith(
+        expect.objectContaining({ immutabilityDays: 14 }),
+      );
     });
   });
 });

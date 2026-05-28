@@ -1,7 +1,7 @@
 import type { SafeJob, SafeJobSession } from "@/types/domain";
 import type { CalculatorSummary } from "@/types/calculator";
 import { DEFAULT_SETTINGS, type GlobalSettings } from "@/types/settings";
-import { MINIMUM_RETENTION_DAYS } from "./constants";
+import { MINIMUM_RETENTION_DAYS, DEFAULT_IMMUTABILITY_DAYS } from "./constants";
 import { formatShortGfs } from "./format-utils";
 
 interface GfsResult {
@@ -250,7 +250,7 @@ export function buildCalculatorSummary(
   return {
     totalSourceDataTB: calculateTotalSourceDataTB(cappedJobs),
     weightedAvgChangeRate: calculateWeightedChangeRate(cappedJobs, sessions),
-    immutabilityDays: 30,
+    immutabilityDays: DEFAULT_IMMUTABILITY_DAYS,
     maxRetentionDays:
       originalMax !== null
         ? Math.max(originalMax, MINIMUM_RETENTION_DAYS)

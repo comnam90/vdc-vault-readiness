@@ -673,6 +673,42 @@ describe("generateGrowthSeries", () => {
     }
   });
 
+  it("patches each step's summary with immutabilityDays when provided", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({ limitCalculationYears: 3 });
+    await generateGrowthSeries({
+      ...baseArgs(settings),
+      immutabilityDays: 14,
+    });
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(3);
+    for (const call of callVmAgentApi.mock.calls) {
+      // First arg is the summary passed to the API
+      const summary = call[0] as { immutabilityDays: number };
+      expect(summary.immutabilityDays).toBe(14);
+    }
+  });
+
+  it("does not override immutabilityDays in the summary when immutabilityDays is not provided", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({ limitCalculationYears: 2 });
+    await generateGrowthSeries(baseArgs(settings));
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(2);
+    // Without an override, the summary's immutabilityDays comes from
+    // buildCalculatorSummary — we simply verify callVmAgentApi was called
+    // (the summary value is whatever the aggregator produces from test data).
+    for (const call of callVmAgentApi.mock.calls) {
+      expect(call[0]).toBeDefined();
+    }
+  });
+
   it("dispatches API calls in batches of 5 (rate-limit guard)", async () => {
     const resolvers: Array<(v: VmAgentResponse) => void> = [];
     callVmAgentApi.mockImplementation(

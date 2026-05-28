@@ -686,7 +686,7 @@ describe("Calculator Types - CalculatorSummary", () => {
     expect(summary.weightedAvgChangeRate).toBe(15.75);
   });
 
-  it("CalculatorSummary requires immutabilityDays as number (always 30 for MVP)", () => {
+  it("CalculatorSummary requires immutabilityDays as number", () => {
     const summary: CalculatorSummary = {
       totalSourceDataTB: 100.5,
       weightedAvgChangeRate: 10.0,

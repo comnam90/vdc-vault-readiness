@@ -24,7 +24,7 @@ export interface UseCalculatorApiResult {
   loading: boolean;
   hasConsented: boolean;
   grantConsent: () => void;
-  calculate: () => Promise<void>;
+  calculate: (immutabilityDays: number) => Promise<void>;
 }
 
 export function useCalculatorApi({
@@ -69,81 +69,92 @@ export function useCalculatorApi({
     setHasConsented(true);
   }, []);
 
-  const calculate = useCallback(async () => {
-    const vbrVersion = data.backupServer?.[0]?.Version ?? "";
-    const isVbr12 =
-      vbrVersion !== "" && !isVersionAtLeast(vbrVersion, "13.0.0");
-    const activeJobCount = data.jobInfo.filter(
-      (j) => !excludedJobNames.has(j.JobName),
-    ).length;
-    const summary = buildCalculatorSummary(
-      data.jobInfo,
-      data.jobSessionSummary,
-      excludedJobNames,
-      settings,
-    );
-    const growthArgs = {
-      jobs: data.jobInfo,
-      sessions: data.jobSessionSummary,
-      excludedJobNames,
-      settings,
-      jobCount: activeJobCount,
-      vbrVersion,
-    };
+  const calculate = useCallback(
+    async (immutabilityDays: number) => {
+      const vbrVersion = data.backupServer?.[0]?.Version ?? "";
+      const isVbr12 =
+        vbrVersion !== "" && !isVersionAtLeast(vbrVersion, "13.0.0");
+      const activeJobCount = data.jobInfo.filter(
+        (j) => !excludedJobNames.has(j.JobName),
+      ).length;
+      const summary = buildCalculatorSummary(
+        data.jobInfo,
+        data.jobSessionSummary,
+        excludedJobNames,
+        settings,
+      );
+      const patchedSummary = { ...summary, immutabilityDays };
+      const growthArgs = {
+        jobs: data.jobInfo,
+        sessions: data.jobSessionSummary,
+        excludedJobNames,
+        settings,
+        jobCount: activeJobCount,
+        vbrVersion,
+        immutabilityDays,
+      };
 
-    const capturedId = ++requestIdRef.current;
-    const isStale = () => requestIdRef.current !== capturedId;
+      const capturedId = ++requestIdRef.current;
+      const isStale = () => requestIdRef.current !== capturedId;
 
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    setUpgradeResult(null);
-    setGrowthSeries(null);
+      setLoading(true);
+      setError(null);
+      setResult(null);
+      setUpgradeResult(null);
+      setGrowthSeries(null);
 
-    try {
-      if (isVbr12) {
-        const [v12Res, v13Res, growth] = await Promise.all([
-          callVmAgentApi(
-            summary,
-            activeJobCount,
-            vbrVersion,
-            undefined,
-            settings,
-          ),
-          callVmAgentApi(summary, activeJobCount, vbrVersion, 0, settings),
-          generateGrowthSeries(growthArgs),
-        ]);
-        if (isStale()) return;
-        setResult(v12Res);
-        setUpgradeResult(v13Res);
-        setGrowthSeries(growth);
-      } else {
-        const [res, growth] = await Promise.all([
-          callVmAgentApi(
-            summary,
-            activeJobCount,
-            vbrVersion,
-            undefined,
-            settings,
-          ),
-          generateGrowthSeries(growthArgs),
-        ]);
-        if (isStale()) return;
-        setResult(res);
-        setGrowthSeries(growth);
+      try {
+        if (isVbr12) {
+          const [v12Res, v13Res, growth] = await Promise.all([
+            callVmAgentApi(
+              patchedSummary,
+              activeJobCount,
+              vbrVersion,
+              undefined,
+              settings,
+            ),
+            callVmAgentApi(
+              patchedSummary,
+              activeJobCount,
+              vbrVersion,
+              0,
+              settings,
+            ),
+            generateGrowthSeries(growthArgs),
+          ]);
+          if (isStale()) return;
+          setResult(v12Res);
+          setUpgradeResult(v13Res);
+          setGrowthSeries(growth);
+        } else {
+          const [res, growth] = await Promise.all([
+            callVmAgentApi(
+              patchedSummary,
+              activeJobCount,
+              vbrVersion,
+              undefined,
+              settings,
+            ),
+            generateGrowthSeries(growthArgs),
+          ]);
+          if (isStale()) return;
+          setResult(res);
+          setGrowthSeries(growth);
+        }
+      } catch {
+        if (!isStale()) {
+          setError(
+            "Could not retrieve sizing estimate. Check your connection and try again.",
+          );
+        }
+      } finally {
+        if (!isStale()) {
+          setLoading(false);
+        }
       }
-    } catch {
-      if (!isStale()) {
-        setError(
-          "Could not retrieve sizing estimate. Check your connection and try again.",
-        );
-      }
-    } finally {
-      if (!isStale()) {
-        setLoading(false);
-      }
-    }
-  }, [data, excludedJobNames, settings]);
+    },
+    [data, excludedJobNames, settings],
+  );
 
   return {
     result,

@@ -7,6 +7,7 @@ export const MINIMUM_VBR_VERSION = "12.1.2";
 export const EXCLUDED_JOB_TYPES = new Set(["Replica"]);
 export const MINIMUM_RETENTION_DAYS = 30;
 export const MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS = 30;
+export const DEFAULT_IMMUTABILITY_DAYS = 30;
 
 /**
  * UI-facing pipeline steps displayed in the ChecklistLoader component.
