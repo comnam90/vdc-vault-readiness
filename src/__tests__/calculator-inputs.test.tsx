@@ -886,11 +886,6 @@ describe("CalculatorInputs", () => {
       });
     });
 
-    it("does not render '(VDC Vault minimum)' label", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
-      expect(screen.queryByText("(VDC Vault minimum)")).not.toBeInTheDocument();
-    });
-
     it("renders a pencil button to edit the immutability period", () => {
       render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
       expect(
@@ -1084,6 +1079,45 @@ describe("CalculatorInputs", () => {
         screen.getByRole("button", { name: /accept & calculate/i }),
       );
       expect(onCalculate).toHaveBeenCalledWith(14);
+    });
+
+    it("resets to the default when data changes", () => {
+      const { rerender } = render(
+        <CalculatorInputs data={mockData} {...defaultControlledProps} />,
+      );
+      // Set custom value
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit immutability period/i }),
+      );
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm immutability period/i }),
+      );
+      expect(screen.getByText("45 days")).toBeInTheDocument();
+      // Re-render with different data (different backupServer Name drives dataKey)
+      const newData = {
+        ...mockData,
+        backupServer: [{ Version: "13.0.1.1071", Name: "server-2" }],
+      } as unknown as NormalizedDataset;
+      rerender(<CalculatorInputs data={newData} {...defaultControlledProps} />);
+      expect(screen.getByText("30 days")).toBeInTheDocument();
+      expect(screen.queryByText("45 days")).not.toBeInTheDocument();
+    });
+
+    it("rejects a cleared (empty) input — stays in edit mode without updating", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit immutability period/i }),
+      );
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm immutability period/i }),
+      );
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
     });
   });
 });

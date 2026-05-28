@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Archive,
   Calculator,
@@ -139,6 +139,13 @@ export function CalculatorInputs({
   const [immutabilityDraft, setImmutabilityDraft] = useState<number>(
     DEFAULT_IMMUTABILITY_DAYS,
   );
+
+  const dataKey = data.backupServer?.[0]?.Name ?? "";
+  useEffect(() => {
+    setImmutabilityDays(DEFAULT_IMMUTABILITY_DAYS);
+    setImmutabilityDraft(DEFAULT_IMMUTABILITY_DAYS);
+    setIsEditingImmutability(false);
+  }, [dataKey]);
 
   const handleImmutabilityConfirm = () => {
     if (!Number.isFinite(immutabilityDraft) || immutabilityDraft <= 0) return;
