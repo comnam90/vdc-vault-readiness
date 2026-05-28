@@ -12,18 +12,16 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
-import { callVmAgentApi } from "@/lib/veeam-api";
-import {
-  generateGrowthSeries,
-  naturalRetentionYears,
-  type GrowthSeriesPoint,
-} from "@/lib/growth-projector";
 import {
   formatDays,
   formatGFS,
   formatPercent,
   formatTB,
 } from "@/lib/format-utils";
+import {
+  naturalRetentionYears,
+  type GrowthSeriesPoint,
+} from "@/lib/growth-projector";
 import type { NormalizedDataset } from "@/types/domain";
 import type { VmAgentResponse } from "@/types/veeam-api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -46,6 +44,7 @@ import {
 } from "@/components/ui/hover-card";
 import { SizingResults } from "./sizing-results";
 import { CalculatorConsentDialog } from "./calculator-consent-dialog";
+import { isVersionAtLeast } from "@/lib/version-compare";
 
 interface BreakdownRow {
   key: string;
@@ -98,22 +97,31 @@ function BreakdownHoverCard({
 interface CalculatorInputsProps {
   data: NormalizedDataset;
   excludedJobNames?: Set<string>;
+  // Controlled state (lifted to useCalculatorApi in DashboardView)
+  result: VmAgentResponse | null;
+  upgradeResult: VmAgentResponse | null;
+  growthSeries: GrowthSeriesPoint[] | null;
+  error: string | null;
+  loading: boolean;
+  hasConsented: boolean;
+  // Callbacks
+  onConsentGiven: () => void;
+  onCalculate: () => Promise<void>;
 }
 
 export function CalculatorInputs({
   data,
   excludedJobNames = new Set(),
+  result,
+  upgradeResult,
+  growthSeries,
+  error,
+  loading,
+  hasConsented,
+  onConsentGiven,
+  onCalculate,
 }: CalculatorInputsProps) {
   const { settings } = useSettings();
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<VmAgentResponse | null>(null);
-  const [upgradeResult, setUpgradeResult] = useState<VmAgentResponse | null>(
-    null,
-  );
-  const [growthSeries, setGrowthSeries] = useState<GrowthSeriesPoint[] | null>(
-    null,
-  );
-  const [error, setError] = useState<string | null>(null);
   const [consentOpen, setConsentOpen] = useState(false);
 
   const summary = buildCalculatorSummary(
@@ -127,77 +135,21 @@ export function CalculatorInputs({
   ).length;
 
   const vbrVersion = data.backupServer?.[0]?.Version ?? "";
-  const isVbr12 = parseInt(vbrVersion.split(".")[0], 10) < 13;
+  const isVbr12 = !isVersionAtLeast(vbrVersion, "13.0.0");
   const hasSobr = (data.sobr?.length ?? 0) > 0;
 
-  // Cap notice fires when the effective retention horizon exceeds 12y. The
-  // cap setting wins when active; otherwise fall back to the data's natural
-  // GFS retention so cap-disabled users with long retention still see why
-  // the chart's final bar doesn't reach the hero total.
   const effectiveRetentionYears =
     settings.limitCalculationYears !== null
       ? settings.limitCalculationYears +
         (settings.limitCalculationMonths ?? 0) / 12
       : naturalRetentionYears(summary);
   const cappedAtYears = effectiveRetentionYears > 12 ? 12 : undefined;
-  // Fire the v13 comparison call for any VBR 12 environment, including those
-  // with a SOBR. Under SOBR, the savings only materialize after both upgrading
-  // and transitioning to direct Backup Copy jobs — the hero card surfaces that
-  // architectural prerequisite via the sobrBlocksUpgrade prop instead of
-  // hiding the savings outright.
-  const showUpgrade = isVbr12;
 
-  const handleGetEstimate = async () => {
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    setUpgradeResult(null);
-    setGrowthSeries(null);
-    const growthArgs = {
-      jobs: data.jobInfo,
-      sessions: data.jobSessionSummary,
-      excludedJobNames,
-      settings,
-      jobCount: activeJobCount,
-      vbrVersion,
-    };
-    try {
-      if (showUpgrade) {
-        const [v12Res, v13Res, growth] = await Promise.all([
-          callVmAgentApi(
-            summary,
-            activeJobCount,
-            vbrVersion,
-            undefined,
-            settings,
-          ),
-          callVmAgentApi(summary, activeJobCount, vbrVersion, 0, settings),
-          generateGrowthSeries(growthArgs),
-        ]);
-        setResult(v12Res);
-        setUpgradeResult(v13Res);
-        setGrowthSeries(growth);
-      } else {
-        const [res, growth] = await Promise.all([
-          callVmAgentApi(
-            summary,
-            activeJobCount,
-            vbrVersion,
-            undefined,
-            settings,
-          ),
-          generateGrowthSeries(growthArgs),
-        ]);
-        setResult(res);
-        setUpgradeResult(null);
-        setGrowthSeries(growth);
-      }
-    } catch {
-      setError(
-        "Could not retrieve sizing estimate. Check your connection and try again.",
-      );
-    } finally {
-      setLoading(false);
+  const handleButtonClick = () => {
+    if (hasConsented) {
+      void onCalculate();
+    } else {
+      setConsentOpen(true);
     }
   };
 
@@ -365,7 +317,7 @@ export function CalculatorInputs({
         </CardContent>
         <CardFooter className="flex flex-wrap gap-2">
           <Button
-            onClick={() => setConsentOpen(true)}
+            onClick={handleButtonClick}
             disabled={loading}
             className="sm:w-auto"
           >
@@ -425,7 +377,10 @@ export function CalculatorInputs({
       <CalculatorConsentDialog
         open={consentOpen}
         onOpenChange={setConsentOpen}
-        onAccept={() => void handleGetEstimate()}
+        onAccept={() => {
+          onConsentGiven();
+          void onCalculate();
+        }}
         onDecline={() => {}}
         summary={summary}
         activeJobCount={activeJobCount}
