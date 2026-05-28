@@ -408,7 +408,7 @@ describe("useCalculatorApi", () => {
 
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(1);
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
-        DEFAULT_SUMMARY,
+        { ...DEFAULT_SUMMARY, immutabilityDays: 30 },
         0,
         "13.0.1.1071",
         undefined,
