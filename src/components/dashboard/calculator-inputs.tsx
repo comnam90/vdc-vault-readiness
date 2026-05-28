@@ -140,12 +140,11 @@ export function CalculatorInputs({
     DEFAULT_IMMUTABILITY_DAYS,
   );
 
-  const dataKey = data.backupServer?.[0]?.Name ?? "";
   useEffect(() => {
     setImmutabilityDays(DEFAULT_IMMUTABILITY_DAYS);
     setImmutabilityDraft(DEFAULT_IMMUTABILITY_DAYS);
     setIsEditingImmutability(false);
-  }, [dataKey]);
+  }, [data]);
 
   const handleImmutabilityConfirm = () => {
     if (!Number.isFinite(immutabilityDraft) || immutabilityDraft <= 0) return;
