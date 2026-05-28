@@ -2,14 +2,17 @@ import { useState } from "react";
 import {
   Archive,
   Calculator,
+  Check,
   Clock,
   Cloud,
   ExternalLink,
   Info,
   Loader2,
+  Pencil,
   RotateCcw,
   Server,
   TrendingUp,
+  X,
 } from "lucide-react";
 import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
 import {
@@ -27,7 +30,10 @@ import type { VmAgentResponse } from "@/types/veeam-api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MINIMUM_RETENTION_DAYS } from "@/lib/constants";
+import {
+  DEFAULT_IMMUTABILITY_DAYS,
+  MINIMUM_RETENTION_DAYS,
+} from "@/lib/constants";
 import { useSettings } from "@/hooks/use-settings";
 import {
   Card,
@@ -42,6 +48,8 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { SizingResults } from "./sizing-results";
 import { CalculatorConsentDialog } from "./calculator-consent-dialog";
 import { isVersionAtLeast } from "@/lib/version-compare";
@@ -106,7 +114,7 @@ interface CalculatorInputsProps {
   hasConsented: boolean;
   // Callbacks
   onConsentGiven: () => void;
-  onCalculate: () => Promise<void>;
+  onCalculate: (immutabilityDays: number) => Promise<void>;
 }
 
 export function CalculatorInputs({
@@ -123,6 +131,31 @@ export function CalculatorInputs({
 }: CalculatorInputsProps) {
   const { settings } = useSettings();
   const [consentOpen, setConsentOpen] = useState(false);
+  const [immutabilityDays, setImmutabilityDays] = useState<number>(
+    DEFAULT_IMMUTABILITY_DAYS,
+  );
+  const [isEditingImmutability, setIsEditingImmutability] =
+    useState<boolean>(false);
+  const [immutabilityDraft, setImmutabilityDraft] = useState<number>(
+    DEFAULT_IMMUTABILITY_DAYS,
+  );
+
+  const handleImmutabilityConfirm = () => {
+    if (!Number.isFinite(immutabilityDraft) || immutabilityDraft <= 0) return;
+    setImmutabilityDays(immutabilityDraft);
+    setIsEditingImmutability(false);
+  };
+
+  const handleImmutabilityCancel = () => {
+    setIsEditingImmutability(false);
+    setImmutabilityDraft(immutabilityDays);
+  };
+
+  const handleImmutabilityReset = () => {
+    setImmutabilityDays(DEFAULT_IMMUTABILITY_DAYS);
+    setImmutabilityDraft(DEFAULT_IMMUTABILITY_DAYS);
+    setIsEditingImmutability(false);
+  };
 
   const summary = buildCalculatorSummary(
     data.jobInfo,
@@ -147,7 +180,7 @@ export function CalculatorInputs({
 
   const handleButtonClick = () => {
     if (hasConsented) {
-      void onCalculate();
+      void onCalculate(immutabilityDays);
     } else {
       setConsentOpen(true);
     }
@@ -205,14 +238,78 @@ export function CalculatorInputs({
               <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
                 Immutability Period
               </p>
-              <div className="flex items-baseline gap-2">
-                <p className="font-mono text-2xl font-semibold">
-                  {summary.immutabilityDays} days
-                </p>
-                <span className="text-muted-foreground text-xs">
-                  (VDC Vault minimum)
-                </span>
-              </div>
+              {isEditingImmutability ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    value={
+                      Number.isNaN(immutabilityDraft) ? "" : immutabilityDraft
+                    }
+                    onChange={(e) =>
+                      setImmutabilityDraft(parseInt(e.target.value, 10))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleImmutabilityConfirm();
+                      if (e.key === "Escape") handleImmutabilityCancel();
+                    }}
+                    className="w-20 font-mono"
+                    autoFocus
+                  />
+                  <span className="text-muted-foreground text-sm">days</span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    className="size-7"
+                    onClick={handleImmutabilityConfirm}
+                    aria-label="Confirm immutability period"
+                  >
+                    <Check className="size-3" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-7"
+                    onClick={handleImmutabilityCancel}
+                    aria-label="Cancel immutability period edit"
+                  >
+                    <X className="size-3" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground h-7 text-xs"
+                    onClick={handleImmutabilityReset}
+                  >
+                    <RotateCcw className="mr-1 size-3" aria-hidden="true" />
+                    Reset to {DEFAULT_IMMUTABILITY_DAYS}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-baseline gap-2">
+                  <p className="font-mono text-2xl font-semibold">
+                    {immutabilityDays} days
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImmutabilityDraft(immutabilityDays);
+                      setIsEditingImmutability(true);
+                    }}
+                    aria-label="Edit immutability period"
+                    className={cn(
+                      "inline-flex items-center justify-center motion-safe:transition-colors",
+                      immutabilityDays !== DEFAULT_IMMUTABILITY_DAYS
+                        ? "text-primary"
+                        : "text-muted-foreground/70 hover:text-foreground",
+                    )}
+                  >
+                    <Pencil className="size-3.5" aria-hidden="true" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -379,7 +476,7 @@ export function CalculatorInputs({
         onOpenChange={setConsentOpen}
         onAccept={() => {
           onConsentGiven();
-          void onCalculate();
+          void onCalculate(immutabilityDays);
         }}
         onDecline={() => {}}
         summary={summary}
