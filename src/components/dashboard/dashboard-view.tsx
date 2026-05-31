@@ -60,25 +60,29 @@ export function DashboardView({
     new Set(),
   );
   const { settings } = useSettings();
-  const [initialSummary] = useState(() =>
-    buildCalculatorSummary(
-      data.jobInfo,
-      data.jobSessionSummary,
-      excludedJobNames,
-      settings,
-    ),
-  );
   const [immutabilityDays, setImmutabilityDays] = useState(
     DEFAULT_IMMUTABILITY_DAYS,
   );
-  const [retentionDays, setRetentionDays] = useState(
-    initialSummary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS,
-  );
-  const [gfs, setGfs] = useState<GfsState>({
-    weekly: initialSummary.gfsWeekly,
-    monthly: initialSummary.gfsMonthly,
-    yearly: initialSummary.gfsYearly,
+  const [retentionDays, setRetentionDays] = useState(() => {
+    const s = buildCalculatorSummary(
+      data.jobInfo,
+      data.jobSessionSummary,
+      new Set(),
+      settings,
+    );
+    return s.maxRetentionDays ?? MINIMUM_RETENTION_DAYS;
   });
+  const [gfs, setGfs] = useState<GfsState>(() => {
+    const s = buildCalculatorSummary(
+      data.jobInfo,
+      data.jobSessionSummary,
+      new Set(),
+      settings,
+    );
+    return { weekly: s.gfsWeekly, monthly: s.gfsMonthly, yearly: s.gfsYearly };
+  });
+  const [isRetentionOverridden, setIsRetentionOverridden] = useState(false);
+  const [isGfsOverridden, setIsGfsOverridden] = useState(false);
   const {
     result: calcResult,
     upgradeResult: calcUpgradeResult,
@@ -296,8 +300,24 @@ export function DashboardView({
             retentionDays={retentionDays}
             gfs={gfs}
             onImmutabilityDaysChange={setImmutabilityDays}
-            onRetentionDaysChange={setRetentionDays}
-            onGfsChange={setGfs}
+            onRetentionDaysChange={(v) => {
+              setRetentionDays(v);
+              setIsRetentionOverridden(true);
+            }}
+            onGfsChange={(v) => {
+              setGfs(v);
+              setIsGfsOverridden(true);
+            }}
+            isRetentionOverridden={isRetentionOverridden}
+            isGfsOverridden={isGfsOverridden}
+            onRetentionReset={(v) => {
+              setRetentionDays(v);
+              setIsRetentionOverridden(false);
+            }}
+            onGfsReset={(v) => {
+              setGfs(v);
+              setIsGfsOverridden(false);
+            }}
             onConsentGiven={grantConsent}
             onCalculate={calculate}
           />

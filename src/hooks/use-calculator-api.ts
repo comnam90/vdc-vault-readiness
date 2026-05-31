@@ -220,7 +220,7 @@ export function useCalculatorApi({
         }
       }
     },
-    [data, excludedJobNames, settings],
+    [data, excludedJobNames, settings], // overrides arrive as a CalculatorOverrides parameter — no closure capture needed
   );
 
   return {

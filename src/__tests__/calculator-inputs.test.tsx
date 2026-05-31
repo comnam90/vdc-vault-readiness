@@ -142,8 +142,14 @@ describe("CalculatorInputs", () => {
     retentionDays: 14,
     gfs: { weekly: 1, monthly: 1, yearly: 1 } as GfsState,
     onImmutabilityDaysChange: vi.fn(),
+    // onRetentionDaysChange and onGfsChange are overridden by the Harness in
+    // renderControlled — do not assert on these in renderControlled contexts.
     onRetentionDaysChange: vi.fn(),
     onGfsChange: vi.fn(),
+    isRetentionOverridden: false,
+    isGfsOverridden: false,
+    onRetentionReset: vi.fn(),
+    onGfsReset: vi.fn(),
   };
 
   function renderControlled(
@@ -155,6 +161,10 @@ describe("CalculatorInputs", () => {
       | "onImmutabilityDaysChange"
       | "onRetentionDaysChange"
       | "onGfsChange"
+      | "isRetentionOverridden"
+      | "isGfsOverridden"
+      | "onRetentionReset"
+      | "onGfsReset"
     > & { data: NormalizedDataset },
     seeds: { imm?: number; ret?: number; gfs?: GfsState } = {},
   ) {
@@ -168,6 +178,8 @@ describe("CalculatorInputs", () => {
       const [immutabilityDays, setImmutabilityDays] = useState(imm);
       const [retentionDays, setRetentionDays] = useState(ret);
       const [gfs, setGfs] = useState<GfsState>(gfsInit);
+      const [isRetentionOverridden, setIsRetentionOverridden] = useState(false);
+      const [isGfsOverridden, setIsGfsOverridden] = useState(false);
       return (
         <CalculatorInputs
           {...uiProps}
@@ -177,8 +189,24 @@ describe("CalculatorInputs", () => {
           retentionDays={retentionDays}
           gfs={gfs}
           onImmutabilityDaysChange={setImmutabilityDays}
-          onRetentionDaysChange={setRetentionDays}
-          onGfsChange={setGfs}
+          onRetentionDaysChange={(v) => {
+            setRetentionDays(v);
+            setIsRetentionOverridden(true);
+          }}
+          onGfsChange={(v) => {
+            setGfs(v);
+            setIsGfsOverridden(true);
+          }}
+          isRetentionOverridden={isRetentionOverridden}
+          isGfsOverridden={isGfsOverridden}
+          onRetentionReset={(v) => {
+            setRetentionDays(v);
+            setIsRetentionOverridden(false);
+          }}
+          onGfsReset={(v) => {
+            setGfs(v);
+            setIsGfsOverridden(false);
+          }}
         />
       );
     }
@@ -835,6 +863,10 @@ describe("CalculatorInputs", () => {
       onImmutabilityDaysChange: vi.fn(),
       onRetentionDaysChange: vi.fn(),
       onGfsChange: vi.fn(),
+      isRetentionOverridden: false,
+      isGfsOverridden: false,
+      onRetentionReset: vi.fn(),
+      onGfsReset: vi.fn(),
     };
 
     beforeEach(() => {
@@ -979,6 +1011,32 @@ describe("CalculatorInputs", () => {
       expect(screen.getByText(/calculating/i)).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: /calculating/i }),
+      ).toBeDisabled();
+    });
+
+    it("disables calculate button while retention editor is open", () => {
+      renderControlled({
+        data: mockDataVbr13,
+        ...baseControlledProps,
+        hasConsented: true,
+      });
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      expect(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      ).toBeDisabled();
+    });
+
+    it("disables calculate button while GFS editor is open", () => {
+      renderControlled({
+        data: mockDataVbr13,
+        ...baseControlledProps,
+        hasConsented: true,
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      expect(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
       ).toBeDisabled();
     });
 
@@ -1391,6 +1449,24 @@ describe("CalculatorInputs", () => {
       ).toHaveClass("text-primary");
     });
 
+    it("pencil stays off when live summary maxRetentionDays changes without user confirming a change", () => {
+      vi.mocked(buildCalculatorSummary).mockReturnValue({
+        ...defaultSummary,
+        maxRetentionDays: 7,
+      });
+      render(
+        <CalculatorInputs
+          data={mockData}
+          {...defaultControlledProps}
+          retentionDays={14}
+          isRetentionOverridden={false}
+        />,
+      );
+      expect(
+        screen.getByRole("button", { name: /edit retention/i }),
+      ).not.toHaveClass("text-primary");
+    });
+
     it("passes retentionDays override to onCalculate on button click", () => {
       const onCalculate = vi.fn().mockResolvedValue(undefined);
       renderControlled({
@@ -1554,6 +1630,26 @@ describe("CalculatorInputs", () => {
       expect(
         screen.getByRole("button", { name: /edit extended retention/i }),
       ).toHaveClass("text-primary");
+    });
+
+    it("pencil stays off when live summary GFS values change without user confirming a change", () => {
+      vi.mocked(buildCalculatorSummary).mockReturnValue({
+        ...defaultSummary,
+        gfsWeekly: 4,
+        gfsMonthly: 12,
+        gfsYearly: 7,
+      });
+      render(
+        <CalculatorInputs
+          data={mockData}
+          {...defaultControlledProps}
+          gfs={{ weekly: 1, monthly: 1, yearly: 1 }}
+          isGfsOverridden={false}
+        />,
+      );
+      expect(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      ).not.toHaveClass("text-primary");
     });
 
     it("passes GFS overrides to onCalculate on button click", () => {

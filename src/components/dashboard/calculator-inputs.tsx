@@ -127,6 +127,10 @@ interface CalculatorInputsProps {
   onImmutabilityDaysChange: (v: number) => void;
   onRetentionDaysChange: (v: number) => void;
   onGfsChange: (v: GfsState) => void;
+  isRetentionOverridden: boolean;
+  isGfsOverridden: boolean;
+  onRetentionReset: (resetValue: number) => void;
+  onGfsReset: (resetValue: GfsState) => void;
   // Callbacks
   onConsentGiven: () => void;
   onCalculate: (overrides: CalculatorOverrides) => Promise<void>;
@@ -147,6 +151,10 @@ export function CalculatorInputs({
   onImmutabilityDaysChange,
   onRetentionDaysChange,
   onGfsChange,
+  isRetentionOverridden,
+  isGfsOverridden,
+  onRetentionReset,
+  onGfsReset,
   onConsentGiven,
   onCalculate,
 }: CalculatorInputsProps) {
@@ -216,7 +224,7 @@ export function CalculatorInputs({
 
   const handleRetentionReset = () => {
     const resetTo = summary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS;
-    onRetentionDaysChange(resetTo);
+    onRetentionReset(resetTo);
     setRetentionDraft(resetTo);
     setIsEditingRetention(false);
   };
@@ -245,7 +253,7 @@ export function CalculatorInputs({
       monthly: summary.gfsMonthly,
       yearly: summary.gfsYearly,
     };
-    onGfsChange(resetTo);
+    onGfsReset(resetTo);
     setGfsDraft(resetTo);
     setIsEditingGfs(false);
   };
@@ -488,8 +496,7 @@ export function CalculatorInputs({
                     aria-label="Edit retention"
                     className={cn(
                       "inline-flex items-center justify-center motion-safe:transition-colors",
-                      retentionDays !==
-                        (summary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS)
+                      isRetentionOverridden
                         ? "text-primary"
                         : "text-muted-foreground/70 hover:text-foreground",
                     )}
@@ -623,9 +630,7 @@ export function CalculatorInputs({
                     aria-label="Edit extended retention"
                     className={cn(
                       "inline-flex items-center justify-center motion-safe:transition-colors",
-                      gfs.weekly !== summary.gfsWeekly ||
-                        gfs.monthly !== summary.gfsMonthly ||
-                        gfs.yearly !== summary.gfsYearly
+                      isGfsOverridden
                         ? "text-primary"
                         : "text-muted-foreground/70 hover:text-foreground",
                     )}
@@ -702,7 +707,12 @@ export function CalculatorInputs({
         <CardFooter className="flex flex-wrap gap-2">
           <Button
             onClick={handleButtonClick}
-            disabled={loading}
+            disabled={
+              loading ||
+              isEditingImmutability ||
+              isEditingRetention ||
+              isEditingGfs
+            }
             className="sm:w-auto"
           >
             {loading ? (

@@ -351,6 +351,42 @@ describe("useCalculatorApi", () => {
       expect(result.current.result).toBeNull();
     });
 
+    it("clears result when gfsMonthly changes", async () => {
+      const { result, rerender } = renderHook(
+        (props: UseCalculatorApiOptions) => useCalculatorApi(props),
+        { initialProps: baseProps },
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+      expect(result.current.result).not.toBeNull();
+
+      act(() => {
+        rerender({ ...baseProps, gfsMonthly: 24 });
+      });
+
+      expect(result.current.result).toBeNull();
+    });
+
+    it("clears result when gfsYearly changes", async () => {
+      const { result, rerender } = renderHook(
+        (props: UseCalculatorApiOptions) => useCalculatorApi(props),
+        { initialProps: baseProps },
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+      expect(result.current.result).not.toBeNull();
+
+      act(() => {
+        rerender({ ...baseProps, gfsYearly: 10 });
+      });
+
+      expect(result.current.result).toBeNull();
+    });
+
     it("ignores in-flight result if inputs change before it resolves", async () => {
       let resolveApi!: (v: VmAgentResponse) => void;
       vi.mocked(callVmAgentApi).mockImplementationOnce(
