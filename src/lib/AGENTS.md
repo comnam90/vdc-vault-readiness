@@ -10,7 +10,7 @@ lib/
 ├── pipeline.ts            # Orchestrator: analyzeHealthcheck() → {data, validations}. Zips sobr/capextents/archextents sections
 ├── parser.ts              # zipSection(): Headers/Rows → Record[] (decoupled JSON format)
 ├── normalizer.ts          # Raw records → typed SafeJob/SafeBackupServer/SafeSobr/SafeCapExtent/SafeArchExtent/SafeJobSummary/etc. with error accumulation (highest complexity)
-├── validator.ts           # 12 validation rules against NormalizedDataset. 8 original + 4 SOBR rules
+├── validator.ts           # 13 validation rules against NormalizedDataset. 8 original + 4 SOBR + 1 active-full rules
 ├── calculator-aggregator.ts # Vault sizing: source TB, change rates, retention, GFS aggregation
 ├── enrich-jobs.ts         # enrichJobs(): joins SafeJob[] with SafeJobSession[] via Map lookup
 ├── format-utils.ts        # Shared formatters: formatSize, formatPercent, formatDuration, formatTB, formatRatio
@@ -29,27 +29,28 @@ HealthcheckRoot (raw JSON)
   → zipSection(jobSessionSummaryByJob) for session data
   → Licenses passed through directly (already objects)
   → normalizeHealthcheck() → NormalizedDataset + DataError[]
-  → validateHealthcheck() → ValidationResult[] (12 rules)
+  → validateHealthcheck() → ValidationResult[] (13 rules)
   → buildCalculatorSummary() → CalculatorSummary (sizing aggregation)
   → enrichJobs() → EnrichedJob[] (jobs joined with session data)
 ```
 
-## VALIDATION RULES (12 total)
+## VALIDATION RULES (13 total)
 
-| Rule ID                       | Type    | Description                                                              |
-| ----------------------------- | ------- | ------------------------------------------------------------------------ |
-| vbr-version                   | blocker | VBR must be 12.1.2+                                                      |
-| config-backup-encryption      | warning | Config backup must be encrypted to use Vault; skipped if summary missing |
-| job-encryption                | blocker | All jobs must have encryption enabled                                    |
-| aws-workload                  | blocker | Cannot target Vault directly                                             |
-| agent-standalone-unsupported  | blocker | Standalone agents must use Backup Copy to reach Vault                    |
-| agent-policy-gateway-required | warning | Managed agent policies require a Gateway Server                          |
-| license-edition               | info    | Community Edition is supported by Vault; lacks SOBR                      |
-| retention-period              | warning | Jobs should have 30+ day retention                                       |
-| sobr-cap-encryption           | warning | Capacity tier must be encrypted                                          |
-| sobr-immutability             | warning | Capacity tier immutability must be enabled                               |
-| archive-tier-edition          | warning | Archive tier consumes egress — consider Advanced edition                 |
-| capacity-tier-residency       | warning | Capacity tier residency must be 30+ days                                 |
+| Rule ID                       | Type    | Description                                                                       |
+| ----------------------------- | ------- | --------------------------------------------------------------------------------- |
+| vbr-version                   | blocker | VBR must be 12.1.2+                                                               |
+| config-backup-encryption      | warning | Config backup must be encrypted to use Vault; skipped if summary missing          |
+| job-encryption                | blocker | All jobs must have encryption enabled                                             |
+| aws-workload                  | blocker | Cannot target Vault directly                                                      |
+| agent-standalone-unsupported  | blocker | Standalone agents must use Backup Copy to reach Vault                             |
+| agent-policy-gateway-required | warning | Managed agent policies require a Gateway Server                                   |
+| license-edition               | info    | Community Edition is supported by Vault; lacks SOBR                               |
+| retention-period              | warning | Jobs should have 30+ day retention                                                |
+| sobr-cap-encryption           | warning | Capacity tier must be encrypted                                                   |
+| sobr-immutability             | warning | Capacity tier immutability must be enabled                                        |
+| archive-tier-edition          | warning | Archive tier consumes egress — consider Advanced edition                          |
+| capacity-tier-residency       | warning | Capacity tier residency must be 30+ days                                          |
+| active-full-enabled           | warning | Jobs with Active Full enabled use more storage than the sizing calculator assumes |
 
 ## WHERE TO LOOK
 

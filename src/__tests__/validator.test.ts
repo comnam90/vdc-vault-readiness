@@ -1734,7 +1734,7 @@ describe("validateHealthcheck", () => {
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(12);
+      expect(results).toHaveLength(13);
       expect(results.map((r) => r.ruleId)).toContain("vbr-version");
       expect(results.map((r) => r.ruleId)).toContain(
         "config-backup-encryption",
@@ -1753,6 +1753,7 @@ describe("validateHealthcheck", () => {
       expect(results.map((r) => r.ruleId)).toContain("sobr-immutability");
       expect(results.map((r) => r.ruleId)).toContain("archive-tier-edition");
       expect(results.map((r) => r.ruleId)).toContain("capacity-tier-residency");
+      expect(results.map((r) => r.ruleId)).toContain("active-full-enabled");
     });
 
     it("handles empty dataset gracefully", () => {
@@ -1773,7 +1774,7 @@ describe("validateHealthcheck", () => {
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(12);
+      expect(results).toHaveLength(13);
       // Version check should fail with empty backupServer
       const versionCheck = results.find((r) => r.ruleId === "vbr-version");
       expect(versionCheck?.status).toBe("fail");
@@ -1892,5 +1893,111 @@ describe("validateHealthcheck — legacy job type deprecation warning", () => {
     validateHealthcheck(data);
 
     expect(warnSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("Rule 13: Active Full Warning", () => {
+  function makeMinimalJob(
+    name: string,
+    activeFull: boolean | null,
+  ): NormalizedDataset["jobInfo"][number] {
+    return {
+      JobName: name,
+      JobType: "Backup",
+      Encrypted: true,
+      RepoName: "Repo1",
+      RetainDays: null,
+      GfsDetails: null,
+      SourceSizeGB: null,
+      OnDiskGB: null,
+      RetentionScheme: null,
+      CompressionLevel: null,
+      BlockSize: null,
+      GfsEnabled: null,
+      ActiveFullEnabled: activeFull,
+      SyntheticFullEnabled: null,
+      BackupChainType: null,
+      IndexingEnabled: null,
+    };
+  }
+
+  function baseDataset(jobs: NormalizedDataset["jobInfo"]): NormalizedDataset {
+    return {
+      backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+      securitySummary: [
+        {
+          BackupFileEncryptionEnabled: true,
+          ConfigBackupEncryptionEnabled: true,
+        },
+      ],
+      jobInfo: jobs,
+      Licenses: [],
+      jobSummary: [],
+      dataErrors: [],
+      jobSessionSummary: [],
+      sobr: [],
+      capExtents: [],
+      extents: [],
+      archExtents: [],
+      repos: [],
+    };
+  }
+
+  it("passes when no jobs have ActiveFullEnabled true", () => {
+    const data = baseDataset([makeMinimalJob("Job A", false)]);
+    const results = validateHealthcheck(data);
+    const rule = results.find((r) => r.ruleId === "active-full-enabled");
+
+    expect(rule).toBeDefined();
+    expect(rule?.status).toBe("pass");
+    expect(rule?.affectedItems).toHaveLength(0);
+  });
+
+  it("passes when ActiveFullEnabled is null on all jobs", () => {
+    const data = baseDataset([makeMinimalJob("Job A", null)]);
+    const results = validateHealthcheck(data);
+    const rule = results.find((r) => r.ruleId === "active-full-enabled");
+
+    expect(rule).toBeDefined();
+    expect(rule?.status).toBe("pass");
+    expect(rule?.affectedItems).toHaveLength(0);
+  });
+
+  it("warns when one job has ActiveFullEnabled true", () => {
+    const data = baseDataset([makeMinimalJob("Job A", true)]);
+    const results = validateHealthcheck(data);
+    const rule = results.find((r) => r.ruleId === "active-full-enabled");
+
+    expect(rule).toBeDefined();
+    expect(rule?.status).toBe("warning");
+    expect(rule?.title).toBe("Active Full Backup Schedules");
+    expect(rule?.message).toContain("Active Full");
+    expect(rule?.message).toContain("Synthetic Full");
+    expect(rule?.affectedItems).toEqual(["Job A"]);
+  });
+
+  it("warns for all affected jobs when multiple have ActiveFullEnabled true", () => {
+    const data = baseDataset([
+      makeMinimalJob("Job A", true),
+      makeMinimalJob("Job B", false),
+      makeMinimalJob("Job C", true),
+    ]);
+    const results = validateHealthcheck(data);
+    const rule = results.find((r) => r.ruleId === "active-full-enabled");
+
+    expect(rule).toBeDefined();
+    expect(rule?.status).toBe("warning");
+    expect(rule?.affectedItems).toEqual(["Job A", "Job C"]);
+    expect(rule?.affectedItems).not.toContain("Job B");
+  });
+
+  it("skips when jobInfo is empty", () => {
+    const data = baseDataset([]);
+    const results = validateHealthcheck(data);
+    const rule = results.find((r) => r.ruleId === "active-full-enabled");
+
+    expect(rule).toBeDefined();
+    expect(rule?.status).toBe("skipped");
+    expect(rule?.affectedItems).toHaveLength(0);
   });
 });

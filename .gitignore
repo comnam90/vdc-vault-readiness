@@ -25,6 +25,9 @@ coverage
 # TypeScript
 *.tsbuildinfo
 
+# Superpowers plugin runtime files
+.superpowers/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
