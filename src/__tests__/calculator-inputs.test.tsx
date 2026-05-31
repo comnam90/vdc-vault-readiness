@@ -171,6 +171,8 @@ describe("CalculatorInputs", () => {
       return (
         <CalculatorInputs
           {...uiProps}
+          // Explicit setters must come after {...uiProps}: they override any spy onChange
+          // handlers that callers inadvertently pass in via defaultControlledProps spread.
           immutabilityDays={immutabilityDays}
           retentionDays={retentionDays}
           gfs={gfs}
