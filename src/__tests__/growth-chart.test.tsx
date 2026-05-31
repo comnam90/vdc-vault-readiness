@@ -1,5 +1,28 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+
+// Mock recharts — jsdom cannot render SVG; expose dataKey and radius as data
+// attributes so tests can assert on chart structure without SVG geometry.
+vi.mock("recharts", () => ({
+  BarChart: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="bar-chart">{children}</div>
+  ),
+  Bar: ({ dataKey, radius }: { dataKey: string; radius?: number[] }) => (
+    <div
+      data-testid={`bar-${dataKey}`}
+      data-radius={radius ? radius.join(",") : undefined}
+    />
+  ),
+  XAxis: () => <div />,
+  YAxis: () => <div />,
+  CartesianGrid: () => <div />,
+  Tooltip: () => <div />,
+  Legend: () => <div />,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="responsive-container">{children}</div>
+  ),
+}));
+
 import { GrowthChart } from "@/components/dashboard/growth-chart";
 import type { GrowthSeriesPoint } from "@/lib/growth-projector";
 
@@ -206,5 +229,79 @@ describe("GrowthChart", () => {
     };
     expect(() => render(<GrowthChart {...props} />)).not.toThrow();
     expect(screen.getByText(/projected storage growth/i)).toBeInTheDocument();
+  });
+
+  describe("buffer bar segment", () => {
+    const BUFFER_SAMPLE: GrowthSeriesPoint[] = [
+      {
+        name: "Year 1",
+        daily: 1,
+        weekly: 0.5,
+        monthly: 0.5,
+        yearly: 0.25,
+        immutability: 0.1,
+        buffer: 0.2,
+        total: 2.55,
+      },
+    ];
+
+    it("does NOT render a buffer Bar when bufferEnabled is false", () => {
+      render(
+        <GrowthChart
+          data={BUFFER_SAMPLE}
+          greenfield={false}
+          bufferEnabled={false}
+        />,
+      );
+      expect(screen.queryByTestId("bar-buffer")).not.toBeInTheDocument();
+    });
+
+    it("does NOT render a buffer Bar when bufferEnabled is not provided", () => {
+      render(<GrowthChart data={BUFFER_SAMPLE} greenfield={false} />);
+      expect(screen.queryByTestId("bar-buffer")).not.toBeInTheDocument();
+    });
+
+    it("renders a buffer Bar when bufferEnabled is true", () => {
+      render(
+        <GrowthChart
+          data={BUFFER_SAMPLE}
+          greenfield={false}
+          bufferEnabled={true}
+        />,
+      );
+      expect(screen.getByTestId("bar-buffer")).toBeInTheDocument();
+    });
+
+    it("immutability bar loses rounded cap when bufferEnabled is true", () => {
+      render(
+        <GrowthChart
+          data={BUFFER_SAMPLE}
+          greenfield={false}
+          bufferEnabled={true}
+        />,
+      );
+      const immutabilityBar = screen.getByTestId("bar-immutability");
+      expect(immutabilityBar).not.toHaveAttribute("data-radius");
+    });
+
+    it("buffer bar has rounded cap when bufferEnabled is true", () => {
+      render(
+        <GrowthChart
+          data={BUFFER_SAMPLE}
+          greenfield={false}
+          bufferEnabled={true}
+        />,
+      );
+      const bufferBar = screen.getByTestId("bar-buffer");
+      expect(bufferBar).toHaveAttribute("data-radius", "4,4,0,0");
+    });
+
+    it("immutability bar retains rounded cap when bufferEnabled is false", () => {
+      render(
+        <GrowthChart data={SAMPLE} greenfield={false} bufferEnabled={false} />,
+      );
+      const immutabilityBar = screen.getByTestId("bar-immutability");
+      expect(immutabilityBar).toHaveAttribute("data-radius", "4,4,0,0");
+    });
   });
 });

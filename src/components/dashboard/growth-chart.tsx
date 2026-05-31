@@ -60,6 +60,8 @@ export interface GrowthChartProps {
    * hero card for the full retention horizon.
    */
   cappedAtYears?: number;
+  /** When true, renders a buffer bar on top of each stack column. */
+  bufferEnabled?: boolean;
 }
 
 export function GrowthChart({
@@ -69,6 +71,7 @@ export function GrowthChart({
   greenfield,
   historicalDataYears = 0,
   cappedAtYears,
+  bufferEnabled = false,
 }: GrowthChartProps) {
   const isMonthlyScale = data?.[0]?.name?.startsWith("Month ") ?? false;
   const showSeedNote = greenfield && historicalDataYears > 0;
@@ -80,7 +83,12 @@ export function GrowthChart({
           isMonthlyScale={isMonthlyScale}
         />
       )}
-      <ChartBody data={data} isLoading={isLoading} error={error} />
+      <ChartBody
+        data={data}
+        isLoading={isLoading}
+        error={error}
+        bufferEnabled={bufferEnabled}
+      />
       {cappedAtYears !== undefined && data && data.length > 0 && (
         <CapNotice cappedAtYears={cappedAtYears} />
       )}
@@ -181,11 +189,36 @@ function ChartBody({
   data,
   isLoading,
   error,
+  bufferEnabled,
 }: {
   data: GrowthSeriesPoint[] | null;
   isLoading: boolean;
   error: string | null;
+  bufferEnabled: boolean;
 }) {
+  // Build the active segment list. When buffer is enabled, immutability loses
+  // its rounded cap (it's no longer the top segment) and buffer gains it.
+  type AnySegment = {
+    dataKey: keyof Omit<GrowthSeriesPoint, "name" | "total">;
+    name: string;
+    color: string;
+    rounded?: boolean;
+  };
+  const activeSegments: AnySegment[] = bufferEnabled
+    ? [
+        ...SEGMENTS.map((s) => ({
+          ...s,
+          rounded: s.dataKey === "immutability" ? false : s.rounded,
+        })),
+        {
+          dataKey: "buffer" as keyof Omit<GrowthSeriesPoint, "name" | "total">,
+          name: "Buffer",
+          color: "var(--chart-buffer)",
+          rounded: true,
+        },
+      ]
+    : SEGMENTS;
+
   if (isLoading) {
     return (
       <div
@@ -247,7 +280,7 @@ function ChartBody({
           content={GrowthTooltip}
         />
         <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "20px" }} />
-        {SEGMENTS.map((seg) => (
+        {activeSegments.map((seg) => (
           <Bar
             key={seg.dataKey}
             dataKey={seg.dataKey}
