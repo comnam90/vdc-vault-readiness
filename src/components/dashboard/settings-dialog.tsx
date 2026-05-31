@@ -396,36 +396,30 @@ function SettingsForm({ initial, onSave, onCancel }: SettingsFormProps) {
             />
           </div>
           {draft.bufferEnabled && (
-            <div className="motion-safe:animate-in motion-safe:slide-in-from-top-2 motion-safe:fade-in fill-mode-backwards grid grid-cols-2 gap-3 pt-2 pl-6 duration-150 ease-[var(--ease-out)]">
-              <div className="space-y-1.5">
-                <Label htmlFor="buffer-percent">Buffer %</Label>
-                <div className="relative max-w-[10rem]">
-                  <Input
-                    id="buffer-percent"
-                    type="number"
-                    min={1}
-                    max={30}
-                    step={1}
-                    value={draft.bufferPercent}
-                    onChange={(e) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        bufferPercent: clamp(
-                          parseInt(e.target.value, 10),
-                          1,
-                          30,
-                        ),
-                      }))
-                    }
-                    className="pr-7 font-mono"
-                  />
-                  <span
-                    className="text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs"
-                    aria-hidden="true"
-                  >
-                    %
-                  </span>
-                </div>
+            <div className="motion-safe:animate-in motion-safe:slide-in-from-top-2 motion-safe:fade-in fill-mode-backwards space-y-1.5 pt-2 pl-6 duration-150 ease-[var(--ease-out)]">
+              <Label htmlFor="buffer-percent">Buffer %</Label>
+              <div className="relative max-w-[10rem]">
+                <Input
+                  id="buffer-percent"
+                  type="number"
+                  min={1}
+                  max={30}
+                  step={1}
+                  value={draft.bufferPercent}
+                  onChange={(e) =>
+                    setDraft((prev) => ({
+                      ...prev,
+                      bufferPercent: clamp(parseInt(e.target.value, 10), 1, 30),
+                    }))
+                  }
+                  className="pr-7 font-mono"
+                />
+                <span
+                  className="text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs"
+                  aria-hidden="true"
+                >
+                  %
+                </span>
               </div>
             </div>
           )}
@@ -473,9 +467,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         <DialogHeader>
           <DialogTitle>Global settings</DialogTitle>
           <DialogDescription>
-            Adjust sizing parameters for your environment. Changes apply when
-            you click <span className="font-medium">Re-calculate</span> on the
-            Sizing tab.
+            Adjust sizing parameters for your environment. Most changes apply
+            when you click <span className="font-medium">Re-calculate</span> on
+            the Sizing tab. Storage buffer applies immediately.
           </DialogDescription>
         </DialogHeader>
         <SettingsForm
