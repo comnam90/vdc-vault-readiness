@@ -877,12 +877,13 @@ describe("CalculatorInputs", () => {
 
   describe("immutability period inline edit", () => {
     beforeEach(() => {
-      // Override retention to null so "14 days" and "30 days" text queries
-      // remain unambiguous when the immutability period is edited to those values.
+      // Set retention to 99 so it doesn't conflict with "14 days" or "30 days"
+      // text queries when immutability is edited to or resets to those values.
+      // (null would seed retentionDays to the MINIMUM_RETENTION_DAYS fallback of 30.)
       vi.mocked(buildCalculatorSummary).mockReturnValue({
         ...defaultSummary,
-        maxRetentionDays: null,
-        originalMaxRetentionDays: null,
+        maxRetentionDays: 99,
+        originalMaxRetentionDays: 99,
       });
     });
 
@@ -1118,6 +1119,162 @@ describe("CalculatorInputs", () => {
         screen.getByRole("button", { name: /confirm immutability period/i }),
       );
       expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+    });
+  });
+
+  describe("retention period inline edit", () => {
+    // defaultSummary has maxRetentionDays: 14 — distinct from immutability's "30 days"
+
+    it("renders a pencil button to edit the retention period", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      expect(
+        screen.getByRole("button", { name: /edit retention/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("clicking the pencil shows the number input and action buttons", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /cancel retention edit/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /reset retention to/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("confirm updates the displayed value and exits edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      expect(screen.getByText("45 days")).toBeInTheDocument();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+    });
+
+    it("Enter key confirms and exits edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.keyDown(screen.getByRole("spinbutton"), { key: "Enter" });
+      expect(screen.getByText("45 days")).toBeInTheDocument();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+    });
+
+    it("cancel reverts to the previous value and exits edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /cancel retention edit/i }),
+      );
+      expect(screen.getByText("14 days")).toBeInTheDocument();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+    });
+
+    it("Escape key cancels and reverts to the previous value", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.keyDown(screen.getByRole("spinbutton"), { key: "Escape" });
+      expect(screen.getByText("14 days")).toBeInTheDocument();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+    });
+
+    it("reset sets value back to the file-aggregated value and exits edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      // First set a custom value
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      expect(screen.getByText("45 days")).toBeInTheDocument();
+      // Now open again and reset
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /reset retention to/i }),
+      );
+      expect(screen.getByText("14 days")).toBeInTheDocument();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+    });
+
+    it("rejects a value below MINIMUM_RETENTION_DAYS — stays in edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "29" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+      expect(screen.queryByText("29 days")).not.toBeInTheDocument();
+    });
+
+    it("rejects a cleared (empty) input — stays in edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+    });
+
+    it("pencil icon has text-primary class when override is active", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      expect(
+        screen.getByRole("button", { name: /edit retention/i }),
+      ).toHaveClass("text-primary");
+    });
+
+    it("resets to the file-aggregated value when data changes", () => {
+      const { rerender } = render(
+        <CalculatorInputs data={mockData} {...defaultControlledProps} />,
+      );
+      // Set custom value
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      expect(screen.getByText("45 days")).toBeInTheDocument();
+      // Re-render with different data
+      const newData = {
+        ...mockData,
+        backupServer: [{ Version: "13.0.1.1071", Name: "server-2" }],
+      } as unknown as NormalizedDataset;
+      rerender(<CalculatorInputs data={newData} {...defaultControlledProps} />);
+      expect(screen.getByText("14 days")).toBeInTheDocument();
+      expect(screen.queryByText("45 days")).not.toBeInTheDocument();
     });
   });
 });

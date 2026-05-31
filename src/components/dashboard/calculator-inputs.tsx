@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
   Calculator,
@@ -130,6 +130,23 @@ export function CalculatorInputs({
   onCalculate,
 }: CalculatorInputsProps) {
   const { settings } = useSettings();
+
+  const summary = useMemo(
+    () =>
+      buildCalculatorSummary(
+        data.jobInfo,
+        data.jobSessionSummary,
+        excludedJobNames,
+        settings,
+      ),
+    [data, excludedJobNames, settings],
+  );
+
+  // Always-current ref so effects that only depend on [data] can read the
+  // latest summary values without capturing a stale closure.
+  const summaryRef = useRef(summary);
+  summaryRef.current = summary;
+
   const [consentOpen, setConsentOpen] = useState(false);
   const [immutabilityDays, setImmutabilityDays] = useState<number>(
     DEFAULT_IMMUTABILITY_DAYS,
@@ -140,10 +157,23 @@ export function CalculatorInputs({
     DEFAULT_IMMUTABILITY_DAYS,
   );
 
+  const [retentionDays, setRetentionDays] = useState<number>(
+    summary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS,
+  );
+  const [isEditingRetention, setIsEditingRetention] = useState<boolean>(false);
+  const [retentionDraft, setRetentionDraft] = useState<number>(
+    summary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS,
+  );
+
   useEffect(() => {
+    const s = summaryRef.current;
     setImmutabilityDays(DEFAULT_IMMUTABILITY_DAYS);
     setImmutabilityDraft(DEFAULT_IMMUTABILITY_DAYS);
     setIsEditingImmutability(false);
+    const retDays = s.maxRetentionDays ?? MINIMUM_RETENTION_DAYS;
+    setRetentionDays(retDays);
+    setRetentionDraft(retDays);
+    setIsEditingRetention(false);
   }, [data]);
 
   const handleImmutabilityConfirm = () => {
@@ -163,12 +193,27 @@ export function CalculatorInputs({
     setIsEditingImmutability(false);
   };
 
-  const summary = buildCalculatorSummary(
-    data.jobInfo,
-    data.jobSessionSummary,
-    excludedJobNames,
-    settings,
-  );
+  const handleRetentionConfirm = () => {
+    if (
+      !Number.isFinite(retentionDraft) ||
+      retentionDraft < MINIMUM_RETENTION_DAYS
+    )
+      return;
+    setRetentionDays(retentionDraft);
+    setIsEditingRetention(false);
+  };
+
+  const handleRetentionCancel = () => {
+    setIsEditingRetention(false);
+    setRetentionDraft(retentionDays);
+  };
+
+  const handleRetentionReset = () => {
+    const resetTo = summary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS;
+    setRetentionDays(resetTo);
+    setRetentionDraft(resetTo);
+    setIsEditingRetention(false);
+  };
   const activeJobCount = data.jobInfo.filter(
     (j) => !excludedJobNames.has(j.JobName),
   ).length;
@@ -330,17 +375,86 @@ export function CalculatorInputs({
                   }))}
                 />
               </div>
-              <div className="flex items-baseline gap-2">
-                <p className="font-mono text-2xl font-semibold">
-                  {formatDays(summary.maxRetentionDays)}
-                </p>
-                {summary.originalMaxRetentionDays !== null &&
-                  summary.originalMaxRetentionDays < MINIMUM_RETENTION_DAYS && (
-                    <span className="text-muted-foreground text-xs">
-                      (current: {summary.originalMaxRetentionDays} days)
-                    </span>
-                  )}
-              </div>
+              {isEditingRetention ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    type="number"
+                    min={MINIMUM_RETENTION_DAYS}
+                    value={Number.isNaN(retentionDraft) ? "" : retentionDraft}
+                    onChange={(e) =>
+                      setRetentionDraft(parseInt(e.target.value, 10))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleRetentionConfirm();
+                      if (e.key === "Escape") handleRetentionCancel();
+                    }}
+                    className="w-20 font-mono"
+                    autoFocus
+                  />
+                  <span className="text-muted-foreground text-sm">days</span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    className="size-7"
+                    onClick={handleRetentionConfirm}
+                    aria-label="Confirm retention"
+                  >
+                    <Check className="size-3" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-7"
+                    onClick={handleRetentionCancel}
+                    aria-label="Cancel retention edit"
+                  >
+                    <X className="size-3" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground h-7 text-xs"
+                    onClick={handleRetentionReset}
+                    aria-label={`Reset retention to ${summary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS}`}
+                  >
+                    <RotateCcw className="mr-1 size-3" aria-hidden="true" />
+                    Reset to{" "}
+                    {summary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-baseline gap-2">
+                  <p className="font-mono text-2xl font-semibold">
+                    {retentionDays} days
+                  </p>
+                  {summary.originalMaxRetentionDays !== null &&
+                    summary.originalMaxRetentionDays <
+                      MINIMUM_RETENTION_DAYS && (
+                      <span className="text-muted-foreground text-xs">
+                        (current: {summary.originalMaxRetentionDays} days)
+                      </span>
+                    )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRetentionDraft(retentionDays);
+                      setIsEditingRetention(true);
+                    }}
+                    aria-label="Edit retention"
+                    className={cn(
+                      "inline-flex items-center justify-center motion-safe:transition-colors",
+                      retentionDays !==
+                        (summary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS)
+                        ? "text-primary"
+                        : "text-muted-foreground/70 hover:text-foreground",
+                    )}
+                  >
+                    <Pencil className="size-3.5" aria-hidden="true" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1 sm:col-span-2">
