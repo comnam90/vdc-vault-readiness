@@ -55,14 +55,30 @@ export function useCalculatorApi({
 
   // Serialise inputs that affect the calculation. When this key changes,
   // clear all result state so the user must re-calculate for the new inputs.
-  const inputKey = useMemo(
-    () =>
-      JSON.stringify({
-        excluded: [...excludedJobNames].sort(),
-        settings,
-      }),
-    [excludedJobNames, settings],
-  );
+  // Buffer fields are excluded: they are a post-processing display transform
+  // and must never re-trigger the Veeam sizing API.
+  const inputKey = useMemo(() => {
+    // bufferEnabled and bufferPercent are post-processing display transforms:
+    // they must not re-trigger the Veeam sizing API when toggled. Build the
+    // key from a copy that omits these two fields.
+    const calcSettings: Omit<
+      typeof settings,
+      "bufferEnabled" | "bufferPercent"
+    > = {
+      targetCloud: settings.targetCloud,
+      growthPercent: settings.growthPercent,
+      growthYears: settings.growthYears,
+      limitCalculationYears: settings.limitCalculationYears,
+      limitCalculationMonths: settings.limitCalculationMonths,
+      ignoreArchiveTier: settings.ignoreArchiveTier,
+      greenfieldSimulation: settings.greenfieldSimulation,
+      historicalDataYears: settings.historicalDataYears,
+    };
+    return JSON.stringify({
+      excluded: [...excludedJobNames].sort(),
+      settings: calcSettings,
+    });
+  }, [excludedJobNames, settings]);
 
   useEffect(() => {
     requestIdRef.current++; // cancel in-flight calculate()

@@ -21,6 +21,16 @@ export interface GlobalSettings {
    * `limitCalculationYears`. Ignored when `greenfieldSimulation` is false.
    */
   historicalDataYears: number;
+  /**
+   * When true, the final sizing result is grossed up by `1 / (1 - bufferPercent / 100)`
+   * to reserve headroom. This is a pure display transform and never re-triggers
+   * the Veeam sizing API.
+   */
+  bufferEnabled: boolean;
+  /**
+   * Percentage of headroom to add when `bufferEnabled` is true. Clamped to [1, 30].
+   */
+  bufferPercent: number;
 }
 
 export const DEFAULT_SETTINGS: GlobalSettings = {
@@ -32,4 +42,6 @@ export const DEFAULT_SETTINGS: GlobalSettings = {
   ignoreArchiveTier: false,
   greenfieldSimulation: true,
   historicalDataYears: 0,
+  bufferEnabled: false,
+  bufferPercent: 10,
 };

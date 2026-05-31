@@ -14,13 +14,15 @@ export interface BucketCounts {
   yearly: number;
 }
 
-/** GFS retention buckets plus the immutability overhead — the 5 segments of the proportion bar. */
+/** GFS retention buckets plus the immutability overhead and buffer — the segments of the proportion bar. */
 export interface CompositionBuckets {
   daily: number;
   weekly: number;
   monthly: number;
   yearly: number;
   immutability: number;
+  /** Post-processing display headroom. Always 0 in raw derivation; applied by consumer when bufferEnabled. */
+  buffer: number;
 }
 
 export interface DerivedSizing {
@@ -144,6 +146,7 @@ export function deriveSizing(data: VmAgentResponseData): DerivedSizing {
     monthly: gfsBuckets.monthly,
     yearly: gfsBuckets.yearly,
     immutability: performanceTaxTB,
+    buffer: 0,
   };
   const compositionTotalTB = gfsSumTB + performanceTaxTB;
   const compositionProportions: CompositionBuckets =
@@ -154,6 +157,7 @@ export function deriveSizing(data: VmAgentResponseData): DerivedSizing {
           monthly: compositionBuckets.monthly / compositionTotalTB,
           yearly: compositionBuckets.yearly / compositionTotalTB,
           immutability: compositionBuckets.immutability / compositionTotalTB,
+          buffer: 0,
         }
       : {
           daily: 0,
@@ -161,6 +165,7 @@ export function deriveSizing(data: VmAgentResponseData): DerivedSizing {
           monthly: 0,
           yearly: 0,
           immutability: 0,
+          buffer: 0,
         };
 
   let initialFullTB: number | null = null;

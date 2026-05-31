@@ -35,6 +35,7 @@ const SAMPLE_GROWTH: GrowthSeriesPoint[] = [
     monthly: 0.5,
     yearly: 0.25,
     immutability: 0.1,
+    buffer: 0,
     total: 2.35,
   },
 ];
@@ -437,6 +438,7 @@ describe("CalculatorInputs", () => {
           monthly: 0.5,
           yearly: 0.25,
           immutability: 0.1,
+          buffer: 0,
           total: 2.35,
         },
       ];
@@ -559,6 +561,44 @@ describe("CalculatorInputs", () => {
       const indicators = screen.getByTestId("settings-indicators");
       expect(indicators).toHaveTextContent(/retention cap: 3m/i);
       expect(indicators).not.toHaveTextContent(/0y/i);
+
+      window.localStorage.clear();
+      __resetSettingsStoreForTests();
+    });
+
+    it("renders the buffer badge when bufferEnabled is true", async () => {
+      const { STORAGE_KEY, __resetSettingsStoreForTests } =
+        await import("@/hooks/use-settings");
+      window.localStorage.clear();
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ bufferEnabled: true, bufferPercent: 15 }),
+      );
+      __resetSettingsStoreForTests();
+
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+
+      const indicators = screen.getByTestId("settings-indicators");
+      expect(indicators).toHaveTextContent(/buffer: 15%/i);
+
+      window.localStorage.clear();
+      __resetSettingsStoreForTests();
+    });
+
+    it("does NOT render the buffer badge when bufferEnabled is false", async () => {
+      const { STORAGE_KEY, __resetSettingsStoreForTests } =
+        await import("@/hooks/use-settings");
+      window.localStorage.clear();
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ bufferEnabled: false, bufferPercent: 10 }),
+      );
+      __resetSettingsStoreForTests();
+
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+
+      const indicators = screen.getByTestId("settings-indicators");
+      expect(indicators).not.toHaveTextContent(/buffer:/i);
 
       window.localStorage.clear();
       __resetSettingsStoreForTests();
@@ -1513,6 +1553,49 @@ describe("CalculatorInputs", () => {
         gfsMonthly: 12,
         gfsYearly: 7,
       });
+    });
+  });
+
+  describe("storage buffer integration", () => {
+    afterEach(() => {
+      window.localStorage.clear();
+    });
+
+    it("grosses up SizingResults display when bufferEnabled=true in settings", async () => {
+      const { STORAGE_KEY, __resetSettingsStoreForTests } =
+        await import("@/hooks/use-settings");
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ bufferEnabled: true, bufferPercent: 25 }),
+      );
+      __resetSettingsStoreForTests();
+      try {
+        render(
+          <CalculatorInputs
+            data={mockDataVbr13}
+            {...defaultControlledProps}
+            result={MOCK_API_RESULT}
+          />,
+        );
+
+        // 12.5 TB × (1 / (1 - 0.25)) = 16.67 TB
+        expect(screen.getByText(/16\.67 TB/i)).toBeInTheDocument();
+      } finally {
+        window.localStorage.clear();
+        __resetSettingsStoreForTests();
+      }
+    });
+
+    it("shows un-buffered total when bufferEnabled=false (default)", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...defaultControlledProps}
+          result={MOCK_API_RESULT}
+        />,
+      );
+
+      expect(screen.getByText(/12\.50 TB/)).toBeInTheDocument();
     });
   });
 });

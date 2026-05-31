@@ -84,6 +84,18 @@ function normalizeSettings(input: unknown): GlobalSettings {
     DEFAULT_SETTINGS.historicalDataYears,
   );
 
+  const bufferEnabled =
+    typeof raw.bufferEnabled === "boolean"
+      ? raw.bufferEnabled
+      : DEFAULT_SETTINGS.bufferEnabled;
+
+  const bufferPercent = clampInt(
+    raw.bufferPercent,
+    1,
+    30,
+    DEFAULT_SETTINGS.bufferPercent,
+  );
+
   return {
     targetCloud,
     growthPercent,
@@ -93,6 +105,8 @@ function normalizeSettings(input: unknown): GlobalSettings {
     ignoreArchiveTier,
     greenfieldSimulation,
     historicalDataYears,
+    bufferEnabled,
+    bufferPercent,
   };
 }
 

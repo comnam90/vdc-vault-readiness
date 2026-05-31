@@ -20,6 +20,7 @@ const SIZING: DerivedSizing = {
     monthly: 14.4375,
     yearly: 14.7,
     immutability: 2.625,
+    buffer: 0,
   },
   compositionTotalTB: TOTAL,
   compositionProportions: {
@@ -28,6 +29,27 @@ const SIZING: DerivedSizing = {
     monthly: 14.4375 / TOTAL,
     yearly: 14.7 / TOTAL,
     immutability: 2.625 / TOTAL,
+    buffer: 0,
+  },
+};
+
+const BUFFER_TB = 4.0;
+const TOTAL_WITH_BUFFER = TOTAL + BUFFER_TB;
+const SIZING_WITH_BUFFER: DerivedSizing = {
+  ...SIZING,
+  totalStorageTB: SIZING.totalStorageTB + BUFFER_TB,
+  compositionBuckets: {
+    ...SIZING.compositionBuckets,
+    buffer: BUFFER_TB,
+  },
+  compositionTotalTB: TOTAL_WITH_BUFFER,
+  compositionProportions: {
+    daily: SIZING.compositionBuckets.daily / TOTAL_WITH_BUFFER,
+    weekly: SIZING.compositionBuckets.weekly / TOTAL_WITH_BUFFER,
+    monthly: SIZING.compositionBuckets.monthly / TOTAL_WITH_BUFFER,
+    yearly: SIZING.compositionBuckets.yearly / TOTAL_WITH_BUFFER,
+    immutability: SIZING.compositionBuckets.immutability / TOTAL_WITH_BUFFER,
+    buffer: BUFFER_TB / TOTAL_WITH_BUFFER,
   },
 };
 
@@ -37,15 +59,18 @@ function renderDefault(overrides?: {
   upgradePerfTaxGB?: number | null;
   immutabilitySavingsGB?: number;
   sobrBlocksUpgrade?: boolean;
+  sizing?: DerivedSizing;
+  bufferPercent?: number;
 }) {
   return render(
     <SizingHeroCard
-      sizing={SIZING}
+      sizing={overrides?.sizing ?? SIZING}
       upgradeTotalStorageTB={overrides?.upgradeTotalStorageTB ?? null}
       storageSavingsTB={overrides?.storageSavingsTB ?? 0}
       upgradePerfTaxGB={overrides?.upgradePerfTaxGB ?? null}
       immutabilitySavingsGB={overrides?.immutabilitySavingsGB ?? 0}
       sobrBlocksUpgrade={overrides?.sobrBlocksUpgrade ?? false}
+      bufferPercent={overrides?.bufferPercent}
     />,
   );
 }
@@ -146,5 +171,48 @@ describe("SizingHeroCard", () => {
       sobrBlocksUpgrade: true,
     });
     expect(screen.getByText(/↓ VBR 13:/)).toBeInTheDocument();
+  });
+
+  it("renders a Buffer (Spare) legend cell when buffer > 0", () => {
+    renderDefault({ sizing: SIZING_WITH_BUFFER });
+    expect(screen.getByText(/Buffer \(Spare\)/i)).toBeInTheDocument();
+  });
+
+  it("does not render a Buffer legend cell when buffer is 0", () => {
+    renderDefault();
+    expect(screen.queryByText(/Buffer \(Spare\)/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the buffer caption when bufferPercent is provided and buffer > 0", () => {
+    renderDefault({ sizing: SIZING_WITH_BUFFER, bufferPercent: 10 });
+    expect(
+      screen.getByText(/Includes 10% spare-capacity buffer\./i),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show the buffer caption when buffer is 0 even if bufferPercent is provided", () => {
+    renderDefault({ bufferPercent: 10 });
+    expect(
+      screen.queryByText(/spare-capacity buffer/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not show the buffer caption when buffer > 0 but bufferPercent is not provided", () => {
+    renderDefault({ sizing: SIZING_WITH_BUFFER });
+    expect(
+      screen.queryByText(/spare-capacity buffer/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("uses md:grid-cols-6 for legend grid when buffer > 0", () => {
+    const { container } = renderDefault({ sizing: SIZING_WITH_BUFFER });
+    const grid = container.querySelector(".md\\:grid-cols-6");
+    expect(grid).not.toBeNull();
+  });
+
+  it("uses md:grid-cols-5 for legend grid when buffer is 0", () => {
+    const { container } = renderDefault();
+    const grid = container.querySelector(".md\\:grid-cols-5");
+    expect(grid).not.toBeNull();
   });
 });

@@ -67,6 +67,7 @@ describe("deriveSizing", () => {
       monthly: 0,
       yearly: 0,
       immutability: 0,
+      buffer: 0,
     });
     expect(result.gfsSumTB).toBe(0);
     expect(result.compositionTotalTB).toBe(0);
@@ -207,7 +208,8 @@ describe("deriveSizing", () => {
       filled.compositionProportions.weekly +
       filled.compositionProportions.monthly +
       filled.compositionProportions.yearly +
-      filled.compositionProportions.immutability;
+      filled.compositionProportions.immutability +
+      filled.compositionProportions.buffer;
     expect(filledSum).toBeCloseTo(1, 6);
     expect(filled.compositionProportions.immutability).toBeGreaterThan(0);
   });
@@ -242,6 +244,21 @@ describe("deriveSizing", () => {
     );
     expect(result.dailyIncrementalTB).toBeCloseTo(0.2625, 6);
     expect(result.initialFullTB).toBeCloseTo(5.25, 6);
+  });
+
+  it("compositionBuckets includes a buffer field equal to 0", () => {
+    const result = deriveSizing(buildData({ restorePoints: [] }));
+    expect(result.compositionBuckets.buffer).toBe(0);
+  });
+
+  it("compositionProportions includes a buffer field equal to 0", () => {
+    const result = deriveSizing(
+      buildData({
+        performanceTierImmutabilityTaxGB: 1024,
+        restorePoints: [rp({ backupCapacity: 1, flags: "D1" })],
+      }),
+    );
+    expect(result.compositionProportions.buffer).toBe(0);
   });
 
   it("matches a hand-computed baseline against the captured live response fixture", () => {

@@ -6,6 +6,8 @@ import type {
   VmAgentResponse,
   VmAgentResponseData,
 } from "@/types/veeam-api";
+import { formatTB } from "@/lib/format-utils";
+import { bufferFactor } from "@/lib/sizing-buffer";
 
 function rp(overrides: Partial<RestorePoint> = {}): RestorePoint {
   return {
@@ -220,6 +222,47 @@ describe("SizingResults", () => {
         />,
       );
       expect(screen.queryByText(/↓ VBR 13:/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("buffer props", () => {
+    it("does not change the headline TB when bufferEnabled is false (default)", () => {
+      render(<SizingResults result={MOCK_RESULT} bufferEnabled={false} />);
+      expect(screen.getByText("12.50 TB")).toBeInTheDocument();
+    });
+
+    it("grosses up the headline TB when bufferEnabled is true", () => {
+      const pct = 10;
+      const expected = formatTB(MOCK_DATA.totalStorageTB * bufferFactor(pct));
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          bufferEnabled={true}
+          bufferPercent={pct}
+        />,
+      );
+      expect(screen.getByText(expected)).toBeInTheDocument();
+      // Original headline should no longer be present.
+      expect(screen.queryByText("12.50 TB")).not.toBeInTheDocument();
+    });
+
+    it("computes upgrade savings from both-buffered totals (apples-to-apples)", () => {
+      const pct = 10;
+      const f = bufferFactor(pct);
+      const bufferedV12 = MOCK_DATA.totalStorageTB * f;
+      const bufferedV13 = 10.0 * f;
+      const expectedSavings = formatTB(bufferedV12 - bufferedV13);
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          bufferEnabled={true}
+          bufferPercent={pct}
+        />,
+      );
+      expect(
+        screen.getByText(new RegExp(expectedSavings.replace(".", "\\."), "i")),
+      ).toBeInTheDocument();
     });
   });
 
