@@ -64,7 +64,7 @@ function SettingsForm({ initial, onSave, onCancel }: SettingsFormProps) {
 
   return (
     <>
-      <div className="space-y-6 py-2">
+      <div className="max-h-[calc(90dvh-12rem)] space-y-6 overflow-y-auto py-2 pr-1">
         {/* Target Cloud */}
         <section className="space-y-3">
           <div>
