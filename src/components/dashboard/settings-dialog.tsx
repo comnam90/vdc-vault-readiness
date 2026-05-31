@@ -372,6 +372,64 @@ function SettingsForm({ initial, onSave, onCancel }: SettingsFormProps) {
             </div>
           )}
         </section>
+
+        <Separator />
+
+        {/* Storage Buffer */}
+        <section className="space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="buffer-enabled" className="text-sm font-semibold">
+                Storage buffer
+              </Label>
+              <p className="text-muted-foreground text-xs">
+                Adds spare-capacity headroom to the sizing result. Applies to
+                results immediately — no re-calculation needed.
+              </p>
+            </div>
+            <Switch
+              id="buffer-enabled"
+              checked={draft.bufferEnabled}
+              onCheckedChange={(checked) =>
+                setDraft((prev) => ({ ...prev, bufferEnabled: checked }))
+              }
+            />
+          </div>
+          {draft.bufferEnabled && (
+            <div className="motion-safe:animate-in motion-safe:slide-in-from-top-2 motion-safe:fade-in fill-mode-backwards grid grid-cols-2 gap-3 pt-2 pl-6 duration-150 ease-[var(--ease-out)]">
+              <div className="space-y-1.5">
+                <Label htmlFor="buffer-percent">Buffer %</Label>
+                <div className="relative max-w-[10rem]">
+                  <Input
+                    id="buffer-percent"
+                    type="number"
+                    min={1}
+                    max={30}
+                    step={1}
+                    value={draft.bufferPercent}
+                    onChange={(e) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        bufferPercent: clamp(
+                          parseInt(e.target.value, 10),
+                          1,
+                          30,
+                        ),
+                      }))
+                    }
+                    className="pr-7 font-mono"
+                  />
+                  <span
+                    className="text-muted-foreground pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs"
+                    aria-hidden="true"
+                  >
+                    %
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
       </div>
 
       <DialogFooter className="gap-2 sm:justify-between">

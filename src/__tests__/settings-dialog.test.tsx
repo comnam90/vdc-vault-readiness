@@ -192,6 +192,47 @@ describe("SettingsDialog", () => {
     expect(persisted.historicalDataYears).toBe(4);
   });
 
+  it("renders the Storage buffer switch in the dialog", () => {
+    render(<SettingsDialog open onOpenChange={vi.fn()} />);
+    expect(
+      screen.getByRole("switch", { name: /storage buffer/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the buffer % input when bufferEnabled is false (default)", () => {
+    render(<SettingsDialog open onOpenChange={vi.fn()} />);
+    expect(screen.queryByLabelText(/buffer %/i)).not.toBeInTheDocument();
+  });
+
+  it("reveals the buffer % input when the storage buffer switch is toggled on", () => {
+    render(<SettingsDialog open onOpenChange={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("switch", { name: /storage buffer/i }));
+
+    const bufferInput = screen.getByLabelText(/buffer %/i) as HTMLInputElement;
+    expect(bufferInput).toBeInTheDocument();
+    expect(bufferInput.value).toBe("10");
+  });
+
+  it("persists bufferEnabled=true and bufferPercent via Save", () => {
+    const onOpenChange = vi.fn();
+    render(<SettingsDialog open onOpenChange={onOpenChange} />);
+
+    fireEvent.click(screen.getByRole("switch", { name: /storage buffer/i }));
+
+    setNumberInput(
+      screen.getByLabelText(/buffer %/i) as HTMLInputElement,
+      "20",
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    const persisted = JSON.parse(
+      window.localStorage.getItem(STORAGE_KEY) ?? "{}",
+    );
+    expect(persisted.bufferEnabled).toBe(true);
+    expect(persisted.bufferPercent).toBe(20);
+  });
+
   it("seeds the draft from current settings when the dialog opens", () => {
     function Harness({ open }: { open: boolean }) {
       const { updateSettings } = useSettings();

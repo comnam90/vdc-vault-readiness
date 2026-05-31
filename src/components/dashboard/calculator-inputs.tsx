@@ -766,6 +766,8 @@ export function CalculatorInputs({
           greenfieldSimulation={settings.greenfieldSimulation}
           historicalDataYears={settings.historicalDataYears}
           cappedAtYears={cappedAtYears}
+          bufferEnabled={settings.bufferEnabled}
+          bufferPercent={settings.bufferPercent}
         />
       )}
 
