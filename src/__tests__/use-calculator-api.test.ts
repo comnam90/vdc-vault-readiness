@@ -360,6 +360,52 @@ describe("useCalculatorApi", () => {
       });
     });
 
+    it("does NOT clear result or growthSeries when only bufferEnabled changes", async () => {
+      const { result, rerender } = renderHook(
+        (props: UseCalculatorApiOptions) => useCalculatorApi(props),
+        { initialProps: baseProps },
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+      expect(result.current.result).not.toBeNull();
+      expect(result.current.growthSeries).not.toBeNull();
+
+      act(() => {
+        rerender({
+          ...baseProps,
+          settings: { ...DEFAULT_SETTINGS, bufferEnabled: true },
+        });
+      });
+
+      expect(result.current.result).not.toBeNull();
+      expect(result.current.growthSeries).not.toBeNull();
+    });
+
+    it("does NOT clear result or growthSeries when only bufferPercent changes", async () => {
+      const { result, rerender } = renderHook(
+        (props: UseCalculatorApiOptions) => useCalculatorApi(props),
+        { initialProps: baseProps },
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+      expect(result.current.result).not.toBeNull();
+      expect(result.current.growthSeries).not.toBeNull();
+
+      act(() => {
+        rerender({
+          ...baseProps,
+          settings: { ...DEFAULT_SETTINGS, bufferPercent: 25 },
+        });
+      });
+
+      expect(result.current.result).not.toBeNull();
+      expect(result.current.growthSeries).not.toBeNull();
+    });
+
     it("does NOT clear hasConsented when inputs change", async () => {
       const { result, rerender } = renderHook(
         (props: UseCalculatorApiOptions) => useCalculatorApi(props),

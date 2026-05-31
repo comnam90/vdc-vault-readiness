@@ -333,6 +333,26 @@ describe("useSettings", () => {
     expect(result.current.settings.bufferPercent).toBe(30);
   });
 
+  it("persists and reads back bufferEnabled: true (happy path round-trip)", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ bufferEnabled: true }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.bufferEnabled).toBe(true);
+  });
+
+  it("passes through bufferPercent: 15 unchanged (in-range value)", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ bufferPercent: 15 }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.bufferPercent).toBe(15);
+  });
+
   it("falls back to default bufferEnabled for non-boolean (string 'yes' → false)", () => {
     window.localStorage.setItem(
       STORAGE_KEY,

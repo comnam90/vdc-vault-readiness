@@ -24,7 +24,7 @@ import type { GrowthSeriesPoint } from "@/lib/growth-projector";
 const CHART_HEIGHT = 350;
 
 interface ChartSegment {
-  dataKey: keyof Omit<GrowthSeriesPoint, "name" | "total">;
+  dataKey: Exclude<keyof Omit<GrowthSeriesPoint, "name" | "total">, "buffer">;
   name: string;
   color: string;
   rounded?: boolean;

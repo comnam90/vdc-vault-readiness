@@ -208,7 +208,8 @@ describe("deriveSizing", () => {
       filled.compositionProportions.weekly +
       filled.compositionProportions.monthly +
       filled.compositionProportions.yearly +
-      filled.compositionProportions.immutability;
+      filled.compositionProportions.immutability +
+      filled.compositionProportions.buffer;
     expect(filledSum).toBeCloseTo(1, 6);
     expect(filled.compositionProportions.immutability).toBeGreaterThan(0);
   });
