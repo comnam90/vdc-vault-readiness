@@ -179,6 +179,20 @@ describe("generateGrowthSeries", () => {
     }
   });
 
+  it("each emitted GrowthSeriesPoint has a buffer field equal to 0", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({ limitCalculationYears: 2 });
+    const result = await generateGrowthSeries(baseArgs(settings));
+
+    expect(result).toHaveLength(2);
+    for (const point of result) {
+      expect(point.buffer).toBe(0);
+    }
+  });
+
   it("extends to natural GFS retention (capped at 12) when no cap is set", async () => {
     callVmAgentApi.mockImplementation(async () =>
       fakeResponse({ totalStorageTB: 10, daily: 1 }),

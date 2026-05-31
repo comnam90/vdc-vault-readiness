@@ -11,6 +11,7 @@ const SAMPLE: GrowthSeriesPoint[] = [
     monthly: 0.5,
     yearly: 0.25,
     immutability: 0.1,
+    buffer: 0,
     total: 2.35,
   },
   {
@@ -20,6 +21,7 @@ const SAMPLE: GrowthSeriesPoint[] = [
     monthly: 0.55,
     yearly: 0.27,
     immutability: 0.11,
+    buffer: 0,
     total: 2.58,
   },
 ];
@@ -32,6 +34,7 @@ const MONTHLY_SAMPLE: GrowthSeriesPoint[] = [
     monthly: 0.5,
     yearly: 0,
     immutability: 0.1,
+    buffer: 0,
     total: 2.1,
   },
   {
@@ -41,6 +44,7 @@ const MONTHLY_SAMPLE: GrowthSeriesPoint[] = [
     monthly: 0.5,
     yearly: 0,
     immutability: 0.1,
+    buffer: 0,
     total: 2.1,
   },
 ];

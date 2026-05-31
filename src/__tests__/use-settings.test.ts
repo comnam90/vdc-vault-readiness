@@ -46,6 +46,8 @@ describe("useSettings", () => {
       ignoreArchiveTier: false,
       greenfieldSimulation: true,
       historicalDataYears: 0,
+      bufferEnabled: false,
+      bufferPercent: 10,
     });
   });
 
@@ -301,5 +303,43 @@ describe("useSettings", () => {
       window.localStorage.getItem(STORAGE_KEY) ?? "{}",
     );
     expect(persisted).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it("DEFAULT_SETTINGS has bufferEnabled: false", () => {
+    expect(DEFAULT_SETTINGS.bufferEnabled).toBe(false);
+  });
+
+  it("DEFAULT_SETTINGS has bufferPercent: 10", () => {
+    expect(DEFAULT_SETTINGS.bufferPercent).toBe(10);
+  });
+
+  it("clamps bufferPercent to a minimum of 1 (input 0 → 1)", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ bufferPercent: 0 }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.bufferPercent).toBe(1);
+  });
+
+  it("clamps bufferPercent to a maximum of 30 (input 31 → 30)", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ bufferPercent: 31 }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.bufferPercent).toBe(30);
+  });
+
+  it("falls back to default bufferEnabled for non-boolean (string 'yes' → false)", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ bufferEnabled: "yes" }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.bufferEnabled).toBe(false);
   });
 });

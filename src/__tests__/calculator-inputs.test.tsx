@@ -35,6 +35,7 @@ const SAMPLE_GROWTH: GrowthSeriesPoint[] = [
     monthly: 0.5,
     yearly: 0.25,
     immutability: 0.1,
+    buffer: 0,
     total: 2.35,
   },
 ];
@@ -437,6 +438,7 @@ describe("CalculatorInputs", () => {
           monthly: 0.5,
           yearly: 0.25,
           immutability: 0.1,
+          buffer: 0,
           total: 2.35,
         },
       ];

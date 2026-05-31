@@ -20,6 +20,7 @@ const SIZING: DerivedSizing = {
     monthly: 14.4375,
     yearly: 14.7,
     immutability: 2.625,
+    buffer: 0,
   },
   compositionTotalTB: TOTAL,
   compositionProportions: {
@@ -28,6 +29,7 @@ const SIZING: DerivedSizing = {
     monthly: 14.4375 / TOTAL,
     yearly: 14.7 / TOTAL,
     immutability: 2.625 / TOTAL,
+    buffer: 0,
   },
 };
 

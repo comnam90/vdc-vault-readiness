@@ -17,9 +17,10 @@ export interface SizingHeroCardProps {
   sobrBlocksUpgrade: boolean;
 }
 
-type Segment = keyof CompositionBuckets;
+/** The segments rendered in the legend — excludes the buffer field which is a post-processing transform. */
+type RenderedSegment = Exclude<keyof CompositionBuckets, "buffer">;
 
-const LEGEND_ORDER: Segment[] = [
+const LEGEND_ORDER: RenderedSegment[] = [
   "yearly",
   "monthly",
   "weekly",
@@ -27,7 +28,7 @@ const LEGEND_ORDER: Segment[] = [
   "immutability",
 ];
 
-const LEGEND_LABEL: Record<Segment, string> = {
+const LEGEND_LABEL: Record<RenderedSegment, string> = {
   yearly: "Yearly",
   monthly: "Monthly",
   weekly: "Weekly",
@@ -35,7 +36,7 @@ const LEGEND_LABEL: Record<Segment, string> = {
   immutability: "Immutability Overhead",
 };
 
-const LEGEND_COLOR: Record<Segment, string> = {
+const LEGEND_COLOR: Record<RenderedSegment, string> = {
   yearly: "var(--chart-5)",
   monthly: "var(--chart-3)",
   weekly: "var(--chart-2)",
@@ -49,7 +50,7 @@ const LEGEND_COLOR: Record<Segment, string> = {
  * Bar starts at t=0 with --duration-slow (400ms); the first label fades in at
  * 300ms (~75% through the bar) and the last completes around 950ms.
  */
-const LEGEND_DELAY_MS: Record<Segment, number> = {
+const LEGEND_DELAY_MS: Record<RenderedSegment, number> = {
   yearly: 300,
   monthly: 400,
   weekly: 500,

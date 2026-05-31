@@ -10,6 +10,7 @@ const FULL_BUCKETS = {
   monthly: 14.4375,
   yearly: 14.7,
   immutability: 2.625,
+  buffer: 0,
 };
 const FULL_TOTAL = 7.875 + 1.05 + 14.4375 + 14.7 + 2.625; // 40.6875
 
@@ -23,6 +24,7 @@ describe("SizingProportionBar", () => {
           monthly: 0,
           yearly: 0,
           immutability: 0,
+          buffer: 0,
         }}
         sumTB={0}
         counts={{ daily: 0, weekly: 0, monthly: 0, yearly: 0 }}

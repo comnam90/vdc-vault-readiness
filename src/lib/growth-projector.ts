@@ -18,7 +18,9 @@ export interface GrowthSeriesPoint {
   yearly: number;
   /** TB of immutability overhead on the performance tier. */
   immutability: number;
-  /** Sum of the five buckets — height of the stacked bar. */
+  /** Post-processing display headroom. Always 0 from API derivation; applied by consumer when bufferEnabled. */
+  buffer: number;
+  /** Sum of all buckets — height of the stacked bar. */
   total: number;
 }
 
@@ -179,6 +181,7 @@ export async function generateGrowthSeries(
       monthly: sizing.compositionBuckets.monthly,
       yearly: sizing.compositionBuckets.yearly,
       immutability: sizing.compositionBuckets.immutability,
+      buffer: 0,
       total: sizing.compositionTotalTB,
     };
   };

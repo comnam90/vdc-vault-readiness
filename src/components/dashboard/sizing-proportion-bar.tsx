@@ -15,9 +15,10 @@ export interface SizingProportionBarProps {
   counts: { daily: number; weekly: number; monthly: number; yearly: number };
 }
 
-type Segment = keyof CompositionBuckets;
+/** The segments rendered in the proportion bar — excludes the buffer field which is a post-processing transform. */
+type RenderedSegment = Exclude<keyof CompositionBuckets, "buffer">;
 
-const SEGMENT_ORDER: Segment[] = [
+const SEGMENT_ORDER: RenderedSegment[] = [
   "yearly",
   "monthly",
   "weekly",
@@ -25,7 +26,7 @@ const SEGMENT_ORDER: Segment[] = [
   "immutability",
 ];
 
-const SEGMENT_LABEL: Record<Segment, string> = {
+const SEGMENT_LABEL: Record<RenderedSegment, string> = {
   yearly: "Yearly",
   monthly: "Monthly",
   weekly: "Weekly",
@@ -33,7 +34,7 @@ const SEGMENT_LABEL: Record<Segment, string> = {
   immutability: "Immutability",
 };
 
-const SEGMENT_COLOR: Record<Segment, string> = {
+const SEGMENT_COLOR: Record<RenderedSegment, string> = {
   yearly: "var(--chart-5)",
   monthly: "var(--chart-3)",
   weekly: "var(--chart-2)",
@@ -85,7 +86,7 @@ export function SizingProportionBar({
           const tooltipDetail =
             seg === "immutability"
               ? `${SEGMENT_LABEL[seg]} Overhead: ${formatTB(buckets[seg])} (${formatPct(fraction)})`
-              : `${SEGMENT_LABEL[seg]}: ${formatTB(buckets[seg])} (${formatPct(fraction)}, ${counts[seg]} points)`;
+              : `${SEGMENT_LABEL[seg]}: ${formatTB(buckets[seg])} (${formatPct(fraction)}, ${counts[seg as keyof typeof counts]} points)`;
           return (
             <Tooltip key={seg}>
               <TooltipTrigger asChild>
