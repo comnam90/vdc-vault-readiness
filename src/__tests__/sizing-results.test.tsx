@@ -245,6 +245,25 @@ describe("SizingResults", () => {
       // Original headline should no longer be present.
       expect(screen.queryByText("12.50 TB")).not.toBeInTheDocument();
     });
+
+    it("computes upgrade savings from both-buffered totals (apples-to-apples)", () => {
+      const pct = 10;
+      const f = bufferFactor(pct);
+      const bufferedV12 = MOCK_DATA.totalStorageTB * f;
+      const bufferedV13 = 10.0 * f;
+      const expectedSavings = formatTB(bufferedV12 - bufferedV13);
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          bufferEnabled={true}
+          bufferPercent={pct}
+        />,
+      );
+      expect(
+        screen.getByText(new RegExp(expectedSavings.replace(".", "\\."), "i")),
+      ).toBeInTheDocument();
+    });
   });
 
   describe("SOBR-blocks-upgrade copy", () => {

@@ -72,6 +72,10 @@ export function SizingResults({
   const storageSavingsTB = hasUpgrade
     ? Math.max(0, sizing.totalStorageTB - upgradeSizing.totalStorageTB)
     : 0;
+  // performanceTaxGB is the immutability overhead charged by Veeam, independent of the
+  // headroom buffer. applyBufferToSizing does not scale it, so this diff is the raw
+  // VBR-12→13 immutability saving — correct, since buffer headroom doesn't affect
+  // immutability overhead.
   const immutabilitySavingsGB = hasUpgrade
     ? Math.max(0, sizing.performanceTaxGB - upgradeSizing.performanceTaxGB)
     : 0;
