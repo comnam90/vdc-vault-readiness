@@ -130,7 +130,7 @@ describe("Rule 13: Active Full Warning", () => {
 
     expect(rule).toBeDefined();
     expect(rule?.status).toBe("warning");
-    expect(rule?.title).toBe("Active Full Backup Schedules Detected");
+    expect(rule?.title).toBe("Active Full Backup Schedules");
     expect(rule?.message).toContain("Active Full");
     expect(rule?.message).toContain("Synthetic Full");
     expect(rule?.affectedItems).toEqual(["Job A"]);
@@ -190,7 +190,7 @@ function validateActiveFull(data: NormalizedDataset): ValidationResult {
   if (data.jobInfo.length === 0) {
     return {
       ruleId: "active-full-enabled",
-      title: "Active Full Backup Schedules Detected",
+      title: "Active Full Backup Schedules",
       status: "skipped",
       message:
         "Active Full check skipped — no job data found in the healthcheck.",
@@ -203,7 +203,7 @@ function validateActiveFull(data: NormalizedDataset): ValidationResult {
   if (affected.length > 0) {
     return {
       ruleId: "active-full-enabled",
-      title: "Active Full Backup Schedules Detected",
+      title: "Active Full Backup Schedules",
       status: "warning",
       message: `${affected.length} job(s) have Active Full enabled. The VDC Vault sizing calculator assumes Synthetic Full backups. Active Full runs create a complete new backup chain on each execution, consuming significantly more storage than the calculator estimates.`,
       affectedItems: affected.map((job) => job.JobName),
@@ -212,7 +212,7 @@ function validateActiveFull(data: NormalizedDataset): ValidationResult {
 
   return {
     ruleId: "active-full-enabled",
-    title: "Active Full Backup Schedules Detected",
+    title: "Active Full Backup Schedules",
     status: "pass",
     message:
       "No jobs have Active Full enabled. Sizing estimates assume Synthetic Full backups.",

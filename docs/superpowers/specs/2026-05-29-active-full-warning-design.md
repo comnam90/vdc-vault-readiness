@@ -13,7 +13,7 @@ The VDC Vault sizing calculator assumes all jobs use Synthetic Full backups. Job
 | Field           | Value                                                |
 | --------------- | ---------------------------------------------------- |
 | `ruleId`        | `"active-full-enabled"`                              |
-| `title`         | `"Active Full Backup Schedules Detected"`            |
+| `title`         | `"Active Full Backup Schedules"`                     |
 | `status`        | `"warning"` / `"pass"` / `"skipped"`                 |
 | `affectedItems` | Names of all jobs where `ActiveFullEnabled === true` |
 
