@@ -25,6 +25,7 @@ export function validateHealthcheck(
     validateSobrImmutability(data),
     validateArchiveTierEdition(data),
     validateCapacityTierResidency(data),
+    validateActiveFull(data),
   ];
 
   // Side-scan for legacy JobType strings after rules run, so we can emit
@@ -506,6 +507,40 @@ function validateCapacityTierResidency(
     title: "Capacity Tier Residency",
     status: "pass",
     message: `All capacity tier data meets the ${minDays}-day minimum residency requirement.`,
+    affectedItems: [],
+  };
+}
+
+function validateActiveFull(data: NormalizedDataset): ValidationResult {
+  if (data.jobInfo.length === 0) {
+    return {
+      ruleId: "active-full-enabled",
+      title: "Active Full Backup Schedules Detected",
+      status: "skipped",
+      message:
+        "Active Full check skipped — no job data found in the healthcheck.",
+      affectedItems: [],
+    };
+  }
+
+  const affected = data.jobInfo.filter((job) => job.ActiveFullEnabled === true);
+
+  if (affected.length > 0) {
+    return {
+      ruleId: "active-full-enabled",
+      title: "Active Full Backup Schedules Detected",
+      status: "warning",
+      message: `${affected.length} job(s) have Active Full enabled. The VDC Vault sizing calculator assumes Synthetic Full backups. Active Full runs create a complete new backup chain on each execution, consuming significantly more storage than the calculator estimates.`,
+      affectedItems: affected.map((job) => job.JobName),
+    };
+  }
+
+  return {
+    ruleId: "active-full-enabled",
+    title: "Active Full Backup Schedules Detected",
+    status: "pass",
+    message:
+      "No jobs have Active Full enabled. Sizing estimates assume Synthetic Full backups.",
     affectedItems: [],
   };
 }

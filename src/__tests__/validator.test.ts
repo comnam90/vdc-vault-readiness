@@ -1734,7 +1734,7 @@ describe("validateHealthcheck", () => {
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(12);
+      expect(results).toHaveLength(13);
       expect(results.map((r) => r.ruleId)).toContain("vbr-version");
       expect(results.map((r) => r.ruleId)).toContain(
         "config-backup-encryption",
@@ -1753,6 +1753,7 @@ describe("validateHealthcheck", () => {
       expect(results.map((r) => r.ruleId)).toContain("sobr-immutability");
       expect(results.map((r) => r.ruleId)).toContain("archive-tier-edition");
       expect(results.map((r) => r.ruleId)).toContain("capacity-tier-residency");
+      expect(results.map((r) => r.ruleId)).toContain("active-full-enabled");
     });
 
     it("handles empty dataset gracefully", () => {
@@ -1773,7 +1774,7 @@ describe("validateHealthcheck", () => {
 
       const results = validateHealthcheck(data);
 
-      expect(results).toHaveLength(12);
+      expect(results).toHaveLength(13);
       // Version check should fail with empty backupServer
       const versionCheck = results.find((r) => r.ruleId === "vbr-version");
       expect(versionCheck?.status).toBe("fail");
