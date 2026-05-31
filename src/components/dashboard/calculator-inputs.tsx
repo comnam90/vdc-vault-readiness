@@ -165,6 +165,23 @@ export function CalculatorInputs({
     summary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS,
   );
 
+  type GfsState = {
+    weekly: number | null;
+    monthly: number | null;
+    yearly: number | null;
+  };
+  const [gfs, setGfs] = useState<GfsState>({
+    weekly: summary.gfsWeekly,
+    monthly: summary.gfsMonthly,
+    yearly: summary.gfsYearly,
+  });
+  const [isEditingGfs, setIsEditingGfs] = useState<boolean>(false);
+  const [gfsDraft, setGfsDraft] = useState<GfsState>({
+    weekly: summary.gfsWeekly,
+    monthly: summary.gfsMonthly,
+    yearly: summary.gfsYearly,
+  });
+
   useEffect(() => {
     const s = summaryRef.current;
     setImmutabilityDays(DEFAULT_IMMUTABILITY_DAYS);
@@ -174,6 +191,14 @@ export function CalculatorInputs({
     setRetentionDays(retDays);
     setRetentionDraft(retDays);
     setIsEditingRetention(false);
+    const gfsInit: GfsState = {
+      weekly: s.gfsWeekly,
+      monthly: s.gfsMonthly,
+      yearly: s.gfsYearly,
+    };
+    setGfs(gfsInit);
+    setGfsDraft(gfsInit);
+    setIsEditingGfs(false);
   }, [data]);
 
   const handleImmutabilityConfirm = () => {
@@ -213,6 +238,35 @@ export function CalculatorInputs({
     setRetentionDays(resetTo);
     setRetentionDraft(resetTo);
     setIsEditingRetention(false);
+  };
+
+  const handleGfsConfirm = () => {
+    const isInvalid = (v: number | null) =>
+      v !== null && (!Number.isFinite(v) || v < 0);
+    if (
+      isInvalid(gfsDraft.weekly) ||
+      isInvalid(gfsDraft.monthly) ||
+      isInvalid(gfsDraft.yearly)
+    )
+      return;
+    setGfs(gfsDraft);
+    setIsEditingGfs(false);
+  };
+
+  const handleGfsCancel = () => {
+    setIsEditingGfs(false);
+    setGfsDraft(gfs);
+  };
+
+  const handleGfsReset = () => {
+    const resetTo: GfsState = {
+      weekly: summary.gfsWeekly,
+      monthly: summary.gfsMonthly,
+      yearly: summary.gfsYearly,
+    };
+    setGfs(resetTo);
+    setGfsDraft(resetTo);
+    setIsEditingGfs(false);
   };
   const activeJobCount = data.jobInfo.filter(
     (j) => !excludedJobNames.has(j.JobName),
@@ -469,13 +523,128 @@ export function CalculatorInputs({
                   }))}
                 />
               </div>
-              <p className="font-mono text-2xl font-semibold">
-                {formatGFS(
-                  summary.gfsWeekly,
-                  summary.gfsMonthly,
-                  summary.gfsYearly,
-                )}
-              </p>
+              {isEditingGfs ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="text-muted-foreground flex items-center gap-1 text-sm">
+                    W
+                    <Input
+                      type="number"
+                      min={0}
+                      value={gfsDraft.weekly ?? ""}
+                      onChange={(e) => {
+                        const p = parseInt(e.target.value, 10);
+                        setGfsDraft((d) => ({
+                          ...d,
+                          weekly: Number.isNaN(p) ? null : p,
+                        }));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleGfsConfirm();
+                        if (e.key === "Escape") handleGfsCancel();
+                      }}
+                      className="w-16 font-mono"
+                      autoFocus
+                      aria-label="Weekly GFS"
+                    />
+                  </label>
+                  <label className="text-muted-foreground flex items-center gap-1 text-sm">
+                    M
+                    <Input
+                      type="number"
+                      min={0}
+                      value={gfsDraft.monthly ?? ""}
+                      onChange={(e) => {
+                        const p = parseInt(e.target.value, 10);
+                        setGfsDraft((d) => ({
+                          ...d,
+                          monthly: Number.isNaN(p) ? null : p,
+                        }));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleGfsConfirm();
+                        if (e.key === "Escape") handleGfsCancel();
+                      }}
+                      className="w-16 font-mono"
+                      aria-label="Monthly GFS"
+                    />
+                  </label>
+                  <label className="text-muted-foreground flex items-center gap-1 text-sm">
+                    Y
+                    <Input
+                      type="number"
+                      min={0}
+                      value={gfsDraft.yearly ?? ""}
+                      onChange={(e) => {
+                        const p = parseInt(e.target.value, 10);
+                        setGfsDraft((d) => ({
+                          ...d,
+                          yearly: Number.isNaN(p) ? null : p,
+                        }));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleGfsConfirm();
+                        if (e.key === "Escape") handleGfsCancel();
+                      }}
+                      className="w-16 font-mono"
+                      aria-label="Yearly GFS"
+                    />
+                  </label>
+                  <Button
+                    type="button"
+                    size="icon"
+                    className="size-7"
+                    onClick={handleGfsConfirm}
+                    aria-label="Confirm GFS"
+                  >
+                    <Check className="size-3" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-7"
+                    onClick={handleGfsCancel}
+                    aria-label="Cancel GFS edit"
+                  >
+                    <X className="size-3" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground h-7 text-xs"
+                    onClick={handleGfsReset}
+                    aria-label="Reset GFS to file values"
+                  >
+                    <RotateCcw className="mr-1 size-3" aria-hidden="true" />
+                    Reset to file values
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-baseline gap-2">
+                  <p className="font-mono text-2xl font-semibold">
+                    {formatGFS(gfs.weekly, gfs.monthly, gfs.yearly)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGfsDraft(gfs);
+                      setIsEditingGfs(true);
+                    }}
+                    aria-label="Edit extended retention"
+                    className={cn(
+                      "inline-flex items-center justify-center motion-safe:transition-colors",
+                      gfs.weekly !== summary.gfsWeekly ||
+                        gfs.monthly !== summary.gfsMonthly ||
+                        gfs.yearly !== summary.gfsYearly
+                        ? "text-primary"
+                        : "text-muted-foreground/70 hover:text-foreground",
+                    )}
+                  >
+                    <Pencil className="size-3.5" aria-hidden="true" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
