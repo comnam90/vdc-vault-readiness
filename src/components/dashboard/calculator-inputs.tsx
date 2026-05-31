@@ -164,6 +164,13 @@ export function CalculatorInputs({
   );
 
   const [consentOpen, setConsentOpen] = useState(false);
+
+  // Drafts are seeded from props at mount and are re-synced only by the
+  // confirm/cancel/reset handlers below. This is safe because the controlled
+  // props (immutabilityDays, retentionDays, gfs) are exclusively updated via
+  // this component's own on*Change callbacks — no external code changes them
+  // while an edit is in flight. If that assumption ever breaks, add a
+  // useEffect to re-sync drafts when the props change.
   const [isEditingImmutability, setIsEditingImmutability] =
     useState<boolean>(false);
   const [immutabilityDraft, setImmutabilityDraft] =
