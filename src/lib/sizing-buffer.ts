@@ -30,7 +30,7 @@ export function applyBufferToSizing(
   enabled: boolean,
   pct: number,
 ): DerivedSizing {
-  if (!enabled || pct <= 0) return sizing;
+  if (!enabled || pct <= 0 || pct >= 100) return sizing;
 
   const f = bufferFactor(pct);
   const bufferTB = sizing.compositionTotalTB * (f - 1);
@@ -86,12 +86,11 @@ export function applyBufferToSeries(
   enabled: boolean,
   pct: number,
 ): GrowthSeriesPoint[] {
-  if (!enabled || pct <= 0) return series;
+  if (!enabled || pct <= 0 || pct >= 100) return series;
 
   const f = bufferFactor(pct);
-  return series.map((point) => ({
-    ...point,
-    buffer: point.total * (f - 1),
-    total: point.total * f,
-  }));
+  return series.map((point) => {
+    const origTotal = point.total;
+    return { ...point, buffer: origTotal * (f - 1), total: origTotal * f };
+  });
 }

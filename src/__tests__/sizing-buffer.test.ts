@@ -88,6 +88,11 @@ describe("applyBufferToSizing", () => {
     expect(applyBufferToSizing(sizing, true, 0)).toBe(sizing);
   });
 
+  it("returns same reference when pct is 100 (guard against Infinity)", () => {
+    const sizing = makeSizing();
+    expect(applyBufferToSizing(sizing, true, 100)).toBe(sizing);
+  });
+
   it("grosses up totalStorageTB by factor f (90 TB + 10% → 100 TB)", () => {
     const sizing = makeSizing();
     const result = applyBufferToSizing(sizing, true, 10);
@@ -180,6 +185,11 @@ describe("applyBufferToSeries", () => {
   it("returns same reference when pct is 0", () => {
     const series = [makeSeriesPoint()];
     expect(applyBufferToSeries(series, true, 0)).toBe(series);
+  });
+
+  it("returns same reference when pct is 100 (guard against Infinity)", () => {
+    const series = [makeSeriesPoint()];
+    expect(applyBufferToSeries(series, true, 100)).toBe(series);
   });
 
   it("scales total by f and sets buffer = total_orig * (f - 1)", () => {
