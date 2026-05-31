@@ -1905,7 +1905,7 @@ describe("Rule 13: Active Full Warning", () => {
       JobType: "Backup",
       Encrypted: true,
       RepoName: "Repo1",
-      RetainDays: 30,
+      RetainDays: null,
       GfsDetails: null,
       SourceSizeGB: null,
       OnDiskGB: null,
