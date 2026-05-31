@@ -117,6 +117,11 @@ const baseProps: UseCalculatorApiOptions = {
   data: mockDataVbr13,
   excludedJobNames: new Set<string>(),
   settings: DEFAULT_SETTINGS,
+  immutabilityDays: 30,
+  retentionDays: 14,
+  gfsWeekly: 1,
+  gfsMonthly: 1,
+  gfsYearly: 1,
 };
 
 const DEFAULT_OVERRIDES: CalculatorOverrides = {
@@ -290,6 +295,96 @@ describe("useCalculatorApi", () => {
       });
 
       expect(result.current.error).toBeNull();
+    });
+
+    it("clears result when immutabilityDays changes", async () => {
+      const { result, rerender } = renderHook(
+        (props: UseCalculatorApiOptions) => useCalculatorApi(props),
+        { initialProps: baseProps },
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+      expect(result.current.result).not.toBeNull();
+
+      act(() => {
+        rerender({ ...baseProps, immutabilityDays: 60 });
+      });
+
+      expect(result.current.result).toBeNull();
+    });
+
+    it("clears result when retentionDays changes", async () => {
+      const { result, rerender } = renderHook(
+        (props: UseCalculatorApiOptions) => useCalculatorApi(props),
+        { initialProps: baseProps },
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+      expect(result.current.result).not.toBeNull();
+
+      act(() => {
+        rerender({ ...baseProps, retentionDays: 90 });
+      });
+
+      expect(result.current.result).toBeNull();
+    });
+
+    it("clears result when gfsWeekly changes", async () => {
+      const { result, rerender } = renderHook(
+        (props: UseCalculatorApiOptions) => useCalculatorApi(props),
+        { initialProps: baseProps },
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+      expect(result.current.result).not.toBeNull();
+
+      act(() => {
+        rerender({ ...baseProps, gfsWeekly: 4 });
+      });
+
+      expect(result.current.result).toBeNull();
+    });
+
+    it("clears result when gfsMonthly changes", async () => {
+      const { result, rerender } = renderHook(
+        (props: UseCalculatorApiOptions) => useCalculatorApi(props),
+        { initialProps: baseProps },
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+      expect(result.current.result).not.toBeNull();
+
+      act(() => {
+        rerender({ ...baseProps, gfsMonthly: 24 });
+      });
+
+      expect(result.current.result).toBeNull();
+    });
+
+    it("clears result when gfsYearly changes", async () => {
+      const { result, rerender } = renderHook(
+        (props: UseCalculatorApiOptions) => useCalculatorApi(props),
+        { initialProps: baseProps },
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+      expect(result.current.result).not.toBeNull();
+
+      act(() => {
+        rerender({ ...baseProps, gfsYearly: 10 });
+      });
+
+      expect(result.current.result).toBeNull();
     });
 
     it("ignores in-flight result if inputs change before it resolves", async () => {

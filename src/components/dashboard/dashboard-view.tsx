@@ -1,8 +1,14 @@
 import { useMemo, useState } from "react";
+import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
 import { CheckCircle2, XCircle } from "lucide-react";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
-import { CARD_LABEL, MINIMUM_VBR_VERSION } from "@/lib/constants";
+import {
+  CARD_LABEL,
+  DEFAULT_IMMUTABILITY_DAYS,
+  MINIMUM_RETENTION_DAYS,
+  MINIMUM_VBR_VERSION,
+} from "@/lib/constants";
 import { enrichJobs } from "@/lib/enrich-jobs";
 import {
   getBlockerValidations,
@@ -21,7 +27,10 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalculatorInputs } from "@/components/dashboard/calculator-inputs";
+import {
+  CalculatorInputs,
+  type GfsState,
+} from "@/components/dashboard/calculator-inputs";
 import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
 import { NotesPanel } from "./notes-panel";
@@ -51,6 +60,29 @@ export function DashboardView({
     new Set(),
   );
   const { settings } = useSettings();
+  const [immutabilityDays, setImmutabilityDays] = useState(
+    DEFAULT_IMMUTABILITY_DAYS,
+  );
+  const [retentionDays, setRetentionDays] = useState(() => {
+    const s = buildCalculatorSummary(
+      data.jobInfo,
+      data.jobSessionSummary,
+      new Set(),
+      settings,
+    );
+    return s.maxRetentionDays ?? MINIMUM_RETENTION_DAYS;
+  });
+  const [gfs, setGfs] = useState<GfsState>(() => {
+    const s = buildCalculatorSummary(
+      data.jobInfo,
+      data.jobSessionSummary,
+      new Set(),
+      settings,
+    );
+    return { weekly: s.gfsWeekly, monthly: s.gfsMonthly, yearly: s.gfsYearly };
+  });
+  const [isRetentionOverridden, setIsRetentionOverridden] = useState(false);
+  const [isGfsOverridden, setIsGfsOverridden] = useState(false);
   const {
     result: calcResult,
     upgradeResult: calcUpgradeResult,
@@ -60,7 +92,16 @@ export function DashboardView({
     hasConsented,
     grantConsent,
     calculate,
-  } = useCalculatorApi({ data, excludedJobNames, settings });
+  } = useCalculatorApi({
+    data,
+    excludedJobNames,
+    settings,
+    immutabilityDays,
+    retentionDays,
+    gfsWeekly: gfs.weekly,
+    gfsMonthly: gfs.monthly,
+    gfsYearly: gfs.yearly,
+  });
   const enrichedJobs = useMemo(
     () => enrichJobs(data.jobInfo, data.jobSessionSummary),
     [data.jobInfo, data.jobSessionSummary],
@@ -255,6 +296,28 @@ export function DashboardView({
             error={calcError}
             loading={calcLoading}
             hasConsented={hasConsented}
+            immutabilityDays={immutabilityDays}
+            retentionDays={retentionDays}
+            gfs={gfs}
+            onImmutabilityDaysChange={setImmutabilityDays}
+            onRetentionDaysChange={(v) => {
+              setRetentionDays(v);
+              setIsRetentionOverridden(true);
+            }}
+            onGfsChange={(v) => {
+              setGfs(v);
+              setIsGfsOverridden(true);
+            }}
+            isRetentionOverridden={isRetentionOverridden}
+            isGfsOverridden={isGfsOverridden}
+            onRetentionReset={(v) => {
+              setRetentionDays(v);
+              setIsRetentionOverridden(false);
+            }}
+            onGfsReset={(v) => {
+              setGfs(v);
+              setIsGfsOverridden(false);
+            }}
             onConsentGiven={grantConsent}
             onCalculate={calculate}
           />

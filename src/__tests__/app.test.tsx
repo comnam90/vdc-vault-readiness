@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import App from "@/App";
 import type { AnalysisStatus } from "@/hooks/use-analysis";
@@ -360,6 +366,47 @@ describe("App", () => {
 
       await new Promise((r) => setTimeout(r, 10));
       expect(mockSaveScan).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("DashboardView remount invariant", () => {
+    it("re-seeds sizing inputs with second file's data after re-upload", async () => {
+      const makeData = (retainDays: number): NormalizedDataset => ({
+        ...MOCK_DATA,
+        jobInfo: [{ ...MOCK_DATA.jobInfo[0], RetainDays: retainDays }],
+      });
+
+      mockStatus = "success";
+      mockData = makeData(90);
+      mockValidations = MOCK_VALIDATIONS;
+      const { rerender } = render(<App />);
+
+      const clickSizingTab = async () => {
+        const tab = screen.getByRole("tab", { name: /sizing/i });
+        await act(async () => {
+          fireEvent.mouseDown(tab);
+          fireEvent.click(tab);
+        });
+      };
+
+      await clickSizingTab();
+      expect(await screen.findByText("90 days")).toBeInTheDocument();
+
+      // Transition through processing — this unmounts DashboardView
+      mockStatus = "processing";
+      mockCurrentStep = "parse";
+      rerender(<App />);
+      expect(screen.queryByText("90 days")).not.toBeInTheDocument();
+
+      // Second file upload completes with different data
+      mockStatus = "success";
+      mockData = makeData(60);
+      mockCurrentStep = null;
+      rerender(<App />);
+
+      await clickSizingTab();
+      expect(await screen.findByText("60 days")).toBeInTheDocument();
+      expect(screen.queryByText("90 days")).not.toBeInTheDocument();
     });
   });
 });

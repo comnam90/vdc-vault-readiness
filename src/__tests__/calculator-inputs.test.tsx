@@ -1,6 +1,10 @@
 import { render, screen, fireEvent } from "@testing-library/react";
+import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { CalculatorInputs } from "@/components/dashboard/calculator-inputs";
+import {
+  CalculatorInputs,
+  type GfsState,
+} from "@/components/dashboard/calculator-inputs";
 import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
 import type { NormalizedDataset } from "@/types/domain";
 import type { VmAgentResponse } from "@/types/veeam-api";
@@ -133,7 +137,81 @@ describe("CalculatorInputs", () => {
     hasConsented: false,
     onConsentGiven: vi.fn(),
     onCalculate: vi.fn().mockResolvedValue(undefined),
+    // Controlled override props
+    immutabilityDays: 30,
+    retentionDays: 14,
+    gfs: { weekly: 1, monthly: 1, yearly: 1 } as GfsState,
+    onImmutabilityDaysChange: vi.fn(),
+    // onRetentionDaysChange and onGfsChange are overridden by the Harness in
+    // renderControlled — do not assert on these in renderControlled contexts.
+    onRetentionDaysChange: vi.fn(),
+    onGfsChange: vi.fn(),
+    isRetentionOverridden: false,
+    isGfsOverridden: false,
+    onRetentionReset: vi.fn(),
+    onGfsReset: vi.fn(),
   };
+
+  function renderControlled(
+    uiProps: Omit<
+      React.ComponentProps<typeof CalculatorInputs>,
+      | "immutabilityDays"
+      | "retentionDays"
+      | "gfs"
+      | "onImmutabilityDaysChange"
+      | "onRetentionDaysChange"
+      | "onGfsChange"
+      | "isRetentionOverridden"
+      | "isGfsOverridden"
+      | "onRetentionReset"
+      | "onGfsReset"
+    > & { data: NormalizedDataset },
+    seeds: { imm?: number; ret?: number; gfs?: GfsState } = {},
+  ) {
+    const {
+      imm = 30,
+      ret = 14,
+      gfs: gfsInit = { weekly: 1, monthly: 1, yearly: 1 },
+    } = seeds;
+
+    function Harness() {
+      const [immutabilityDays, setImmutabilityDays] = useState(imm);
+      const [retentionDays, setRetentionDays] = useState(ret);
+      const [gfs, setGfs] = useState<GfsState>(gfsInit);
+      const [isRetentionOverridden, setIsRetentionOverridden] = useState(false);
+      const [isGfsOverridden, setIsGfsOverridden] = useState(false);
+      return (
+        <CalculatorInputs
+          {...uiProps}
+          // Explicit setters must come after {...uiProps}: they override any spy onChange
+          // handlers that callers inadvertently pass in via defaultControlledProps spread.
+          immutabilityDays={immutabilityDays}
+          retentionDays={retentionDays}
+          gfs={gfs}
+          onImmutabilityDaysChange={setImmutabilityDays}
+          onRetentionDaysChange={(v) => {
+            setRetentionDays(v);
+            setIsRetentionOverridden(true);
+          }}
+          onGfsChange={(v) => {
+            setGfs(v);
+            setIsGfsOverridden(true);
+          }}
+          isRetentionOverridden={isRetentionOverridden}
+          isGfsOverridden={isGfsOverridden}
+          onRetentionReset={(v) => {
+            setRetentionDays(v);
+            setIsRetentionOverridden(false);
+          }}
+          onGfsReset={(v) => {
+            setGfs(v);
+            setIsGfsOverridden(false);
+          }}
+        />
+      );
+    }
+    return render(<Harness />);
+  }
 
   it("renders all 5 calculator input labels", () => {
     render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
@@ -160,7 +238,13 @@ describe("CalculatorInputs", () => {
       retentionDistribution: [],
     });
 
-    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+    render(
+      <CalculatorInputs
+        data={mockData}
+        {...defaultControlledProps}
+        gfs={{ weekly: 4, monthly: 12, yearly: 7 }}
+      />,
+    );
 
     // Source Data: 2 decimal places
     expect(screen.getByText("123.46 TB")).toBeInTheDocument();
@@ -196,7 +280,13 @@ describe("CalculatorInputs", () => {
       retentionDistribution: [],
     });
 
-    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+    render(
+      <CalculatorInputs
+        data={mockData}
+        {...defaultControlledProps}
+        gfs={{ weekly: null, monthly: null, yearly: null }}
+      />,
+    );
 
     const naElements = screen.getAllByText("N/A");
     expect(naElements.length).toBeGreaterThan(0); // Should appear multiple times
@@ -254,7 +344,14 @@ describe("CalculatorInputs", () => {
       retentionDistribution: [],
     });
 
-    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+    render(
+      <CalculatorInputs
+        data={mockData}
+        {...defaultControlledProps}
+        retentionDays={30}
+        gfs={{ weekly: null, monthly: null, yearly: null }}
+      />,
+    );
 
     expect(screen.getAllByText("30 days").length).toBeGreaterThan(0);
     expect(screen.getByText("(current: 14 days)")).toBeInTheDocument();
@@ -275,7 +372,14 @@ describe("CalculatorInputs", () => {
       retentionDistribution: [],
     });
 
-    render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+    render(
+      <CalculatorInputs
+        data={mockData}
+        {...defaultControlledProps}
+        retentionDays={45}
+        gfs={{ weekly: null, monthly: null, yearly: null }}
+      />,
+    );
 
     expect(screen.getByText("45 days")).toBeInTheDocument();
     expect(screen.queryByText(/current:/)).not.toBeInTheDocument();
@@ -752,6 +856,17 @@ describe("CalculatorInputs", () => {
       hasConsented: false,
       onConsentGiven,
       onCalculate,
+      // Controlled override props
+      immutabilityDays: 30,
+      retentionDays: 14,
+      gfs: { weekly: 1, monthly: 1, yearly: 1 } as GfsState,
+      onImmutabilityDaysChange: vi.fn(),
+      onRetentionDaysChange: vi.fn(),
+      onGfsChange: vi.fn(),
+      isRetentionOverridden: false,
+      isGfsOverridden: false,
+      onRetentionReset: vi.fn(),
+      onGfsReset: vi.fn(),
     };
 
     beforeEach(() => {
@@ -899,6 +1014,32 @@ describe("CalculatorInputs", () => {
       ).toBeDisabled();
     });
 
+    it("disables calculate button while retention editor is open", () => {
+      renderControlled({
+        data: mockDataVbr13,
+        ...baseControlledProps,
+        hasConsented: true,
+      });
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      expect(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      ).toBeDisabled();
+    });
+
+    it("disables calculate button while GFS editor is open", () => {
+      renderControlled({
+        data: mockDataVbr13,
+        ...baseControlledProps,
+        hasConsented: true,
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      expect(
+        screen.getByRole("button", { name: /get sizing estimate/i }),
+      ).toBeDisabled();
+    });
+
     it("renders VBR 12 upgrade annotation when upgradeResult is non-null", () => {
       render(
         <CalculatorInputs
@@ -954,7 +1095,10 @@ describe("CalculatorInputs", () => {
     });
 
     it("confirm updates the displayed value and exits edit mode", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled(
+        { data: mockData, ...defaultControlledProps },
+        { ret: 99 },
+      );
       fireEvent.click(
         screen.getByRole("button", { name: /edit immutability period/i }),
       );
@@ -969,7 +1113,10 @@ describe("CalculatorInputs", () => {
     });
 
     it("Enter key confirms and exits edit mode", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled(
+        { data: mockData, ...defaultControlledProps },
+        { ret: 99 },
+      );
       fireEvent.click(
         screen.getByRole("button", { name: /edit immutability period/i }),
       );
@@ -982,7 +1129,10 @@ describe("CalculatorInputs", () => {
     });
 
     it("cancel reverts to the previous value and exits edit mode", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled(
+        { data: mockData, ...defaultControlledProps },
+        { ret: 99 },
+      );
       fireEvent.click(
         screen.getByRole("button", { name: /edit immutability period/i }),
       );
@@ -999,7 +1149,10 @@ describe("CalculatorInputs", () => {
     });
 
     it("Escape key cancels and reverts to the previous value", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled(
+        { data: mockData, ...defaultControlledProps },
+        { ret: 99 },
+      );
       fireEvent.click(
         screen.getByRole("button", { name: /edit immutability period/i }),
       );
@@ -1012,7 +1165,10 @@ describe("CalculatorInputs", () => {
     });
 
     it("reset sets value back to 30 and exits edit mode", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled(
+        { data: mockData, ...defaultControlledProps },
+        { ret: 99 },
+      );
       // First set a custom value
       fireEvent.click(
         screen.getByRole("button", { name: /edit immutability period/i }),
@@ -1034,7 +1190,10 @@ describe("CalculatorInputs", () => {
     });
 
     it("rejects a value of 0 — stays in edit mode without updating", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled(
+        { data: mockData, ...defaultControlledProps },
+        { ret: 99 },
+      );
       fireEvent.click(
         screen.getByRole("button", { name: /edit immutability period/i }),
       );
@@ -1049,7 +1208,10 @@ describe("CalculatorInputs", () => {
     });
 
     it("pencil icon has text-primary class when override is active", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled(
+        { data: mockData, ...defaultControlledProps },
+        { ret: 99 },
+      );
       fireEvent.click(
         screen.getByRole("button", { name: /edit immutability period/i }),
       );
@@ -1066,14 +1228,15 @@ describe("CalculatorInputs", () => {
 
     it("passes the immutabilityDays override to onCalculate on button click", () => {
       const onCalculate = vi.fn().mockResolvedValue(undefined);
-      render(
-        <CalculatorInputs
-          data={mockDataVbr13}
-          {...defaultControlledProps}
-          onCalculate={onCalculate}
-          hasConsented={true}
-          result={MOCK_API_RESULT}
-        />,
+      renderControlled(
+        {
+          data: mockDataVbr13,
+          ...defaultControlledProps,
+          onCalculate,
+          hasConsented: true,
+          result: MOCK_API_RESULT,
+        },
+        { ret: 99 },
       );
       // Set a custom value
       fireEvent.click(
@@ -1100,14 +1263,15 @@ describe("CalculatorInputs", () => {
     it("passes immutabilityDays to onCalculate when consent dialog is accepted", () => {
       const onCalculate = vi.fn().mockResolvedValue(undefined);
       const onConsentGiven = vi.fn();
-      render(
-        <CalculatorInputs
-          data={mockDataVbr13}
-          {...defaultControlledProps}
-          onCalculate={onCalculate}
-          onConsentGiven={onConsentGiven}
-          hasConsented={false}
-        />,
+      renderControlled(
+        {
+          data: mockDataVbr13,
+          ...defaultControlledProps,
+          onCalculate,
+          onConsentGiven,
+          hasConsented: false,
+        },
+        { ret: 99 },
       );
       // Set a custom value
       fireEvent.click(
@@ -1135,33 +1299,11 @@ describe("CalculatorInputs", () => {
       });
     });
 
-    it("resets to the default when data changes", () => {
-      const { rerender } = render(
-        <CalculatorInputs data={mockData} {...defaultControlledProps} />,
-      );
-      // Set custom value
-      fireEvent.click(
-        screen.getByRole("button", { name: /edit immutability period/i }),
-      );
-      fireEvent.change(screen.getByRole("spinbutton"), {
-        target: { value: "45" },
-      });
-      fireEvent.click(
-        screen.getByRole("button", { name: /confirm immutability period/i }),
-      );
-      expect(screen.getByText("45 days")).toBeInTheDocument();
-      // Re-render with different data (different backupServer Name drives dataKey)
-      const newData = {
-        ...mockData,
-        backupServer: [{ Version: "13.0.1.1071", Name: "server-2" }],
-      } as unknown as NormalizedDataset;
-      rerender(<CalculatorInputs data={newData} {...defaultControlledProps} />);
-      expect(screen.getByText("30 days")).toBeInTheDocument();
-      expect(screen.queryByText("45 days")).not.toBeInTheDocument();
-    });
-
     it("rejects a cleared (empty) input — stays in edit mode without updating", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled(
+        { data: mockData, ...defaultControlledProps },
+        { ret: 99 },
+      );
       fireEvent.click(
         screen.getByRole("button", { name: /edit immutability period/i }),
       );
@@ -1201,7 +1343,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("confirm updates the displayed value and exits edit mode", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
       fireEvent.change(screen.getByRole("spinbutton"), {
         target: { value: "45" },
@@ -1214,7 +1356,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("Enter key confirms and exits edit mode", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
       fireEvent.change(screen.getByRole("spinbutton"), {
         target: { value: "45" },
@@ -1225,7 +1367,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("cancel reverts to the previous value and exits edit mode", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
       fireEvent.change(screen.getByRole("spinbutton"), {
         target: { value: "45" },
@@ -1238,7 +1380,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("Escape key cancels and reverts to the previous value", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
       fireEvent.change(screen.getByRole("spinbutton"), {
         target: { value: "45" },
@@ -1249,7 +1391,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("reset sets value back to the file-aggregated value and exits edit mode", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       // First set a custom value
       fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
       fireEvent.change(screen.getByRole("spinbutton"), {
@@ -1294,7 +1436,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("pencil icon has text-primary class when override is active", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
       fireEvent.change(screen.getByRole("spinbutton"), {
         target: { value: "45" },
@@ -1307,40 +1449,33 @@ describe("CalculatorInputs", () => {
       ).toHaveClass("text-primary");
     });
 
-    it("resets to the file-aggregated value when data changes", () => {
-      const { rerender } = render(
-        <CalculatorInputs data={mockData} {...defaultControlledProps} />,
-      );
-      // Set custom value
-      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
-      fireEvent.change(screen.getByRole("spinbutton"), {
-        target: { value: "45" },
+    it("pencil stays off when live summary maxRetentionDays changes without user confirming a change", () => {
+      vi.mocked(buildCalculatorSummary).mockReturnValue({
+        ...defaultSummary,
+        maxRetentionDays: 7,
       });
-      fireEvent.click(
-        screen.getByRole("button", { name: /confirm retention/i }),
+      render(
+        <CalculatorInputs
+          data={mockData}
+          {...defaultControlledProps}
+          retentionDays={14}
+          isRetentionOverridden={false}
+        />,
       );
-      expect(screen.getByText("45 days")).toBeInTheDocument();
-      // Re-render with different data
-      const newData = {
-        ...mockData,
-        backupServer: [{ Version: "13.0.1.1071", Name: "server-2" }],
-      } as unknown as NormalizedDataset;
-      rerender(<CalculatorInputs data={newData} {...defaultControlledProps} />);
-      expect(screen.getByText("14 days")).toBeInTheDocument();
-      expect(screen.queryByText("45 days")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /edit retention/i }),
+      ).not.toHaveClass("text-primary");
     });
 
     it("passes retentionDays override to onCalculate on button click", () => {
       const onCalculate = vi.fn().mockResolvedValue(undefined);
-      render(
-        <CalculatorInputs
-          data={mockDataVbr13}
-          {...defaultControlledProps}
-          onCalculate={onCalculate}
-          hasConsented={true}
-          result={MOCK_API_RESULT}
-        />,
-      );
+      renderControlled({
+        data: mockDataVbr13,
+        ...defaultControlledProps,
+        onCalculate,
+        hasConsented: true,
+        result: MOCK_API_RESULT,
+      });
       fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
       fireEvent.change(screen.getByRole("spinbutton"), {
         target: { value: "45" },
@@ -1389,7 +1524,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("confirm updates the composite display and exits edit mode", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       fireEvent.click(
         screen.getByRole("button", { name: /edit extended retention/i }),
       );
@@ -1405,7 +1540,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("Enter key on any input confirms all three values", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       fireEvent.click(
         screen.getByRole("button", { name: /edit extended retention/i }),
       );
@@ -1416,7 +1551,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("cancel reverts to the previous values and exits edit mode", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       fireEvent.click(
         screen.getByRole("button", { name: /edit extended retention/i }),
       );
@@ -1430,7 +1565,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("Escape key on any input cancels and reverts", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       fireEvent.click(
         screen.getByRole("button", { name: /edit extended retention/i }),
       );
@@ -1444,7 +1579,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("reset restores all three values to file-aggregated values", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       fireEvent.click(
         screen.getByRole("button", { name: /edit extended retention/i }),
       );
@@ -1463,7 +1598,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("allows a GFS value of 0 (disables that tier)", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       fireEvent.click(
         screen.getByRole("button", { name: /edit extended retention/i }),
       );
@@ -1485,7 +1620,7 @@ describe("CalculatorInputs", () => {
     });
 
     it("pencil icon has text-primary class when any GFS value is overridden", () => {
-      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      renderControlled({ data: mockData, ...defaultControlledProps });
       fireEvent.click(
         screen.getByRole("button", { name: /edit extended retention/i }),
       );
@@ -1497,45 +1632,35 @@ describe("CalculatorInputs", () => {
       ).toHaveClass("text-primary");
     });
 
-    it("resets to file-aggregated values when data changes", () => {
-      const { rerender } = render(
-        <CalculatorInputs data={mockData} {...defaultControlledProps} />,
+    it("pencil stays off when live summary GFS values change without user confirming a change", () => {
+      vi.mocked(buildCalculatorSummary).mockReturnValue({
+        ...defaultSummary,
+        gfsWeekly: 4,
+        gfsMonthly: 12,
+        gfsYearly: 7,
+      });
+      render(
+        <CalculatorInputs
+          data={mockData}
+          {...defaultControlledProps}
+          gfs={{ weekly: 1, monthly: 1, yearly: 1 }}
+          isGfsOverridden={false}
+        />,
       );
-      fireEvent.click(
+      expect(
         screen.getByRole("button", { name: /edit extended retention/i }),
-      );
-      const [w, m, y] = screen.getAllByRole("spinbutton");
-      fireEvent.change(w, { target: { value: "4" } });
-      fireEvent.change(m, { target: { value: "12" } });
-      fireEvent.change(y, { target: { value: "7" } });
-      fireEvent.click(screen.getByRole("button", { name: /confirm gfs/i }));
-      expect(
-        screen.getByText("Weekly: 4, Monthly: 12, Yearly: 7"),
-      ).toBeInTheDocument();
-      const newData = {
-        ...mockData,
-        backupServer: [{ Version: "13.0.1.1071", Name: "server-2" }],
-      } as unknown as NormalizedDataset;
-      rerender(<CalculatorInputs data={newData} {...defaultControlledProps} />);
-      expect(
-        screen.getByText("Weekly: 1, Monthly: 1, Yearly: 1"),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByText("Weekly: 4, Monthly: 12, Yearly: 7"),
-      ).not.toBeInTheDocument();
+      ).not.toHaveClass("text-primary");
     });
 
     it("passes GFS overrides to onCalculate on button click", () => {
       const onCalculate = vi.fn().mockResolvedValue(undefined);
-      render(
-        <CalculatorInputs
-          data={mockDataVbr13}
-          {...defaultControlledProps}
-          onCalculate={onCalculate}
-          hasConsented={true}
-          result={MOCK_API_RESULT}
-        />,
-      );
+      renderControlled({
+        data: mockDataVbr13,
+        ...defaultControlledProps,
+        onCalculate,
+        hasConsented: true,
+        result: MOCK_API_RESULT,
+      });
       fireEvent.click(
         screen.getByRole("button", { name: /edit extended retention/i }),
       );

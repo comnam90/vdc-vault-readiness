@@ -129,3 +129,18 @@ Rejected.
 - `src/components/dashboard/calculator-inputs.tsx` — controlled component refactor
 - `src/components/dashboard/dashboard-view.tsx` — hook call site, wires all props
 - `src/__tests__/use-calculator-api.test.ts` — 17 tests covering all cases above
+- `src/__tests__/calculator-inputs.test.tsx` — tests for the fully controlled override inputs
+
+## Update 2026-06-01: Override inputs lifted above TabsContent boundary
+
+The same Radix `TabsContent` unmount root cause documented in this ADR was also destroying the three committed override inputs — `immutabilityDays`, `retentionDays`, and `gfs` — that lived as local `useState` inside `CalculatorInputs`. Every tab switch discarded whatever the user had typed, resetting the fields to their computed defaults on re-visit. This was a silent correctness bug: the sizing result was preserved (the original fix), but the inputs that produced it were not.
+
+Code review surfaced two related bugs in the interim implementation. First, a reactive effect inside `CalculatorInputs` fired on every component mount and called an `invalidate()` function exposed on `UseCalculatorApiResult`, clearing the computed result whenever the user returned to the Sizing tab. Second, the custom Retention, Immutability, and GFS values entered by the user were silently reset to their computed defaults on each re-visit because the local state initialised fresh from props on each mount.
+
+The fix follows the same pattern already established by `excludedJobNames`: the three override values — `immutabilityDays`, `retentionDays`, and `gfs` — are lifted into `DashboardView` state and passed into `useCalculatorApi` as new fields in `UseCalculatorApiOptions`. All three are included in the serialised `inputKey`, so changing any override auto-invalidates the result through the same mechanism that handles `settings` and `excludedJobNames` changes. `CalculatorInputs` is now fully controlled for these values; it receives them as props and calls back to `DashboardView` on change.
+
+The interim approach that exposed `invalidate()` on `UseCalculatorApiResult` — and wired it back via an `onInvalidateResult` prop and a reactive effect watching primitive override deps — has been removed entirely. That design had a latent mount-fire bug: the effect ran on mount, not only on genuine user-driven changes, and code review confirmed the symptom. Lifting state removes the need for any separate invalidation signalling; the `inputKey` mechanism already handles it.
+
+The GFS composite value (`gfsWeekly`, `gfsMonthly`, `gfsYearly`) is stored as three separate `number | null` primitives. These are safe direct `useMemo` dependency entries and need no Set-identity workaround — unlike `excludedJobNames`, identity comparison is sufficient and React handles it correctly.
+
+`DashboardView` mounts fresh on every file upload: `App` renders it only when `status === "success"`, and new uploads transition through `"processing"` first, destroying and recreating the component. This confirms that the once-on-mount lazy `useState` seed for the override initial values is safe. It also confirms that the `[data]` reset effect previously inside `CalculatorInputs` — which re-derived defaults whenever `data` changed — was dead code: `data` is stable for the entire lifetime of the component. That effect has been removed.
