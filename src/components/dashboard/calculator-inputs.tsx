@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Archive,
   Calculator,
@@ -55,6 +55,12 @@ import { cn } from "@/lib/utils";
 import { SizingResults } from "./sizing-results";
 import { CalculatorConsentDialog } from "./calculator-consent-dialog";
 import { isVersionAtLeast } from "@/lib/version-compare";
+
+export type GfsState = {
+  weekly: number | null;
+  monthly: number | null;
+  yearly: number | null;
+};
 
 interface BreakdownRow {
   key: string;
@@ -114,6 +120,13 @@ interface CalculatorInputsProps {
   error: string | null;
   loading: boolean;
   hasConsented: boolean;
+  // Lifted override inputs
+  immutabilityDays: number;
+  retentionDays: number;
+  gfs: GfsState;
+  onImmutabilityDaysChange: (v: number) => void;
+  onRetentionDaysChange: (v: number) => void;
+  onGfsChange: (v: GfsState) => void;
   // Callbacks
   onConsentGiven: () => void;
   onCalculate: (overrides: CalculatorOverrides) => Promise<void>;
@@ -128,6 +141,12 @@ export function CalculatorInputs({
   error,
   loading,
   hasConsented,
+  immutabilityDays,
+  retentionDays,
+  gfs,
+  onImmutabilityDaysChange,
+  onRetentionDaysChange,
+  onGfsChange,
   onConsentGiven,
   onCalculate,
 }: CalculatorInputsProps) {
@@ -144,68 +163,21 @@ export function CalculatorInputs({
     [data, excludedJobNames, settings],
   );
 
-  // Always-current ref so effects that only depend on [data] can read the
-  // latest summary values without capturing a stale closure.
-  const summaryRef = useRef(summary);
-  summaryRef.current = summary;
-
   const [consentOpen, setConsentOpen] = useState(false);
-  const [immutabilityDays, setImmutabilityDays] = useState<number>(
-    DEFAULT_IMMUTABILITY_DAYS,
-  );
   const [isEditingImmutability, setIsEditingImmutability] =
     useState<boolean>(false);
-  const [immutabilityDraft, setImmutabilityDraft] = useState<number>(
-    DEFAULT_IMMUTABILITY_DAYS,
-  );
+  const [immutabilityDraft, setImmutabilityDraft] =
+    useState<number>(immutabilityDays);
 
-  const [retentionDays, setRetentionDays] = useState<number>(
-    summary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS,
-  );
   const [isEditingRetention, setIsEditingRetention] = useState<boolean>(false);
-  const [retentionDraft, setRetentionDraft] = useState<number>(
-    summary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS,
-  );
+  const [retentionDraft, setRetentionDraft] = useState<number>(retentionDays);
 
-  type GfsState = {
-    weekly: number | null;
-    monthly: number | null;
-    yearly: number | null;
-  };
-  const [gfs, setGfs] = useState<GfsState>({
-    weekly: summary.gfsWeekly,
-    monthly: summary.gfsMonthly,
-    yearly: summary.gfsYearly,
-  });
   const [isEditingGfs, setIsEditingGfs] = useState<boolean>(false);
-  const [gfsDraft, setGfsDraft] = useState<GfsState>({
-    weekly: summary.gfsWeekly,
-    monthly: summary.gfsMonthly,
-    yearly: summary.gfsYearly,
-  });
-
-  useEffect(() => {
-    const s = summaryRef.current;
-    setImmutabilityDays(DEFAULT_IMMUTABILITY_DAYS);
-    setImmutabilityDraft(DEFAULT_IMMUTABILITY_DAYS);
-    setIsEditingImmutability(false);
-    const retDays = s.maxRetentionDays ?? MINIMUM_RETENTION_DAYS;
-    setRetentionDays(retDays);
-    setRetentionDraft(retDays);
-    setIsEditingRetention(false);
-    const gfsInit: GfsState = {
-      weekly: s.gfsWeekly,
-      monthly: s.gfsMonthly,
-      yearly: s.gfsYearly,
-    };
-    setGfs(gfsInit);
-    setGfsDraft(gfsInit);
-    setIsEditingGfs(false);
-  }, [data]);
+  const [gfsDraft, setGfsDraft] = useState<GfsState>(gfs);
 
   const handleImmutabilityConfirm = () => {
     if (!Number.isFinite(immutabilityDraft) || immutabilityDraft <= 0) return;
-    setImmutabilityDays(immutabilityDraft);
+    onImmutabilityDaysChange(immutabilityDraft);
     setIsEditingImmutability(false);
   };
 
@@ -215,7 +187,7 @@ export function CalculatorInputs({
   };
 
   const handleImmutabilityReset = () => {
-    setImmutabilityDays(DEFAULT_IMMUTABILITY_DAYS);
+    onImmutabilityDaysChange(DEFAULT_IMMUTABILITY_DAYS);
     setImmutabilityDraft(DEFAULT_IMMUTABILITY_DAYS);
     setIsEditingImmutability(false);
   };
@@ -226,7 +198,7 @@ export function CalculatorInputs({
       retentionDraft < MINIMUM_RETENTION_DAYS
     )
       return;
-    setRetentionDays(retentionDraft);
+    onRetentionDaysChange(retentionDraft);
     setIsEditingRetention(false);
   };
 
@@ -237,7 +209,7 @@ export function CalculatorInputs({
 
   const handleRetentionReset = () => {
     const resetTo = summary.maxRetentionDays ?? MINIMUM_RETENTION_DAYS;
-    setRetentionDays(resetTo);
+    onRetentionDaysChange(resetTo);
     setRetentionDraft(resetTo);
     setIsEditingRetention(false);
   };
@@ -251,7 +223,7 @@ export function CalculatorInputs({
       isInvalid(gfsDraft.yearly)
     )
       return;
-    setGfs(gfsDraft);
+    onGfsChange(gfsDraft);
     setIsEditingGfs(false);
   };
 
@@ -266,7 +238,7 @@ export function CalculatorInputs({
       monthly: summary.gfsMonthly,
       yearly: summary.gfsYearly,
     };
-    setGfs(resetTo);
+    onGfsChange(resetTo);
     setGfsDraft(resetTo);
     setIsEditingGfs(false);
   };

@@ -14,6 +14,11 @@ export interface UseCalculatorApiOptions {
   data: NormalizedDataset;
   excludedJobNames: Set<string>;
   settings: GlobalSettings;
+  immutabilityDays: number;
+  retentionDays: number;
+  gfsWeekly: number | null;
+  gfsMonthly: number | null;
+  gfsYearly: number | null;
 }
 
 export interface CalculatorOverrides {
@@ -39,6 +44,11 @@ export function useCalculatorApi({
   data,
   excludedJobNames,
   settings,
+  immutabilityDays,
+  retentionDays,
+  gfsWeekly,
+  gfsMonthly,
+  gfsYearly,
 }: UseCalculatorApiOptions): UseCalculatorApiResult {
   const [result, setResult] = useState<VmAgentResponse | null>(null);
   const [upgradeResult, setUpgradeResult] = useState<VmAgentResponse | null>(
@@ -77,8 +87,23 @@ export function useCalculatorApi({
     return JSON.stringify({
       excluded: [...excludedJobNames].sort(),
       settings: calcSettings,
+      overrides: {
+        immutabilityDays,
+        retentionDays,
+        gfsWeekly,
+        gfsMonthly,
+        gfsYearly,
+      },
     });
-  }, [excludedJobNames, settings]);
+  }, [
+    excludedJobNames,
+    settings,
+    immutabilityDays,
+    retentionDays,
+    gfsWeekly,
+    gfsMonthly,
+    gfsYearly,
+  ]);
 
   useEffect(() => {
     requestIdRef.current++; // cancel in-flight calculate()
