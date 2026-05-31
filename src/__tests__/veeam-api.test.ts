@@ -139,6 +139,21 @@ describe("buildVmAgentRequest", () => {
     expect(req.ChangeRate).toBe(0);
     expect(req.Weeklies).toBe(0);
   });
+
+  it("produces a consistent payload when maxRetentionDays and originalMaxRetentionDays are both patched to the same override value", () => {
+    // When use-calculator-api patches both fields to the user's retentionDays
+    // override, the top-level `days`, `retention.days`, and `capacityTierDays`
+    // should all agree.
+    const patched: CalculatorSummary = {
+      ...MOCK_SUMMARY,
+      maxRetentionDays: 60,
+      originalMaxRetentionDays: 60,
+    };
+    const req = buildVmAgentRequest(patched, 10, "13.0.1.1071");
+    expect(req.days).toBe(60);
+    expect(req.retention.days).toBe(60);
+    expect(req.capacityTierDays).toBe(60);
+  });
 });
 
 describe("buildVmAgentRequest with GlobalSettings", () => {
