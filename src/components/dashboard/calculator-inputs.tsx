@@ -11,6 +11,7 @@ import {
   Pencil,
   RotateCcw,
   Server,
+  Shield,
   TrendingUp,
   X,
 } from "lucide-react";
@@ -706,6 +707,15 @@ export function CalculatorInputs({
               >
                 <Archive className="size-3" aria-hidden="true" />
                 Simulating: Archive Tier Ignored
+              </Badge>
+            )}
+            {settings.bufferEnabled && (
+              <Badge
+                variant="outline"
+                className="text-muted-foreground gap-1 text-xs font-normal"
+              >
+                <Shield className="size-3" aria-hidden="true" />
+                Buffer: {settings.bufferPercent}%
               </Badge>
             )}
           </div>

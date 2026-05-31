@@ -565,6 +565,44 @@ describe("CalculatorInputs", () => {
       window.localStorage.clear();
       __resetSettingsStoreForTests();
     });
+
+    it("renders the buffer badge when bufferEnabled is true", async () => {
+      const { STORAGE_KEY, __resetSettingsStoreForTests } =
+        await import("@/hooks/use-settings");
+      window.localStorage.clear();
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ bufferEnabled: true, bufferPercent: 15 }),
+      );
+      __resetSettingsStoreForTests();
+
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+
+      const indicators = screen.getByTestId("settings-indicators");
+      expect(indicators).toHaveTextContent(/buffer: 15%/i);
+
+      window.localStorage.clear();
+      __resetSettingsStoreForTests();
+    });
+
+    it("does NOT render the buffer badge when bufferEnabled is false", async () => {
+      const { STORAGE_KEY, __resetSettingsStoreForTests } =
+        await import("@/hooks/use-settings");
+      window.localStorage.clear();
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ bufferEnabled: false, bufferPercent: 10 }),
+      );
+      __resetSettingsStoreForTests();
+
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+
+      const indicators = screen.getByTestId("settings-indicators");
+      expect(indicators).not.toHaveTextContent(/buffer:/i);
+
+      window.localStorage.clear();
+      __resetSettingsStoreForTests();
+    });
   });
 
   describe("breakdown hover cards", () => {
