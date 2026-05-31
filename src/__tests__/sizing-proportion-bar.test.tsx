@@ -14,6 +14,13 @@ const FULL_BUCKETS = {
 };
 const FULL_TOTAL = 7.875 + 1.05 + 14.4375 + 14.7 + 2.625; // 40.6875
 
+const BUFFER_TB = 4.0;
+const BUFFERED_BUCKETS = {
+  ...FULL_BUCKETS,
+  buffer: BUFFER_TB,
+};
+const BUFFERED_TOTAL = FULL_TOTAL + BUFFER_TB;
+
 describe("SizingProportionBar", () => {
   it('renders an "unavailable" caption when sumTB is 0', () => {
     render(
@@ -71,5 +78,56 @@ describe("SizingProportionBar", () => {
     expect(label).toMatch(/Immutability/);
     expect(label).toMatch(/14\.70 TB/);
     expect(label).toMatch(/2\.63 TB|2\.62 TB/);
+  });
+
+  it("renders a buffer segment when buffer > 0", () => {
+    const { container } = render(
+      <SizingProportionBar
+        buckets={BUFFERED_BUCKETS}
+        sumTB={BUFFERED_TOTAL}
+        counts={COUNTS}
+      />,
+    );
+    const bufferSegment = container.querySelector("[data-segment='buffer']");
+    expect(bufferSegment).not.toBeNull();
+  });
+
+  it("renders six segments (Y → M → W → D → Immutability → Buffer) when buffer > 0", () => {
+    const { container } = render(
+      <SizingProportionBar
+        buckets={BUFFERED_BUCKETS}
+        sumTB={BUFFERED_TOTAL}
+        counts={COUNTS}
+      />,
+    );
+    const segments = container.querySelectorAll("[data-segment]");
+    expect(segments.length).toBe(6);
+    expect(segments[5].getAttribute("data-segment")).toBe("buffer");
+  });
+
+  it("does not render a buffer segment when buffer is 0", () => {
+    const { container } = render(
+      <SizingProportionBar
+        buckets={FULL_BUCKETS}
+        sumTB={FULL_TOTAL}
+        counts={COUNTS}
+      />,
+    );
+    const bufferSegment = container.querySelector("[data-segment='buffer']");
+    expect(bufferSegment).toBeNull();
+  });
+
+  it("includes Buffer in the aria-label when buffer > 0", () => {
+    render(
+      <SizingProportionBar
+        buckets={BUFFERED_BUCKETS}
+        sumTB={BUFFERED_TOTAL}
+        counts={COUNTS}
+      />,
+    );
+    const group = screen.getByRole("group", { name: /retention composition/i });
+    const label = group.getAttribute("aria-label") ?? "";
+    expect(label).toMatch(/Buffer/);
+    expect(label).toMatch(/4\.00 TB/);
   });
 });

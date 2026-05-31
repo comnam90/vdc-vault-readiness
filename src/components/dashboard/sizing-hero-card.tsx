@@ -15,10 +15,11 @@ export interface SizingHeroCardProps {
   /** GB; precomputed savings from caller. */
   immutabilitySavingsGB: number;
   sobrBlocksUpgrade: boolean;
+  /** When provided and buffer > 0, renders a "Includes X% spare-capacity buffer" caption. */
+  bufferPercent?: number;
 }
 
-/** The segments rendered in the legend — excludes the buffer field which is a post-processing transform. */
-type RenderedSegment = Exclude<keyof CompositionBuckets, "buffer">;
+type RenderedSegment = keyof CompositionBuckets;
 
 const LEGEND_ORDER: RenderedSegment[] = [
   "yearly",
@@ -26,6 +27,7 @@ const LEGEND_ORDER: RenderedSegment[] = [
   "weekly",
   "daily",
   "immutability",
+  "buffer",
 ];
 
 const LEGEND_LABEL: Record<RenderedSegment, string> = {
@@ -34,6 +36,7 @@ const LEGEND_LABEL: Record<RenderedSegment, string> = {
   weekly: "Weekly",
   daily: "Daily",
   immutability: "Immutability Overhead",
+  buffer: "Buffer (Spare)",
 };
 
 const LEGEND_COLOR: Record<RenderedSegment, string> = {
@@ -42,6 +45,7 @@ const LEGEND_COLOR: Record<RenderedSegment, string> = {
   weekly: "var(--chart-2)",
   daily: "var(--chart-1)",
   immutability: "var(--chart-4)",
+  buffer: "var(--chart-buffer)",
 };
 
 /**
@@ -56,6 +60,7 @@ const LEGEND_DELAY_MS: Record<RenderedSegment, number> = {
   weekly: 500,
   daily: 600,
   immutability: 700,
+  buffer: 800,
 };
 
 function formatPerfTax(gb: number): string {
@@ -70,6 +75,7 @@ export function SizingHeroCard({
   upgradePerfTaxGB,
   immutabilitySavingsGB,
   sobrBlocksUpgrade,
+  bufferPercent,
 }: SizingHeroCardProps) {
   const hasUpgradeSavings = storageSavingsTB > 0;
   const showStandardUpgradeCaption =
@@ -77,6 +83,8 @@ export function SizingHeroCard({
   const showSobrActionableCaption = sobrBlocksUpgrade && hasUpgradeSavings;
   const showImmutabilitySavings =
     upgradePerfTaxGB !== null && immutabilitySavingsGB > 0;
+  const hasBuffer = sizing.compositionBuckets.buffer > 0;
+  const showBufferCaption = hasBuffer && bufferPercent !== undefined;
 
   return (
     <Card className="border-t-primary border-t-4">
@@ -109,6 +117,11 @@ export function SizingHeroCard({
               (saving {formatTB(storageSavingsTB)})
             </p>
           )}
+          {showBufferCaption && (
+            <p className="text-muted-foreground motion-safe:animate-in motion-safe:fade-in fill-mode-backwards text-sm motion-safe:delay-300">
+              Includes {bufferPercent}% spare-capacity buffer.
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -123,8 +136,16 @@ export function SizingHeroCard({
 
           {sizing.compositionTotalTB > 0 && (
             <>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 md:grid-cols-5">
-                {LEGEND_ORDER.map((seg) => (
+              <div
+                className={
+                  hasBuffer
+                    ? "grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 md:grid-cols-6"
+                    : "grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 md:grid-cols-5"
+                }
+              >
+                {LEGEND_ORDER.filter(
+                  (seg) => seg !== "buffer" || hasBuffer,
+                ).map((seg) => (
                   <div
                     key={seg}
                     className="motion-safe:animate-in motion-safe:fade-in fill-mode-backwards flex items-baseline gap-2 motion-safe:duration-[var(--duration-normal)]"

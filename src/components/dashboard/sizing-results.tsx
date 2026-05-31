@@ -89,6 +89,7 @@ export function SizingResults({
         upgradePerfTaxGB={hasUpgrade ? upgradeSizing.performanceTaxGB : null}
         immutabilitySavingsGB={immutabilitySavingsGB}
         sobrBlocksUpgrade={sobrBlocksUpgrade}
+        bufferPercent={bufferEnabled ? bufferPercent : undefined}
       />
       {bufferedGrowthSeries != null && (
         <GrowthChart
