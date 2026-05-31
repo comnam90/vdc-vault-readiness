@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   useCalculatorApi,
   type UseCalculatorApiOptions,
+  type CalculatorOverrides,
 } from "@/hooks/use-calculator-api";
 import { DEFAULT_SETTINGS } from "@/types/settings";
 import type { NormalizedDataset } from "@/types/domain";
@@ -117,6 +118,14 @@ const baseProps: UseCalculatorApiOptions = {
   settings: DEFAULT_SETTINGS,
 };
 
+const DEFAULT_OVERRIDES: CalculatorOverrides = {
+  immutabilityDays: 30,
+  retentionDays: DEFAULT_SUMMARY.maxRetentionDays ?? 30,
+  gfsWeekly: DEFAULT_SUMMARY.gfsWeekly,
+  gfsMonthly: DEFAULT_SUMMARY.gfsMonthly,
+  gfsYearly: DEFAULT_SUMMARY.gfsYearly,
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(buildCalculatorSummary).mockReturnValue(DEFAULT_SUMMARY);
@@ -176,7 +185,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
 
       expect(result.current.result).toEqual(MOCK_API_RESULT);
@@ -193,7 +202,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
 
       expect(result.current.growthSeries).toEqual(SAMPLE_GROWTH);
@@ -212,7 +221,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
       expect(result.current.result).not.toBeNull();
 
@@ -230,7 +239,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
       expect(result.current.growthSeries).not.toBeNull();
 
@@ -248,7 +257,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
       expect(result.current.result).not.toBeNull();
 
@@ -271,7 +280,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
       expect(result.current.error).not.toBeNull();
 
@@ -298,7 +307,7 @@ describe("useCalculatorApi", () => {
 
       // Start calculate but don't await it yet
       act(() => {
-        void result.current.calculate(30);
+        void result.current.calculate(DEFAULT_OVERRIDES);
       });
 
       // Change inputs while calculate is in flight — this should cancel the in-flight call
@@ -332,7 +341,7 @@ describe("useCalculatorApi", () => {
       );
 
       act(() => {
-        void result.current.calculate(30);
+        void result.current.calculate(DEFAULT_OVERRIDES);
       });
       expect(result.current.loading).toBe(true);
 
@@ -384,7 +393,7 @@ describe("useCalculatorApi", () => {
 
       let calculatePromise!: Promise<void>;
       act(() => {
-        calculatePromise = result.current.calculate(30);
+        calculatePromise = result.current.calculate(DEFAULT_OVERRIDES);
       });
 
       expect(result.current.loading).toBe(true);
@@ -403,12 +412,13 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
 
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(1);
+      // patchedSummary with DEFAULT_OVERRIDES equals DEFAULT_SUMMARY
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
-        { ...DEFAULT_SUMMARY, immutabilityDays: 30 },
+        DEFAULT_SUMMARY,
         0,
         "13.0.1.1071",
         undefined,
@@ -424,7 +434,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
 
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(1);
@@ -441,7 +451,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
 
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledTimes(2);
@@ -455,7 +465,7 @@ describe("useCalculatorApi", () => {
       );
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
 
       expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledTimes(1);
@@ -468,7 +478,7 @@ describe("useCalculatorApi", () => {
       const { result } = renderHook(() => useCalculatorApi(baseProps));
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
 
       expect(result.current.result).toBeNull();
@@ -485,12 +495,12 @@ describe("useCalculatorApi", () => {
       const { result } = renderHook(() => useCalculatorApi(baseProps));
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
       expect(result.current.error).not.toBeNull();
 
       await act(async () => {
-        await result.current.calculate(30);
+        await result.current.calculate(DEFAULT_OVERRIDES);
       });
 
       expect(result.current.error).toBeNull();
@@ -501,7 +511,10 @@ describe("useCalculatorApi", () => {
       const { result } = renderHook(() => useCalculatorApi(baseProps));
 
       await act(async () => {
-        await result.current.calculate(14);
+        await result.current.calculate({
+          ...DEFAULT_OVERRIDES,
+          immutabilityDays: 14,
+        });
       });
 
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
@@ -517,11 +530,80 @@ describe("useCalculatorApi", () => {
       const { result } = renderHook(() => useCalculatorApi(baseProps));
 
       await act(async () => {
-        await result.current.calculate(14);
+        await result.current.calculate({
+          ...DEFAULT_OVERRIDES,
+          immutabilityDays: 14,
+        });
       });
 
       expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledWith(
         expect.objectContaining({ immutabilityDays: 14 }),
+      );
+    });
+
+    it("patches patchedSummary with retentionDays overriding both maxRetentionDays and originalMaxRetentionDays", async () => {
+      const { result } = renderHook(() => useCalculatorApi(baseProps));
+
+      await act(async () => {
+        await result.current.calculate({
+          ...DEFAULT_OVERRIDES,
+          retentionDays: 60,
+        });
+      });
+
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          maxRetentionDays: 60,
+          originalMaxRetentionDays: 60,
+        }),
+        expect.any(Number),
+        expect.any(String),
+        undefined,
+        DEFAULT_SETTINGS,
+      );
+    });
+
+    it("patches patchedSummary with GFS overrides", async () => {
+      const { result } = renderHook(() => useCalculatorApi(baseProps));
+
+      await act(async () => {
+        await result.current.calculate({
+          ...DEFAULT_OVERRIDES,
+          gfsWeekly: 4,
+          gfsMonthly: 12,
+          gfsYearly: 7,
+        });
+      });
+
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
+        expect.objectContaining({ gfsWeekly: 4, gfsMonthly: 12, gfsYearly: 7 }),
+        expect.any(Number),
+        expect.any(String),
+        undefined,
+        DEFAULT_SETTINGS,
+      );
+    });
+
+    it("forwards retentionDays and GFS overrides to generateGrowthSeries", async () => {
+      const { result } = renderHook(() => useCalculatorApi(baseProps));
+
+      await act(async () => {
+        await result.current.calculate({
+          ...DEFAULT_OVERRIDES,
+          retentionDays: 60,
+          gfsWeekly: 4,
+          gfsMonthly: 12,
+          gfsYearly: 7,
+        });
+      });
+
+      expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          retentionDays: 60,
+          gfsWeekly: 4,
+          gfsMonthly: 12,
+          gfsYearly: 7,
+        }),
       );
     });
   });

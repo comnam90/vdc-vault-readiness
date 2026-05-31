@@ -692,6 +692,54 @@ describe("generateGrowthSeries", () => {
     }
   });
 
+  it("patches each step's summary with retentionDays when provided", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({ limitCalculationYears: 2 });
+    await generateGrowthSeries({
+      ...baseArgs(settings),
+      retentionDays: 60,
+    });
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(2);
+    for (const call of callVmAgentApi.mock.calls) {
+      const summary = call[0] as {
+        maxRetentionDays: number;
+        originalMaxRetentionDays: number;
+      };
+      expect(summary.maxRetentionDays).toBe(60);
+      expect(summary.originalMaxRetentionDays).toBe(60);
+    }
+  });
+
+  it("patches each step's summary with GFS overrides when provided", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    const settings = makeSettings({ limitCalculationYears: 2 });
+    await generateGrowthSeries({
+      ...baseArgs(settings),
+      gfsWeekly: 4,
+      gfsMonthly: 12,
+      gfsYearly: 7,
+    });
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(2);
+    for (const call of callVmAgentApi.mock.calls) {
+      const summary = call[0] as {
+        gfsWeekly: number;
+        gfsMonthly: number;
+        gfsYearly: number;
+      };
+      expect(summary.gfsWeekly).toBe(4);
+      expect(summary.gfsMonthly).toBe(12);
+      expect(summary.gfsYearly).toBe(7);
+    }
+  });
+
   it("does not override immutabilityDays in the summary when immutabilityDays is not provided", async () => {
     callVmAgentApi.mockImplementation(async () =>
       fakeResponse({ totalStorageTB: 10, daily: 1 }),

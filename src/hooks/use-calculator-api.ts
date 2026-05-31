@@ -16,6 +16,14 @@ export interface UseCalculatorApiOptions {
   settings: GlobalSettings;
 }
 
+export interface CalculatorOverrides {
+  immutabilityDays: number;
+  retentionDays: number;
+  gfsWeekly: number | null;
+  gfsMonthly: number | null;
+  gfsYearly: number | null;
+}
+
 export interface UseCalculatorApiResult {
   result: VmAgentResponse | null;
   upgradeResult: VmAgentResponse | null;
@@ -24,7 +32,7 @@ export interface UseCalculatorApiResult {
   loading: boolean;
   hasConsented: boolean;
   grantConsent: () => void;
-  calculate: (immutabilityDays: number) => Promise<void>;
+  calculate: (overrides: CalculatorOverrides) => Promise<void>;
 }
 
 export function useCalculatorApi({
@@ -70,7 +78,13 @@ export function useCalculatorApi({
   }, []);
 
   const calculate = useCallback(
-    async (immutabilityDays: number) => {
+    async ({
+      immutabilityDays,
+      retentionDays,
+      gfsWeekly,
+      gfsMonthly,
+      gfsYearly,
+    }: CalculatorOverrides) => {
       const vbrVersion = data.backupServer?.[0]?.Version ?? "";
       const isVbr12 =
         vbrVersion !== "" && !isVersionAtLeast(vbrVersion, "13.0.0");
@@ -83,7 +97,15 @@ export function useCalculatorApi({
         excludedJobNames,
         settings,
       );
-      const patchedSummary = { ...summary, immutabilityDays };
+      const patchedSummary = {
+        ...summary,
+        immutabilityDays,
+        maxRetentionDays: retentionDays,
+        originalMaxRetentionDays: retentionDays,
+        gfsWeekly,
+        gfsMonthly,
+        gfsYearly,
+      };
       const growthArgs = {
         jobs: data.jobInfo,
         sessions: data.jobSessionSummary,
@@ -92,6 +114,10 @@ export function useCalculatorApi({
         jobCount: activeJobCount,
         vbrVersion,
         immutabilityDays,
+        retentionDays,
+        gfsWeekly,
+        gfsMonthly,
+        gfsYearly,
       };
 
       const capturedId = ++requestIdRef.current;

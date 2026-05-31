@@ -877,12 +877,13 @@ describe("CalculatorInputs", () => {
 
   describe("immutability period inline edit", () => {
     beforeEach(() => {
-      // Override retention to null so "14 days" and "30 days" text queries
-      // remain unambiguous when the immutability period is edited to those values.
+      // Set retention to 99 so it doesn't conflict with "14 days" or "30 days"
+      // text queries when immutability is edited to or resets to those values.
+      // (null would seed retentionDays to the MINIMUM_RETENTION_DAYS fallback of 30.)
       vi.mocked(buildCalculatorSummary).mockReturnValue({
         ...defaultSummary,
-        maxRetentionDays: null,
-        originalMaxRetentionDays: null,
+        maxRetentionDays: 99,
+        originalMaxRetentionDays: 99,
       });
     });
 
@@ -1046,7 +1047,14 @@ describe("CalculatorInputs", () => {
       );
       // Trigger calculation
       fireEvent.click(screen.getByRole("button", { name: /re-calculate/i }));
-      expect(onCalculate).toHaveBeenCalledWith(14);
+      // beforeEach sets maxRetentionDays:99, gfsWeekly/Monthly/Yearly:1
+      expect(onCalculate).toHaveBeenCalledWith({
+        immutabilityDays: 14,
+        retentionDays: 99,
+        gfsWeekly: 1,
+        gfsMonthly: 1,
+        gfsYearly: 1,
+      });
     });
 
     it("passes immutabilityDays to onCalculate when consent dialog is accepted", () => {
@@ -1078,7 +1086,13 @@ describe("CalculatorInputs", () => {
       fireEvent.click(
         screen.getByRole("button", { name: /accept & calculate/i }),
       );
-      expect(onCalculate).toHaveBeenCalledWith(14);
+      expect(onCalculate).toHaveBeenCalledWith({
+        immutabilityDays: 14,
+        retentionDays: 99,
+        gfsWeekly: 1,
+        gfsMonthly: 1,
+        gfsYearly: 1,
+      });
     });
 
     it("resets to the default when data changes", () => {
@@ -1118,6 +1132,387 @@ describe("CalculatorInputs", () => {
         screen.getByRole("button", { name: /confirm immutability period/i }),
       );
       expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+    });
+  });
+
+  describe("retention period inline edit", () => {
+    // defaultSummary has maxRetentionDays: 14 — distinct from immutability's "30 days"
+
+    it("renders a pencil button to edit the retention period", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      expect(
+        screen.getByRole("button", { name: /edit retention/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("clicking the pencil shows the number input and action buttons", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /cancel retention edit/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /reset retention to/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("confirm updates the displayed value and exits edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      expect(screen.getByText("45 days")).toBeInTheDocument();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+    });
+
+    it("Enter key confirms and exits edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.keyDown(screen.getByRole("spinbutton"), { key: "Enter" });
+      expect(screen.getByText("45 days")).toBeInTheDocument();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+    });
+
+    it("cancel reverts to the previous value and exits edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /cancel retention edit/i }),
+      );
+      expect(screen.getByText("14 days")).toBeInTheDocument();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+    });
+
+    it("Escape key cancels and reverts to the previous value", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.keyDown(screen.getByRole("spinbutton"), { key: "Escape" });
+      expect(screen.getByText("14 days")).toBeInTheDocument();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+    });
+
+    it("reset sets value back to the file-aggregated value and exits edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      // First set a custom value
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      expect(screen.getByText("45 days")).toBeInTheDocument();
+      // Now open again and reset
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /reset retention to/i }),
+      );
+      expect(screen.getByText("14 days")).toBeInTheDocument();
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+    });
+
+    it("rejects a value below MINIMUM_RETENTION_DAYS — stays in edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "29" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+      expect(screen.queryByText("29 days")).not.toBeInTheDocument();
+    });
+
+    it("rejects a cleared (empty) input — stays in edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument();
+    });
+
+    it("pencil icon has text-primary class when override is active", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      expect(
+        screen.getByRole("button", { name: /edit retention/i }),
+      ).toHaveClass("text-primary");
+    });
+
+    it("resets to the file-aggregated value when data changes", () => {
+      const { rerender } = render(
+        <CalculatorInputs data={mockData} {...defaultControlledProps} />,
+      );
+      // Set custom value
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      expect(screen.getByText("45 days")).toBeInTheDocument();
+      // Re-render with different data
+      const newData = {
+        ...mockData,
+        backupServer: [{ Version: "13.0.1.1071", Name: "server-2" }],
+      } as unknown as NormalizedDataset;
+      rerender(<CalculatorInputs data={newData} {...defaultControlledProps} />);
+      expect(screen.getByText("14 days")).toBeInTheDocument();
+      expect(screen.queryByText("45 days")).not.toBeInTheDocument();
+    });
+
+    it("passes retentionDays override to onCalculate on button click", () => {
+      const onCalculate = vi.fn().mockResolvedValue(undefined);
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...defaultControlledProps}
+          onCalculate={onCalculate}
+          hasConsented={true}
+          result={MOCK_API_RESULT}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: /re-calculate/i }));
+      // defaultSummary has immutabilityDays:30 (constant), gfsWeekly/Monthly/Yearly:1
+      expect(onCalculate).toHaveBeenCalledWith({
+        immutabilityDays: 30,
+        retentionDays: 45,
+        gfsWeekly: 1,
+        gfsMonthly: 1,
+        gfsYearly: 1,
+      });
+    });
+  });
+
+  describe("extended retention (GFS) inline edit", () => {
+    // defaultSummary has gfsWeekly:1, gfsMonthly:1, gfsYearly:1
+    // so initial display is "Weekly: 1, Monthly: 1, Yearly: 1"
+
+    it("renders a pencil button to edit GFS retention", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      expect(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("clicking the pencil shows three spinbuttons and action buttons", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      expect(screen.getAllByRole("spinbutton")).toHaveLength(3);
+      expect(
+        screen.getByRole("button", { name: /confirm gfs/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /cancel gfs edit/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /reset gfs to/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("confirm updates the composite display and exits edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [weekly, monthly, yearly] = screen.getAllByRole("spinbutton");
+      fireEvent.change(weekly, { target: { value: "4" } });
+      fireEvent.change(monthly, { target: { value: "12" } });
+      fireEvent.change(yearly, { target: { value: "7" } });
+      fireEvent.click(screen.getByRole("button", { name: /confirm gfs/i }));
+      expect(
+        screen.getByText("Weekly: 4, Monthly: 12, Yearly: 7"),
+      ).toBeInTheDocument();
+      expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
+    });
+
+    it("Enter key on any input confirms all three values", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [weekly] = screen.getAllByRole("spinbutton");
+      fireEvent.change(weekly, { target: { value: "4" } });
+      fireEvent.keyDown(weekly, { key: "Enter" });
+      expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
+    });
+
+    it("cancel reverts to the previous values and exits edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [weekly] = screen.getAllByRole("spinbutton");
+      fireEvent.change(weekly, { target: { value: "4" } });
+      fireEvent.click(screen.getByRole("button", { name: /cancel gfs edit/i }));
+      expect(
+        screen.getByText("Weekly: 1, Monthly: 1, Yearly: 1"),
+      ).toBeInTheDocument();
+      expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
+    });
+
+    it("Escape key on any input cancels and reverts", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [weekly] = screen.getAllByRole("spinbutton");
+      fireEvent.change(weekly, { target: { value: "4" } });
+      fireEvent.keyDown(weekly, { key: "Escape" });
+      expect(
+        screen.getByText("Weekly: 1, Monthly: 1, Yearly: 1"),
+      ).toBeInTheDocument();
+      expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
+    });
+
+    it("reset restores all three values to file-aggregated values", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [w1, m1, y1] = screen.getAllByRole("spinbutton");
+      fireEvent.change(w1, { target: { value: "4" } });
+      fireEvent.change(m1, { target: { value: "12" } });
+      fireEvent.change(y1, { target: { value: "7" } });
+      fireEvent.click(screen.getByRole("button", { name: /confirm gfs/i }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: /reset gfs to/i }));
+      expect(
+        screen.getByText("Weekly: 1, Monthly: 1, Yearly: 1"),
+      ).toBeInTheDocument();
+    });
+
+    it("allows a GFS value of 0 (disables that tier)", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [, , yearly] = screen.getAllByRole("spinbutton");
+      fireEvent.change(yearly, { target: { value: "0" } });
+      fireEvent.click(screen.getByRole("button", { name: /confirm gfs/i }));
+      expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
+    });
+
+    it("rejects a negative GFS value — stays in edit mode", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [, monthly] = screen.getAllByRole("spinbutton");
+      fireEvent.change(monthly, { target: { value: "-1" } });
+      fireEvent.click(screen.getByRole("button", { name: /confirm gfs/i }));
+      expect(screen.getAllByRole("spinbutton")).toHaveLength(3);
+    });
+
+    it("pencil icon has text-primary class when any GFS value is overridden", () => {
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [, , yearly] = screen.getAllByRole("spinbutton");
+      fireEvent.change(yearly, { target: { value: "7" } });
+      fireEvent.click(screen.getByRole("button", { name: /confirm gfs/i }));
+      expect(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      ).toHaveClass("text-primary");
+    });
+
+    it("resets to file-aggregated values when data changes", () => {
+      const { rerender } = render(
+        <CalculatorInputs data={mockData} {...defaultControlledProps} />,
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [w, m, y] = screen.getAllByRole("spinbutton");
+      fireEvent.change(w, { target: { value: "4" } });
+      fireEvent.change(m, { target: { value: "12" } });
+      fireEvent.change(y, { target: { value: "7" } });
+      fireEvent.click(screen.getByRole("button", { name: /confirm gfs/i }));
+      expect(
+        screen.getByText("Weekly: 4, Monthly: 12, Yearly: 7"),
+      ).toBeInTheDocument();
+      const newData = {
+        ...mockData,
+        backupServer: [{ Version: "13.0.1.1071", Name: "server-2" }],
+      } as unknown as NormalizedDataset;
+      rerender(<CalculatorInputs data={newData} {...defaultControlledProps} />);
+      expect(
+        screen.getByText("Weekly: 1, Monthly: 1, Yearly: 1"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText("Weekly: 4, Monthly: 12, Yearly: 7"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("passes GFS overrides to onCalculate on button click", () => {
+      const onCalculate = vi.fn().mockResolvedValue(undefined);
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...defaultControlledProps}
+          onCalculate={onCalculate}
+          hasConsented={true}
+          result={MOCK_API_RESULT}
+        />,
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [w, m, y] = screen.getAllByRole("spinbutton");
+      fireEvent.change(w, { target: { value: "4" } });
+      fireEvent.change(m, { target: { value: "12" } });
+      fireEvent.change(y, { target: { value: "7" } });
+      fireEvent.click(screen.getByRole("button", { name: /confirm gfs/i }));
+      fireEvent.click(screen.getByRole("button", { name: /re-calculate/i }));
+      // defaultSummary has immutabilityDays:30 (constant), maxRetentionDays:14
+      expect(onCalculate).toHaveBeenCalledWith({
+        immutabilityDays: 30,
+        retentionDays: 14,
+        gfsWeekly: 4,
+        gfsMonthly: 12,
+        gfsYearly: 7,
+      });
     });
   });
 });
