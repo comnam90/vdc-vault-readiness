@@ -1,0 +1,55 @@
+<h2>Immutability Period — proposed design</h2>
+<p class="subtitle">Three states for the Immutability Period cell</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">State 1: Default (30 days)</div>
+    <div class="mockup-body" style="font-size:12px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:4px">Immutability Period</div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <span style="font-size:20px;font-weight:600;font-family:monospace">30 days</span>
+        <button style="background:none;border:none;padding:0;cursor:pointer;color:#aaa;line-height:1;font-size:13px" title="Edit immutability period">✏</button>
+      </div>
+      <div style="margin-top:6px;font-size:10px;color:#bbb">Pencil icon muted — value is default</div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">State 2: Non-default (e.g. 14 days)</div>
+    <div class="mockup-body" style="font-size:12px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:4px">Immutability Period</div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <span style="font-size:20px;font-weight:600;font-family:monospace">14 days</span>
+        <button style="background:none;border:none;padding:0;cursor:pointer;color:#4f9cf9;line-height:1;font-size:13px" title="Edit immutability period">✏</button>
+      </div>
+      <div style="margin-top:6px;font-size:10px;color:#4f9cf9">Pencil icon tinted — signals override is active</div>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">State 3: Editing</div>
+  <div class="mockup-body" style="font-size:12px">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:6px">Immutability Period</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <input type="number" value="14" min="1" style="width:60px;border:1px solid #4f9cf9;border-radius:4px;padding:4px 6px;font-family:monospace;font-size:16px;font-weight:600;background:#fff;outline:none;box-shadow:0 0 0 2px rgba(79,156,249,.2)">
+      <span style="font-size:13px;color:#555">days</span>
+      <button style="background:#4f9cf9;color:#fff;border:none;border-radius:4px;padding:4px 12px;font-size:12px;cursor:pointer;font-weight:500" title="Confirm (Enter)">✓</button>
+      <button style="background:none;border:1px solid #ccc;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;color:#666" title="Cancel (Esc)">✗</button>
+      <button style="background:none;border:1px solid #e0e0e0;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;color:#888" title="Reset to default (30 days)">↺ Reset to 30</button>
+    </div>
+    <div style="margin-top:8px;font-size:10px;color:#888">Enter = confirm · Esc = cancel · minimum 1 day</div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:20px">
+  <h3>What changes</h3>
+  <ul style="font-size:13px;line-height:2">
+    <li>Remove <code>(VDC Vault minimum)</code> label — it's factually wrong</li>
+    <li>Add pencil icon: muted when default, <span style="color:#4f9cf9">primary-coloured</span> when overridden</li>
+    <li>Edit mode: number input (min 1) + ✓ confirm + ✗ cancel + ↺ Reset to 30 days</li>
+    <li>Local <code>useState</code> in <code>CalculatorInputs</code> — resets on new file upload, not persisted</li>
+    <li><code>calculate(immutabilityDays)</code> receives the value and patches the summary before the API call</li>
+    <li><code>buildVmAgentRequest</code> reads <code>summary.immutabilityDays</code> instead of hardcoding 30 for both <code>immutablePerfDays</code> and <code>immutableCapDays</code></li>
+  </ul>
+</div>
