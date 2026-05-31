@@ -35,6 +35,7 @@ import {
   MINIMUM_RETENTION_DAYS,
 } from "@/lib/constants";
 import { useSettings } from "@/hooks/use-settings";
+import type { CalculatorOverrides } from "@/hooks/use-calculator-api";
 import {
   Card,
   CardContent,
@@ -114,7 +115,7 @@ interface CalculatorInputsProps {
   hasConsented: boolean;
   // Callbacks
   onConsentGiven: () => void;
-  onCalculate: (immutabilityDays: number) => Promise<void>;
+  onCalculate: (overrides: CalculatorOverrides) => Promise<void>;
 }
 
 export function CalculatorInputs({
@@ -283,9 +284,17 @@ export function CalculatorInputs({
       : naturalRetentionYears(summary);
   const cappedAtYears = effectiveRetentionYears > 12 ? 12 : undefined;
 
+  const buildOverrides = (): CalculatorOverrides => ({
+    immutabilityDays,
+    retentionDays,
+    gfsWeekly: gfs.weekly,
+    gfsMonthly: gfs.monthly,
+    gfsYearly: gfs.yearly,
+  });
+
   const handleButtonClick = () => {
     if (hasConsented) {
-      void onCalculate(immutabilityDays);
+      void onCalculate(buildOverrides());
     } else {
       setConsentOpen(true);
     }
@@ -765,10 +774,18 @@ export function CalculatorInputs({
         onOpenChange={setConsentOpen}
         onAccept={() => {
           onConsentGiven();
-          void onCalculate(immutabilityDays);
+          void onCalculate(buildOverrides());
         }}
         onDecline={() => {}}
-        summary={{ ...summary, immutabilityDays }}
+        summary={{
+          ...summary,
+          immutabilityDays,
+          maxRetentionDays: retentionDays,
+          originalMaxRetentionDays: retentionDays,
+          gfsWeekly: gfs.weekly,
+          gfsMonthly: gfs.monthly,
+          gfsYearly: gfs.yearly,
+        }}
         activeJobCount={activeJobCount}
         vbrVersion={vbrVersion}
       />

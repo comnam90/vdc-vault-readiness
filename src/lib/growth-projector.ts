@@ -31,6 +31,10 @@ export interface GenerateGrowthSeriesArgs {
   vbrVersion: string;
   productVersionOverride?: number;
   immutabilityDays?: number;
+  retentionDays?: number;
+  gfsWeekly?: number | null;
+  gfsMonthly?: number | null;
+  gfsYearly?: number | null;
 }
 
 /**
@@ -110,6 +114,10 @@ export async function generateGrowthSeries(
     vbrVersion,
     productVersionOverride,
     immutabilityDays,
+    retentionDays,
+    gfsWeekly,
+    gfsMonthly,
+    gfsYearly,
   } = args;
 
   const capYears = settings.limitCalculationYears ?? 0;
@@ -145,10 +153,17 @@ export async function generateGrowthSeries(
       excludedJobNames,
       tempSettings,
     );
-    const patchedSummary =
-      immutabilityDays !== undefined
-        ? { ...summary, immutabilityDays }
-        : summary;
+    const patchedSummary = {
+      ...summary,
+      ...(immutabilityDays !== undefined && { immutabilityDays }),
+      ...(retentionDays !== undefined && {
+        maxRetentionDays: retentionDays,
+        originalMaxRetentionDays: retentionDays,
+      }),
+      ...(gfsWeekly !== undefined && { gfsWeekly }),
+      ...(gfsMonthly !== undefined && { gfsMonthly }),
+      ...(gfsYearly !== undefined && { gfsYearly }),
+    };
     const response = await callVmAgentApi(
       patchedSummary,
       jobCount,

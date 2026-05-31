@@ -1047,7 +1047,14 @@ describe("CalculatorInputs", () => {
       );
       // Trigger calculation
       fireEvent.click(screen.getByRole("button", { name: /re-calculate/i }));
-      expect(onCalculate).toHaveBeenCalledWith(14);
+      // beforeEach sets maxRetentionDays:99, gfsWeekly/Monthly/Yearly:1
+      expect(onCalculate).toHaveBeenCalledWith({
+        immutabilityDays: 14,
+        retentionDays: 99,
+        gfsWeekly: 1,
+        gfsMonthly: 1,
+        gfsYearly: 1,
+      });
     });
 
     it("passes immutabilityDays to onCalculate when consent dialog is accepted", () => {
@@ -1079,7 +1086,13 @@ describe("CalculatorInputs", () => {
       fireEvent.click(
         screen.getByRole("button", { name: /accept & calculate/i }),
       );
-      expect(onCalculate).toHaveBeenCalledWith(14);
+      expect(onCalculate).toHaveBeenCalledWith({
+        immutabilityDays: 14,
+        retentionDays: 99,
+        gfsWeekly: 1,
+        gfsMonthly: 1,
+        gfsYearly: 1,
+      });
     });
 
     it("resets to the default when data changes", () => {
@@ -1276,6 +1289,35 @@ describe("CalculatorInputs", () => {
       expect(screen.getByText("14 days")).toBeInTheDocument();
       expect(screen.queryByText("45 days")).not.toBeInTheDocument();
     });
+
+    it("passes retentionDays override to onCalculate on button click", () => {
+      const onCalculate = vi.fn().mockResolvedValue(undefined);
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...defaultControlledProps}
+          onCalculate={onCalculate}
+          hasConsented={true}
+          result={MOCK_API_RESULT}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      fireEvent.change(screen.getByRole("spinbutton"), {
+        target: { value: "45" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: /re-calculate/i }));
+      // defaultSummary has immutabilityDays:30 (constant), gfsWeekly/Monthly/Yearly:1
+      expect(onCalculate).toHaveBeenCalledWith({
+        immutabilityDays: 30,
+        retentionDays: 45,
+        gfsWeekly: 1,
+        gfsMonthly: 1,
+        gfsYearly: 1,
+      });
+    });
   });
 
   describe("extended retention (GFS) inline edit", () => {
@@ -1441,6 +1483,36 @@ describe("CalculatorInputs", () => {
       expect(
         screen.queryByText("Weekly: 4, Monthly: 12, Yearly: 7"),
       ).not.toBeInTheDocument();
+    });
+
+    it("passes GFS overrides to onCalculate on button click", () => {
+      const onCalculate = vi.fn().mockResolvedValue(undefined);
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...defaultControlledProps}
+          onCalculate={onCalculate}
+          hasConsented={true}
+          result={MOCK_API_RESULT}
+        />,
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [w, m, y] = screen.getAllByRole("spinbutton");
+      fireEvent.change(w, { target: { value: "4" } });
+      fireEvent.change(m, { target: { value: "12" } });
+      fireEvent.change(y, { target: { value: "7" } });
+      fireEvent.click(screen.getByRole("button", { name: /confirm gfs/i }));
+      fireEvent.click(screen.getByRole("button", { name: /re-calculate/i }));
+      // defaultSummary has immutabilityDays:30 (constant), maxRetentionDays:14
+      expect(onCalculate).toHaveBeenCalledWith({
+        immutabilityDays: 30,
+        retentionDays: 14,
+        gfsWeekly: 4,
+        gfsMonthly: 12,
+        gfsYearly: 7,
+      });
     });
   });
 });
