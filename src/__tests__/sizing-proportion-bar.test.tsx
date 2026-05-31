@@ -1,6 +1,18 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { SizingProportionBar } from "@/components/dashboard/sizing-proportion-bar";
+
+// Make TooltipContent always visible so tooltip strings can be asserted without hover interaction.
+vi.mock("@/components/ui/tooltip", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/components/ui/tooltip")>();
+  return {
+    ...actual,
+    TooltipContent: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="tooltip-content">{children}</div>
+    ),
+  };
+});
 
 const COUNTS = { daily: 30, weekly: 4, monthly: 11, yearly: 3 };
 
@@ -129,5 +141,21 @@ describe("SizingProportionBar", () => {
     const label = group.getAttribute("aria-label") ?? "";
     expect(label).toMatch(/Buffer/);
     expect(label).toMatch(/4\.00 TB/);
+  });
+
+  it("renders buffer tooltip text 'Buffer (spare capacity): X TB (Y%)'", () => {
+    const { container } = render(
+      <SizingProportionBar
+        buckets={BUFFERED_BUCKETS}
+        sumTB={BUFFERED_TOTAL}
+        counts={COUNTS}
+      />,
+    );
+    const bufferSegment = container.querySelector("[data-segment='buffer']")!;
+    const tooltip = bufferSegment.nextSibling as HTMLElement;
+    const pct = Math.round((BUFFER_TB / BUFFERED_TOTAL) * 100);
+    expect(tooltip.textContent).toBe(
+      `Buffer (spare capacity): 4.00 TB (${pct}%)`,
+    );
   });
 });
