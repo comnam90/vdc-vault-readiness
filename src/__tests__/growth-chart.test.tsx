@@ -7,9 +7,18 @@ vi.mock("recharts", () => ({
   BarChart: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="bar-chart">{children}</div>
   ),
-  Bar: ({ dataKey, radius }: { dataKey: string; radius?: number[] }) => (
+  Bar: ({
+    dataKey,
+    name,
+    radius,
+  }: {
+    dataKey: string;
+    name?: string;
+    radius?: number[];
+  }) => (
     <div
       data-testid={`bar-${dataKey}`}
+      data-name={name}
       data-radius={radius ? radius.join(",") : undefined}
     />
   ),
@@ -261,7 +270,7 @@ describe("GrowthChart", () => {
       expect(screen.queryByTestId("bar-buffer")).not.toBeInTheDocument();
     });
 
-    it("renders a buffer Bar when bufferEnabled is true", () => {
+    it("renders a buffer Bar named 'Buffer' when bufferEnabled is true", () => {
       render(
         <GrowthChart
           data={BUFFER_SAMPLE}
@@ -269,7 +278,9 @@ describe("GrowthChart", () => {
           bufferEnabled={true}
         />,
       );
-      expect(screen.getByTestId("bar-buffer")).toBeInTheDocument();
+      const bufferBar = screen.getByTestId("bar-buffer");
+      expect(bufferBar).toBeInTheDocument();
+      expect(bufferBar).toHaveAttribute("data-name", "Buffer");
     });
 
     it("immutability bar loses rounded cap when bufferEnabled is true", () => {

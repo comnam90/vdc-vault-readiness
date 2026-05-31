@@ -97,6 +97,7 @@ export function SizingResults({
           greenfield={greenfieldSimulation}
           historicalDataYears={historicalDataYears}
           cappedAtYears={cappedAtYears}
+          bufferEnabled={bufferEnabled}
         />
       )}
       <SizingBaselinesCard sizing={sizing} />
