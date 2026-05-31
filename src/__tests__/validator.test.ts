@@ -1970,7 +1970,7 @@ describe("Rule 13: Active Full Warning", () => {
 
     expect(rule).toBeDefined();
     expect(rule?.status).toBe("warning");
-    expect(rule?.title).toBe("Active Full Backup Schedules Detected");
+    expect(rule?.title).toBe("Active Full Backup Schedules");
     expect(rule?.message).toContain("Active Full");
     expect(rule?.message).toContain("Synthetic Full");
     expect(rule?.affectedItems).toEqual(["Job A"]);
