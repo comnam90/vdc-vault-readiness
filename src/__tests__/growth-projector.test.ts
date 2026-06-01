@@ -728,11 +728,14 @@ describe("generateGrowthSeries", () => {
     }
   });
 
-  it("patches each step's summary with GFS overrides when provided", async () => {
+  it("caps GFS overrides to the per-step horizon in greenfield mode", async () => {
     callVmAgentApi.mockImplementation(async () =>
       fakeResponse({ totalStorageTB: 10, daily: 1 }),
     );
 
+    // limitCalculationYears: 2 + default greenfieldSimulation: true → step 1 cap=1, step 2 cap=2.
+    // weekly (4) and monthly (12) both fit within year 1 (4 ≤ 52, 12 ≤ 12), so they pass through
+    // at full value. yearly (7) exceeds the per-step cap each time and must be clamped.
     const settings = makeSettings({ limitCalculationYears: 2 });
     await generateGrowthSeries({
       ...baseArgs(settings),
@@ -742,15 +745,19 @@ describe("generateGrowthSeries", () => {
     });
 
     expect(callVmAgentApi).toHaveBeenCalledTimes(2);
-    for (const call of callVmAgentApi.mock.calls) {
-      const summary = call[0] as {
+    for (let year = 1; year <= 2; year++) {
+      const call = callVmAgentApi.mock.calls.find(
+        (c) => (c[4] as GlobalSettings).limitCalculationYears === year,
+      );
+      expect(call, `call for year ${year}`).toBeDefined();
+      const summary = call![0] as {
         gfsWeekly: number;
         gfsMonthly: number;
         gfsYearly: number;
       };
       expect(summary.gfsWeekly).toBe(4);
       expect(summary.gfsMonthly).toBe(12);
-      expect(summary.gfsYearly).toBe(7);
+      expect(summary.gfsYearly).toBe(year); // clamped to the per-step cap
     }
   });
 
@@ -817,5 +824,59 @@ describe("generateGrowthSeries", () => {
       "Year 6",
       "Year 7",
     ]);
+  });
+
+  it("ramps GFS yearly override year-by-year in greenfield mode with no explicit cap (regression: was flat at full depth)", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    // Faithful reproduction of the reported bug: no explicit cap, greenfield on,
+    // job has Yearly:7 so natural retention drives 7 steps.
+    // With the bug every step would report gfsYearly=7; after the fix each step
+    // must report gfsYearly === year (1..7), mirroring capJob's per-step cap.
+    const settings = makeSettings({
+      limitCalculationYears: null,
+      greenfieldSimulation: true,
+    });
+    await generateGrowthSeries({
+      jobs: [
+        makeJob({
+          JobName: "Job A",
+          SourceSizeGB: 1024,
+          RetainDays: 30,
+          GfsDetails: "Yearly:7",
+        }),
+      ],
+      sessions: [
+        makeSession({
+          JobName: "Job A",
+          AvgChangeRate: 5,
+          MaxDataSize: 1024 ** 3,
+        }),
+      ],
+      settings,
+      jobCount: 1,
+      vbrVersion: "13.0.1.1071",
+      gfsWeekly: 4,
+      gfsMonthly: 12,
+      gfsYearly: 7,
+    });
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(7);
+    for (let year = 1; year <= 7; year++) {
+      const call = callVmAgentApi.mock.calls.find(
+        (c) => (c[4] as GlobalSettings).limitCalculationYears === year,
+      );
+      expect(call, `call for year ${year}`).toBeDefined();
+      const summary = call![0] as {
+        gfsWeekly: number;
+        gfsMonthly: number;
+        gfsYearly: number;
+      };
+      expect(summary.gfsYearly, `year ${year} gfsYearly`).toBe(year);
+      expect(summary.gfsMonthly, `year ${year} gfsMonthly`).toBe(12);
+      expect(summary.gfsWeekly, `year ${year} gfsWeekly`).toBe(4);
+    }
   });
 });
