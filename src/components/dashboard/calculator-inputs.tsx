@@ -18,6 +18,7 @@ import {
 import {
   buildCalculatorSummary,
   capGfsToSettings,
+  retentionCapsForSettings,
 } from "@/lib/calculator-aggregator";
 import {
   formatDays,
@@ -176,22 +177,31 @@ export function CalculatorInputs({
 
   const [consentOpen, setConsentOpen] = useState(false);
 
-  // Drafts are seeded from props at mount and are re-synced only by the
-  // confirm/cancel/reset handlers below. This is safe because the controlled
-  // props (immutabilityDays, retentionDays, gfs) are exclusively updated via
-  // this component's own on*Change callbacks — no external code changes them
-  // while an edit is in flight. If that assumption ever breaks, add a
-  // useEffect to re-sync drafts when the props change.
+  // Cap-lens: apply the active Cap Retention setting as a read-time lens so
+  // every consumption point (display, edit drafts, commit, consent preview,
+  // and the calc in use-calculator-api) shows/sends the same clamped value.
+  // When no cap is set, globalCapDays returns Infinity and all these are no-ops.
+  const caps = retentionCapsForSettings(settings);
+  const effectiveGfs = capGfsToSettings(gfs, settings);
+  const effectiveRetention = Math.min(retentionDays, caps.retentionDays);
+
+  // Drafts are seeded from the lensed values at mount and are re-synced only
+  // by the confirm/cancel/reset handlers below. This is safe because the
+  // controlled props (immutabilityDays, retentionDays, gfs) are exclusively
+  // updated via this component's own on*Change callbacks — no external code
+  // changes them while an edit is in flight. If that assumption ever breaks,
+  // add a useEffect to re-sync drafts when the props change.
   const [isEditingImmutability, setIsEditingImmutability] =
     useState<boolean>(false);
   const [immutabilityDraft, setImmutabilityDraft] =
     useState<number>(immutabilityDays);
 
   const [isEditingRetention, setIsEditingRetention] = useState<boolean>(false);
-  const [retentionDraft, setRetentionDraft] = useState<number>(retentionDays);
+  const [retentionDraft, setRetentionDraft] =
+    useState<number>(effectiveRetention);
 
   const [isEditingGfs, setIsEditingGfs] = useState<boolean>(false);
-  const [gfsDraft, setGfsDraft] = useState<GfsState>(gfs);
+  const [gfsDraft, setGfsDraft] = useState<GfsState>(effectiveGfs);
 
   const handleImmutabilityConfirm = () => {
     if (!Number.isFinite(immutabilityDraft) || immutabilityDraft <= 0) return;
@@ -216,13 +226,15 @@ export function CalculatorInputs({
       retentionDraft < MINIMUM_RETENTION_DAYS
     )
       return;
-    onRetentionDaysChange(retentionDraft);
+    // Silently clamp to the active cap (no-op when cap is Infinity).
+    const committed = Math.min(retentionDraft, caps.retentionDays);
+    onRetentionDaysChange(committed);
     setIsEditingRetention(false);
   };
 
   const handleRetentionCancel = () => {
     setIsEditingRetention(false);
-    setRetentionDraft(retentionDays);
+    setRetentionDraft(effectiveRetention);
   };
 
   const handleRetentionReset = () => {
@@ -241,13 +253,15 @@ export function CalculatorInputs({
       isInvalid(gfsDraft.yearly)
     )
       return;
-    onGfsChange(gfsDraft);
+    // Silently clamp each bucket to the active cap (no-op when cap is Infinity).
+    const committed = capGfsToSettings(gfsDraft, settings);
+    onGfsChange(committed);
     setIsEditingGfs(false);
   };
 
   const handleGfsCancel = () => {
     setIsEditingGfs(false);
-    setGfsDraft(gfs);
+    setGfsDraft(effectiveGfs);
   };
 
   const handleGfsReset = () => {
@@ -434,6 +448,11 @@ export function CalculatorInputs({
                   <Input
                     type="number"
                     min={MINIMUM_RETENTION_DAYS}
+                    max={
+                      Number.isFinite(caps.retentionDays)
+                        ? caps.retentionDays
+                        : undefined
+                    }
                     value={Number.isNaN(retentionDraft) ? "" : retentionDraft}
                     onChange={(e) =>
                       setRetentionDraft(parseInt(e.target.value, 10))
@@ -481,7 +500,7 @@ export function CalculatorInputs({
               ) : (
                 <div className="flex items-baseline gap-2">
                   <p className="font-mono text-2xl font-semibold">
-                    {retentionDays} days
+                    {effectiveRetention} days
                   </p>
                   {summary.originalMaxRetentionDays !== null &&
                     summary.originalMaxRetentionDays <
@@ -529,6 +548,9 @@ export function CalculatorInputs({
                     <Input
                       type="number"
                       min={0}
+                      max={
+                        Number.isFinite(caps.weekly) ? caps.weekly : undefined
+                      }
                       value={gfsDraft.weekly ?? ""}
                       onChange={(e) => {
                         const p = parseInt(e.target.value, 10);
@@ -551,6 +573,9 @@ export function CalculatorInputs({
                     <Input
                       type="number"
                       min={0}
+                      max={
+                        Number.isFinite(caps.monthly) ? caps.monthly : undefined
+                      }
                       value={gfsDraft.monthly ?? ""}
                       onChange={(e) => {
                         const p = parseInt(e.target.value, 10);
@@ -572,6 +597,9 @@ export function CalculatorInputs({
                     <Input
                       type="number"
                       min={0}
+                      max={
+                        Number.isFinite(caps.yearly) ? caps.yearly : undefined
+                      }
                       value={gfsDraft.yearly ?? ""}
                       onChange={(e) => {
                         const p = parseInt(e.target.value, 10);
@@ -622,12 +650,16 @@ export function CalculatorInputs({
               ) : (
                 <div className="flex items-baseline gap-2">
                   <p className="font-mono text-2xl font-semibold">
-                    {formatGFS(gfs.weekly, gfs.monthly, gfs.yearly)}
+                    {formatGFS(
+                      effectiveGfs.weekly,
+                      effectiveGfs.monthly,
+                      effectiveGfs.yearly,
+                    )}
                   </p>
                   <button
                     type="button"
                     onClick={() => {
-                      setGfsDraft(gfs);
+                      setGfsDraft(effectiveGfs);
                       setIsEditingGfs(true);
                     }}
                     aria-label="Edit extended retention"
@@ -782,9 +814,9 @@ export function CalculatorInputs({
         }}
         onDecline={() => {}}
         summary={(() => {
-          // Cap GFS preview values to the active horizon so the consent dialog
-          // shows what will actually be sent to the API (consistent with the
-          // hero total calculation in use-calculator-api.ts).
+          // Cap GFS and retention preview values to the active horizon so the
+          // consent dialog shows what will actually be sent to the API
+          // (consistent with the hero total in use-calculator-api.ts).
           const cappedPreviewGfs = capGfsToSettings(
             { weekly: gfs.weekly, monthly: gfs.monthly, yearly: gfs.yearly },
             settings,
@@ -792,8 +824,8 @@ export function CalculatorInputs({
           return {
             ...summary,
             immutabilityDays,
-            maxRetentionDays: retentionDays,
-            originalMaxRetentionDays: retentionDays,
+            maxRetentionDays: effectiveRetention,
+            originalMaxRetentionDays: effectiveRetention,
             gfsWeekly: cappedPreviewGfs.weekly,
             gfsMonthly: cappedPreviewGfs.monthly,
             gfsYearly: cappedPreviewGfs.yearly,

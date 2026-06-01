@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildCalculatorSummary,
   capGfsToSettings,
+  globalCapDays,
 } from "@/lib/calculator-aggregator";
 import {
   generateGrowthSeries,
@@ -141,21 +142,21 @@ export function useCalculatorApi({
         excludedJobNames,
         settings,
       );
-      // Cap GFS overrides to the active retention horizon so the hero total
-      // matches the chart. Without this, an override of e.g. gfsYearly=5 would
-      // bypass a 1-year cap and overstate storage. growthArgs intentionally
-      // receives the raw values — generateGrowthSeries applies its own
-      // per-step capping (see growth-projector.ts); pre-capping here would
-      // double-cap monthly-scale steps.
+      // Cap GFS overrides and retention to the active horizon so the hero total
+      // matches the lensed display. growthArgs intentionally receives raw values
+      // — generateGrowthSeries applies its own per-step capping; pre-capping
+      // here would double-cap monthly-scale steps.
       const cappedGfs = capGfsToSettings(
         { weekly: gfsWeekly, monthly: gfsMonthly, yearly: gfsYearly },
         settings,
       );
+      // min(x, Infinity) === x, so the no-cap path is unchanged.
+      const cappedRetention = Math.min(retentionDays, globalCapDays(settings));
       const patchedSummary = {
         ...summary,
         immutabilityDays,
-        maxRetentionDays: retentionDays,
-        originalMaxRetentionDays: retentionDays,
+        maxRetentionDays: cappedRetention,
+        originalMaxRetentionDays: cappedRetention,
         gfsWeekly: cappedGfs.weekly,
         gfsMonthly: cappedGfs.monthly,
         gfsYearly: cappedGfs.yearly,

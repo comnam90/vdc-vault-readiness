@@ -67,6 +67,40 @@ export function capGfsToSettings(
   return capGfs(gfs, globalCapDays(settings));
 }
 
+export interface RetentionCaps {
+  /** Maximum retention days; `Infinity` when no cap is active. */
+  retentionDays: number;
+  /** Maximum weekly GFS slots; `Infinity` when no cap is active. */
+  weekly: number;
+  /** Maximum monthly GFS slots; `Infinity` when no cap is active. */
+  monthly: number;
+  /** Maximum yearly GFS slots; `Infinity` when no cap is active. */
+  yearly: number;
+}
+
+/**
+ * Returns per-tier slot maxes derived from the active Cap Retention setting.
+ * All fields are `Infinity` when no cap is active (`limitCalculationYears` is
+ * null or the computed day count is zero). Used to set `max` attributes on
+ * editable number inputs and to clamp committed override values.
+ *
+ * Uses the same 365/30/7 conversions as `capGfs` so the display lens and the
+ * calc lens agree.
+ */
+export function retentionCapsForSettings(
+  settings: GlobalSettings,
+): RetentionCaps {
+  const capDays = globalCapDays(settings);
+  const slotMax = (per: number) =>
+    Number.isFinite(capDays) ? Math.floor(capDays / per) : Infinity;
+  return {
+    retentionDays: capDays,
+    weekly: slotMax(7),
+    monthly: slotMax(30),
+    yearly: slotMax(365),
+  };
+}
+
 export function calculateTotalSourceDataTB(jobs: SafeJob[]): number | null {
   let sumGB = 0;
   let hasValid = false;
