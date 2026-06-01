@@ -165,6 +165,14 @@ export async function generateGrowthSeries(
     // capJob inside the aggregator, giving overrides identical treatment to
     // job-derived GFS. With no active cap (limit=null) globalCapDays returns
     // Infinity and capGfs passes overrides through unchanged.
+    //
+    // Note: the archive-tier tightening (min(globalDays, archiveOffloadDays))
+    // that capJob applies per-job is intentionally omitted here. The UI always
+    // seeds overrides from buildCalculatorSummary, which already applies
+    // capJob (including archive truncation) to each job before aggregating, so
+    // an override can never exceed what the job-level data allows. A future
+    // caller that supplies overrides from outside that invariant would need to
+    // apply the archive cap explicitly.
     const stepCapDays = globalCapDays(tempSettings);
     const cappedGfsOverride = capGfs(
       {
