@@ -9,6 +9,7 @@ import {
   aggregateGfsMax,
   globalCapDays,
   capGfs,
+  capGfsToSettings,
   buildCalculatorSummary,
 } from "@/lib/calculator-aggregator";
 import { makeJob, makeSession, makeSettings } from "./fixtures";
@@ -456,6 +457,28 @@ describe("capGfs", () => {
       monthly: 0,
       yearly: 0,
     });
+  });
+});
+
+describe("capGfsToSettings", () => {
+  it("clamps only yearly when limitCalculationYears is 1 (exact reported scenario)", () => {
+    // cap=1y → 365 days → yearly max=1, monthly max=12, weekly max=52
+    // yearly 5 clamps to 1; monthly 12 and weekly 4 fit within the cap
+    expect(
+      capGfsToSettings(
+        { weekly: 4, monthly: 12, yearly: 5 },
+        makeSettings({ limitCalculationYears: 1, limitCalculationMonths: 0 }),
+      ),
+    ).toEqual({ weekly: 4, monthly: 12, yearly: 1 });
+  });
+
+  it("passes GFS through unchanged when limitCalculationYears is null (no active cap)", () => {
+    expect(
+      capGfsToSettings(
+        { weekly: 4, monthly: 12, yearly: 5 },
+        makeSettings({ limitCalculationYears: null }),
+      ),
+    ).toEqual({ weekly: 4, monthly: 12, yearly: 5 });
   });
 });
 
