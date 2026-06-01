@@ -4,10 +4,50 @@ import { DEFAULT_SETTINGS, type GlobalSettings } from "@/types/settings";
 import { MINIMUM_RETENTION_DAYS, DEFAULT_IMMUTABILITY_DAYS } from "./constants";
 import { formatShortGfs } from "./format-utils";
 
-interface GfsResult {
+export interface GfsResult {
   weekly: number | null;
   monthly: number | null;
   yearly: number | null;
+}
+
+/**
+ * Returns the total cap horizon in days implied by the given settings, or
+ * `Infinity` when no cap is active. A cap is active only when
+ * `limitCalculationYears` is set (not null) and the resulting day count is
+ * positive — matching the `capActive` guard used elsewhere in the pipeline.
+ */
+export function globalCapDays(settings: GlobalSettings): number {
+  const capYears = settings.limitCalculationYears ?? 0;
+  const capMonths = settings.limitCalculationMonths ?? 0;
+  const totalCapDays = capYears * 365 + capMonths * 30;
+  const capActive = settings.limitCalculationYears !== null && totalCapDays > 0;
+  return capActive ? totalCapDays : Infinity;
+}
+
+/**
+ * Clamps each bucket in `gfs` to the slot count that fits within `capDays`,
+ * using the same unit conversions as `capJob` (365 d/yr, 30 d/mo, 7 d/wk).
+ * Returns `gfs` unchanged when `capDays` is infinite (no active cap).
+ * Null values are preserved as-is.
+ */
+export function capGfs(gfs: GfsResult, capDays: number): GfsResult {
+  if (!Number.isFinite(capDays)) {
+    return gfs;
+  }
+  return {
+    weekly:
+      gfs.weekly !== null
+        ? Math.min(gfs.weekly, Math.floor(capDays / 7))
+        : null,
+    monthly:
+      gfs.monthly !== null
+        ? Math.min(gfs.monthly, Math.floor(capDays / 30))
+        : null,
+    yearly:
+      gfs.yearly !== null
+        ? Math.min(gfs.yearly, Math.floor(capDays / 365))
+        : null,
+  };
 }
 
 export function calculateTotalSourceDataTB(jobs: SafeJob[]): number | null {
@@ -151,48 +191,30 @@ function serializeGfs(gfs: GfsResult): string | null {
 }
 
 function capJob(job: SafeJob, settings: GlobalSettings): SafeJob {
-  const capYears = settings.limitCalculationYears ?? 0;
-  const capMonths = settings.limitCalculationMonths ?? 0;
-  const totalCapDays = capYears * 365 + capMonths * 30;
-  const capActive = settings.limitCalculationYears !== null && totalCapDays > 0;
-  const globalCapDays = capActive ? totalCapDays : Infinity;
+  const globalDays = globalCapDays(settings);
 
   const archiveCapDays =
     job.archiveOffloadDays != null && !settings.ignoreArchiveTier
       ? job.archiveOffloadDays
       : Infinity;
 
-  const dailyCapDays = globalCapDays;
-  const gfsCapDays = Math.min(globalCapDays, archiveCapDays);
+  // Daily retention caps to the global horizon only.
+  // GFS caps to the tighter of global horizon and archive offload
+  // (Symmetric with the input math: 365-day year, 30-day month, 7-day week.
+  // Using calendar conversions e.g. cap_days * 12 / 365 under-counts a
+  // 3-month cap as 2 monthly slots — weeklies and monthlies coexist on the
+  // Vault, so a 3-month cap should retain 3 monthly slots.)
+  const gfsCapDays = Math.min(globalDays, archiveCapDays);
 
   const capped: SafeJob = { ...job };
 
-  if (job.RetainDays != null && Number.isFinite(dailyCapDays)) {
-    capped.RetainDays = Math.min(job.RetainDays, dailyCapDays);
+  if (job.RetainDays != null && Number.isFinite(globalDays)) {
+    capped.RetainDays = Math.min(job.RetainDays, globalDays);
   }
 
   if (job.GfsDetails) {
     const parsed = parseGfsDetails(job.GfsDetails);
-    // Symmetric with the input math: 365-day year, 30-day month, 7-day week.
-    // Using calendar conversions (e.g. cap_days * 12 / 365) under-counts a
-    // 3-month cap as 2 monthly slots — weeklies and monthlies coexist on the
-    // Vault, so a 3-month cap should retain 3 monthly slots.
-    const yMax = Number.isFinite(gfsCapDays)
-      ? Math.floor(gfsCapDays / 365)
-      : Infinity;
-    const mMax = Number.isFinite(gfsCapDays)
-      ? Math.floor(gfsCapDays / 30)
-      : Infinity;
-    const wMax = Number.isFinite(gfsCapDays)
-      ? Math.floor(gfsCapDays / 7)
-      : Infinity;
-
-    const cappedGfs: GfsResult = {
-      weekly: parsed.weekly != null ? Math.min(parsed.weekly, wMax) : null,
-      monthly: parsed.monthly != null ? Math.min(parsed.monthly, mMax) : null,
-      yearly: parsed.yearly != null ? Math.min(parsed.yearly, yMax) : null,
-    };
-    capped.GfsDetails = serializeGfs(cappedGfs);
+    capped.GfsDetails = serializeGfs(capGfs(parsed, gfsCapDays));
   }
 
   return capped;

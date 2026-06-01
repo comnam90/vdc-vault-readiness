@@ -1,4 +1,8 @@
-import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
+import {
+  buildCalculatorSummary,
+  capGfs,
+  globalCapDays,
+} from "@/lib/calculator-aggregator";
 import { deriveSizing } from "@/lib/sizing-derivation";
 import { callVmAgentApi } from "@/lib/veeam-api";
 import type { SafeJob, SafeJobSession } from "@/types/domain";
@@ -155,6 +159,21 @@ export async function generateGrowthSeries(
       excludedJobNames,
       tempSettings,
     );
+    // Cap the user's GFS overrides to the per-step horizon so the chart ramps
+    // in greenfield mode (e.g. yearly=7 → 1,2,3,…7 across 7 bars) instead of
+    // holding flat at the full depth every step. Uses the same cap logic as
+    // capJob inside the aggregator, giving overrides identical treatment to
+    // job-derived GFS. With no active cap (limit=null) globalCapDays returns
+    // Infinity and capGfs passes overrides through unchanged.
+    const stepCapDays = globalCapDays(tempSettings);
+    const cappedGfsOverride = capGfs(
+      {
+        weekly: gfsWeekly ?? null,
+        monthly: gfsMonthly ?? null,
+        yearly: gfsYearly ?? null,
+      },
+      stepCapDays,
+    );
     const patchedSummary = {
       ...summary,
       ...(immutabilityDays !== undefined && { immutabilityDays }),
@@ -162,9 +181,11 @@ export async function generateGrowthSeries(
         maxRetentionDays: retentionDays,
         originalMaxRetentionDays: retentionDays,
       }),
-      ...(gfsWeekly !== undefined && { gfsWeekly }),
-      ...(gfsMonthly !== undefined && { gfsMonthly }),
-      ...(gfsYearly !== undefined && { gfsYearly }),
+      ...(gfsWeekly !== undefined && { gfsWeekly: cappedGfsOverride.weekly }),
+      ...(gfsMonthly !== undefined && {
+        gfsMonthly: cappedGfsOverride.monthly,
+      }),
+      ...(gfsYearly !== undefined && { gfsYearly: cappedGfsOverride.yearly }),
     };
     const response = await callVmAgentApi(
       patchedSummary,
