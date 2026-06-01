@@ -15,7 +15,10 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
-import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
+import {
+  buildCalculatorSummary,
+  capGfsToSettings,
+} from "@/lib/calculator-aggregator";
 import {
   formatDays,
   formatGFS,
@@ -778,15 +781,24 @@ export function CalculatorInputs({
           void onCalculate(buildOverrides());
         }}
         onDecline={() => {}}
-        summary={{
-          ...summary,
-          immutabilityDays,
-          maxRetentionDays: retentionDays,
-          originalMaxRetentionDays: retentionDays,
-          gfsWeekly: gfs.weekly,
-          gfsMonthly: gfs.monthly,
-          gfsYearly: gfs.yearly,
-        }}
+        summary={(() => {
+          // Cap GFS preview values to the active horizon so the consent dialog
+          // shows what will actually be sent to the API (consistent with the
+          // hero total calculation in use-calculator-api.ts).
+          const cappedPreviewGfs = capGfsToSettings(
+            { weekly: gfs.weekly, monthly: gfs.monthly, yearly: gfs.yearly },
+            settings,
+          );
+          return {
+            ...summary,
+            immutabilityDays,
+            maxRetentionDays: retentionDays,
+            originalMaxRetentionDays: retentionDays,
+            gfsWeekly: cappedPreviewGfs.weekly,
+            gfsMonthly: cappedPreviewGfs.monthly,
+            gfsYearly: cappedPreviewGfs.yearly,
+          };
+        })()}
         activeJobCount={activeJobCount}
         vbrVersion={vbrVersion}
       />

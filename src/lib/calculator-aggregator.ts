@@ -50,6 +50,23 @@ export function capGfs(gfs: GfsResult, capDays: number): GfsResult {
   };
 }
 
+/**
+ * Convenience wrapper: clamps `gfs` to the retention horizon implied by
+ * `settings`. Equivalent to `capGfs(gfs, globalCapDays(settings))`.
+ *
+ * Use at call sites that have a `GlobalSettings` but not a pre-computed
+ * `capDays` value (e.g. the hero total in `use-calculator-api` and the
+ * consent-preview in `calculator-inputs`). Archive truncation is intentionally
+ * omitted — callers always seed overrides from `buildCalculatorSummary`, which
+ * already bakes per-job archive offload in via `capJob`.
+ */
+export function capGfsToSettings(
+  gfs: GfsResult,
+  settings: GlobalSettings,
+): GfsResult {
+  return capGfs(gfs, globalCapDays(settings));
+}
+
 export function calculateTotalSourceDataTB(jobs: SafeJob[]): number | null {
   let sumGB = 0;
   let hasValid = false;

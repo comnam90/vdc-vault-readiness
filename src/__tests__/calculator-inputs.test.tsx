@@ -10,9 +10,11 @@ import type { NormalizedDataset } from "@/types/domain";
 import type { VmAgentResponse } from "@/types/veeam-api";
 
 // Mock the aggregator function
-vi.mock("@/lib/calculator-aggregator", () => ({
-  buildCalculatorSummary: vi.fn(),
-}));
+vi.mock("@/lib/calculator-aggregator", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/calculator-aggregator")>();
+  return { ...actual, buildCalculatorSummary: vi.fn() };
+});
 
 vi.mock("@/lib/veeam-api", () => ({
   callVmAgentApi: vi.fn(),
