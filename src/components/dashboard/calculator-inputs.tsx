@@ -512,7 +512,7 @@ export function CalculatorInputs({
                   <button
                     type="button"
                     onClick={() => {
-                      setRetentionDraft(retentionDays);
+                      setRetentionDraft(effectiveRetention);
                       setIsEditingRetention(true);
                     }}
                     aria-label="Edit retention"

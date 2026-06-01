@@ -1834,6 +1834,23 @@ describe("CalculatorInputs", () => {
       });
     });
 
+    it("seeds retention edit draft from lensed value (365) not raw value (400) when cap is active", async () => {
+      await activateCap(1);
+
+      render(
+        <CalculatorInputs
+          data={mockData}
+          {...defaultControlledProps}
+          retentionDays={400} // over cap
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      const input = screen.getByRole("spinbutton");
+      // Draft seeded from lensed value → shows 365, not 400
+      expect(input).toHaveValue(365);
+    });
+
     it("retention input shows correct max attribute when cap is 1 year", async () => {
       // cap=1y → max retention = 365 days
       await activateCap(1);
