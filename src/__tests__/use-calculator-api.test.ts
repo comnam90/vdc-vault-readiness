@@ -754,6 +754,54 @@ describe("useCalculatorApi", () => {
       );
     });
 
+    it("caps retentionDays to limitCalculationYears before sending to the API", async () => {
+      // cap=1y → 365 days; retentionDays=400 clamps to 365; no-cap path unaffected
+      const cappedSettings = { ...DEFAULT_SETTINGS, limitCalculationYears: 1 };
+      const { result } = renderHook(() =>
+        useCalculatorApi({ ...baseProps, settings: cappedSettings }),
+      );
+
+      await act(async () => {
+        await result.current.calculate({
+          ...DEFAULT_OVERRIDES,
+          retentionDays: 400,
+        });
+      });
+
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          maxRetentionDays: 365,
+          originalMaxRetentionDays: 365,
+        }),
+        expect.any(Number),
+        expect.any(String),
+        undefined,
+        cappedSettings,
+      );
+    });
+
+    it("does not cap retentionDays when limitCalculationYears is null (no-cap path)", async () => {
+      const { result } = renderHook(() => useCalculatorApi(baseProps));
+
+      await act(async () => {
+        await result.current.calculate({
+          ...DEFAULT_OVERRIDES,
+          retentionDays: 400,
+        });
+      });
+
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          maxRetentionDays: 400,
+          originalMaxRetentionDays: 400,
+        }),
+        expect.any(Number),
+        expect.any(String),
+        undefined,
+        DEFAULT_SETTINGS,
+      );
+    });
+
     it("forwards retentionDays and GFS overrides to generateGrowthSeries", async () => {
       const { result } = renderHook(() => useCalculatorApi(baseProps));
 

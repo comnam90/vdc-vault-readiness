@@ -10,6 +10,7 @@ import {
   globalCapDays,
   capGfs,
   capGfsToSettings,
+  retentionCapsForSettings,
   buildCalculatorSummary,
 } from "@/lib/calculator-aggregator";
 import { makeJob, makeSession, makeSettings } from "./fixtures";
@@ -479,6 +480,27 @@ describe("capGfsToSettings", () => {
         makeSettings({ limitCalculationYears: null }),
       ),
     ).toEqual({ weekly: 4, monthly: 12, yearly: 5 });
+  });
+});
+
+describe("retentionCapsForSettings", () => {
+  it("returns per-tier slot maxes when limitCalculationYears is 1 (exact user scenario)", () => {
+    // cap=1y → 365 days; floor(365/365)=1y, floor(365/30)=12m, floor(365/7)=52w
+    expect(
+      retentionCapsForSettings(
+        makeSettings({ limitCalculationYears: 1, limitCalculationMonths: 0 }),
+      ),
+    ).toEqual({ retentionDays: 365, weekly: 52, monthly: 12, yearly: 1 });
+  });
+
+  it("returns Infinity for all fields when limitCalculationYears is null (no cap)", () => {
+    const caps = retentionCapsForSettings(
+      makeSettings({ limitCalculationYears: null }),
+    );
+    expect(caps.retentionDays).toBe(Infinity);
+    expect(caps.weekly).toBe(Infinity);
+    expect(caps.monthly).toBe(Infinity);
+    expect(caps.yearly).toBe(Infinity);
   });
 });
 
