@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.0](https://github.com/comnam90/vdc-vault-readiness/compare/v1.3.2...v1.4.0) (2026-05-31)
+
+
+### Features
+
+* **calculator:** make retention and GFS editable inline ([#60](https://github.com/comnam90/vdc-vault-readiness/issues/60)) ([abd7860](https://github.com/comnam90/vdc-vault-readiness/commit/abd78607b341362ebed3ea8009819f411274f5fa))
+* **sizing:** add storage buffer to sizing calculator ([#61](https://github.com/comnam90/vdc-vault-readiness/issues/61)) ([15c701f](https://github.com/comnam90/vdc-vault-readiness/commit/15c701f1536938c701486c13cd763e11b0538c73))
+* **validator:** warn when jobs have Active Full enabled ([#58](https://github.com/comnam90/vdc-vault-readiness/issues/58)) ([cf33fae](https://github.com/comnam90/vdc-vault-readiness/commit/cf33fae05116ee3b11cfc2ec5cd3b130c6d2949c))
+
+
+### Bug Fixes
+
+* **calculator:** lift override inputs above TabsContent boundary ([#62](https://github.com/comnam90/vdc-vault-readiness/issues/62)) ([f8fa007](https://github.com/comnam90/vdc-vault-readiness/commit/f8fa007c2f023d1823e1010d980ef55554373e74))
+
 ## [1.3.2](https://github.com/comnam90/vdc-vault-readiness/compare/v1.3.1...v1.3.2) (2026-05-28)
 
 
