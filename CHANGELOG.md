@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.1](https://github.com/comnam90/vdc-vault-readiness/compare/v1.4.0...v1.4.1) (2026-06-02)
+
+
+### Bug Fixes
+
+* **sizing:** GFS overrides and Retention respect Cap Retention everywhere ([#64](https://github.com/comnam90/vdc-vault-readiness/issues/64)) ([626dcf9](https://github.com/comnam90/vdc-vault-readiness/commit/626dcf9d43222ce903521f94cafeb44f2d0d4347))
+* **sizing:** zero residual months in yearly path and cap retentionDays per step ([#66](https://github.com/comnam90/vdc-vault-readiness/issues/66)) ([792807c](https://github.com/comnam90/vdc-vault-readiness/commit/792807c0ac2931753e68515f0e400a371e41ace6))
+
 ## [1.4.0](https://github.com/comnam90/vdc-vault-readiness/compare/v1.3.2...v1.4.0) (2026-05-31)
 
 
