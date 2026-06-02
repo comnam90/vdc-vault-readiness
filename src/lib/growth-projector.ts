@@ -186,8 +186,8 @@ export async function generateGrowthSeries(
       ...summary,
       ...(immutabilityDays !== undefined && { immutabilityDays }),
       ...(retentionDays !== undefined && {
-        maxRetentionDays: retentionDays,
-        originalMaxRetentionDays: retentionDays,
+        maxRetentionDays: Math.min(retentionDays, stepCapDays),
+        originalMaxRetentionDays: Math.min(retentionDays, stepCapDays),
       }),
       ...(gfsWeekly !== undefined && { gfsWeekly: cappedGfsOverride.weekly }),
       ...(gfsMonthly !== undefined && {
@@ -245,6 +245,7 @@ function buildYearlySettings(
     ...settings,
     growthYears: Math.min(year, settings.growthYears),
     limitCalculationYears: perYearLimit,
+    limitCalculationMonths: 0,
   };
 }
 

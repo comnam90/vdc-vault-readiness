@@ -662,11 +662,16 @@ describe("generateGrowthSeries", () => {
     ]);
   });
 
-  it("preserves limitCalculationMonths across all per-year iterations in greenfield mode", async () => {
+  it("zeroes limitCalculationMonths in each yearly step even when base cap has residual months", async () => {
     callVmAgentApi.mockImplementation(async () =>
       fakeResponse({ totalStorageTB: 10, daily: 1 }),
     );
 
+    // cap = "4y 3m" → yearly path (totalCapMonths=51 > 12).
+    // Each per-step tempSettings must have limitCalculationMonths=0 so
+    // globalCapDays returns exactly year*365, not year*365 + 3*30.
+    // Without the fix the monthly/weekly per-step caps would be inflated
+    // (e.g. year=1 → 545d instead of 365d → monthly cap=18 not 12).
     const settings = makeSettings({
       limitCalculationYears: 4,
       limitCalculationMonths: 3,
@@ -682,7 +687,7 @@ describe("generateGrowthSeries", () => {
       );
       expect(call, `call for year ${year}`).toBeDefined();
       const passed = call![4] as GlobalSettings;
-      expect(passed.limitCalculationMonths).toBe(3);
+      expect(passed.limitCalculationMonths, `year ${year}`).toBe(0);
       expect(passed.limitCalculationYears).toBe(year);
     }
   });
@@ -725,6 +730,42 @@ describe("generateGrowthSeries", () => {
       };
       expect(summary.maxRetentionDays).toBe(60);
       expect(summary.originalMaxRetentionDays).toBe(60);
+    }
+  });
+
+  it("caps retentionDays override to the per-step horizon in monthly greenfield mode", async () => {
+    callVmAgentApi.mockImplementation(async () =>
+      fakeResponse({ totalStorageTB: 10, daily: 1 }),
+    );
+
+    // cap = 2 months greenfield: step 1 → stepCapDays=30, step 2 → stepCapDays=60.
+    // retentionDays=365 exceeds both horizons, so each step must clamp to min(365, stepCapDays).
+    const settings = makeSettings({
+      limitCalculationYears: 0,
+      limitCalculationMonths: 2,
+      greenfieldSimulation: true,
+      historicalDataYears: 0,
+    });
+    await generateGrowthSeries({
+      ...baseArgs(settings),
+      retentionDays: 365,
+    });
+
+    expect(callVmAgentApi).toHaveBeenCalledTimes(2);
+    const expected = [30, 60];
+    for (let step = 1; step <= 2; step++) {
+      const call = callVmAgentApi.mock.calls.find(
+        (c) => (c[4] as GlobalSettings).limitCalculationMonths === step,
+      );
+      expect(call, `call for step ${step}`).toBeDefined();
+      const summary = call![0] as {
+        maxRetentionDays: number;
+        originalMaxRetentionDays: number;
+      };
+      expect(summary.maxRetentionDays, `step ${step}`).toBe(expected[step - 1]);
+      expect(summary.originalMaxRetentionDays, `step ${step}`).toBe(
+        expected[step - 1],
+      );
     }
   });
 
