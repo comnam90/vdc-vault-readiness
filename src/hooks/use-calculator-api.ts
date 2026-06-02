@@ -80,6 +80,7 @@ export function useCalculatorApi({
   );
   const upgradeGrowthLoadingRef = useRef(false);
   const upgradeGrowthDoneRef = useRef(false);
+  const upgradeGrowthRequestIdRef = useRef(0);
   const lastOverridesRef = useRef<CalculatorOverrides | null>(null);
 
   // Serialise inputs that affect the calculation. When this key changes,
@@ -136,6 +137,8 @@ export function useCalculatorApi({
     setUpgradeGrowthError(null);
     upgradeGrowthLoadingRef.current = false;
     upgradeGrowthDoneRef.current = false;
+    upgradeGrowthRequestIdRef.current = 0;
+    lastOverridesRef.current = null;
   }, [inputKey]);
 
   const grantConsent = useCallback(() => {
@@ -280,8 +283,8 @@ export function useCalculatorApi({
       gfsYearly,
     } = lastOverridesRef.current;
 
-    const capturedId = requestIdRef.current;
-    const isStale = () => requestIdRef.current !== capturedId;
+    const capturedId = ++upgradeGrowthRequestIdRef.current;
+    const isStale = () => upgradeGrowthRequestIdRef.current !== capturedId;
 
     upgradeGrowthLoadingRef.current = true;
     setUpgradeGrowthLoading(true);

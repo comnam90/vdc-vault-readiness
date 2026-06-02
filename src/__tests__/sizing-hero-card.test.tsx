@@ -240,5 +240,34 @@ describe("SizingHeroCard", () => {
       renderDefault({ comparisonTotalStorageTB: 42.0 });
       expect(screen.queryByText(/currently requires/i)).not.toBeInTheDocument();
     });
+
+    it("hides the v13 caption when v13 primary costs more than the v12 comparison", () => {
+      // SIZING.totalStorageTB = 38.06 (v13 primary), comparison = 32.5 (v12, cheaper)
+      // v13 costs MORE → no savings caption should appear
+      renderDefault({ comparisonTotalStorageTB: 32.5, showAsV13: true });
+      expect(screen.queryByText(/currently requires/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/more without upgrading/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not show the SOBR caption when showAsV13 is true even with sobrBlocksUpgrade=true", () => {
+      // Direct usage: both flags true simultaneously — only v13 caption should be eligible
+      renderDefault({
+        comparisonTotalStorageTB: 42.0,
+        sobrBlocksUpgrade: true,
+        showAsV13: true,
+      });
+      expect(screen.queryByText(/Potentially save/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it("hides the standard upgrade caption when the comparison (v13) costs more than the primary (v12)", () => {
+    // SIZING.totalStorageTB = 38.06 (v12 primary), comparison = 42.0 (v13, more expensive)
+    // upgrading would cost MORE → caption must not appear
+    renderDefault({ comparisonTotalStorageTB: 42.0 });
+    expect(
+      screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+    ).not.toBeInTheDocument();
   });
 });

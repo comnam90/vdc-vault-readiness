@@ -378,5 +378,17 @@ describe("SizingResults", () => {
       ).toBeInTheDocument();
       expect(screen.getByText("12.50 TB")).toBeInTheDocument();
     });
+
+    it("with showAsV13=true but no upgradeResult, renders result as hero with no comparison captions", () => {
+      // upgradeResult absent: primaryResult falls back to result, comparisonResult must be null
+      render(<SizingResults result={MOCK_RESULT} showAsV13={true} />);
+      // Hero shows result's total (12.50 TB)
+      expect(screen.getByText("12.50 TB")).toBeInTheDocument();
+      // No comparison captions — comparisonResult should be null, not result itself
+      expect(screen.queryByText(/currently requires/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+      ).not.toBeInTheDocument();
+    });
   });
 });

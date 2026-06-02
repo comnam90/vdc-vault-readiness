@@ -1036,5 +1036,87 @@ describe("useCalculatorApi", () => {
       expect(vi.mocked(generateGrowthSeries)).not.toHaveBeenCalled();
       expect(result.current.upgradeGrowthSeries).toBeNull();
     });
+
+    it("does not leave upgradeGrowthLoading stuck when calculate() fires concurrently", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_UPGRADE_RESULT)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_UPGRADE_RESULT);
+
+      let resolveUpgradeGrowth!: (v: typeof SAMPLE_GROWTH) => void;
+      vi.mocked(generateGrowthSeries)
+        .mockResolvedValueOnce(SAMPLE_GROWTH) // v12 growth during first calculate()
+        .mockImplementationOnce(
+          () =>
+            new Promise<typeof SAMPLE_GROWTH>((resolve) => {
+              resolveUpgradeGrowth = resolve;
+            }),
+        ) // generateUpgradeGrowth() — hangs
+        .mockResolvedValueOnce(SAMPLE_GROWTH); // growth during second calculate()
+
+      const { result } = renderHook(() =>
+        useCalculatorApi({ ...baseProps, data: mockDataVbr12 }),
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+
+      // Start the upgrade growth fetch (hangs)
+      let upgradeGrowthPromise!: Promise<void>;
+      act(() => {
+        upgradeGrowthPromise = result.current.generateUpgradeGrowth();
+      });
+      expect(result.current.upgradeGrowthLoading).toBe(true);
+
+      // Fire a concurrent calculate() — bumps requestIdRef
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+
+      // Resolve the hung fetch
+      await act(async () => {
+        resolveUpgradeGrowth(SAMPLE_GROWTH);
+        await upgradeGrowthPromise;
+      });
+
+      // Key: loading must reset to false (not permanently stuck)
+      expect(result.current.upgradeGrowthLoading).toBe(false);
+    });
+
+    it("no-ops after inputKey changes before re-running calculate (stale overrides are cleared)", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_UPGRADE_RESULT);
+
+      const { result, rerender } = renderHook(
+        (props: UseCalculatorApiOptions) => useCalculatorApi(props),
+        { initialProps: { ...baseProps, data: mockDataVbr12 } },
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+
+      // Change inputKey — new excluded job set
+      act(() => {
+        rerender({
+          ...baseProps,
+          data: mockDataVbr12,
+          excludedJobNames: new Set(["Job A"]),
+        });
+      });
+
+      vi.mocked(generateGrowthSeries).mockClear();
+
+      // Call without re-running calculate — stale overrides should prevent the fetch
+      await act(async () => {
+        await result.current.generateUpgradeGrowth();
+      });
+
+      expect(vi.mocked(generateGrowthSeries)).not.toHaveBeenCalled();
+      expect(result.current.upgradeGrowthSeries).toBeNull();
+    });
   });
 });

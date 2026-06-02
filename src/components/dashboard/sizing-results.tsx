@@ -55,7 +55,8 @@ export function SizingResults({
   upgradeGrowthError = null,
 }: SizingResultsProps) {
   const primaryResult = showAsV13 && upgradeResult ? upgradeResult : result;
-  const comparisonResult = showAsV13 ? result : (upgradeResult ?? null);
+  const comparisonResult =
+    showAsV13 && upgradeResult ? result : (upgradeResult ?? null);
 
   const sizing = useMemo(
     () =>
@@ -78,9 +79,7 @@ export function SizingResults({
     [comparisonResult, bufferEnabled, bufferPercent],
   );
 
-  const activeGrowthSeries = showAsV13
-    ? (upgradeGrowthSeries ?? null)
-    : (growthSeries ?? null);
+  const activeGrowthSeries = showAsV13 ? upgradeGrowthSeries : growthSeries;
 
   const bufferedActiveGrowthSeries = useMemo(
     () =>
@@ -91,8 +90,12 @@ export function SizingResults({
   );
 
   const hasComparison = comparisonSizing !== null;
+  // In v12 mode: primary is v12, comparison is v13 — savings when primary > comparison.
+  // In v13 mode: primary is v13, comparison is v12 — savings when comparison > primary.
   const immutabilitySavingsGB = hasComparison
-    ? Math.abs(sizing.performanceTaxGB - comparisonSizing.performanceTaxGB)
+    ? showAsV13
+      ? Math.max(0, comparisonSizing.performanceTaxGB - sizing.performanceTaxGB)
+      : Math.max(0, sizing.performanceTaxGB - comparisonSizing.performanceTaxGB)
     : 0;
 
   const activeGrowthLoading = showAsV13 ? upgradeGrowthLoading : false;

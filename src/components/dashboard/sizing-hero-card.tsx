@@ -78,9 +78,13 @@ export function SizingHeroCard({
   showAsV13 = false,
   bufferPercent,
 }: SizingHeroCardProps) {
+  // In v12 mode: primary is v12, comparison is v13 — savings when primary > comparison.
+  // In v13 mode: primary is v13, comparison is v12 — savings when comparison > primary.
   const storageSavingsTB =
     comparisonTotalStorageTB !== null
-      ? Math.abs(sizing.totalStorageTB - comparisonTotalStorageTB)
+      ? showAsV13
+        ? Math.max(0, comparisonTotalStorageTB - sizing.totalStorageTB)
+        : Math.max(0, sizing.totalStorageTB - comparisonTotalStorageTB)
       : 0;
   const hasUpgradeSavings = storageSavingsTB > 0;
   const showStandardUpgradeCaption =
@@ -90,7 +94,8 @@ export function SizingHeroCard({
     hasUpgradeSavings;
   const showV13Caption =
     showAsV13 && comparisonTotalStorageTB !== null && hasUpgradeSavings;
-  const showSobrActionableCaption = sobrBlocksUpgrade && hasUpgradeSavings;
+  const showSobrActionableCaption =
+    !showAsV13 && sobrBlocksUpgrade && hasUpgradeSavings;
   const showImmutabilitySavings =
     upgradePerfTaxGB !== null && immutabilitySavingsGB > 0;
   const hasBuffer = sizing.compositionBuckets.buffer > 0;
