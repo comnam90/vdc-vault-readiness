@@ -10,9 +10,9 @@ dashboard/
 ├── site-header.tsx           # App header: title, reset, opens SettingsDialog. Rendered by dashboard-view
 ├── site-footer.tsx           # Footer: app version + commit (__APP_VERSION__ / __APP_COMMIT__) + link
 ├── experimental-banner.tsx   # Unconditional Alert at top of App layout (FlaskConical icon)
-├── settings-dialog.tsx       # Global settings (target cloud, GFS/retention caps, buffer). 483 lines
+├── settings-dialog.tsx       # Global settings (target cloud, GFS/retention caps, buffer)
 ├── file-upload.tsx           # Drop zone (drag/click/keyboard) + recent-scans list via useRecentScans
-├── dashboard-view.tsx        # Main layout: SiteHeader, 3 summary cards, 4 tabs. Memoizes enrichJobs(). 342 lines
+├── dashboard-view.tsx        # Main layout: SiteHeader, 3 summary cards, 4 tabs. Memoizes enrichJobs()
 ├── checklist-loader.tsx      # Processing state: step checklist with progress bar (reads PIPELINE_STEPS)
 # Overview tab
 ├── blockers-list.tsx         # Fail/warning alerts with severity ordering + stagger entrance
@@ -21,19 +21,19 @@ dashboard/
 ├── notes-panel.tsx           # info/skipped validations as advisory notes (getNoteValidations; staggered after blockers)
 # Jobs tab
 ├── job-table.tsx             # TanStack Table: search, sort, paginate EnrichedJob[]. Row click → sheet
-├── job-detail-sheet.tsx      # Right-side Sheet: storage, protection, config, session sections
+├── job-detail-sheet.tsx      # Right-side Sheet: Storage, Protection, Config, Session sections
 ├── jobs-charts.tsx           # Bar charts: source TB by job type, change-rate distribution
 # Sizing tab
-├── calculator-inputs.tsx     # Sizing tab entry: summary, override inputs, API trigger → SizingResults. 830 lines
+├── calculator-inputs.tsx     # Sizing tab entry: summary, override inputs, API trigger → SizingResults
 ├── calculator-consent-dialog.tsx # Privacy-consent gate before any /api/veeam-proxy call
 ├── sizing-results.tsx        # Composes hero card + proportion bar + growth chart from API response
 ├── sizing-hero-card.tsx      # Headline total storage, edition upgrade comparison, savings
 ├── sizing-baselines-card.tsx # Baseline daily/weekly/monthly/yearly TB rows
 ├── sizing-metric-row.tsx     # Reusable label/value/annotation row (shared by sizing cards)
 ├── sizing-proportion-bar.tsx # Stacked bar of GFS + immutability + buffer composition (with tooltips)
-├── growth-chart.tsx          # Multi-year projected-storage bar chart (recharts). 339 lines
+├── growth-chart.tsx          # Multi-year projected-storage bar chart (recharts)
 # Repositories tab
-├── repositories-tab.tsx      # Repo + SOBR table, size/immutability charts, row click → sheet. 407 lines
+├── repositories-tab.tsx      # Repo + SOBR table, size/immutability charts, row click → sheet
 ├── repositories-table.tsx    # Generic sortable/paginated table wrapper for repos & SOBRs
 ├── repo-detail-sheet.tsx     # Right-side Sheet: per-repo detail
 ├── repo-size-chart.tsx       # Bar chart: source vs on-disk TB per repo
@@ -47,23 +47,23 @@ dashboard/
 
 | Need                    | File                                         | Notes                                                                          |
 | ----------------------- | -------------------------------------------- | ------------------------------------------------------------------------------ |
-| Add validation display  | blockers-list.tsx                            | SEVERITY map drives icon/color/badge per status                                |
+| Validation display      | blockers-list.tsx                            | SEVERITY map drives icon/color/badge per status                                |
 | Advisory/info notes     | notes-panel.tsx                              | Renders info/skipped validations (getNoteValidations); staggers after blockers |
-| Modify summary cards    | dashboard-view.tsx                           | 3 cards: VBR version, total jobs, readiness                                    |
+| Summary cards           | dashboard-view.tsx                           | 3 cards: VBR version, total jobs, readiness                                    |
 | App header / reset      | site-header.tsx                              | Hosts reset + SettingsDialog trigger; rendered inside dashboard-view           |
 | Global settings UI      | settings-dialog.tsx                          | Target cloud, GFS/retention caps, buffer; persisted via useSettings            |
-| Change table columns    | job-table.tsx                                | TanStack columnHelper definitions at top; uses EnrichedJob type                |
-| Job detail drill-down   | job-detail-sheet.tsx                         | Controlled Sheet: Storage, Protection, Config, Session                         |
+| Table columns           | job-table.tsx                                | TanStack columnHelper definitions at top; uses EnrichedJob type                |
+| Job detail drill-down   | job-detail-sheet.tsx                         | Right-side Sheet: Storage, Protection, Config, Session                         |
 | Job charts              | jobs-charts.tsx                              | Uses chart-selectors (groupByJobType, bucketChangeRates)                       |
-| Adjust processing UX    | checklist-loader.tsx                         | Reads PIPELINE_STEPS from @/lib/constants                                      |
+| Processing UX           | checklist-loader.tsx                         | Reads PIPELINE_STEPS from @/lib/constants                                      |
 | All-pass celebration    | success-celebration.tsx                      | Shown when no blockers; has "View Job Details" CTA                             |
-| Show passing checks     | passing-checks-list.tsx                      | Uses getPassingValidations() from validation-selectors                         |
+| Passing checks          | passing-checks-list.tsx                      | Uses getPassingValidations() from validation-selectors                         |
 | Sizing tab / overrides  | calculator-inputs.tsx                        | Summary + override inputs; gates API behind calculator-consent-dialog          |
 | Sizing API consent      | calculator-consent-dialog.tsx                | Must be accepted before any outbound /api/veeam-proxy call                     |
-| Sizing results display  | sizing-results.tsx                           | Composes hero/proportion/growth from VmAgentResponse                           |
+| Sizing results          | sizing-results.tsx                           | Composes hero/proportion/growth from VmAgentResponse                           |
 | Growth projection chart | growth-chart.tsx                             | Multi-year bar chart; data from growth-projector                               |
 | Repositories tab        | repositories-tab.tsx                         | Table + charts + detail sheets; uses repo-aggregator + chart-selectors         |
-| Repo/SOBR detail        | repo-detail-sheet.tsx, sobr-detail-sheet.tsx | Controlled Sheets; share detail-sheet-helpers                                  |
+| Repo/SOBR detail        | repo-detail-sheet.tsx, sobr-detail-sheet.tsx | Right-side Sheets; share detail-sheet-helpers                                  |
 | Detail sheet primitives | detail-sheet-helpers.tsx                     | PropertyRow, SectionHeading, FreeSpaceValue (shared across all sheets)         |
 | Recent scans list       | file-upload.tsx                              | useRecentScans() hook surfaces IndexedDB-persisted prior uploads               |
 | App status banner       | experimental-banner.tsx                      | Unconditional Alert at top of App layout; lucide FlaskConical icon             |
