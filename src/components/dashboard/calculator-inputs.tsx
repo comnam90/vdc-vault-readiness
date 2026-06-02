@@ -813,24 +813,15 @@ export function CalculatorInputs({
           void onCalculate(buildOverrides());
         }}
         onDecline={() => {}}
-        summary={(() => {
-          // Cap GFS and retention preview values to the active horizon so the
-          // consent dialog shows what will actually be sent to the API
-          // (consistent with the hero total in use-calculator-api.ts).
-          const cappedPreviewGfs = capGfsToSettings(
-            { weekly: gfs.weekly, monthly: gfs.monthly, yearly: gfs.yearly },
-            settings,
-          );
-          return {
-            ...summary,
-            immutabilityDays,
-            maxRetentionDays: effectiveRetention,
-            originalMaxRetentionDays: effectiveRetention,
-            gfsWeekly: cappedPreviewGfs.weekly,
-            gfsMonthly: cappedPreviewGfs.monthly,
-            gfsYearly: cappedPreviewGfs.yearly,
-          };
-        })()}
+        summary={{
+          ...summary,
+          immutabilityDays,
+          maxRetentionDays: effectiveRetention,
+          originalMaxRetentionDays: effectiveRetention,
+          gfsWeekly: effectiveGfs.weekly,
+          gfsMonthly: effectiveGfs.monthly,
+          gfsYearly: effectiveGfs.yearly,
+        }}
         activeJobCount={activeJobCount}
         vbrVersion={vbrVersion}
       />

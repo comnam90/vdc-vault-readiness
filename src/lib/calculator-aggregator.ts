@@ -91,13 +91,11 @@ export function retentionCapsForSettings(
   settings: GlobalSettings,
 ): RetentionCaps {
   const capDays = globalCapDays(settings);
-  const slotMax = (per: number) =>
-    Number.isFinite(capDays) ? Math.floor(capDays / per) : Infinity;
   return {
     retentionDays: capDays,
-    weekly: slotMax(7),
-    monthly: slotMax(30),
-    yearly: slotMax(365),
+    weekly: Math.floor(capDays / 7),
+    monthly: Math.floor(capDays / 30),
+    yearly: Math.floor(capDays / 365),
   };
 }
 
