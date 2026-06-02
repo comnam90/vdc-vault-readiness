@@ -8,13 +8,14 @@ import { SizingProportionBar } from "./sizing-proportion-bar";
 
 export interface SizingHeroCardProps {
   sizing: DerivedSizing;
-  upgradeTotalStorageTB: number | null;
-  storageSavingsTB: number;
-  /** GB; from upgradeResult.data.performanceTierImmutabilityTaxGB. */
+  /** TB of the comparison result (v13 when in v12 mode, v12 when in v13 mode). */
+  comparisonTotalStorageTB: number | null;
+  /** GB perf tax of the comparison result. Used only as a null guard for the annotation. */
   upgradePerfTaxGB: number | null;
   /** GB; precomputed savings from caller. */
   immutabilitySavingsGB: number;
   sobrBlocksUpgrade: boolean;
+  showAsV13?: boolean;
   /** When provided and buffer > 0, renders a "Includes X% spare-capacity buffer" caption. */
   bufferPercent?: number;
 }
@@ -70,17 +71,31 @@ function formatPerfTax(gb: number): string {
 
 export function SizingHeroCard({
   sizing,
-  upgradeTotalStorageTB,
-  storageSavingsTB,
+  comparisonTotalStorageTB,
   upgradePerfTaxGB,
   immutabilitySavingsGB,
   sobrBlocksUpgrade,
+  showAsV13 = false,
   bufferPercent,
 }: SizingHeroCardProps) {
+  // In v12 mode: primary is v12, comparison is v13 — savings when primary > comparison.
+  // In v13 mode: primary is v13, comparison is v12 — savings when comparison > primary.
+  const storageSavingsTB =
+    comparisonTotalStorageTB !== null
+      ? showAsV13
+        ? Math.max(0, comparisonTotalStorageTB - sizing.totalStorageTB)
+        : Math.max(0, sizing.totalStorageTB - comparisonTotalStorageTB)
+      : 0;
   const hasUpgradeSavings = storageSavingsTB > 0;
   const showStandardUpgradeCaption =
-    !sobrBlocksUpgrade && upgradeTotalStorageTB !== null && hasUpgradeSavings;
-  const showSobrActionableCaption = sobrBlocksUpgrade && hasUpgradeSavings;
+    !showAsV13 &&
+    !sobrBlocksUpgrade &&
+    comparisonTotalStorageTB !== null &&
+    hasUpgradeSavings;
+  const showV13Caption =
+    showAsV13 && comparisonTotalStorageTB !== null && hasUpgradeSavings;
+  const showSobrActionableCaption =
+    !showAsV13 && sobrBlocksUpgrade && hasUpgradeSavings;
   const showImmutabilitySavings =
     upgradePerfTaxGB !== null && immutabilitySavingsGB > 0;
   const hasBuffer = sizing.compositionBuckets.buffer > 0;
@@ -94,6 +109,7 @@ export function SizingHeroCard({
             Total Storage Required
           </p>
           <p
+            key={showAsV13 ? "v13" : "v12"}
             aria-label={`Total storage required: ${formatTB(sizing.totalStorageTB)}`}
             className="text-foreground motion-safe:animate-celebrate-in font-mono text-5xl tracking-tight tabular-nums sm:text-6xl lg:text-7xl"
           >
@@ -112,9 +128,15 @@ export function SizingHeroCard({
             <p className="text-muted-foreground motion-safe:animate-in motion-safe:fade-in fill-mode-backwards text-sm motion-safe:delay-300">
               Upgrade to VBR 13 could reduce this to{" "}
               <span className="font-mono">
-                {formatTB(upgradeTotalStorageTB)}
+                {formatTB(comparisonTotalStorageTB)}
               </span>{" "}
               (saving {formatTB(storageSavingsTB)})
+            </p>
+          )}
+          {showV13Caption && (
+            <p className="text-muted-foreground motion-safe:animate-in motion-safe:fade-in fill-mode-backwards font-mono text-sm motion-safe:delay-300">
+              Currently requires {formatTB(comparisonTotalStorageTB)} on VBR 12
+              ({formatTB(storageSavingsTB)} more without upgrading)
             </p>
           )}
           {showBufferCaption && (
@@ -167,7 +189,9 @@ export function SizingHeroCard({
                       </span>
                       {seg === "immutability" && showImmutabilitySavings && (
                         <span className="text-muted-foreground font-mono text-xs">
-                          ↓ VBR 13: {formatPerfTax(upgradePerfTaxGB)}
+                          {showAsV13
+                            ? `Includes ${formatPerfTax(immutabilitySavingsGB)} less overhead vs. VBR 12`
+                            : `↓ VBR 13: ${formatPerfTax(upgradePerfTaxGB)}`}
                         </span>
                       )}
                     </span>

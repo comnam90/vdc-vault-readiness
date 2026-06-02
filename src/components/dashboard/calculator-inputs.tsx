@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Archive,
   Calculator,
@@ -55,6 +55,14 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { SizingResults } from "./sizing-results";
 import { CalculatorConsentDialog } from "./calculator-consent-dialog";
@@ -138,6 +146,10 @@ interface CalculatorInputsProps {
   // Callbacks
   onConsentGiven: () => void;
   onCalculate: (overrides: CalculatorOverrides) => Promise<void>;
+  generateUpgradeGrowth: () => Promise<void>;
+  upgradeGrowthSeries: GrowthSeriesPoint[] | null;
+  upgradeGrowthLoading: boolean;
+  upgradeGrowthError: string | null;
 }
 
 export function CalculatorInputs({
@@ -161,6 +173,10 @@ export function CalculatorInputs({
   onGfsReset,
   onConsentGiven,
   onCalculate,
+  generateUpgradeGrowth,
+  upgradeGrowthSeries,
+  upgradeGrowthLoading,
+  upgradeGrowthError,
 }: CalculatorInputsProps) {
   const { settings } = useSettings();
 
@@ -202,6 +218,11 @@ export function CalculatorInputs({
 
   const [isEditingGfs, setIsEditingGfs] = useState<boolean>(false);
   const [gfsDraft, setGfsDraft] = useState<GfsState>(effectiveGfs);
+
+  const [showAsV13, setShowAsV13] = useState(false);
+  useEffect(() => {
+    if (result === null) setShowAsV13(false);
+  }, [result]);
 
   const handleImmutabilityConfirm = () => {
     if (!Number.isFinite(immutabilityDraft) || immutabilityDraft <= 0) return;
@@ -314,6 +335,37 @@ export function CalculatorInputs({
             <Badge variant="outline" className="font-normal">
               Estimated
             </Badge>
+            {isVbr12 && !!upgradeResult && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="ml-auto flex items-center gap-2">
+                      <Label
+                        htmlFor="v13-toggle"
+                        className="text-muted-foreground cursor-pointer text-sm font-normal"
+                      >
+                        VBR 13
+                      </Label>
+                      <Switch
+                        id="v13-toggle"
+                        size="sm"
+                        checked={showAsV13}
+                        onCheckedChange={(checked) => {
+                          setShowAsV13(checked);
+                          if (checked && !upgradeGrowthSeries) {
+                            void generateUpgradeGrowth();
+                          }
+                        }}
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    See how much Vault storage you&apos;d need after upgrading
+                    to VBR 13
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </CardTitle>
           <CardDescription>
             Aggregated values from {activeJobCount} job
@@ -802,6 +854,10 @@ export function CalculatorInputs({
           cappedAtYears={cappedAtYears}
           bufferEnabled={settings.bufferEnabled}
           bufferPercent={settings.bufferPercent}
+          showAsV13={showAsV13}
+          upgradeGrowthSeries={upgradeGrowthSeries}
+          upgradeGrowthLoading={upgradeGrowthLoading}
+          upgradeGrowthError={upgradeGrowthError}
         />
       )}
 

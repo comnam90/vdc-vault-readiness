@@ -1,8 +1,11 @@
 import { useMemo } from "react";
+import { Loader2 } from "lucide-react";
 import type { VmAgentResponse } from "@/types/veeam-api";
 import { deriveSizing } from "@/lib/sizing-derivation";
 import { applyBufferToSizing, applyBufferToSeries } from "@/lib/sizing-buffer";
 import type { GrowthSeriesPoint } from "@/lib/growth-projector";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
 import { SizingHeroCard } from "./sizing-hero-card";
 import { SizingBaselinesCard } from "./sizing-baselines-card";
 import { GrowthChart } from "./growth-chart";
@@ -26,6 +29,14 @@ interface SizingResultsProps {
   bufferEnabled?: boolean;
   /** Spare-capacity percentage (1–30). Only used when bufferEnabled is true. */
   bufferPercent?: number;
+  /** When true, treats upgradeResult as the primary (v13) result and result as the comparison (v12). */
+  showAsV13?: boolean;
+  /** Growth series for the v13 projection (used when showAsV13=true). */
+  upgradeGrowthSeries?: GrowthSeriesPoint[] | null;
+  /** When true, shows a loading skeleton in the chart slot instead of the chart. */
+  upgradeGrowthLoading?: boolean;
+  /** When set, shows a destructive alert in the chart slot instead of the chart. */
+  upgradeGrowthError?: string | null;
 }
 
 export function SizingResults({
@@ -38,68 +49,94 @@ export function SizingResults({
   cappedAtYears,
   bufferEnabled = false,
   bufferPercent = 10,
+  showAsV13 = false,
+  upgradeGrowthSeries,
+  upgradeGrowthLoading = false,
+  upgradeGrowthError = null,
 }: SizingResultsProps) {
+  const primaryResult = showAsV13 && upgradeResult ? upgradeResult : result;
+  const comparisonResult =
+    showAsV13 && upgradeResult ? result : (upgradeResult ?? null);
+
   const sizing = useMemo(
     () =>
       applyBufferToSizing(
-        deriveSizing(result.data),
+        deriveSizing(primaryResult.data),
         bufferEnabled,
         bufferPercent,
       ),
-    [result, bufferEnabled, bufferPercent],
+    [primaryResult, bufferEnabled, bufferPercent],
   );
-  const upgradeSizing = useMemo(
+  const comparisonSizing = useMemo(
     () =>
-      upgradeResult
+      comparisonResult
         ? applyBufferToSizing(
-            deriveSizing(upgradeResult.data),
+            deriveSizing(comparisonResult.data),
             bufferEnabled,
             bufferPercent,
           )
         : null,
-    [upgradeResult, bufferEnabled, bufferPercent],
+    [comparisonResult, bufferEnabled, bufferPercent],
   );
 
-  const bufferedGrowthSeries = useMemo(
+  const activeGrowthSeries = showAsV13 ? upgradeGrowthSeries : growthSeries;
+
+  const bufferedActiveGrowthSeries = useMemo(
     () =>
-      growthSeries != null
-        ? applyBufferToSeries(growthSeries, bufferEnabled, bufferPercent)
-        : growthSeries,
-    [growthSeries, bufferEnabled, bufferPercent],
+      activeGrowthSeries != null
+        ? applyBufferToSeries(activeGrowthSeries, bufferEnabled, bufferPercent)
+        : activeGrowthSeries,
+    [activeGrowthSeries, bufferEnabled, bufferPercent],
   );
 
-  const hasUpgrade = upgradeSizing !== null;
-  const storageSavingsTB = hasUpgrade
-    ? Math.max(0, sizing.totalStorageTB - upgradeSizing.totalStorageTB)
+  const hasComparison = comparisonSizing !== null;
+  // In v12 mode: primary is v12, comparison is v13 — savings when primary > comparison.
+  // In v13 mode: primary is v13, comparison is v12 — savings when comparison > primary.
+  const immutabilitySavingsGB = hasComparison
+    ? showAsV13
+      ? Math.max(0, comparisonSizing.performanceTaxGB - sizing.performanceTaxGB)
+      : Math.max(0, sizing.performanceTaxGB - comparisonSizing.performanceTaxGB)
     : 0;
-  // performanceTaxGB is the immutability overhead charged by Veeam, independent of the
-  // headroom buffer. applyBufferToSizing does not scale it, so this diff is the raw
-  // VBR-12→13 immutability saving — correct, since buffer headroom doesn't affect
-  // immutability overhead.
-  const immutabilitySavingsGB = hasUpgrade
-    ? Math.max(0, sizing.performanceTaxGB - upgradeSizing.performanceTaxGB)
-    : 0;
+
+  const activeGrowthLoading = showAsV13 ? upgradeGrowthLoading : false;
+  const activeGrowthError = showAsV13 ? upgradeGrowthError : null;
 
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in fill-mode-backwards space-y-6 duration-500">
       <SizingHeroCard
         sizing={sizing}
-        upgradeTotalStorageTB={hasUpgrade ? upgradeSizing.totalStorageTB : null}
-        storageSavingsTB={storageSavingsTB}
-        upgradePerfTaxGB={hasUpgrade ? upgradeSizing.performanceTaxGB : null}
+        comparisonTotalStorageTB={comparisonSizing?.totalStorageTB ?? null}
+        upgradePerfTaxGB={comparisonSizing?.performanceTaxGB ?? null}
         immutabilitySavingsGB={immutabilitySavingsGB}
-        sobrBlocksUpgrade={sobrBlocksUpgrade}
+        sobrBlocksUpgrade={sobrBlocksUpgrade && !showAsV13}
+        showAsV13={showAsV13}
         bufferPercent={bufferEnabled ? bufferPercent : undefined}
       />
-      {bufferedGrowthSeries != null && (
+      {activeGrowthError ? (
+        <Alert variant="destructive">
+          <AlertDescription>{activeGrowthError}</AlertDescription>
+        </Alert>
+      ) : activeGrowthLoading ? (
+        <Card>
+          <CardContent className="flex min-h-[200px] items-center justify-center gap-2 pt-6">
+            <Loader2
+              className="size-4 motion-safe:animate-spin"
+              aria-hidden="true"
+            />
+            <span className="text-muted-foreground text-sm">
+              Calculating VBR 13 projection…
+            </span>
+          </CardContent>
+        </Card>
+      ) : bufferedActiveGrowthSeries != null ? (
         <GrowthChart
-          data={bufferedGrowthSeries}
+          data={bufferedActiveGrowthSeries}
           greenfield={greenfieldSimulation}
           historicalDataYears={historicalDataYears}
           cappedAtYears={cappedAtYears}
           bufferEnabled={bufferEnabled}
         />
-      )}
+      ) : null}
       <SizingBaselinesCard sizing={sizing} />
     </div>
   );

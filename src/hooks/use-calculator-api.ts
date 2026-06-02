@@ -37,11 +37,15 @@ export interface UseCalculatorApiResult {
   result: VmAgentResponse | null;
   upgradeResult: VmAgentResponse | null;
   growthSeries: GrowthSeriesPoint[] | null;
+  upgradeGrowthSeries: GrowthSeriesPoint[] | null;
+  upgradeGrowthLoading: boolean;
+  upgradeGrowthError: string | null;
   error: string | null;
   loading: boolean;
   hasConsented: boolean;
   grantConsent: () => void;
   calculate: (overrides: CalculatorOverrides) => Promise<void>;
+  generateUpgradeGrowth: () => Promise<void>;
 }
 
 export function useCalculatorApi({
@@ -66,6 +70,18 @@ export function useCalculatorApi({
   const [hasConsented, setHasConsented] = useState(false);
 
   const requestIdRef = useRef(0);
+
+  const [upgradeGrowthSeries, setUpgradeGrowthSeries] = useState<
+    GrowthSeriesPoint[] | null
+  >(null);
+  const [upgradeGrowthLoading, setUpgradeGrowthLoading] = useState(false);
+  const [upgradeGrowthError, setUpgradeGrowthError] = useState<string | null>(
+    null,
+  );
+  const upgradeGrowthLoadingRef = useRef(false);
+  const upgradeGrowthDoneRef = useRef(false);
+  const upgradeGrowthRequestIdRef = useRef(0);
+  const lastOverridesRef = useRef<CalculatorOverrides | null>(null);
 
   // Serialise inputs that affect the calculation. When this key changes,
   // clear all result state so the user must re-calculate for the new inputs.
@@ -116,6 +132,13 @@ export function useCalculatorApi({
     setGrowthSeries(null);
     setError(null);
     setLoading(false);
+    setUpgradeGrowthSeries(null);
+    setUpgradeGrowthLoading(false);
+    setUpgradeGrowthError(null);
+    upgradeGrowthLoadingRef.current = false;
+    upgradeGrowthDoneRef.current = false;
+    upgradeGrowthRequestIdRef.current = 0;
+    lastOverridesRef.current = null;
   }, [inputKey]);
 
   const grantConsent = useCallback(() => {
@@ -130,6 +153,13 @@ export function useCalculatorApi({
       gfsMonthly,
       gfsYearly,
     }: CalculatorOverrides) => {
+      lastOverridesRef.current = {
+        immutabilityDays,
+        retentionDays,
+        gfsWeekly,
+        gfsMonthly,
+        gfsYearly,
+      };
       const vbrVersion = data.backupServer?.[0]?.Version ?? "";
       const isVbr12 =
         vbrVersion !== "" && !isVersionAtLeast(vbrVersion, "13.0.0");
@@ -237,14 +267,73 @@ export function useCalculatorApi({
     [data, excludedJobNames, settings], // overrides arrive as a CalculatorOverrides parameter — no closure capture needed
   );
 
+  const generateUpgradeGrowth = useCallback(async () => {
+    if (upgradeGrowthLoadingRef.current || upgradeGrowthDoneRef.current) return;
+    if (!lastOverridesRef.current) return;
+
+    const vbrVersion = data.backupServer?.[0]?.Version ?? "";
+    const activeJobCount = data.jobInfo.filter(
+      (j) => !excludedJobNames.has(j.JobName),
+    ).length;
+    const {
+      immutabilityDays,
+      retentionDays,
+      gfsWeekly,
+      gfsMonthly,
+      gfsYearly,
+    } = lastOverridesRef.current;
+
+    const capturedId = ++upgradeGrowthRequestIdRef.current;
+    const isStale = () => upgradeGrowthRequestIdRef.current !== capturedId;
+
+    upgradeGrowthLoadingRef.current = true;
+    setUpgradeGrowthLoading(true);
+    setUpgradeGrowthError(null);
+
+    try {
+      const series = await generateGrowthSeries({
+        jobs: data.jobInfo,
+        sessions: data.jobSessionSummary,
+        excludedJobNames,
+        settings,
+        jobCount: activeJobCount,
+        vbrVersion,
+        productVersionOverride: 0,
+        immutabilityDays,
+        retentionDays,
+        gfsWeekly,
+        gfsMonthly,
+        gfsYearly,
+      });
+      if (isStale()) return;
+      setUpgradeGrowthSeries(series);
+      upgradeGrowthDoneRef.current = true;
+    } catch {
+      if (!isStale()) {
+        setUpgradeGrowthError(
+          "Could not retrieve sizing estimate. Check your connection and try again.",
+        );
+      }
+    } finally {
+      if (!isStale()) {
+        upgradeGrowthLoadingRef.current = false;
+        setUpgradeGrowthLoading(false);
+      }
+    }
+  }, [data, excludedJobNames, settings]);
+
   return {
     result,
     upgradeResult,
     growthSeries,
+    upgradeGrowthSeries,
+    upgradeGrowthLoading,
+    upgradeGrowthError,
     error,
     loading,
     hasConsented,
     grantConsent,
     calculate,
+    generateUpgradeGrowth,
   };
 }
