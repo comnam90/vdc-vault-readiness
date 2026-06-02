@@ -1827,6 +1827,35 @@ describe("CalculatorInputs", () => {
 
       expect(generateUpgradeGrowth).not.toHaveBeenCalled();
     });
+
+    it("resets showAsV13 to off when result becomes null", async () => {
+      const { rerender } = render(
+        <CalculatorInputs
+          data={mockDataVbr12}
+          {...defaultControlledProps}
+          result={MOCK_V12_RESULT}
+          upgradeResult={MOCK_V13_RESULT}
+        />,
+      );
+
+      const toggle = screen.getByRole("switch", { name: /VBR 13/i });
+      fireEvent.click(toggle);
+      expect(toggle).toBeChecked();
+
+      rerender(
+        <CalculatorInputs
+          data={mockDataVbr12}
+          {...defaultControlledProps}
+          result={null}
+          upgradeResult={null}
+        />,
+      );
+
+      // Toggle is gone from the DOM (upgradeResult is null), and showAsV13 state has reset
+      expect(
+        screen.queryByRole("switch", { name: /VBR 13/i }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   describe("cap retention clamping on inputs", () => {
