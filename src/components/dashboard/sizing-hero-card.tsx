@@ -129,12 +129,9 @@ export function SizingHeroCard({
             </p>
           )}
           {showV13Caption && (
-            <p className="text-muted-foreground motion-safe:animate-in motion-safe:fade-in fill-mode-backwards text-sm motion-safe:delay-300">
-              Currently requires{" "}
-              <span className="font-mono">
-                {formatTB(comparisonTotalStorageTB)}
-              </span>{" "}
-              on VBR 12 ({formatTB(storageSavingsTB)} more without upgrading)
+            <p className="text-muted-foreground motion-safe:animate-in motion-safe:fade-in fill-mode-backwards font-mono text-sm motion-safe:delay-300">
+              Currently requires {formatTB(comparisonTotalStorageTB)} on VBR 12
+              ({formatTB(storageSavingsTB)} more without upgrading)
             </p>
           )}
           {showBufferCaption && (

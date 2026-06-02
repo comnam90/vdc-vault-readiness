@@ -305,4 +305,78 @@ describe("SizingResults", () => {
       expect(screen.getByText(/↓ VBR 13:/)).toBeInTheDocument();
     });
   });
+
+  describe("showAsV13 mode", () => {
+    it("with showAsV13=true, uses upgradeResult as the hero total", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          showAsV13={true}
+        />,
+      );
+      // upgradeResult.data.totalStorageTB = 10.0
+      expect(screen.getByText("10.00 TB")).toBeInTheDocument();
+      // MOCK_RESULT total (12.5) is now the comparison, not the hero
+      expect(screen.queryByText("12.50 TB")).not.toBeInTheDocument();
+    });
+
+    it("with showAsV13=true, shows the v12 comparison caption", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          showAsV13={true}
+        />,
+      );
+      expect(screen.getByText(/currently requires/i)).toBeInTheDocument();
+      expect(screen.getByText(/12\.50 TB/)).toBeInTheDocument();
+      expect(screen.getByText(/more without upgrading/i)).toBeInTheDocument();
+      expect(
+        screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("with showAsV13=true and upgradeGrowthLoading=true, renders growth skeleton not chart", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          showAsV13={true}
+          upgradeGrowthLoading={true}
+        />,
+      );
+      expect(
+        screen.getByText(/calculating VBR 13 projection/i),
+      ).toBeInTheDocument();
+    });
+
+    it("with showAsV13=true and upgradeGrowthError set, renders destructive alert in chart slot", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          showAsV13={true}
+          upgradeGrowthError="Could not retrieve sizing estimate. Check your connection and try again."
+        />,
+      );
+      expect(
+        screen.getByText(/could not retrieve sizing estimate/i),
+      ).toBeInTheDocument();
+    });
+
+    it("with showAsV13=false, still shows standard v12 upgrade caption", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          showAsV13={false}
+        />,
+      );
+      expect(
+        screen.getByText(/upgrade to VBR 13 could reduce this to/i),
+      ).toBeInTheDocument();
+      expect(screen.getByText("12.50 TB")).toBeInTheDocument();
+    });
+  });
 });
