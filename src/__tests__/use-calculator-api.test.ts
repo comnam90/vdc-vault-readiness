@@ -825,4 +825,216 @@ describe("useCalculatorApi", () => {
       );
     });
   });
+
+  describe("generateUpgradeGrowth()", () => {
+    it("starts with upgradeGrowthSeries null and upgradeGrowthLoading false", () => {
+      const { result } = renderHook(() =>
+        useCalculatorApi({ ...baseProps, data: mockDataVbr12 }),
+      );
+      expect(result.current.upgradeGrowthSeries).toBeNull();
+      expect(result.current.upgradeGrowthLoading).toBe(false);
+      expect(result.current.upgradeGrowthError).toBeNull();
+    });
+
+    it("calls generateGrowthSeries with productVersionOverride: 0 and sets upgradeGrowthSeries", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_UPGRADE_RESULT);
+
+      const { result } = renderHook(() =>
+        useCalculatorApi({ ...baseProps, data: mockDataVbr12 }),
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+
+      vi.mocked(generateGrowthSeries).mockClear();
+      vi.mocked(generateGrowthSeries).mockResolvedValue(SAMPLE_GROWTH);
+
+      await act(async () => {
+        await result.current.generateUpgradeGrowth();
+      });
+
+      expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledWith(
+        expect.objectContaining({ productVersionOverride: 0 }),
+      );
+      expect(result.current.upgradeGrowthSeries).toEqual(SAMPLE_GROWTH);
+      expect(result.current.upgradeGrowthLoading).toBe(false);
+      expect(result.current.upgradeGrowthError).toBeNull();
+    });
+
+    it("is idempotent: second call does not re-invoke generateGrowthSeries", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_UPGRADE_RESULT);
+
+      const { result } = renderHook(() =>
+        useCalculatorApi({ ...baseProps, data: mockDataVbr12 }),
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+
+      vi.mocked(generateGrowthSeries).mockClear();
+      vi.mocked(generateGrowthSeries).mockResolvedValue(SAMPLE_GROWTH);
+
+      await act(async () => {
+        await result.current.generateUpgradeGrowth();
+      });
+      await act(async () => {
+        await result.current.generateUpgradeGrowth();
+      });
+
+      expect(vi.mocked(generateGrowthSeries)).toHaveBeenCalledTimes(1);
+    });
+
+    it("sets upgradeGrowthLoading true during fetch, false after", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_UPGRADE_RESULT);
+
+      let resolveGrowth!: (v: typeof SAMPLE_GROWTH) => void;
+      vi.mocked(generateGrowthSeries)
+        .mockResolvedValueOnce(SAMPLE_GROWTH) // v12 growth during calculate()
+        .mockImplementationOnce(
+          () =>
+            new Promise<typeof SAMPLE_GROWTH>((resolve) => {
+              resolveGrowth = resolve;
+            }),
+        );
+
+      const { result } = renderHook(() =>
+        useCalculatorApi({ ...baseProps, data: mockDataVbr12 }),
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+
+      let growthPromise!: Promise<void>;
+      act(() => {
+        growthPromise = result.current.generateUpgradeGrowth();
+      });
+
+      expect(result.current.upgradeGrowthLoading).toBe(true);
+
+      await act(async () => {
+        resolveGrowth(SAMPLE_GROWTH);
+        await growthPromise;
+      });
+
+      expect(result.current.upgradeGrowthLoading).toBe(false);
+    });
+
+    it("sets upgradeGrowthError on failure and leaves series null", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_UPGRADE_RESULT);
+
+      const { result } = renderHook(() =>
+        useCalculatorApi({ ...baseProps, data: mockDataVbr12 }),
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+
+      vi.mocked(generateGrowthSeries).mockRejectedValueOnce(
+        new Error("network"),
+      );
+
+      await act(async () => {
+        await result.current.generateUpgradeGrowth();
+      });
+
+      expect(result.current.upgradeGrowthSeries).toBeNull();
+      expect(result.current.upgradeGrowthError).toMatch(
+        /could not retrieve sizing estimate/i,
+      );
+      expect(result.current.upgradeGrowthLoading).toBe(false);
+    });
+
+    it("allows retry after failure (not idempotent when series is null)", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_UPGRADE_RESULT);
+
+      const { result } = renderHook(() =>
+        useCalculatorApi({ ...baseProps, data: mockDataVbr12 }),
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+
+      vi.mocked(generateGrowthSeries).mockRejectedValueOnce(new Error("fail"));
+
+      await act(async () => {
+        await result.current.generateUpgradeGrowth();
+      });
+
+      expect(result.current.upgradeGrowthSeries).toBeNull();
+
+      vi.mocked(generateGrowthSeries).mockResolvedValueOnce(SAMPLE_GROWTH);
+
+      await act(async () => {
+        await result.current.generateUpgradeGrowth();
+      });
+
+      expect(result.current.upgradeGrowthSeries).toEqual(SAMPLE_GROWTH);
+    });
+
+    it("clears upgradeGrowthSeries, loading, and error when inputKey changes", async () => {
+      vi.mocked(callVmAgentApi)
+        .mockResolvedValueOnce(MOCK_V12_RESULT)
+        .mockResolvedValueOnce(MOCK_UPGRADE_RESULT);
+
+      const { result, rerender } = renderHook(
+        (props: UseCalculatorApiOptions) => useCalculatorApi(props),
+        { initialProps: { ...baseProps, data: mockDataVbr12 } },
+      );
+
+      await act(async () => {
+        await result.current.calculate(DEFAULT_OVERRIDES);
+      });
+
+      vi.mocked(generateGrowthSeries).mockResolvedValueOnce(SAMPLE_GROWTH);
+
+      await act(async () => {
+        await result.current.generateUpgradeGrowth();
+      });
+
+      expect(result.current.upgradeGrowthSeries).toEqual(SAMPLE_GROWTH);
+
+      act(() => {
+        rerender({
+          ...baseProps,
+          data: mockDataVbr12,
+          excludedJobNames: new Set(["Job A"]),
+        });
+      });
+
+      expect(result.current.upgradeGrowthSeries).toBeNull();
+      expect(result.current.upgradeGrowthLoading).toBe(false);
+      expect(result.current.upgradeGrowthError).toBeNull();
+    });
+
+    it("no-ops when called before calculate() has run (no stored overrides)", async () => {
+      const { result } = renderHook(() =>
+        useCalculatorApi({ ...baseProps, data: mockDataVbr12 }),
+      );
+
+      vi.mocked(generateGrowthSeries).mockClear();
+
+      await act(async () => {
+        await result.current.generateUpgradeGrowth();
+      });
+
+      expect(vi.mocked(generateGrowthSeries)).not.toHaveBeenCalled();
+      expect(result.current.upgradeGrowthSeries).toBeNull();
+    });
+  });
 });
