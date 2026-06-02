@@ -152,6 +152,10 @@ describe("CalculatorInputs", () => {
     isGfsOverridden: false,
     onRetentionReset: vi.fn(),
     onGfsReset: vi.fn(),
+    upgradeGrowthSeries: null as GrowthSeriesPoint[] | null,
+    upgradeGrowthLoading: false,
+    upgradeGrowthError: null as string | null,
+    generateUpgradeGrowth: vi.fn().mockResolvedValue(undefined),
   };
 
   function renderControlled(
@@ -869,6 +873,10 @@ describe("CalculatorInputs", () => {
       isGfsOverridden: false,
       onRetentionReset: vi.fn(),
       onGfsReset: vi.fn(),
+      upgradeGrowthSeries: null as GrowthSeriesPoint[] | null,
+      upgradeGrowthLoading: false,
+      upgradeGrowthError: null as string | null,
+      generateUpgradeGrowth: vi.fn().mockResolvedValue(undefined),
     };
 
     beforeEach(() => {
@@ -1723,6 +1731,101 @@ describe("CalculatorInputs", () => {
       );
 
       expect(screen.getByText(/12\.50 TB/)).toBeInTheDocument();
+    });
+  });
+
+  describe("VBR 13 toggle", () => {
+    it("does not render the VBR 13 toggle for a v13 server", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr13}
+          {...defaultControlledProps}
+          result={MOCK_API_RESULT}
+          upgradeResult={null}
+        />,
+      );
+      expect(
+        screen.queryByRole("switch", { name: /VBR 13/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not render the VBR 13 toggle before upgradeResult is available", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr12}
+          {...defaultControlledProps}
+          result={MOCK_V12_RESULT}
+          upgradeResult={null}
+        />,
+      );
+      expect(
+        screen.queryByRole("switch", { name: /VBR 13/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("renders the VBR 13 toggle once upgradeResult is present on a v12 server", () => {
+      render(
+        <CalculatorInputs
+          data={mockDataVbr12}
+          {...defaultControlledProps}
+          result={MOCK_V12_RESULT}
+          upgradeResult={MOCK_V13_RESULT}
+        />,
+      );
+      expect(
+        screen.getByRole("switch", { name: /VBR 13/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("calls generateUpgradeGrowth when toggled on with no series yet", async () => {
+      const generateUpgradeGrowth = vi.fn().mockResolvedValue(undefined);
+      render(
+        <CalculatorInputs
+          data={mockDataVbr12}
+          {...defaultControlledProps}
+          result={MOCK_V12_RESULT}
+          upgradeResult={MOCK_V13_RESULT}
+          upgradeGrowthSeries={null}
+          generateUpgradeGrowth={generateUpgradeGrowth}
+        />,
+      );
+
+      const toggle = screen.getByRole("switch", { name: /VBR 13/i });
+      fireEvent.click(toggle);
+
+      expect(generateUpgradeGrowth).toHaveBeenCalledTimes(1);
+    });
+
+    it("does NOT call generateUpgradeGrowth when toggled on if series already loaded", async () => {
+      const generateUpgradeGrowth = vi.fn().mockResolvedValue(undefined);
+      const existingSeries: GrowthSeriesPoint[] = [
+        {
+          name: "Year 1",
+          daily: 1,
+          weekly: 0.5,
+          monthly: 0.5,
+          yearly: 0.25,
+          immutability: 0.1,
+          buffer: 0,
+          total: 2.35,
+        },
+      ];
+
+      render(
+        <CalculatorInputs
+          data={mockDataVbr12}
+          {...defaultControlledProps}
+          result={MOCK_V12_RESULT}
+          upgradeResult={MOCK_V13_RESULT}
+          upgradeGrowthSeries={existingSeries}
+          generateUpgradeGrowth={generateUpgradeGrowth}
+        />,
+      );
+
+      const toggle = screen.getByRole("switch", { name: /VBR 13/i });
+      fireEvent.click(toggle);
+
+      expect(generateUpgradeGrowth).not.toHaveBeenCalled();
     });
   });
 

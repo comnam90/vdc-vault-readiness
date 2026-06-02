@@ -87,11 +87,15 @@ export function DashboardView({
     result: calcResult,
     upgradeResult: calcUpgradeResult,
     growthSeries: calcGrowthSeries,
+    upgradeGrowthSeries: calcUpgradeGrowthSeries,
+    upgradeGrowthLoading: calcUpgradeGrowthLoading,
+    upgradeGrowthError: calcUpgradeGrowthError,
     error: calcError,
     loading: calcLoading,
     hasConsented,
     grantConsent,
     calculate,
+    generateUpgradeGrowth,
   } = useCalculatorApi({
     data,
     excludedJobNames,
@@ -320,6 +324,10 @@ export function DashboardView({
             }}
             onConsentGiven={grantConsent}
             onCalculate={calculate}
+            generateUpgradeGrowth={generateUpgradeGrowth}
+            upgradeGrowthSeries={calcUpgradeGrowthSeries}
+            upgradeGrowthLoading={calcUpgradeGrowthLoading}
+            upgradeGrowthError={calcUpgradeGrowthError}
           />
         </TabsContent>
 
