@@ -54,23 +54,23 @@ const SIZING_WITH_BUFFER: DerivedSizing = {
 };
 
 function renderDefault(overrides?: {
-  upgradeTotalStorageTB?: number | null;
-  storageSavingsTB?: number;
+  comparisonTotalStorageTB?: number | null;
   upgradePerfTaxGB?: number | null;
   immutabilitySavingsGB?: number;
   sobrBlocksUpgrade?: boolean;
   sizing?: DerivedSizing;
   bufferPercent?: number;
+  showAsV13?: boolean;
 }) {
   return render(
     <SizingHeroCard
       sizing={overrides?.sizing ?? SIZING}
-      upgradeTotalStorageTB={overrides?.upgradeTotalStorageTB ?? null}
-      storageSavingsTB={overrides?.storageSavingsTB ?? 0}
+      comparisonTotalStorageTB={overrides?.comparisonTotalStorageTB ?? null}
       upgradePerfTaxGB={overrides?.upgradePerfTaxGB ?? null}
       immutabilitySavingsGB={overrides?.immutabilitySavingsGB ?? 0}
       sobrBlocksUpgrade={overrides?.sobrBlocksUpgrade ?? false}
       bufferPercent={overrides?.bufferPercent}
+      showAsV13={overrides?.showAsV13 ?? false}
     />,
   );
 }
@@ -89,7 +89,8 @@ describe("SizingHeroCard", () => {
   });
 
   it("shows the upgrade caption when savings > 0", () => {
-    renderDefault({ upgradeTotalStorageTB: 32.5, storageSavingsTB: 5.56 });
+    // savings = |38.06 - 32.5| = 5.56 TB, computed internally
+    renderDefault({ comparisonTotalStorageTB: 32.5 });
     expect(
       screen.getByText(/upgrade to VBR 13 could reduce this to/i),
     ).toBeInTheDocument();
@@ -98,8 +99,7 @@ describe("SizingHeroCard", () => {
 
   it("shows the SOBR-aware actionable copy when sobrBlocksUpgrade and savings > 0", () => {
     renderDefault({
-      upgradeTotalStorageTB: 32.5,
-      storageSavingsTB: 5.56,
+      comparisonTotalStorageTB: 32.5,
       sobrBlocksUpgrade: true,
     });
     expect(
@@ -119,9 +119,9 @@ describe("SizingHeroCard", () => {
   });
 
   it("hides the SOBR-aware caption when no savings to surface", () => {
+    // comparisonTotalStorageTB === SIZING.totalStorageTB → savings = 0
     renderDefault({
-      upgradeTotalStorageTB: 38.06,
-      storageSavingsTB: 0,
+      comparisonTotalStorageTB: 38.06,
       sobrBlocksUpgrade: true,
     });
     expect(screen.queryByText(/Potentially save/i)).not.toBeInTheDocument();
@@ -214,5 +214,31 @@ describe("SizingHeroCard", () => {
     const { container } = renderDefault();
     const grid = container.querySelector(".md\\:grid-cols-5");
     expect(grid).not.toBeNull();
+  });
+
+  describe("showAsV13 mode", () => {
+    it("shows the v13 caption (not the v12 upgrade caption) when showAsV13 is true and savings > 0", () => {
+      // primary = v13 (38.06 TB), comparison = v12 (42.0 TB), savings = |38.06 - 42.0| = 3.94
+      renderDefault({ comparisonTotalStorageTB: 42.0, showAsV13: true });
+      expect(screen.getByText(/currently requires/i)).toBeInTheDocument();
+      expect(screen.getByText(/42\.00 TB/)).toBeInTheDocument();
+      expect(screen.getByText(/more without upgrading/i)).toBeInTheDocument();
+      expect(
+        screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not show either caption when showAsV13 is true but savings is 0", () => {
+      renderDefault({ comparisonTotalStorageTB: 38.06, showAsV13: true });
+      expect(screen.queryByText(/currently requires/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not show the v13 caption when showAsV13 is false (default)", () => {
+      renderDefault({ comparisonTotalStorageTB: 42.0 });
+      expect(screen.queryByText(/currently requires/i)).not.toBeInTheDocument();
+    });
   });
 });
