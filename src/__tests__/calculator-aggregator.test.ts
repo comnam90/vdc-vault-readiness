@@ -7,6 +7,10 @@ import {
   getMaxRetentionDays,
   parseGfsDetails,
   aggregateGfsMax,
+  globalCapDays,
+  capGfs,
+  capGfsToSettings,
+  retentionCapsForSettings,
   buildCalculatorSummary,
 } from "@/lib/calculator-aggregator";
 import { makeJob, makeSession, makeSettings } from "./fixtures";
@@ -350,6 +354,153 @@ describe("aggregateGfsMax", () => {
       monthly: null,
       yearly: null,
     });
+  });
+});
+
+describe("globalCapDays", () => {
+  it("returns Infinity when limitCalculationYears is null (no cap active)", () => {
+    expect(globalCapDays(makeSettings({ limitCalculationYears: null }))).toBe(
+      Infinity,
+    );
+  });
+
+  it("returns Infinity when both years and months are zero (cap value is zero)", () => {
+    expect(
+      globalCapDays(
+        makeSettings({ limitCalculationYears: 0, limitCalculationMonths: 0 }),
+      ),
+    ).toBe(Infinity);
+  });
+
+  it("returns days for a years-only cap", () => {
+    // 3 years × 365 days
+    expect(
+      globalCapDays(
+        makeSettings({ limitCalculationYears: 3, limitCalculationMonths: 0 }),
+      ),
+    ).toBe(3 * 365);
+  });
+
+  it("returns days for a months-only cap (years=0, months>0)", () => {
+    // limitCalculationYears=0 means "cap active with zero years", not null
+    expect(
+      globalCapDays(
+        makeSettings({ limitCalculationYears: 0, limitCalculationMonths: 6 }),
+      ),
+    ).toBe(6 * 30);
+  });
+
+  it("combines years and months correctly", () => {
+    // 1 year (365) + 3 months (90) = 455
+    expect(
+      globalCapDays(
+        makeSettings({ limitCalculationYears: 1, limitCalculationMonths: 3 }),
+      ),
+    ).toBe(365 + 3 * 30);
+  });
+});
+
+describe("capGfs", () => {
+  it("returns gfs unchanged when capDays is Infinity", () => {
+    const gfs = { weekly: 52, monthly: 12, yearly: 7 };
+    expect(capGfs(gfs, Infinity)).toEqual(gfs);
+  });
+
+  it("preserves null bucket values", () => {
+    const gfs = { weekly: null, monthly: null, yearly: null };
+    expect(capGfs(gfs, 365)).toEqual({
+      weekly: null,
+      monthly: null,
+      yearly: null,
+    });
+  });
+
+  it("clamps yearly to floor(capDays/365)", () => {
+    // 2 years = 730 days → floor(730/365) = 2; override of 7 → clamped to 2
+    expect(capGfs({ weekly: null, monthly: null, yearly: 7 }, 730)).toEqual({
+      weekly: null,
+      monthly: null,
+      yearly: 2,
+    });
+  });
+
+  it("clamps monthly to floor(capDays/30)", () => {
+    // 3 months = 90 days → floor(90/30) = 3; override of 12 → clamped to 3
+    expect(capGfs({ weekly: null, monthly: 12, yearly: null }, 90)).toEqual({
+      weekly: null,
+      monthly: 3,
+      yearly: null,
+    });
+  });
+
+  it("clamps weekly to floor(capDays/7)", () => {
+    // 2 weeks = 14 days → floor(14/7) = 2; override of 4 → clamped to 2
+    expect(capGfs({ weekly: 4, monthly: null, yearly: null }, 14)).toEqual({
+      weekly: 2,
+      monthly: null,
+      yearly: null,
+    });
+  });
+
+  it("passes values through unchanged when they already fit inside the cap", () => {
+    // cap = 365 days → yearly max = 1, monthly max = 12, weekly max = 52
+    // overrides are all at or below the max
+    expect(capGfs({ weekly: 4, monthly: 12, yearly: 1 }, 365)).toEqual({
+      weekly: 4,
+      monthly: 12,
+      yearly: 1,
+    });
+  });
+
+  it("floors to 0 when capDays is 0", () => {
+    expect(capGfs({ weekly: 4, monthly: 12, yearly: 7 }, 0)).toEqual({
+      weekly: 0,
+      monthly: 0,
+      yearly: 0,
+    });
+  });
+});
+
+describe("capGfsToSettings", () => {
+  it("clamps only yearly when limitCalculationYears is 1 (exact reported scenario)", () => {
+    // cap=1y → 365 days → yearly max=1, monthly max=12, weekly max=52
+    // yearly 5 clamps to 1; monthly 12 and weekly 4 fit within the cap
+    expect(
+      capGfsToSettings(
+        { weekly: 4, monthly: 12, yearly: 5 },
+        makeSettings({ limitCalculationYears: 1, limitCalculationMonths: 0 }),
+      ),
+    ).toEqual({ weekly: 4, monthly: 12, yearly: 1 });
+  });
+
+  it("passes GFS through unchanged when limitCalculationYears is null (no active cap)", () => {
+    expect(
+      capGfsToSettings(
+        { weekly: 4, monthly: 12, yearly: 5 },
+        makeSettings({ limitCalculationYears: null }),
+      ),
+    ).toEqual({ weekly: 4, monthly: 12, yearly: 5 });
+  });
+});
+
+describe("retentionCapsForSettings", () => {
+  it("returns per-tier slot maxes when limitCalculationYears is 1 (exact user scenario)", () => {
+    // cap=1y → 365 days; floor(365/365)=1y, floor(365/30)=12m, floor(365/7)=52w
+    expect(
+      retentionCapsForSettings(
+        makeSettings({ limitCalculationYears: 1, limitCalculationMonths: 0 }),
+      ),
+    ).toEqual({ retentionDays: 365, weekly: 52, monthly: 12, yearly: 1 });
+  });
+
+  it("returns Infinity for all fields when limitCalculationYears is null (no cap)", () => {
+    const caps = retentionCapsForSettings(
+      makeSettings({ limitCalculationYears: null }),
+    );
+    expect(caps.retentionDays).toBe(Infinity);
+    expect(caps.weekly).toBe(Infinity);
+    expect(caps.monthly).toBe(Infinity);
+    expect(caps.yearly).toBe(Infinity);
   });
 });
 

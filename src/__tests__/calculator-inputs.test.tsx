@@ -10,9 +10,11 @@ import type { NormalizedDataset } from "@/types/domain";
 import type { VmAgentResponse } from "@/types/veeam-api";
 
 // Mock the aggregator function
-vi.mock("@/lib/calculator-aggregator", () => ({
-  buildCalculatorSummary: vi.fn(),
-}));
+vi.mock("@/lib/calculator-aggregator", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/calculator-aggregator")>();
+  return { ...actual, buildCalculatorSummary: vi.fn() };
+});
 
 vi.mock("@/lib/veeam-api", () => ({
   callVmAgentApi: vi.fn(),
@@ -1721,6 +1723,178 @@ describe("CalculatorInputs", () => {
       );
 
       expect(screen.getByText(/12\.50 TB/)).toBeInTheDocument();
+    });
+  });
+
+  describe("cap retention clamping on inputs", () => {
+    // Helper: set cap via localStorage so useSettings() picks it up
+    async function activateCap(years: number, months = 0) {
+      const { STORAGE_KEY, __resetSettingsStoreForTests } =
+        await import("@/hooks/use-settings");
+      window.localStorage.clear();
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          limitCalculationYears: years,
+          limitCalculationMonths: months,
+        }),
+      );
+      __resetSettingsStoreForTests();
+    }
+
+    async function deactivateCap() {
+      const { __resetSettingsStoreForTests } =
+        await import("@/hooks/use-settings");
+      window.localStorage.clear();
+      __resetSettingsStoreForTests();
+    }
+
+    afterEach(async () => {
+      await deactivateCap();
+    });
+
+    it("displays lensed GFS yearly (1) when stored value (3) exceeds 1-year cap", async () => {
+      // cap=1y → yearly max=1; stored gfs.yearly=3 → display clamps to 1
+      await activateCap(1);
+
+      render(
+        <CalculatorInputs
+          data={mockData}
+          {...defaultControlledProps}
+          gfs={{ weekly: 4, monthly: 12, yearly: 3 }}
+        />,
+      );
+
+      // Composite display should show 1 for yearly, not 3
+      expect(screen.getByText(/yearly: 1/i)).toBeInTheDocument();
+      // Weekly (4≤52) and monthly (12≤12) stay unchanged
+      expect(screen.getByText(/weekly: 4/i)).toBeInTheDocument();
+      expect(screen.getByText(/monthly: 12/i)).toBeInTheDocument();
+    });
+
+    it("seeds GFS edit draft from lensed value (1) not raw value (3) when cap is active", async () => {
+      await activateCap(1);
+
+      render(
+        <CalculatorInputs
+          data={mockData}
+          {...defaultControlledProps}
+          gfs={{ weekly: 4, monthly: 12, yearly: 3 }}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [, , yearly] = screen.getAllByRole("spinbutton");
+      // Draft seeded from lensed value → shows 1, not 3
+      expect(yearly).toHaveValue(1);
+    });
+
+    it("GFS inputs show correct max attributes when cap is 1 year", async () => {
+      // cap=1y → weekly max=52, monthly max=12, yearly max=1
+      await activateCap(1);
+
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+
+      const [weekly, monthly, yearly] = screen.getAllByRole("spinbutton");
+      expect(weekly).toHaveAttribute("max", "52");
+      expect(monthly).toHaveAttribute("max", "12");
+      expect(yearly).toHaveAttribute("max", "1");
+    });
+
+    it("commits clamped GFS yearly (1) even when user types an over-cap value (5)", async () => {
+      await activateCap(1);
+      const onGfsChange = vi.fn();
+
+      render(
+        <CalculatorInputs
+          data={mockData}
+          {...defaultControlledProps}
+          onGfsChange={onGfsChange}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [weekly, monthly, yearly] = screen.getAllByRole("spinbutton");
+      fireEvent.change(weekly, { target: { value: "4" } });
+      fireEvent.change(monthly, { target: { value: "12" } });
+      fireEvent.change(yearly, { target: { value: "5" } }); // over cap
+      fireEvent.click(screen.getByRole("button", { name: /confirm gfs/i }));
+
+      expect(onGfsChange).toHaveBeenCalledWith({
+        weekly: 4,
+        monthly: 12,
+        yearly: 1, // clamped to cap
+      });
+    });
+
+    it("seeds retention edit draft from lensed value (365) not raw value (400) when cap is active", async () => {
+      await activateCap(1);
+
+      render(
+        <CalculatorInputs
+          data={mockData}
+          {...defaultControlledProps}
+          retentionDays={400} // over cap
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      const input = screen.getByRole("spinbutton");
+      // Draft seeded from lensed value → shows 365, not 400
+      expect(input).toHaveValue(365);
+    });
+
+    it("retention input shows correct max attribute when cap is 1 year", async () => {
+      // cap=1y → max retention = 365 days
+      await activateCap(1);
+
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+
+      const input = screen.getByRole("spinbutton");
+      expect(input).toHaveAttribute("max", "365");
+    });
+
+    it("commits clamped retention (365) even when user types an over-cap value (400)", async () => {
+      await activateCap(1);
+      const onRetentionDaysChange = vi.fn();
+
+      render(
+        <CalculatorInputs
+          data={mockData}
+          {...defaultControlledProps}
+          onRetentionDaysChange={onRetentionDaysChange}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /edit retention/i }));
+      const input = screen.getByRole("spinbutton");
+      fireEvent.change(input, { target: { value: "400" } }); // over cap
+      fireEvent.click(
+        screen.getByRole("button", { name: /confirm retention/i }),
+      );
+
+      expect(onRetentionDaysChange).toHaveBeenCalledWith(365); // clamped to cap
+    });
+
+    it("does not add max attributes when no cap is active", async () => {
+      // Ensure no cap (default state — localStorage cleared by afterEach)
+      render(<CalculatorInputs data={mockData} {...defaultControlledProps} />);
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /edit extended retention/i }),
+      );
+      const [weekly, monthly, yearly] = screen.getAllByRole("spinbutton");
+      expect(weekly).not.toHaveAttribute("max");
+      expect(monthly).not.toHaveAttribute("max");
+      expect(yearly).not.toHaveAttribute("max");
     });
   });
 });

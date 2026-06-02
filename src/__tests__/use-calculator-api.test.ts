@@ -11,9 +11,11 @@ import type { NormalizedDataset } from "@/types/domain";
 import type { VmAgentResponse } from "@/types/veeam-api";
 import type { GrowthSeriesPoint } from "@/lib/growth-projector";
 
-vi.mock("@/lib/calculator-aggregator", () => ({
-  buildCalculatorSummary: vi.fn(),
-}));
+vi.mock("@/lib/calculator-aggregator", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/calculator-aggregator")>();
+  return { ...actual, buildCalculatorSummary: vi.fn() };
+});
 
 vi.mock("@/lib/veeam-api", () => ({
   callVmAgentApi: vi.fn(),
@@ -719,6 +721,80 @@ describe("useCalculatorApi", () => {
 
       expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
         expect.objectContaining({ gfsWeekly: 4, gfsMonthly: 12, gfsYearly: 7 }),
+        expect.any(Number),
+        expect.any(String),
+        undefined,
+        DEFAULT_SETTINGS,
+      );
+    });
+
+    it("caps GFS overrides to limitCalculationYears before sending to the API", async () => {
+      // cap=1y → yearly max=floor(365/365)=1 (clamps 5→1); monthly=floor(365/30)=12
+      // (stays 12); weekly=floor(365/7)=52 (stays 4). Only yearly must change.
+      const cappedSettings = { ...DEFAULT_SETTINGS, limitCalculationYears: 1 };
+      const { result } = renderHook(() =>
+        useCalculatorApi({ ...baseProps, settings: cappedSettings }),
+      );
+
+      await act(async () => {
+        await result.current.calculate({
+          ...DEFAULT_OVERRIDES,
+          gfsWeekly: 4,
+          gfsMonthly: 12,
+          gfsYearly: 5,
+        });
+      });
+
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
+        expect.objectContaining({ gfsWeekly: 4, gfsMonthly: 12, gfsYearly: 1 }),
+        expect.any(Number),
+        expect.any(String),
+        undefined,
+        cappedSettings,
+      );
+    });
+
+    it("caps retentionDays to limitCalculationYears before sending to the API", async () => {
+      // cap=1y → 365 days; retentionDays=400 clamps to 365; no-cap path unaffected
+      const cappedSettings = { ...DEFAULT_SETTINGS, limitCalculationYears: 1 };
+      const { result } = renderHook(() =>
+        useCalculatorApi({ ...baseProps, settings: cappedSettings }),
+      );
+
+      await act(async () => {
+        await result.current.calculate({
+          ...DEFAULT_OVERRIDES,
+          retentionDays: 400,
+        });
+      });
+
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          maxRetentionDays: 365,
+          originalMaxRetentionDays: 365,
+        }),
+        expect.any(Number),
+        expect.any(String),
+        undefined,
+        cappedSettings,
+      );
+    });
+
+    it("does not cap retentionDays when limitCalculationYears is null (no-cap path)", async () => {
+      const { result } = renderHook(() => useCalculatorApi(baseProps));
+
+      await act(async () => {
+        await result.current.calculate({
+          ...DEFAULT_OVERRIDES,
+          retentionDays: 400,
+        });
+      });
+
+      expect(vi.mocked(callVmAgentApi)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          maxRetentionDays: 400,
+          originalMaxRetentionDays: 400,
+        }),
         expect.any(Number),
         expect.any(String),
         undefined,
