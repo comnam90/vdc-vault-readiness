@@ -1,0 +1,176 @@
+{
+  "Licenses": [
+    {
+      "Edition": "EnterprisePlus",
+      "Status": "Valid",
+      "LicensedTo": "Synthetic Testing Corp",
+      "Type": "Subscription",
+      "LicensedInstances": "500",
+      "UsedInstances": "245",
+      "NewInstances": "0",
+      "RentalInstances": "0",
+      "LicensedSockets": "0",
+      "UsedSockets": "0",
+      "LicensedNas": "0",
+      "UsedNas": "0",
+      "ExpirationDate": "12/31/2028 12:00:00 AM",
+      "SupportExpirationDate": "12/31/2028 12:00:00 AM",
+      "CloudConnect": "Disabled"
+    }
+  ],
+  "Sections": {
+    "backupServer": {
+      "SectionName": "backupServer",
+      "Headers": [
+        "Name",
+        "Version",
+        "DbType",
+        "DbHost",
+        "ConfigBackupEnabled",
+        "ConfigBackupLastResult",
+        "ConfigBackupEncryption",
+        "ConfigBackupTarget"
+      ],
+      "Rows": [
+        [
+          "VBR-SEC-01",
+          "12.1.2.172",
+          "PostgreSQL",
+          "localhost",
+          "True",
+          "Success",
+          "True",
+          "Default Configuration Backup"
+        ]
+      ]
+    },
+    "securitySummary": {
+      "SectionName": "securitySummary",
+      "Headers": [
+        "MFAEnabled",
+        "TrafficEncryptionEnabled",
+        "BackupFileEncryptionEnabled",
+        "ConfigBackupEncryptionEnabled",
+        "ImmutabilityEnabled"
+      ],
+      "Rows": [["True", "True", "True", "True", "True"]]
+    },
+    "repos": {
+      "SectionName": "repos",
+      "Headers": [
+        "Name",
+        "JobCount",
+        "MaxTasks",
+        "Cores",
+        "Ram",
+        "Host",
+        "Path",
+        "FreeSpace",
+        "TotalSpace",
+        "IsImmutabilitySupported",
+        "Type"
+      ],
+      "Rows": [
+        [
+          "Linux-Repo-01",
+          "0",
+          "4",
+          "8",
+          "32",
+          "Backup-Repo-01",
+          "/backups",
+          "9",
+          "42",
+          "False",
+          "LinuxLocal"
+        ]
+      ]
+    },
+    "jobInfo": {
+      "SectionName": "jobInfo",
+      "Headers": [
+        "JobName",
+        "RepoName",
+        "SourceSizeGB",
+        "OnDiskGB",
+        "RetentionScheme",
+        "RetainDays",
+        "Encrypted",
+        "JobType",
+        "CompressionLevel",
+        "BlockSize",
+        "GfsEnabled",
+        "GfsDetails",
+        "ActiveFullEnabled",
+        "SyntheticFullEnabled",
+        "BackupChainType",
+        "IndexingEnabled"
+      ],
+      "Rows": [
+        [
+          "Job_Unencrypted_01",
+          "Linux-Repo-01",
+          "2477",
+          "1486",
+          "Days",
+          "31",
+          "False",
+          "Backup",
+          "Optimal",
+          "1 MB",
+          "False",
+          "",
+          "False",
+          "True",
+          "Forward Incremental",
+          "True"
+        ]
+      ]
+    },
+    "jobSessionSummaryByJob": {
+      "SectionName": "jobSessionSummaryByJob",
+      "Headers": [
+        "JobName",
+        "ItemCount",
+        "MinJobTime",
+        "MaxJobTime",
+        "AvgJobTime",
+        "SessionCount",
+        "Fails",
+        "Retries",
+        "SuccessRate",
+        "AvgBackupSize",
+        "MaxBackupSize",
+        "AvgDataSize",
+        "MaxDataSize",
+        "AvgChangeRate",
+        "WaitCount",
+        "MaxWait",
+        "AvgWait",
+        "JobTypes"
+      ],
+      "Rows": [
+        [
+          "Job_Unencrypted_01",
+          "10",
+          "00:05:00",
+          "02:30:00",
+          "01:15:00",
+          "30",
+          "0",
+          "1",
+          "100",
+          "92.5",
+          "148",
+          "185",
+          "222",
+          "2.5",
+          "0",
+          "0",
+          "0",
+          "VMware Backup"
+        ]
+      ]
+    }
+  }
+}
