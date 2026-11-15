@@ -34,6 +34,26 @@ describe("classifyAgentJobType", () => {
         legacy: false,
       });
     });
+
+    it("classifies bare 'Agent Standalone' as standalone, not legacy", () => {
+      // Emitted by current veeam-healthcheck when VBR returns a blank
+      // TypeToString for an EndpointBackup job (AgentJobAggregator.ToStandaloneLabel).
+      expect(classifyAgentJobType("Agent Standalone")).toEqual({
+        category: "standalone",
+        legacy: false,
+      });
+    });
+
+    it("classifies bare 'Agent Standalone' case-insensitively with surrounding whitespace", () => {
+      expect(classifyAgentJobType("  agent standalone ")).toEqual({
+        category: "standalone",
+        legacy: false,
+      });
+    });
+
+    it("still leaves bare 'Agent Backup' unclassified (jobSummary aggregate label)", () => {
+      expect(classifyAgentJobType("Agent Backup")).toBeNull();
+    });
   });
 
   describe("legacy matches (exact strings)", () => {
@@ -99,7 +119,6 @@ describe("classifyAgentJobType", () => {
       ["Replica"],
       ["Endpoint Backup"],
       ["Agent"],
-      ["Agent Standalone"], // no platform prefix
       ["Agent Policy"], // no platform prefix
       ["AgentPolicy"], // no whitespace separator
       ["WindowsAgentPolicy"], // no whitespace separator
