@@ -33,7 +33,7 @@
       ],
       "Rows": [
         [
-          "VBR-SEC-01",
+          "VBR-PROD-01",
           "12.1.2.172",
           "PostgreSQL",
           "localhost",
@@ -55,11 +55,48 @@
       ],
       "Rows": [["True", "True", "True", "True", "True"]]
     },
-    "repos": {
-      "SectionName": "repos",
+    "sobr": {
+      "SectionName": "sobr",
       "Headers": [
         "Name",
+        "ExtentCount",
         "JobCount",
+        "PolicyType",
+        "EnableCapacityTier",
+        "CapacityTierCopy",
+        "CapacityTierMove",
+        "ArchiveTierEnabled",
+        "UsePerVMFiles",
+        "CapTierType",
+        "ImmutableEnabled",
+        "ImmutablePeriod",
+        "SizeLimitEnabled",
+        "SizeLimit"
+      ],
+      "Rows": [
+        [
+          "SOBR_Vault",
+          "2",
+          "0",
+          "DataLocality",
+          "True",
+          "True",
+          "True",
+          "False",
+          "True",
+          "DataCloudVault",
+          "False",
+          null,
+          "False",
+          null
+        ]
+      ]
+    },
+    "extents": {
+      "SectionName": "extents",
+      "Headers": [
+        "Name",
+        "SobrName",
         "MaxTasks",
         "Cores",
         "Ram",
@@ -72,17 +109,69 @@
       ],
       "Rows": [
         [
-          "Linux-Repo-01",
-          "0",
-          "4",
+          "SOBR_Vault_Perf_01",
+          "SOBR_Vault",
           "8",
-          "32",
-          "Backup-Repo-01",
-          "/backups",
-          "9",
-          "42",
-          "False",
+          "16",
+          "64",
+          "Server-01",
+          "/mnt/backup",
+          "90",
+          "176",
+          "True",
           "LinuxLocal"
+        ],
+        [
+          "SOBR_Vault_Perf_02",
+          "SOBR_Vault",
+          "8",
+          "16",
+          "64",
+          "Server-02",
+          "/mnt/backup",
+          "26",
+          "61",
+          "True",
+          "LinuxLocal"
+        ]
+      ]
+    },
+    "capextents": {
+      "SectionName": "capextents",
+      "Headers": [
+        "Name",
+        "SobrName",
+        "Status",
+        "ConnectionType",
+        "GatewayServer",
+        "CopyModeEnabled",
+        "MoveModeEnabled",
+        "MovePeriodDays",
+        "EncryptionEnabled",
+        "ImmutableEnabled",
+        "ImmutablePeriod",
+        "ImmutabilityMode",
+        "SizeLimitEnabled",
+        "SizeLimit",
+        "Type"
+      ],
+      "Rows": [
+        [
+          "SOBR_Vault_Cap_Tier",
+          "SOBR_Vault",
+          "Normal",
+          "Direct",
+          "VBR-PROD-01",
+          "True",
+          "True",
+          "0",
+          "True",
+          "False",
+          null,
+          "Compliance",
+          "False",
+          null,
+          "DataCloudVault"
         ]
       ]
     },
@@ -108,13 +197,13 @@
       ],
       "Rows": [
         [
-          "Job_Unencrypted_01",
-          "Linux-Repo-01",
-          "2477",
-          "1486",
+          "Job_VM_01",
+          "SOBR_Vault",
+          "2291",
+          "1374",
           "Days",
           "31",
-          "False",
+          "True",
           "Backup",
           "Optimal",
           "1 MB",
@@ -151,7 +240,7 @@
       ],
       "Rows": [
         [
-          "Job_Unencrypted_01",
+          "Job_VM_01",
           "10",
           "00:05:00",
           "02:30:00",
@@ -160,10 +249,10 @@
           "0",
           "1",
           "100",
-          "92.5",
-          "148",
-          "185",
-          "222",
+          "91.5",
+          "146.4",
+          "183",
+          "219.6",
           "2.5",
           "0",
           "0",

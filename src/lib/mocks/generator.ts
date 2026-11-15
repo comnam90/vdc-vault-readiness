@@ -9,6 +9,21 @@ import type { HealthcheckRoot } from "../../types/healthcheck";
  * 3. Detailed field population for UI testing (Job Details, Sizing, Repos)
  */
 
+export interface CapTierOptions {
+  /** Capacity tier extent encryption (default: true). */
+  encrypted?: boolean;
+  /**
+   * Use move-only mode, offloading after this many days. When omitted the
+   * extent uses copy mode, so data lands on capacity tier immediately.
+   */
+  moveAfterDays?: number;
+}
+
+export interface JobOptions {
+  /** Active Full backups scheduled (default: false). */
+  activeFull?: boolean;
+}
+
 export class HealthcheckMockBuilder {
   private data: HealthcheckRoot;
 
@@ -58,7 +73,7 @@ export class HealthcheckMockBuilder {
       "Job_File_Share_01",
       "Dedupe-Appliance-01",
       true,
-      14,
+      30,
       "File Backup",
     );
 
@@ -92,7 +107,7 @@ export class HealthcheckMockBuilder {
       .build();
   }
 
-  static createWarningUnencrypted(): HealthcheckRoot {
+  static createBlockingUnencrypted(): HealthcheckRoot {
     return new HealthcheckMockBuilder()
       .withLicense("EnterprisePlus", "Valid")
       .withBackupServer("VBR-SEC-01", "12.1.2.172")
@@ -112,13 +127,14 @@ export class HealthcheckMockBuilder {
       .build();
   }
 
+  /**
+   * Targets a plain repo (not a capacity-tier SOBR) so only retention-period
+   * fires; on a cap-tier SOBR, 7-day retention also trips capacity-tier-residency.
+   */
   static createLowRetention(): HealthcheckRoot {
-    return new HealthcheckMockBuilder()
-      .withLicense("EnterprisePlus", "Valid")
-      .withBackupServer("VBR-PROD-01", "12.1.2.172")
-      .withSecuritySummary(true, true, true, true, true)
-      .withSobr("SOBR_Vault", true, true, 7)
-      .addDetailedJob("Short_Ret_Job_01", "SOBR_Vault", true, 7)
+    return HealthcheckMockBuilder.healthyBase()
+      .withRepo("Linux-Hardened-01", "LinuxHardened", true)
+      .addDetailedJob("Short_Ret_Job_01", "Linux-Hardened-01", true, 7)
       .build();
   }
 
@@ -146,6 +162,81 @@ export class HealthcheckMockBuilder {
     }
 
     return builder.build();
+  }
+
+  static createBlockingStandaloneAgent(): HealthcheckRoot {
+    return HealthcheckMockBuilder.healthyBase()
+      .withRepo("Linux-Hardened-01", "LinuxHardened", true)
+      .addDetailedJob(
+        "Agent_Laptop_01",
+        "Linux-Hardened-01",
+        true,
+        31,
+        "Windows Agent Standalone",
+      )
+      .build();
+  }
+
+  static createAgentPolicy(): HealthcheckRoot {
+    return HealthcheckMockBuilder.healthyBase()
+      .withRepo("Linux-Hardened-01", "LinuxHardened", true)
+      .addDetailedJob(
+        "Agent_Policy_Linux_01",
+        "Linux-Hardened-01",
+        true,
+        31,
+        "Linux Agent Policy",
+      )
+      .build();
+  }
+
+  static createCapTierUnencrypted(): HealthcheckRoot {
+    return HealthcheckMockBuilder.healthyBase()
+      .withSobr("SOBR_Vault", true, true, 7, { encrypted: false })
+      .addDetailedJob("Job_VM_01", "SOBR_Vault", true, 31)
+      .build();
+  }
+
+  static createCapTierMutable(): HealthcheckRoot {
+    return HealthcheckMockBuilder.healthyBase()
+      .withSobr("SOBR_Vault", true, false, 0)
+      .addDetailedJob("Job_VM_01", "SOBR_Vault", true, 31)
+      .build();
+  }
+
+  static createActiveFull(): HealthcheckRoot {
+    return HealthcheckMockBuilder.healthyBase()
+      .withRepo("Linux-Hardened-01", "LinuxHardened", true)
+      .addDetailedJob(
+        "Job_VM_ActiveFull",
+        "Linux-Hardened-01",
+        true,
+        31,
+        "Backup",
+        {
+          activeFull: true,
+        },
+      )
+      .build();
+  }
+
+  /**
+   * Move-only capacity tier offloading after 14 days with 31-day retention:
+   * passes retention-period (31 >= 30) but only 17 days reside on capacity.
+   */
+  static createCapTierResidency(): HealthcheckRoot {
+    return HealthcheckMockBuilder.healthyBase()
+      .withSobr("SOBR_Vault", true, true, 7, { moveAfterDays: 14 })
+      .addDetailedJob("Job_VM_01", "SOBR_Vault", true, 31)
+      .build();
+  }
+
+  /** Licensed, supported, fully-secured server with no repos or jobs yet. */
+  private static healthyBase(): HealthcheckMockBuilder {
+    return new HealthcheckMockBuilder()
+      .withLicense("EnterprisePlus", "Valid")
+      .withBackupServer("VBR-PROD-01", "12.1.2.172")
+      .withSecuritySummary(true, true, true, true, true);
   }
 
   withLicense(edition: string, status: string = "Valid"): this {
@@ -234,6 +325,7 @@ export class HealthcheckMockBuilder {
     hasCapTier: boolean,
     immutable: boolean,
     immutableDays: number,
+    capTier: CapTierOptions = {},
   ): this {
     if (!this.data.Sections.sobr) {
       this.data.Sections.sobr = {
@@ -283,9 +375,9 @@ export class HealthcheckMockBuilder {
       this.addCapExtent(
         name + "_Cap_Tier",
         name,
-        true,
         immutable,
         immutableDays,
+        capTier,
       );
     }
 
@@ -339,10 +431,11 @@ export class HealthcheckMockBuilder {
   private addCapExtent(
     name: string,
     sobrName: string,
-    encrypted: boolean,
     immutable: boolean,
     days: number,
+    { encrypted = true, moveAfterDays }: CapTierOptions,
   ) {
+    const copyMode = moveAfterDays === undefined;
     if (!this.data.Sections.capextents) {
       this.data.Sections.capextents = {
         SectionName: "capextents",
@@ -372,9 +465,9 @@ export class HealthcheckMockBuilder {
       "Normal",
       "Direct",
       "VBR-PROD-01",
+      copyMode ? "True" : "False",
       "True",
-      "True",
-      "0",
+      (moveAfterDays ?? 0).toString(),
       encrypted ? "True" : "False",
       immutable ? "True" : "False",
       immutable ? days.toString() : null,
@@ -467,6 +560,7 @@ export class HealthcheckMockBuilder {
     encrypted: boolean,
     retentionDays: number,
     type: string = "Backup",
+    { activeFull = false }: JobOptions = {},
   ): this {
     if (!this.data.Sections.jobInfo) {
       this.data.Sections.jobInfo = {
@@ -509,7 +603,7 @@ export class HealthcheckMockBuilder {
       "1 MB",
       "False",
       "",
-      "False",
+      activeFull ? "True" : "False",
       "True",
       "Forward Incremental",
       "True",
@@ -577,3 +671,29 @@ export class HealthcheckMockBuilder {
     return this.data;
   }
 }
+
+/**
+ * Single source of truth for the pre-generated fixtures in /mocks.
+ * Keys are output filenames (without .json); consumed by
+ * scripts/generate-mocks.ts and the scenario tests.
+ */
+export const MOCK_SCENARIOS: Readonly<Record<string, () => HealthcheckRoot>> = {
+  "perfect-v12": () => HealthcheckMockBuilder.createPassingV12(),
+  "legacy-v11": () => HealthcheckMockBuilder.createLegacyV11(),
+  "blocker-aws": () => HealthcheckMockBuilder.createBlockingAWS(),
+  "blocker-unencrypted": () =>
+    HealthcheckMockBuilder.createBlockingUnencrypted(),
+  "community-edition": () => HealthcheckMockBuilder.createCommunityEdition(),
+  "low-retention": () => HealthcheckMockBuilder.createLowRetention(),
+  "advanced-cloud": () => HealthcheckMockBuilder.createAdvancedCloud(),
+  "blocker-standalone-agent": () =>
+    HealthcheckMockBuilder.createBlockingStandaloneAgent(),
+  "warning-agent-policy": () => HealthcheckMockBuilder.createAgentPolicy(),
+  "warning-cap-tier-unencrypted": () =>
+    HealthcheckMockBuilder.createCapTierUnencrypted(),
+  "warning-cap-tier-mutable": () =>
+    HealthcheckMockBuilder.createCapTierMutable(),
+  "warning-active-full": () => HealthcheckMockBuilder.createActiveFull(),
+  "warning-cap-tier-residency": () =>
+    HealthcheckMockBuilder.createCapTierResidency(),
+};

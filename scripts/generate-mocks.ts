@@ -1,4 +1,4 @@
-import { HealthcheckMockBuilder } from "../src/lib/mocks/generator";
+import { MOCK_SCENARIOS } from "../src/lib/mocks/generator";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -8,21 +8,14 @@ if (!fs.existsSync(MOCK_DIR)) {
   fs.mkdirSync(MOCK_DIR);
 }
 
-const scenarios = {
-  "perfect-v12.json": HealthcheckMockBuilder.createPassingV12(),
-  "legacy-v11.json": HealthcheckMockBuilder.createLegacyV11(),
-  "blocker-aws.json": HealthcheckMockBuilder.createBlockingAWS(),
-  "warning-unencrypted.json": HealthcheckMockBuilder.createWarningUnencrypted(),
-  "community-edition.json": HealthcheckMockBuilder.createCommunityEdition(),
-  "low-retention.json": HealthcheckMockBuilder.createLowRetention(),
-  "advanced-cloud.json": HealthcheckMockBuilder.createAdvancedCloud(),
-};
-
 console.log("Generating synthetic healthcheck files...");
 
-Object.entries(scenarios).forEach(([filename, data]) => {
-  const filePath = path.join(MOCK_DIR, filename);
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+Object.entries(MOCK_SCENARIOS).forEach(([name, create]) => {
+  const filename = `${name}.json`;
+  fs.writeFileSync(
+    path.join(MOCK_DIR, filename),
+    JSON.stringify(create(), null, 2),
+  );
   console.log(`  - ${filename}`);
 });
 
