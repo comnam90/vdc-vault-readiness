@@ -120,6 +120,9 @@ describe("classifyAgentJobType", () => {
       ["Endpoint Backup"],
       ["Agent"],
       ["Agent Policy"], // no platform prefix
+      ["Agent Standalone Copy"], // trailing word after standalone
+      ["AgentStandalone"], // no whitespace separator
+      ["Reagent Standalone"], // "agent" must be a whole word
       ["AgentPolicy"], // no whitespace separator
       ["WindowsAgentPolicy"], // no whitespace separator
     ])("returns null for non-agent JobType %j", (jobType) => {
