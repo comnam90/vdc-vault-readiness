@@ -1,6 +1,6 @@
 # src/\_\_tests\_\_ — Test Suite
 
-1267 tests across 57 test files. Vitest + React Testing Library + jsdom. `fake-indexeddb` for persistence tests. Run `npm run test:coverage` for current coverage.
+1295 tests across 57 test files. Vitest + React Testing Library + jsdom. `fake-indexeddb` for persistence tests. Run `npm run test:coverage` for current coverage.
 
 ## STRUCTURE
 
