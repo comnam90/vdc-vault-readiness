@@ -3,8 +3,11 @@ import {
   formatSize,
   formatPercent,
   formatDuration,
-  formatCompressionRatio,
   formatTB,
+  formatTooltipTB,
+  formatGFS,
+  formatShortGfs,
+  formatRatio,
 } from "@/lib/format-utils";
 
 describe("formatSize", () => {
@@ -102,36 +105,91 @@ describe("formatTB", () => {
   });
 });
 
-describe("formatCompressionRatio", () => {
-  it('returns "N/A" when both inputs are null', () => {
-    expect(formatCompressionRatio(null, null)).toBe("N/A");
+describe("formatTooltipTB", () => {
+  it("returns formatted TB string and 'Source' label for a number", () => {
+    expect(formatTooltipTB(1.5)).toEqual(["1.50 TB", "Source"]);
+  });
+  it("returns empty array for undefined", () => {
+    expect(formatTooltipTB(undefined)).toEqual([]);
+  });
+});
+
+describe("formatGFS", () => {
+  it('returns "None configured" when all inputs are null', () => {
+    expect(formatGFS(null, null, null)).toBe("None configured");
   });
 
-  it('returns "N/A" when source is null', () => {
-    expect(formatCompressionRatio(null, 512)).toBe("N/A");
+  it("formats weekly only", () => {
+    expect(formatGFS(4, null, null)).toBe("Weekly: 4");
   });
 
-  it('returns "N/A" when disk is null', () => {
-    expect(formatCompressionRatio(1024, null)).toBe("N/A");
+  it("formats monthly only", () => {
+    expect(formatGFS(null, 12, null)).toBe("Monthly: 12");
   });
 
-  it('returns "N/A" when source is 0', () => {
-    expect(formatCompressionRatio(0, 512)).toBe("N/A");
+  it("formats yearly only", () => {
+    expect(formatGFS(null, null, 7)).toBe("Yearly: 7");
   });
 
-  it('returns "N/A" when disk is 0', () => {
-    expect(formatCompressionRatio(1024, 0)).toBe("N/A");
+  it("formats all three in order", () => {
+    expect(formatGFS(4, 12, 7)).toBe("Weekly: 4, Monthly: 12, Yearly: 7");
   });
 
-  it("computes correct ratio", () => {
-    expect(formatCompressionRatio(1024, 512)).toBe("2.0x");
+  it("formats weekly and monthly without yearly", () => {
+    expect(formatGFS(4, 12, null)).toBe("Weekly: 4, Monthly: 12");
+  });
+});
+
+describe("formatShortGfs", () => {
+  it("formats all three tiers in W | M | Y order", () => {
+    expect(formatShortGfs("Weekly:4,Monthly:12,Yearly:7")).toBe(
+      "4W | 12M | 7Y",
+    );
   });
 
-  it("handles 1:1 ratio", () => {
-    expect(formatCompressionRatio(500, 500)).toBe("1.0x");
+  it("renders single tier without separators", () => {
+    expect(formatShortGfs("Monthly:12")).toBe("12M");
   });
 
-  it("handles fractional ratios", () => {
-    expect(formatCompressionRatio(1000, 750)).toBe("1.3x");
+  it("skips missing tiers", () => {
+    expect(formatShortGfs("Weekly:4,Yearly:1")).toBe("4W | 1Y");
+  });
+
+  it("returns empty string for empty input", () => {
+    expect(formatShortGfs("")).toBe("");
+  });
+
+  it("returns empty string for unparseable input", () => {
+    expect(formatShortGfs("garbage")).toBe("");
+  });
+
+  it("tolerates whitespace around tokens and pairs", () => {
+    expect(formatShortGfs(" Weekly:4 , Monthly:12 ")).toBe("4W | 12M");
+  });
+
+  it("ignores tiers with non-numeric values", () => {
+    expect(formatShortGfs("Weekly:abc,Monthly:6")).toBe("6M");
+  });
+
+  it("preserves W | M | Y order regardless of input order", () => {
+    expect(formatShortGfs("Yearly:1,Weekly:4")).toBe("4W | 1Y");
+  });
+});
+
+describe("formatRatio", () => {
+  it("returns an em-dash for null", () => {
+    expect(formatRatio(null)).toBe("—");
+  });
+
+  it("formats positive numbers with two-decimal precision and 'x' suffix", () => {
+    expect(formatRatio(3.03)).toBe("3.03x");
+  });
+
+  it("formats whole numbers with trailing zeros", () => {
+    expect(formatRatio(1)).toBe("1.00x");
+  });
+
+  it("formats zero", () => {
+    expect(formatRatio(0)).toBe("0.00x");
   });
 });

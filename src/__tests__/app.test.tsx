@@ -1,9 +1,16 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import App from "@/App";
 import type { AnalysisStatus } from "@/hooks/use-analysis";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
+import type { StoredScan, StoredScanSummary } from "@/lib/indexed-db";
 
 const mockAnalyzeFile = vi.fn();
 const mockReset = vi.fn();
@@ -25,6 +32,28 @@ vi.mock("@/hooks/use-analysis", () => ({
     currentStep: mockCurrentStep,
     analyzeFile: mockAnalyzeFile,
     reset: mockReset,
+  }),
+}));
+
+const mockSaveScan = vi.fn();
+const mockLoadScanPayload = vi.fn();
+const mockGetRecentScans = vi.fn();
+const mockDeleteScan = vi.fn();
+
+vi.mock("@/lib/indexed-db", () => ({
+  saveScan: (...args: unknown[]) => mockSaveScan(...args),
+  loadScanPayload: (...args: unknown[]) => mockLoadScanPayload(...args),
+  getRecentScans: (...args: unknown[]) => mockGetRecentScans(...args),
+  deleteScan: (...args: unknown[]) => mockDeleteScan(...args),
+}));
+
+let mockRecentScansList: StoredScanSummary[] = [];
+
+vi.mock("@/hooks/use-recent-scans", () => ({
+  useRecentScans: () => ({
+    recentScans: mockRecentScansList,
+    removeScan: vi.fn(),
+    refreshScans: vi.fn(),
   }),
 }));
 
@@ -55,6 +84,7 @@ const MOCK_DATA: NormalizedDataset = {
   ],
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
   jobSessionSummary: [],
+  jobSummary: [],
   sobr: [],
   capExtents: [],
   extents: [],
@@ -79,10 +109,10 @@ const MOCK_VALIDATIONS: ValidationResult[] = [
     affectedItems: [],
   },
   {
-    ruleId: "global-encryption",
-    title: "Global Encryption Configuration",
+    ruleId: "config-backup-encryption",
+    title: "Configuration Backup Encryption",
     status: "pass",
-    message: "Global encryption enabled.",
+    message: "VBR configuration backup encryption is enabled.",
     affectedItems: [],
   },
 ];
@@ -96,6 +126,11 @@ describe("App", () => {
     mockValidations = null;
     mockCompletedSteps = [];
     mockCurrentStep = null;
+    mockRecentScansList = [];
+    mockSaveScan.mockResolvedValue(1);
+    mockLoadScanPayload.mockResolvedValue(null);
+    mockGetRecentScans.mockResolvedValue([]);
+    mockDeleteScan.mockResolvedValue(undefined);
   });
 
   it("renders file upload in idle state", () => {
@@ -219,7 +254,159 @@ describe("App", () => {
     });
 
     await waitFor(() => {
-      expect(mockAnalyzeFile).toHaveBeenCalledWith(file);
+      expect(mockAnalyzeFile).toHaveBeenCalledTimes(1);
+    });
+    const passed = mockAnalyzeFile.mock.calls[0]![0] as File;
+    expect(passed).toBeInstanceOf(File);
+    expect(passed.name).toBe("healthcheck.json");
+  });
+
+  describe("recent scans orchestration", () => {
+    it("saves the scan to IndexedDB after a successful upload", async () => {
+      mockStatus = "idle";
+      const { rerender } = render(<App />);
+
+      const file = new File(['{"hello":"world"}'], "alpha.json", {
+        type: "application/json",
+      });
+      fireEvent.drop(screen.getByTestId("drop-zone"), {
+        dataTransfer: { files: [file] },
+      });
+
+      await waitFor(() => expect(mockAnalyzeFile).toHaveBeenCalledTimes(1));
+
+      mockStatus = "success";
+      mockData = MOCK_DATA;
+      mockValidations = MOCK_VALIDATIONS;
+      rerender(<App />);
+
+      await waitFor(() => expect(mockSaveScan).toHaveBeenCalledTimes(1));
+
+      const saved = mockSaveScan.mock.calls[0]![0] as Omit<StoredScan, "id">;
+      expect(saved.filename).toBe("alpha.json");
+      expect(saved.jobCount).toBe(MOCK_DATA.jobInfo.length);
+      expect(saved.vbrVersion).toBe("13.0.1.1071");
+      expect(saved.sourceTb).toBeNull(); // MOCK_DATA has no SourceSizeGB
+      expect(saved.rawJson).toBe('{"hello":"world"}');
+      expect(typeof saved.uploadedAt).toBe("string");
+      expect(() => new Date(saved.uploadedAt).toISOString()).not.toThrow();
+    });
+
+    it("does not save when analysis ends in an error", async () => {
+      mockStatus = "idle";
+      const { rerender } = render(<App />);
+
+      const file = new File(["bad json"], "bad.json", {
+        type: "application/json",
+      });
+      fireEvent.drop(screen.getByTestId("drop-zone"), {
+        dataTransfer: { files: [file] },
+      });
+      await waitFor(() => expect(mockAnalyzeFile).toHaveBeenCalledTimes(1));
+
+      mockStatus = "error";
+      mockError = "Invalid JSON";
+      rerender(<App />);
+
+      // Give any pending effect a tick
+      await new Promise((r) => setTimeout(r, 10));
+      expect(mockSaveScan).not.toHaveBeenCalled();
+    });
+
+    it("loads a recent scan and feeds the synthetic File into analyzeFile without re-saving", async () => {
+      const stored: StoredScan = {
+        id: 12345,
+        filename: "stored.json",
+        uploadedAt: "2026-05-06T10:00:00Z",
+        jobCount: 7,
+        sourceTb: 9.5,
+        vbrVersion: "13.0.0.0",
+        rawJson: '{"Sections":{"backupServer":{"Headers":[],"Rows":[]}}}',
+      };
+      mockLoadScanPayload.mockResolvedValueOnce(stored);
+      mockRecentScansList = [
+        {
+          id: stored.id,
+          filename: stored.filename,
+          uploadedAt: stored.uploadedAt,
+          jobCount: stored.jobCount,
+          sourceTb: stored.sourceTb,
+          vbrVersion: stored.vbrVersion,
+        },
+      ];
+
+      mockStatus = "idle";
+      const { rerender } = render(<App />);
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /load scan stored\.json/i }),
+      );
+
+      await waitFor(() =>
+        expect(mockLoadScanPayload).toHaveBeenCalledWith(stored.id),
+      );
+      await waitFor(() => expect(mockAnalyzeFile).toHaveBeenCalledTimes(1));
+
+      const passed = mockAnalyzeFile.mock.calls[0]![0] as File;
+      expect(passed).toBeInstanceOf(File);
+      expect(passed.name).toBe("stored.json");
+      const text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(passed);
+      });
+      expect(text).toBe(stored.rawJson);
+
+      // Now drive the success transition; the load path must NOT trigger save.
+      mockStatus = "success";
+      mockData = MOCK_DATA;
+      mockValidations = MOCK_VALIDATIONS;
+      rerender(<App />);
+
+      await new Promise((r) => setTimeout(r, 10));
+      expect(mockSaveScan).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("DashboardView remount invariant", () => {
+    it("re-seeds sizing inputs with second file's data after re-upload", async () => {
+      const makeData = (retainDays: number): NormalizedDataset => ({
+        ...MOCK_DATA,
+        jobInfo: [{ ...MOCK_DATA.jobInfo[0], RetainDays: retainDays }],
+      });
+
+      mockStatus = "success";
+      mockData = makeData(90);
+      mockValidations = MOCK_VALIDATIONS;
+      const { rerender } = render(<App />);
+
+      const clickSizingTab = async () => {
+        const tab = screen.getByRole("tab", { name: /sizing/i });
+        await act(async () => {
+          fireEvent.mouseDown(tab);
+          fireEvent.click(tab);
+        });
+      };
+
+      await clickSizingTab();
+      expect(await screen.findByText("90 days")).toBeInTheDocument();
+
+      // Transition through processing — this unmounts DashboardView
+      mockStatus = "processing";
+      mockCurrentStep = "parse";
+      rerender(<App />);
+      expect(screen.queryByText("90 days")).not.toBeInTheDocument();
+
+      // Second file upload completes with different data
+      mockStatus = "success";
+      mockData = makeData(60);
+      mockCurrentStep = null;
+      rerender(<App />);
+
+      await clickSizingTab();
+      expect(await screen.findByText("60 days")).toBeInTheDocument();
+      expect(screen.queryByText("90 days")).not.toBeInTheDocument();
     });
   });
 });

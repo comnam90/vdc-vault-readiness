@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from "react";
 import { AlertCircle } from "lucide-react";
 import { useAnalysis } from "@/hooks/use-analysis";
 import { FileUpload } from "@/components/dashboard/file-upload";
@@ -7,6 +8,9 @@ import { ExperimentalBanner } from "@/components/dashboard/experimental-banner";
 import { SiteFooter } from "@/components/dashboard/site-footer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { loadScanPayload, saveScan } from "@/lib/indexed-db";
+import { calculateTotalSourceDataTB } from "@/lib/calculator-aggregator";
+import { readFileAsText } from "@/lib/file-reader";
 
 function App() {
   const {
@@ -19,6 +23,68 @@ function App() {
     analyzeFile,
     reset,
   } = useAnalysis();
+
+  const pendingScanRef = useRef<{ rawJson: string; filename: string } | null>(
+    null,
+  );
+
+  const handleFileSelected = useCallback(
+    async (file: File) => {
+      let rawJson: string;
+      try {
+        rawJson = await readFileAsText(file);
+      } catch {
+        // Fall back to the original File so use-analysis surfaces the read error.
+        analyzeFile(file);
+        return;
+      }
+      pendingScanRef.current = { rawJson, filename: file.name };
+      const synthetic = new File([rawJson], file.name, {
+        type: "application/json",
+      });
+      analyzeFile(synthetic);
+    },
+    [analyzeFile],
+  );
+
+  const handleLoadRecent = useCallback(
+    async (id: number) => {
+      let scan;
+      try {
+        scan = await loadScanPayload(id);
+      } catch (err) {
+        console.warn("Failed to load recent scan:", err);
+        return;
+      }
+      if (!scan) return;
+      pendingScanRef.current = null;
+      const synthetic = new File([scan.rawJson], scan.filename, {
+        type: "application/json",
+      });
+      analyzeFile(synthetic);
+    },
+    [analyzeFile],
+  );
+
+  useEffect(() => {
+    if (status === "success" && data && pendingScanRef.current) {
+      const { rawJson, filename } = pendingScanRef.current;
+      pendingScanRef.current = null;
+      saveScan({
+        filename,
+        uploadedAt: new Date().toISOString(),
+        jobCount: data.jobInfo.length,
+        sourceTb: calculateTotalSourceDataTB(data.jobInfo),
+        vbrVersion: data.backupServer[0]?.Version ?? null,
+        rawJson,
+      }).catch((err) => {
+        console.warn("Failed to save scan:", err);
+      });
+    }
+    if (status === "error") {
+      pendingScanRef.current = null;
+    }
+  }, [status, data]);
 
   return (
     <div
@@ -78,7 +144,10 @@ function App() {
                   and workload compatibility
                 </p>
               </div>
-              <FileUpload onFileSelected={analyzeFile} />
+              <FileUpload
+                onFileSelected={handleFileSelected}
+                onLoadRecent={handleLoadRecent}
+              />
             </div>
           </div>
         )}

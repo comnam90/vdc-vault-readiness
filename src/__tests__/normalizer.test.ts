@@ -43,6 +43,61 @@ describe("normalizeHealthcheck", () => {
     expect(result.securitySummary[0].ConfigBackupEncryptionEnabled).toBe(false);
   });
 
+  it("excludes Replica job types from normalized output", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Rep1",
+          JobType: "Replica",
+          Encrypted: "True",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "Job B",
+          JobType: "Backup",
+          Encrypted: "True",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(1);
+    expect(result.jobInfo[0].JobName).toBe("Job B");
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
+  it("excludes all Replica jobs when multiple Replica jobs exist", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "Rep1",
+          JobType: "Replica",
+          Encrypted: "True",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "Rep2",
+          JobType: "Replica",
+          Encrypted: "False",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo).toHaveLength(0);
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
   it("drops jobs missing required fields and logs data errors", () => {
     const raw: ParsedHealthcheckSections = {
       backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
@@ -97,6 +152,7 @@ describe("normalizeHealthcheck", () => {
       jobInfo: [],
       Licenses: [],
       jobSessionSummary: [],
+      jobSummary: [],
       sobr: [],
       capExtents: [],
       extents: [],
@@ -145,6 +201,7 @@ describe("normalizeHealthcheck", () => {
       ],
       Licenses: [],
       jobSessionSummary: [],
+      jobSummary: [],
       sobr: [],
       capExtents: [],
       extents: [],
@@ -167,6 +224,7 @@ describe("normalizeHealthcheck", () => {
       jobInfo: [],
       Licenses: [],
       jobSessionSummary: [],
+      jobSummary: [],
       sobr: [],
       capExtents: [],
       extents: [],
@@ -1255,6 +1313,8 @@ describe("normalizeHealthcheck", () => {
         Fails: null,
         AvgJobTime: null,
         MaxJobTime: null,
+        AvgDedupRatio: null,
+        AvgCompressRatio: null,
       });
     });
 
@@ -1328,6 +1388,109 @@ describe("normalizeHealthcheck", () => {
       const result = normalizeHealthcheck(raw, sessionData);
 
       expect(result.jobSessionSummary[0].AvgChangeRate).toBeNull();
+    });
+
+    describe("AvgDedupRatio and AvgCompressRatio parsing", () => {
+      it("parses 'x'-suffixed values as numbers", () => {
+        const raw = {
+          jobSessionSummaryByJob: {
+            Headers: ["JobName", "AvgDedupRatio", "AvgCompressRatio"],
+            Rows: [],
+          },
+        };
+        const sessions = [
+          {
+            JobName: "JobA",
+            AvgDedupRatio: "3.03x",
+            AvgCompressRatio: "1.56x",
+          },
+        ];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBe(3.03);
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBe(1.56);
+      });
+
+      it("parses values without 'x' suffix as numbers", () => {
+        const raw = { jobSessionSummaryByJob: { Headers: [], Rows: [] } };
+        const sessions = [
+          {
+            JobName: "JobA",
+            AvgDedupRatio: "3.03",
+            AvgCompressRatio: "1.56",
+          },
+        ];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBe(3.03);
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBe(1.56);
+      });
+
+      it("returns null for empty string without emitting a DataError", () => {
+        const raw = { jobSessionSummaryByJob: { Headers: [], Rows: [] } };
+        const sessions = [
+          {
+            JobName: "JobA",
+            AvgDedupRatio: "",
+            AvgCompressRatio: "",
+          },
+        ];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBeNull();
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBeNull();
+        expect(
+          result.dataErrors.filter((e) => e.field.includes("Ratio")),
+        ).toHaveLength(0);
+      });
+
+      it("returns null when fields are absent from the record (legacy healthcheck)", () => {
+        const raw = { jobSessionSummaryByJob: { Headers: [], Rows: [] } };
+        const sessions = [{ JobName: "JobA" }];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBeNull();
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBeNull();
+        expect(
+          result.dataErrors.filter((e) => e.field.includes("Ratio")),
+        ).toHaveLength(0);
+      });
+
+      it("returns null and emits a DataError for garbage values", () => {
+        const raw = { jobSessionSummaryByJob: { Headers: [], Rows: [] } };
+        const sessions = [
+          {
+            JobName: "JobA",
+            AvgDedupRatio: "abc",
+            AvgCompressRatio: "not-a-number",
+          },
+        ];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBeNull();
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBeNull();
+        const ratioErrors = result.dataErrors.filter((e) =>
+          e.field.includes("Ratio"),
+        );
+        expect(ratioErrors).toHaveLength(2);
+        expect(ratioErrors.map((e) => e.field).sort()).toEqual([
+          "AvgCompressRatio",
+          "AvgDedupRatio",
+        ]);
+      });
+
+      it("returns null and emits a DataError for a bare 'x' (no number)", () => {
+        const raw = { jobSessionSummaryByJob: { Headers: [], Rows: [] } };
+        const sessions = [
+          {
+            JobName: "JobA",
+            AvgDedupRatio: "x",
+            AvgCompressRatio: "X",
+          },
+        ];
+        const result = normalizeHealthcheck(raw as never, sessions);
+        expect(result.jobSessionSummary[0].AvgDedupRatio).toBeNull();
+        expect(result.jobSessionSummary[0].AvgCompressRatio).toBeNull();
+        const ratioErrors = result.dataErrors.filter((e) =>
+          e.field.includes("Ratio"),
+        );
+        expect(ratioErrors).toHaveLength(2);
+      });
     });
 
     it("defaults MaxDataSize to null and logs DataError for non-numeric value", () => {
@@ -2235,5 +2398,67 @@ describe("normalizeRepos — extended fields", () => {
     expect(repo.TotalSpaceTB).toBe(5.0);
     expect(repo.FreeSpaceTB).toBe(2.0);
     expect(repo.Type).toBe("LinuxHardened");
+  });
+});
+
+describe("normalizeJobSummary (via normalizeHealthcheck)", () => {
+  it("parses well-formed rows and skips the Total Jobs aggregate row", () => {
+    const result = normalizeHealthcheck({
+      jobSummary: [
+        { JobType: "Agent Backup", Count: "4" },
+        { JobType: "Unmanaged Agent", Count: "1" },
+        { JobType: "Total Jobs", Count: "5" },
+      ],
+    });
+
+    expect(result.jobSummary).toHaveLength(2);
+    expect(result.jobSummary[0]).toEqual({ JobType: "Agent Backup", Count: 4 });
+    expect(result.jobSummary[1]).toEqual({
+      JobType: "Unmanaged Agent",
+      Count: 1,
+    });
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
+  it("skips rows with missing or empty JobType and accumulates a DataError", () => {
+    const result = normalizeHealthcheck({
+      jobSummary: [
+        { JobType: "", Count: "3" },
+        { JobType: "Agent Backup", Count: "2" },
+      ],
+    });
+
+    expect(result.jobSummary).toHaveLength(1);
+    expect(result.jobSummary[0].JobType).toBe("Agent Backup");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "jobSummary",
+      field: "JobType",
+    });
+  });
+
+  it("skips rows with non-numeric Count and accumulates a DataError", () => {
+    const result = normalizeHealthcheck({
+      jobSummary: [
+        { JobType: "Agent Backup", Count: "not-a-number" },
+        { JobType: "Unmanaged Agent", Count: "1" },
+      ],
+    });
+
+    expect(result.jobSummary).toHaveLength(1);
+    expect(result.jobSummary[0].JobType).toBe("Unmanaged Agent");
+    expect(result.dataErrors).toHaveLength(1);
+    expect(result.dataErrors[0]).toMatchObject({
+      level: "Data Error",
+      section: "jobSummary",
+      field: "Count",
+    });
+  });
+
+  it("returns empty array when jobSummary section is missing entirely", () => {
+    const result = normalizeHealthcheck({});
+    expect(result.jobSummary).toEqual([]);
+    expect(result.dataErrors).toHaveLength(0);
   });
 });

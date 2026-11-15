@@ -292,6 +292,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.JobName).toBe("Test Job");
   });
@@ -306,6 +308,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.MaxDataSize).toBe(2048);
   });
@@ -320,6 +324,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.MaxDataSize).toBeNull();
   });
@@ -334,6 +340,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.AvgChangeRate).toBe(12.75);
   });
@@ -348,6 +356,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.AvgChangeRate).toBeNull();
   });
@@ -362,6 +372,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.JobName).toBeDefined();
   });
@@ -376,6 +388,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.SuccessRate).toBe(100);
   });
@@ -390,6 +404,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.SuccessRate).toBeNull();
   });
@@ -404,6 +420,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: 1,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.SessionCount).toBe(8);
     expect(session.Fails).toBe(1);
@@ -419,6 +437,8 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: "00.08:01:24",
       MaxJobTime: "00.09:23:18",
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.AvgJobTime).toBe("00.08:01:24");
     expect(session.MaxJobTime).toBe("00.09:23:18");
@@ -434,9 +454,45 @@ describe("Domain Types - SafeJobSession", () => {
       Fails: null,
       AvgJobTime: null,
       MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     };
     expect(session.AvgJobTime).toBeNull();
     expect(session.MaxJobTime).toBeNull();
+  });
+
+  it("SafeJobSession accepts AvgDedupRatio and AvgCompressRatio as numbers", () => {
+    const session: SafeJobSession = {
+      JobName: "Test Job",
+      MaxDataSize: null,
+      AvgChangeRate: null,
+      SuccessRate: null,
+      SessionCount: null,
+      Fails: null,
+      AvgJobTime: null,
+      MaxJobTime: null,
+      AvgDedupRatio: 3.03,
+      AvgCompressRatio: 1.56,
+    };
+    expect(session.AvgDedupRatio).toBe(3.03);
+    expect(session.AvgCompressRatio).toBe(1.56);
+  });
+
+  it("SafeJobSession accepts AvgDedupRatio and AvgCompressRatio as null", () => {
+    const session: SafeJobSession = {
+      JobName: "Test Job",
+      MaxDataSize: null,
+      AvgChangeRate: null,
+      SuccessRate: null,
+      SessionCount: null,
+      Fails: null,
+      AvgJobTime: null,
+      MaxJobTime: null,
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
+    };
+    expect(session.AvgDedupRatio).toBeNull();
+    expect(session.AvgCompressRatio).toBeNull();
   });
 });
 
@@ -457,8 +513,11 @@ describe("Domain Types - NormalizedDataset extension", () => {
           Fails: null,
           AvgJobTime: null,
           MaxJobTime: null,
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       ],
+      jobSummary: [],
       sobr: [],
       capExtents: [],
       extents: [],
@@ -477,6 +536,7 @@ describe("Domain Types - NormalizedDataset extension", () => {
       jobInfo: [],
       Licenses: [],
       jobSessionSummary: [],
+      jobSummary: [],
       sobr: [],
       capExtents: [],
       extents: [],
@@ -503,6 +563,8 @@ describe("Domain Types - NormalizedDataset extension", () => {
           Fails: null,
           AvgJobTime: null,
           MaxJobTime: null,
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
         {
           JobName: "Job B",
@@ -513,8 +575,11 @@ describe("Domain Types - NormalizedDataset extension", () => {
           Fails: null,
           AvgJobTime: null,
           MaxJobTime: null,
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       ],
+      jobSummary: [],
       sobr: [],
       capExtents: [],
       extents: [],
@@ -556,6 +621,7 @@ describe("Domain Types - NormalizedDataset extension", () => {
       ],
       Licenses: [{ Edition: "Enterprise", Status: "Active" }],
       jobSessionSummary: [],
+      jobSummary: [],
       sobr: [],
       capExtents: [],
       extents: [],
@@ -579,6 +645,9 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 5,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.totalSourceDataTB).toBe(100.5);
   });
@@ -593,6 +662,9 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.totalSourceDataTB).toBeNull();
   });
@@ -607,11 +679,14 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 5,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.weightedAvgChangeRate).toBe(15.75);
   });
 
-  it("CalculatorSummary requires immutabilityDays as number (always 30 for MVP)", () => {
+  it("CalculatorSummary requires immutabilityDays as number", () => {
     const summary: CalculatorSummary = {
       totalSourceDataTB: 100.5,
       weightedAvgChangeRate: 10.0,
@@ -621,6 +696,9 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.immutabilityDays).toBe(30);
   });
@@ -635,6 +713,9 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.maxRetentionDays).toBe(1095);
   });
@@ -649,6 +730,9 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 5,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.gfsWeekly).toBe(4);
     expect(summary.gfsMonthly).toBe(12);
@@ -665,6 +749,9 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: null,
       gfsMonthly: null,
       gfsYearly: null,
+      sourceDataBreakdown: [],
+      gfsDistribution: [],
+      retentionDistribution: [],
     };
     expect(summary.gfsWeekly).toBeNull();
     expect(summary.gfsMonthly).toBeNull();
@@ -681,8 +768,11 @@ describe("Calculator Types - CalculatorSummary", () => {
       gfsWeekly: 4,
       gfsMonthly: 12,
       gfsYearly: 7,
+      sourceDataBreakdown: [{ type: "VMware Backup", tb: 250.0 }],
+      gfsDistribution: [{ policy: "4W | 12M | 7Y", count: 1 }],
+      retentionDistribution: [{ days: 730, count: 1 }],
     };
     expect(summary).toBeDefined();
-    expect(Object.keys(summary)).toHaveLength(8);
+    expect(Object.keys(summary)).toHaveLength(11);
   });
 });

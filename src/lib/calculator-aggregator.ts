@@ -1,11 +1,102 @@
 import type { SafeJob, SafeJobSession } from "@/types/domain";
 import type { CalculatorSummary } from "@/types/calculator";
-import { MINIMUM_RETENTION_DAYS } from "./constants";
+import { DEFAULT_SETTINGS, type GlobalSettings } from "@/types/settings";
+import { MINIMUM_RETENTION_DAYS, DEFAULT_IMMUTABILITY_DAYS } from "./constants";
+import { formatShortGfs } from "./format-utils";
 
-interface GfsResult {
+export interface GfsResult {
   weekly: number | null;
   monthly: number | null;
   yearly: number | null;
+}
+
+/**
+ * Returns the total cap horizon in days implied by the given settings, or
+ * `Infinity` when no cap is active. A cap is active only when
+ * `limitCalculationYears` is set (not null) and the resulting day count is
+ * positive — matching the `capActive` guard used elsewhere in the pipeline.
+ */
+export function globalCapDays(settings: GlobalSettings): number {
+  const capYears = settings.limitCalculationYears ?? 0;
+  const capMonths = settings.limitCalculationMonths ?? 0;
+  const totalCapDays = capYears * 365 + capMonths * 30;
+  const capActive = settings.limitCalculationYears !== null && totalCapDays > 0;
+  return capActive ? totalCapDays : Infinity;
+}
+
+/**
+ * Clamps each bucket in `gfs` to the slot count that fits within `capDays`,
+ * using the same unit conversions as `capJob` (365 d/yr, 30 d/mo, 7 d/wk).
+ * Returns `gfs` unchanged when `capDays` is infinite (no active cap).
+ * Null values are preserved as-is.
+ */
+export function capGfs(gfs: GfsResult, capDays: number): GfsResult {
+  if (!Number.isFinite(capDays)) {
+    return gfs;
+  }
+  return {
+    weekly:
+      gfs.weekly !== null
+        ? Math.min(gfs.weekly, Math.floor(capDays / 7))
+        : null,
+    monthly:
+      gfs.monthly !== null
+        ? Math.min(gfs.monthly, Math.floor(capDays / 30))
+        : null,
+    yearly:
+      gfs.yearly !== null
+        ? Math.min(gfs.yearly, Math.floor(capDays / 365))
+        : null,
+  };
+}
+
+/**
+ * Convenience wrapper: clamps `gfs` to the retention horizon implied by
+ * `settings`. Equivalent to `capGfs(gfs, globalCapDays(settings))`.
+ *
+ * Use at call sites that have a `GlobalSettings` but not a pre-computed
+ * `capDays` value (e.g. the hero total in `use-calculator-api` and the
+ * consent-preview in `calculator-inputs`). Archive truncation is intentionally
+ * omitted — callers always seed overrides from `buildCalculatorSummary`, which
+ * already bakes per-job archive offload in via `capJob`.
+ */
+export function capGfsToSettings(
+  gfs: GfsResult,
+  settings: GlobalSettings,
+): GfsResult {
+  return capGfs(gfs, globalCapDays(settings));
+}
+
+export interface RetentionCaps {
+  /** Maximum retention days; `Infinity` when no cap is active. */
+  retentionDays: number;
+  /** Maximum weekly GFS slots; `Infinity` when no cap is active. */
+  weekly: number;
+  /** Maximum monthly GFS slots; `Infinity` when no cap is active. */
+  monthly: number;
+  /** Maximum yearly GFS slots; `Infinity` when no cap is active. */
+  yearly: number;
+}
+
+/**
+ * Returns per-tier slot maxes derived from the active Cap Retention setting.
+ * All fields are `Infinity` when no cap is active (`limitCalculationYears` is
+ * null or the computed day count is zero). Used to set `max` attributes on
+ * editable number inputs and to clamp committed override values.
+ *
+ * Uses the same 365/30/7 conversions as `capGfs` so the display lens and the
+ * calc lens agree.
+ */
+export function retentionCapsForSettings(
+  settings: GlobalSettings,
+): RetentionCaps {
+  const capDays = globalCapDays(settings);
+  return {
+    retentionDays: capDays,
+    weekly: Math.floor(capDays / 7),
+    monthly: Math.floor(capDays / 30),
+    yearly: Math.floor(capDays / 365),
+  };
 }
 
 export function calculateTotalSourceDataTB(jobs: SafeJob[]): number | null {
@@ -140,22 +231,97 @@ export function aggregateGfsMax(jobs: SafeJob[]): GfsResult {
   return result;
 }
 
+function serializeGfs(gfs: GfsResult): string | null {
+  const parts: string[] = [];
+  if (gfs.weekly != null) parts.push(`Weekly:${gfs.weekly}`);
+  if (gfs.monthly != null) parts.push(`Monthly:${gfs.monthly}`);
+  if (gfs.yearly != null) parts.push(`Yearly:${gfs.yearly}`);
+  return parts.length > 0 ? parts.join(",") : null;
+}
+
+function capJob(job: SafeJob, settings: GlobalSettings): SafeJob {
+  const globalDays = globalCapDays(settings);
+
+  const archiveCapDays =
+    job.archiveOffloadDays != null && !settings.ignoreArchiveTier
+      ? job.archiveOffloadDays
+      : Infinity;
+
+  // Daily retention caps to the global horizon only.
+  // GFS caps to the tighter of global horizon and archive offload
+  // (Symmetric with the input math: 365-day year, 30-day month, 7-day week.
+  // Using calendar conversions e.g. cap_days * 12 / 365 under-counts a
+  // 3-month cap as 2 monthly slots — weeklies and monthlies coexist on the
+  // Vault, so a 3-month cap should retain 3 monthly slots.)
+  const gfsCapDays = Math.min(globalDays, archiveCapDays);
+
+  const capped: SafeJob = { ...job };
+
+  if (job.RetainDays != null && Number.isFinite(globalDays)) {
+    capped.RetainDays = Math.min(job.RetainDays, globalDays);
+  }
+
+  if (job.GfsDetails) {
+    const parsed = parseGfsDetails(job.GfsDetails);
+    capped.GfsDetails = serializeGfs(capGfs(parsed, gfsCapDays));
+  }
+
+  return capped;
+}
+
 export function buildCalculatorSummary(
   jobs: SafeJob[],
   sessions: SafeJobSession[],
   excludedJobNames: Set<string> = new Set(),
+  settings: GlobalSettings = DEFAULT_SETTINGS,
 ): CalculatorSummary {
   const filteredJobs =
     excludedJobNames.size > 0
       ? jobs.filter((j) => !excludedJobNames.has(j.JobName))
       : jobs;
-  const gfs = aggregateGfsMax(filteredJobs);
-  const originalMax = getMaxRetentionDays(filteredJobs);
+
+  const cappedJobs = filteredJobs.map((j) => capJob(j, settings));
+
+  const gfs = aggregateGfsMax(cappedJobs);
+  const originalMax = getMaxRetentionDays(cappedJobs);
+
+  const sourceByType = new Map<string, number>();
+  for (const job of cappedJobs) {
+    if (job.SourceSizeGB == null) continue;
+    const key = job.JobType || "Unknown";
+    sourceByType.set(key, (sourceByType.get(key) ?? 0) + job.SourceSizeGB);
+  }
+  const sourceDataBreakdown = [...sourceByType.entries()]
+    .map(([type, gb]) => ({ type, tb: gb / 1024 }))
+    .sort((a, b) => b.tb - a.tb);
+
+  const gfsCounts = new Map<string, number>();
+  for (const job of cappedJobs) {
+    if (!job.GfsDetails) continue;
+    const policy = formatShortGfs(job.GfsDetails);
+    if (!policy) continue;
+    gfsCounts.set(policy, (gfsCounts.get(policy) ?? 0) + 1);
+  }
+  const gfsDistribution = [...gfsCounts.entries()]
+    .map(([policy, count]) => ({ policy, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const retentionCounts = new Map<number, number>();
+  for (const job of cappedJobs) {
+    if (job.RetainDays == null) continue;
+    retentionCounts.set(
+      job.RetainDays,
+      (retentionCounts.get(job.RetainDays) ?? 0) + 1,
+    );
+  }
+  const retentionDistribution = [...retentionCounts.entries()]
+    .map(([days, count]) => ({ days, count }))
+    .sort((a, b) => b.count - a.count);
 
   return {
-    totalSourceDataTB: calculateTotalSourceDataTB(filteredJobs),
-    weightedAvgChangeRate: calculateWeightedChangeRate(filteredJobs, sessions),
-    immutabilityDays: 30,
+    totalSourceDataTB: calculateTotalSourceDataTB(cappedJobs),
+    weightedAvgChangeRate: calculateWeightedChangeRate(cappedJobs, sessions),
+    immutabilityDays: DEFAULT_IMMUTABILITY_DAYS,
     maxRetentionDays:
       originalMax !== null
         ? Math.max(originalMax, MINIMUM_RETENTION_DAYS)
@@ -164,5 +330,8 @@ export function buildCalculatorSummary(
     gfsWeekly: gfs.weekly,
     gfsMonthly: gfs.monthly,
     gfsYearly: gfs.yearly,
+    sourceDataBreakdown,
+    gfsDistribution,
+    retentionDistribution,
   };
 }

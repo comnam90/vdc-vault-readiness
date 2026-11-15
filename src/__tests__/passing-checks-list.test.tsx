@@ -29,10 +29,10 @@ const FAIL_RESULT: ValidationResult = {
 };
 
 const WARNING_RESULT: ValidationResult = {
-  ruleId: "agent-workload",
-  title: "Agent Workload Configuration",
+  ruleId: "agent-policy-gateway-required",
+  title: "Managed Agent Policies",
   status: "warning",
-  message: "Agent workloads detected.",
+  message: "Managed agent policies require a VBR Gateway Server.",
   affectedItems: ["Agent Job 1"],
 };
 
@@ -123,11 +123,11 @@ describe("PassingChecksList", () => {
     expect(items[1].style.animationDelay).toBe("100ms");
   });
 
-  it("offsets stagger delay when blockerCount is provided", () => {
+  it("offsets stagger delay when precedingItemsCount is provided", () => {
     render(
       <PassingChecksList
         validations={[PASS_VBR, PASS_ENCRYPTION]}
-        blockerCount={getBlockerCount([
+        precedingItemsCount={getBlockerCount([
           FAIL_RESULT,
           WARNING_RESULT,
           INFO_RESULT,

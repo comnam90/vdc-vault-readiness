@@ -7,4 +7,7 @@ export interface CalculatorSummary {
   gfsWeekly: number | null;
   gfsMonthly: number | null;
   gfsYearly: number | null;
+  sourceDataBreakdown: { type: string; tb: number }[];
+  gfsDistribution: { policy: string; count: number }[];
+  retentionDistribution: { days: number; count: number }[];
 }

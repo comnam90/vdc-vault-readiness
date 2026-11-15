@@ -40,6 +40,7 @@ function makeDataset(
     jobInfo: [],
     Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
     jobSessionSummary: [],
+    jobSummary: [],
     sobr: [],
     capExtents: [],
     extents: [],

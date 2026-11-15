@@ -1,5 +1,12 @@
-import type { NormalizedDataset, SafeRepo } from "@/types/domain";
+import type {
+  NormalizedDataset,
+  SafeRepo,
+  SafeJob,
+  SafeJobSession,
+  SafeSobr,
+} from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
+import { DEFAULT_SETTINGS, type GlobalSettings } from "@/types/settings";
 
 /**
  * Shared test fixtures — import into test files instead of re-declaring.
@@ -69,6 +76,7 @@ export const MOCK_DATA: NormalizedDataset = {
   ],
   Licenses: [{ Edition: "Enterprise Plus", Status: "Active" }],
   jobSessionSummary: [],
+  jobSummary: [],
   sobr: [],
   extents: [],
   capExtents: [],
@@ -111,12 +119,98 @@ export const FAIL_RESULT: ValidationResult = {
 };
 
 export const WARNING_RESULT: ValidationResult = {
-  ruleId: "agent-workload",
-  title: "Agent Workload Configuration",
+  ruleId: "agent-policy-gateway-required",
+  title: "Managed Agent Policies",
   status: "warning",
-  message: "Agent workloads detected.",
+  message: "Managed agent policies detected.",
   affectedItems: ["Job B"],
 };
+
+export function makeJob(overrides: Partial<SafeJob> = {}): SafeJob {
+  return {
+    JobName: "TestJob",
+    JobType: "VMware Backup",
+    Encrypted: true,
+    RepoName: "LinuxHardened",
+    RetainDays: null,
+    GfsDetails: null,
+    SourceSizeGB: null,
+    OnDiskGB: null,
+    RetentionScheme: null,
+    CompressionLevel: null,
+    BlockSize: null,
+    GfsEnabled: null,
+    ActiveFullEnabled: null,
+    SyntheticFullEnabled: null,
+    BackupChainType: null,
+    IndexingEnabled: null,
+    ...overrides,
+  };
+}
+
+export function makeSession(
+  overrides: Partial<SafeJobSession> = {},
+): SafeJobSession {
+  return {
+    JobName: "TestJob",
+    MaxDataSize: null,
+    AvgChangeRate: null,
+    SuccessRate: null,
+    SessionCount: null,
+    Fails: null,
+    AvgJobTime: null,
+    MaxJobTime: null,
+    AvgDedupRatio: null,
+    AvgCompressRatio: null,
+    ...overrides,
+  };
+}
+
+export function makeRepo(overrides: Partial<SafeRepo> = {}): SafeRepo {
+  return {
+    Name: "Repo",
+    JobCount: null,
+    TotalSpaceTB: null,
+    FreeSpaceTB: null,
+    ImmutabilitySupported: false,
+    Type: null,
+    Host: null,
+    Path: null,
+    MaxTasks: null,
+    IsPerVmBackupFiles: null,
+    IsDecompress: null,
+    AlignBlocks: null,
+    IsRotatedDrives: null,
+    FreeSpacePercent: null,
+    ...overrides,
+  };
+}
+
+export function makeSettings(
+  overrides: Partial<GlobalSettings> = {},
+): GlobalSettings {
+  return { ...DEFAULT_SETTINGS, ...overrides };
+}
+
+export function makeSobr(overrides: Partial<SafeSobr> = {}): SafeSobr {
+  return {
+    Name: "SOBR",
+    EnableCapacityTier: false,
+    CapacityTierCopy: false,
+    CapacityTierMove: false,
+    ArchiveTierEnabled: false,
+    ImmutableEnabled: false,
+    ExtentCount: null,
+    JobCount: null,
+    PolicyType: null,
+    UsePerVMFiles: null,
+    CapTierType: null,
+    ImmutablePeriod: null,
+    SizeLimitEnabled: null,
+    SizeLimit: null,
+    ...overrides,
+  };
+}
 
 export const ALL_PASS_VALIDATIONS: ValidationResult[] = [
   PASS_RESULT,

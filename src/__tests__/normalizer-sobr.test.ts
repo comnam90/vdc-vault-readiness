@@ -748,6 +748,100 @@ describe("normalizeArchExtents", () => {
   });
 });
 
+describe("archive offload wiring (SafeJob.archiveOffloadDays)", () => {
+  const BASE_JOB = {
+    JobName: "JobA",
+    JobType: "VMware Backup",
+    Encrypted: "True",
+    RetainDays: "30",
+    GfsDetails: null,
+    SourceSizeGB: null,
+    OnDiskGB: null,
+    RetentionScheme: null,
+    CompressionLevel: null,
+    BlockSize: null,
+    GfsEnabled: null,
+    ActiveFullEnabled: null,
+    SyntheticFullEnabled: null,
+    BackupChainType: null,
+    IndexingEnabled: null,
+  };
+
+  it("sets archiveOffloadDays on a job whose RepoName matches a SOBR with archive tier", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      jobInfo: [{ ...BASE_JOB, RepoName: "SOBR-Arch" }],
+      archextents: [
+        {
+          SobrName: "SOBR-Arch",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+          OffloadPeriod: "28",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo[0].archiveOffloadDays).toBe(28);
+  });
+
+  it("leaves archiveOffloadDays undefined when RepoName does not match any archextent", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      jobInfo: [{ ...BASE_JOB, RepoName: "PlainRepo" }],
+      archextents: [
+        {
+          SobrName: "SOBR-Other",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+          OffloadPeriod: "28",
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo[0].archiveOffloadDays).toBeUndefined();
+  });
+
+  it("leaves archiveOffloadDays undefined when matching archextent has no OffloadPeriod", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      jobInfo: [{ ...BASE_JOB, RepoName: "SOBR-Arch" }],
+      archextents: [
+        {
+          SobrName: "SOBR-Arch",
+          Name: "Archive-01",
+          ArchiveTierEnabled: "True",
+          EncryptionEnabled: "True",
+          ImmutableEnabled: "False",
+          OffloadPeriod: null,
+        },
+      ],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo[0].archiveOffloadDays).toBeUndefined();
+  });
+
+  it("leaves archiveOffloadDays undefined when no archextents are present", () => {
+    const raw: NormalizerInput = {
+      ...BASE_INPUT,
+      jobInfo: [{ ...BASE_JOB, RepoName: "AnyRepo" }],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo[0].archiveOffloadDays).toBeUndefined();
+  });
+});
+
 describe("normalizeExtents", () => {
   it("normalizes a valid extents row with all fields", () => {
     const raw: NormalizerInput = {

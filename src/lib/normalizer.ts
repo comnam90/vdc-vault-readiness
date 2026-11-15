@@ -1,4 +1,5 @@
 import type { NormalizerInput } from "@/types/healthcheck";
+import { EXCLUDED_JOB_TYPES } from "@/lib/constants";
 import type {
   DataError,
   NormalizedDataset,
@@ -8,6 +9,7 @@ import type {
   SafeExtent,
   SafeJob,
   SafeJobSession,
+  SafeJobSummary,
   SafeLicense,
   SafeRepo,
   SafeSecuritySummary,
@@ -21,6 +23,8 @@ export function normalizeHealthcheck(
   sessionData?: SessionRecord[],
 ): NormalizedDataset {
   const dataErrors: DataError[] = [];
+
+  const archiveOffloadBySobr = buildArchiveOffloadMap(asArray(raw.archextents));
 
   const jobInfo = asArray(raw.jobInfo).flatMap((job, rowIndex) => {
     if (!isRecord(job)) {
@@ -43,6 +47,10 @@ export function normalizeHealthcheck(
       dataErrors.push(
         buildError("jobInfo", rowIndex, "JobType", "Missing required JobType"),
       );
+      return [];
+    }
+
+    if (EXCLUDED_JOB_TYPES.has(jobType)) {
       return [];
     }
 
@@ -120,6 +128,11 @@ export function normalizeHealthcheck(
         job.IndexingEnabled as string | null | undefined,
       ),
     };
+
+    const archiveOffloadDays = archiveOffloadBySobr.get(repoName);
+    if (archiveOffloadDays != null) {
+      safeJob.archiveOffloadDays = archiveOffloadDays;
+    }
 
     return [safeJob];
   });
@@ -261,6 +274,7 @@ export function normalizeHealthcheck(
     jobInfo,
     Licenses,
     jobSessionSummary: normalizeJobSessions(asArray(sessionData), dataErrors),
+    jobSummary: normalizeJobSummary(asArray(raw.jobSummary), dataErrors),
     sobr: normalizeSobr(asArray(raw.sobr), dataErrors),
     extents: normalizeExtents(asArray(raw.extents), dataErrors),
     capExtents: normalizeCapExtents(asArray(raw.capextents), dataErrors),
@@ -351,6 +365,31 @@ function parseNumeric(
   return parsed;
 }
 
+function parseRatio(
+  value: string | null | undefined,
+  section: DataError["section"],
+  rowIndex: number,
+  field: string,
+  dataErrors: DataError[],
+): number | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  const stripped = trimmed.replace(/[xX]$/, "");
+  if (stripped.length === 0) {
+    dataErrors.push(
+      buildError(
+        section,
+        rowIndex,
+        field,
+        `Invalid numeric value: "${trimmed}"`,
+      ),
+    );
+    return null;
+  }
+  return parseNumeric(stripped, section, rowIndex, field, dataErrors);
+}
+
 function normalizeJobSessions(
   sessionData: SessionRecord[],
   dataErrors: DataError[],
@@ -431,9 +470,90 @@ function normalizeJobSessions(
       MaxJobTime: normalizeString(
         record.MaxJobTime as string | null | undefined,
       ),
+      AvgDedupRatio: parseRatio(
+        record.AvgDedupRatio as string | null | undefined,
+        "jobSessionSummaryByJob",
+        rowIndex,
+        "AvgDedupRatio",
+        dataErrors,
+      ),
+      AvgCompressRatio: parseRatio(
+        record.AvgCompressRatio as string | null | undefined,
+        "jobSessionSummaryByJob",
+        rowIndex,
+        "AvgCompressRatio",
+        dataErrors,
+      ),
     };
 
     return [safeSession];
+  });
+}
+
+type JobSummaryRecord = Record<string, string | null | undefined>;
+
+function normalizeJobSummary(
+  rows: JobSummaryRecord[],
+  dataErrors: DataError[],
+): SafeJobSummary[] {
+  return rows.flatMap((row, rowIndex) => {
+    if (!isRecord(row)) {
+      dataErrors.push(
+        buildError(
+          "jobSummary",
+          rowIndex,
+          "_row",
+          "Invalid row: not an object",
+        ),
+      );
+      return [];
+    }
+
+    const jobType = normalizeString(row.JobType as string | null | undefined);
+    if (!jobType) {
+      dataErrors.push(
+        buildError(
+          "jobSummary",
+          rowIndex,
+          "JobType",
+          "Missing required JobType",
+        ),
+      );
+      return [];
+    }
+
+    // Skip the aggregate "Total Jobs" row
+    if (jobType.toLowerCase() === "total jobs") {
+      return [];
+    }
+
+    const rawCount = row.Count as string | null | undefined;
+    if (typeof rawCount !== "string" || rawCount.trim().length === 0) {
+      dataErrors.push(
+        buildError("jobSummary", rowIndex, "Count", "Missing required Count"),
+      );
+      return [];
+    }
+
+    const count = parseInt(rawCount.trim(), 10);
+    if (Number.isNaN(count)) {
+      dataErrors.push(
+        buildError(
+          "jobSummary",
+          rowIndex,
+          "Count",
+          `Invalid numeric value: "${rawCount.trim()}"`,
+        ),
+      );
+      return [];
+    }
+
+    const safeJobSummary: SafeJobSummary = {
+      JobType: jobType,
+      Count: count,
+    };
+
+    return [safeJobSummary];
   });
 }
 
@@ -778,6 +898,26 @@ function normalizeCapExtents(
 }
 
 type ArchExtentRecord = Record<string, string | null | undefined>;
+
+function buildArchiveOffloadMap(rows: ArchExtentRecord[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const row of rows) {
+    if (!isRecord(row)) continue;
+    const sobrName = normalizeString(row.SobrName as string | null | undefined);
+    if (!sobrName) continue;
+    const raw = (row.OffloadPeriod ?? row.RetentionPeriod) as
+      | string
+      | null
+      | undefined;
+    if (typeof raw !== "string") continue;
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed) || parsed <= 0) continue;
+    map.set(sobrName, parsed);
+  }
+  return map;
+}
 
 function normalizeArchExtents(
   rows: ArchExtentRecord[],

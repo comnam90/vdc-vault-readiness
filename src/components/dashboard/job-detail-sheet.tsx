@@ -4,8 +4,10 @@ import {
   formatSize,
   formatPercent,
   formatDuration,
-  formatCompressionRatio,
+  formatRatio,
 } from "@/lib/format-utils";
+import { Info } from "lucide-react";
+import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,6 +19,12 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { PropertyRow, SectionHeading } from "./detail-sheet-helpers";
 
 interface JobDetailSheetProps {
@@ -83,6 +91,28 @@ function NullableValue({ value }: { value: string | number | null }) {
   return <span>{String(value)}</span>;
 }
 
+function RatioValue({ value }: { value: number | null }) {
+  if (value === null) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="text-muted-foreground inline-flex cursor-help items-center gap-1">
+            —
+            <Info aria-hidden="true" className="size-3" />
+            <span className="sr-only">
+              Not reported by this healthcheck version
+            </span>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          Not reported by this healthcheck version
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  return <span>{formatRatio(value)}</span>;
+}
+
 function StorageSection({ job }: { job: EnrichedJob }) {
   return (
     <div className="space-y-1">
@@ -93,10 +123,11 @@ function StorageSection({ job }: { job: EnrichedJob }) {
       <PropertyRow label="On-Disk Size">
         <FormatSizeDisplay gb={job.OnDiskGB} />
       </PropertyRow>
+      <PropertyRow label="Dedup Ratio">
+        <RatioValue value={job.sessionData?.AvgDedupRatio ?? null} />
+      </PropertyRow>
       <PropertyRow label="Compression Ratio">
-        <NullableValue
-          value={formatCompressionRatio(job.SourceSizeGB, job.OnDiskGB)}
-        />
+        <RatioValue value={job.sessionData?.AvgCompressRatio ?? null} />
       </PropertyRow>
       <PropertyRow label="Change Rate">
         <ChangeRateValue rate={job.sessionData?.AvgChangeRate ?? null} />
@@ -106,8 +137,23 @@ function StorageSection({ job }: { job: EnrichedJob }) {
 }
 
 function ProtectionSection({ job }: { job: EnrichedJob }) {
+  const { settings } = useSettings();
   const gfs = parseGfsDetails(job.GfsDetails);
   const gfsEnabled = job.GfsEnabled;
+  // Gate the muted note on conditions where archive offload is *actually* the
+  // effective GFS cap: (a) override is off, (b) the job has GFS to cap, and
+  // (c) archive cap is tighter than any global retention horizon. This mirrors
+  // capJob's GFS branch and avoids attributing a cap to archive when
+  // `limitCalculationYears` is the binding constraint.
+  const globalCapDays =
+    settings.limitCalculationYears != null
+      ? settings.limitCalculationYears * 365
+      : Infinity;
+  const archiveTruncated =
+    job.archiveOffloadDays != null &&
+    !settings.ignoreArchiveTier &&
+    job.GfsDetails != null &&
+    job.archiveOffloadDays < globalCapDays;
 
   return (
     <div className="space-y-1">
@@ -143,6 +189,12 @@ function ProtectionSection({ job }: { job: EnrichedJob }) {
           <span className="text-muted-foreground">N/A</span>
         )}
       </PropertyRow>
+      {archiveTruncated && (
+        <p className="text-muted-foreground pt-1 text-xs">
+          GFS retention truncated to {job.archiveOffloadDays} days for sizing
+          math due to Archive Tier offload.
+        </p>
+      )}
     </div>
   );
 }
@@ -238,15 +290,17 @@ export function JobDetailSheet({
         </SheetHeader>
 
         <ScrollArea className="min-h-0 flex-1 px-4 pb-4">
-          <div className="space-y-5">
-            <StorageSection job={job} />
-            <Separator />
-            <ProtectionSection job={job} />
-            <Separator />
-            <ConfigurationSection job={job} />
-            <Separator />
-            <SessionSection job={job} />
-          </div>
+          <TooltipProvider>
+            <div className="space-y-5">
+              <StorageSection job={job} />
+              <Separator />
+              <ProtectionSection job={job} />
+              <Separator />
+              <ConfigurationSection job={job} />
+              <Separator />
+              <SessionSection job={job} />
+            </div>
+          </TooltipProvider>
         </ScrollArea>
       </SheetContent>
     </Sheet>

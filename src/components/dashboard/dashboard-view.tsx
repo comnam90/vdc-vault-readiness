@@ -1,13 +1,23 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, XCircle, Upload } from "lucide-react";
+import { buildCalculatorSummary } from "@/lib/calculator-aggregator";
+import { CheckCircle2, XCircle } from "lucide-react";
 import type { NormalizedDataset } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
-import { MINIMUM_VBR_VERSION } from "@/lib/constants";
+import {
+  CARD_LABEL,
+  DEFAULT_IMMUTABILITY_DAYS,
+  MINIMUM_RETENTION_DAYS,
+  MINIMUM_VBR_VERSION,
+} from "@/lib/constants";
 import { enrichJobs } from "@/lib/enrich-jobs";
-import { getBlockerValidations } from "@/lib/validation-selectors";
+import {
+  getBlockerValidations,
+  getNoteValidations,
+  getPassingValidations,
+} from "@/lib/validation-selectors";
 import { isVersionAtLeast } from "@/lib/version-compare";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useSettings } from "@/hooks/use-settings";
+import { useCalculatorApi } from "@/hooks/use-calculator-api";
 import {
   Card,
   CardContent,
@@ -17,18 +27,22 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalculatorInputs } from "@/components/dashboard/calculator-inputs";
+import {
+  CalculatorInputs,
+  type GfsState,
+} from "@/components/dashboard/calculator-inputs";
 import { BlockersList } from "./blockers-list";
 import { JobTable } from "./job-table";
+import { NotesPanel } from "./notes-panel";
 import { PassingChecksList } from "./passing-checks-list";
+import { JobsCharts } from "./jobs-charts";
 import { RepositoriesTab } from "./repositories-tab";
+import { SiteHeader } from "./site-header";
 import { SuccessCelebration } from "./success-celebration";
 import { cn } from "@/lib/utils";
 
 const SUMMARY_CARD =
   "motion-safe:animate-in motion-safe:fade-in fill-mode-backwards ease-[var(--ease-out)] border-b-4 shadow-sm transition-shadow duration-300 hover:shadow-md";
-const CARD_LABEL =
-  "text-muted-foreground text-xs font-semibold tracking-wide uppercase";
 
 interface DashboardViewProps {
   data: NormalizedDataset;
@@ -45,6 +59,53 @@ export function DashboardView({
   const [excludedJobNames, setExcludedJobNames] = useState<Set<string>>(
     new Set(),
   );
+  const { settings } = useSettings();
+  const [immutabilityDays, setImmutabilityDays] = useState(
+    DEFAULT_IMMUTABILITY_DAYS,
+  );
+  const [retentionDays, setRetentionDays] = useState(() => {
+    const s = buildCalculatorSummary(
+      data.jobInfo,
+      data.jobSessionSummary,
+      new Set(),
+      settings,
+    );
+    return s.maxRetentionDays ?? MINIMUM_RETENTION_DAYS;
+  });
+  const [gfs, setGfs] = useState<GfsState>(() => {
+    const s = buildCalculatorSummary(
+      data.jobInfo,
+      data.jobSessionSummary,
+      new Set(),
+      settings,
+    );
+    return { weekly: s.gfsWeekly, monthly: s.gfsMonthly, yearly: s.gfsYearly };
+  });
+  const [isRetentionOverridden, setIsRetentionOverridden] = useState(false);
+  const [isGfsOverridden, setIsGfsOverridden] = useState(false);
+  const {
+    result: calcResult,
+    upgradeResult: calcUpgradeResult,
+    growthSeries: calcGrowthSeries,
+    upgradeGrowthSeries: calcUpgradeGrowthSeries,
+    upgradeGrowthLoading: calcUpgradeGrowthLoading,
+    upgradeGrowthError: calcUpgradeGrowthError,
+    error: calcError,
+    loading: calcLoading,
+    hasConsented,
+    grantConsent,
+    calculate,
+    generateUpgradeGrowth,
+  } = useCalculatorApi({
+    data,
+    excludedJobNames,
+    settings,
+    immutabilityDays,
+    retentionDays,
+    gfsWeekly: gfs.weekly,
+    gfsMonthly: gfs.monthly,
+    gfsYearly: gfs.yearly,
+  });
   const enrichedJobs = useMemo(
     () => enrichJobs(data.jobInfo, data.jobSessionSummary),
     [data.jobInfo, data.jobSessionSummary],
@@ -72,23 +133,12 @@ export function DashboardView({
   const hasFail = validations.some((v) => v.status === "fail");
   const allChecksPass = validations.every((v) => v.status === "pass");
   const blockers = getBlockerValidations(validations);
+  const notes = getNoteValidations(validations);
   const hasBlockers = blockers.length > 0;
 
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto w-full max-w-5xl space-y-6 p-6 duration-400 ease-[var(--ease-out)]">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">
-            VDC Vault Readiness
-          </h1>
-          <Badge variant="secondary">Scan Complete</Badge>
-        </div>
-        <Button variant="outline" size="sm" onClick={onReset}>
-          <Upload className="size-4" />
-          Upload New
-        </Button>
-      </div>
+      <SiteHeader onReset={onReset} />
 
       <Separator />
 
@@ -181,11 +231,19 @@ export function DashboardView({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="jobs">Job Details</TabsTrigger>
-          <TabsTrigger value="sizing">Sizing</TabsTrigger>
-          <TabsTrigger value="repositories">Repositories</TabsTrigger>
+        <TabsList variant="line" className="w-full">
+          <TabsTrigger className="after:bg-primary" value="overview">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger className="after:bg-primary" value="jobs">
+            Job Details
+          </TabsTrigger>
+          <TabsTrigger className="after:bg-primary" value="sizing">
+            Sizing
+          </TabsTrigger>
+          <TabsTrigger className="after:bg-primary" value="repositories">
+            Repositories
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent
@@ -195,16 +253,23 @@ export function DashboardView({
           {hasBlockers ? (
             <>
               <BlockersList blockers={blockers} />
+              <NotesPanel
+                validations={validations}
+                precedingItemsCount={blockers.length}
+              />
               <PassingChecksList
                 validations={validations}
-                blockerCount={blockers.length}
+                precedingItemsCount={blockers.length + notes.length}
               />
             </>
           ) : (
-            <SuccessCelebration
-              checksCount={validations.length}
-              onViewDetails={() => setActiveTab("jobs")}
-            />
+            <>
+              <NotesPanel validations={validations} />
+              <SuccessCelebration
+                checksCount={getPassingValidations(validations).length}
+                onViewDetails={() => setActiveTab("jobs")}
+              />
+            </>
           )}
         </TabsContent>
 
@@ -212,18 +277,58 @@ export function DashboardView({
           value="jobs"
           className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
         >
-          <JobTable
-            jobs={enrichedJobs}
-            excludedJobNames={excludedJobNames}
-            onExcludedChange={setExcludedJobNames}
-          />
+          <div className="space-y-6">
+            <JobsCharts jobs={enrichedJobs} />
+            <JobTable
+              jobs={enrichedJobs}
+              excludedJobNames={excludedJobNames}
+              onExcludedChange={setExcludedJobNames}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent
           value="sizing"
           className="motion-safe:data-[state=active]:animate-in motion-safe:data-[state=active]:fade-in mt-4 motion-safe:data-[state=active]:duration-150"
         >
-          <CalculatorInputs data={data} excludedJobNames={excludedJobNames} />
+          <CalculatorInputs
+            data={data}
+            excludedJobNames={excludedJobNames}
+            result={calcResult}
+            upgradeResult={calcUpgradeResult}
+            growthSeries={calcGrowthSeries}
+            error={calcError}
+            loading={calcLoading}
+            hasConsented={hasConsented}
+            immutabilityDays={immutabilityDays}
+            retentionDays={retentionDays}
+            gfs={gfs}
+            onImmutabilityDaysChange={setImmutabilityDays}
+            onRetentionDaysChange={(v) => {
+              setRetentionDays(v);
+              setIsRetentionOverridden(true);
+            }}
+            onGfsChange={(v) => {
+              setGfs(v);
+              setIsGfsOverridden(true);
+            }}
+            isRetentionOverridden={isRetentionOverridden}
+            isGfsOverridden={isGfsOverridden}
+            onRetentionReset={(v) => {
+              setRetentionDays(v);
+              setIsRetentionOverridden(false);
+            }}
+            onGfsReset={(v) => {
+              setGfs(v);
+              setIsGfsOverridden(false);
+            }}
+            onConsentGiven={grantConsent}
+            onCalculate={calculate}
+            generateUpgradeGrowth={generateUpgradeGrowth}
+            upgradeGrowthSeries={calcUpgradeGrowthSeries}
+            upgradeGrowthLoading={calcUpgradeGrowthLoading}
+            upgradeGrowthError={calcUpgradeGrowthError}
+          />
         </TabsContent>
 
         <TabsContent

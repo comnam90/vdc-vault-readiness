@@ -7,14 +7,14 @@ import { cn } from "@/lib/utils";
 
 interface PassingChecksListProps {
   validations: ValidationResult[];
-  blockerCount?: number;
+  precedingItemsCount?: number;
 }
 
 const STAGGER_DELAY_MS = 100;
 
 export function PassingChecksList({
   validations,
-  blockerCount = 0,
+  precedingItemsCount = 0,
 }: PassingChecksListProps) {
   const passing = getPassingValidations(validations);
 
@@ -42,7 +42,7 @@ export function PassingChecksList({
             "border-l-primary/30 bg-primary/5 border-l-4",
           )}
           style={{
-            animationDelay: `${(blockerCount + index) * STAGGER_DELAY_MS}ms`,
+            animationDelay: `${(precedingItemsCount + index) * STAGGER_DELAY_MS}ms`,
           }}
         >
           <CheckCircle2 className="text-primary !size-5" aria-hidden="true" />

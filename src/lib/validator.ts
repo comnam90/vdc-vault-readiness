@@ -7,23 +7,49 @@ import {
 } from "./constants";
 import { isVersionAtLeast } from "./version-compare";
 import { parseGfsDetails } from "./calculator-aggregator";
+import { classifyAgentJobType } from "./agent-classifier";
 
 export function validateHealthcheck(
   data: NormalizedDataset,
 ): ValidationResult[] {
-  return [
+  const results: ValidationResult[] = [
     validateVbrVersion(data),
-    validateGlobalEncryption(data),
+    validateConfigBackupEncryption(data),
     validateJobEncryption(data),
     validateAwsWorkload(data),
-    validateAgentWorkload(data),
+    validateAgentStandaloneUnsupported(data),
+    validateAgentPolicyGatewayRequired(data),
     validateLicenseEdition(data),
     validateRetentionPeriod(data),
     validateCapTierEncryption(data),
     validateSobrImmutability(data),
     validateArchiveTierEdition(data),
     validateCapacityTierResidency(data),
+    validateActiveFull(data),
   ];
+
+  // Side-scan for legacy JobType strings after rules run, so we can emit
+  // a single deprecation warning per call. Re-classifying here (in
+  // addition to the rules' own classification) is intentional and cheap
+  // for typical Veeam environments (well under 1k jobs).
+  const sawLegacy =
+    data.jobInfo.some(
+      (job) => classifyAgentJobType(job.JobType)?.legacy === true,
+    ) ||
+    data.jobSummary.some(
+      (row) => classifyAgentJobType(row.JobType)?.legacy === true,
+    );
+
+  if (sawLegacy) {
+    console.warn(
+      "[vdc-vault-readiness] Legacy agent job type strings detected " +
+        "(EpAgentBackup / EpAgentPolicy / Unmanaged Agent / VmbapiPolicyTempJob). " +
+        "These will be removed in a future release once the updated veeam-healthcheck " +
+        "tool is widely deployed. Please regenerate your healthcheck using the latest version.",
+    );
+  }
+
+  return results;
 }
 
 function validateVbrVersion(data: NormalizedDataset): ValidationResult {
@@ -60,38 +86,38 @@ function validateVbrVersion(data: NormalizedDataset): ValidationResult {
   };
 }
 
-function validateGlobalEncryption(data: NormalizedDataset): ValidationResult {
+function validateConfigBackupEncryption(
+  data: NormalizedDataset,
+): ValidationResult {
   if (data.securitySummary.length === 0) {
     return {
-      ruleId: "global-encryption",
-      title: "Global Encryption Configuration",
-      status: "pass",
-      message: "No security summary found. Skipping global encryption check.",
+      ruleId: "config-backup-encryption",
+      title: "Configuration Backup Encryption",
+      status: "skipped",
+      message:
+        "Configuration backup encryption check skipped — security summary section is missing from the healthcheck data.",
       affectedItems: [],
     };
   }
 
   const summary = data.securitySummary[0];
-  const allEnabled =
-    summary.BackupFileEncryptionEnabled &&
-    summary.ConfigBackupEncryptionEnabled;
 
-  if (!allEnabled) {
+  if (!summary.ConfigBackupEncryptionEnabled) {
     return {
-      ruleId: "global-encryption",
-      title: "Global Encryption Configuration",
+      ruleId: "config-backup-encryption",
+      title: "Configuration Backup Encryption",
       status: "warning",
       message:
-        "Global encryption is disabled. VDC Vault requires all data to be encrypted. Best practice is to enable BackupFileEncryption and ConfigBackupEncryption globally to ensure compliance.",
+        "VBR configuration backup encryption is not enabled. Once VDC Vault is in use, VBR automatically disables configuration backups unless they are encrypted, so encryption becomes a requirement at that point. It is also a best practice generally — the configuration backup contains sensitive information such as credentials and certificates.",
       affectedItems: [],
     };
   }
 
   return {
-    ruleId: "global-encryption",
-    title: "Global Encryption Configuration",
+    ruleId: "config-backup-encryption",
+    title: "Configuration Backup Encryption",
     status: "pass",
-    message: "Global encryption settings are enabled.",
+    message: "VBR configuration backup encryption is enabled.",
     affectedItems: [],
   };
 }
@@ -164,27 +190,72 @@ function validateAwsWorkload(data: NormalizedDataset): ValidationResult {
   };
 }
 
-function validateAgentWorkload(data: NormalizedDataset): ValidationResult {
-  const agentJobs = data.jobInfo.filter((job) =>
-    job.JobType.toLowerCase().includes("agent"),
+function validateAgentStandaloneUnsupported(
+  data: NormalizedDataset,
+): ValidationResult {
+  const jobInfoMatches = data.jobInfo.filter(
+    (job) => classifyAgentJobType(job.JobType)?.category === "standalone",
   );
 
-  if (agentJobs.length > 0) {
+  const summaryCount = data.jobSummary
+    .filter(
+      (s) =>
+        classifyAgentJobType(s.JobType)?.category === "standalone" &&
+        s.Count > 0,
+    )
+    .reduce((sum, s) => sum + s.Count, 0);
+
+  // jobInfo and jobSummary describe the same set of agents — jobInfo is
+  // a per-job view, jobSummary is an aggregate count by JobType. Prefer
+  // jobInfo when present (new-format healthchecks) so we can list named
+  // jobs; fall back to the jobSummary count otherwise (old-format
+  // healthchecks expose standalone agents via the count only). We never
+  // sum the two sources, which would double-count when both are populated.
+  const useJobInfo = jobInfoMatches.length > 0;
+  const totalCount = useJobInfo ? jobInfoMatches.length : summaryCount;
+
+  if (totalCount > 0) {
     return {
-      ruleId: "agent-workload",
-      title: "Agent Workload Configuration",
-      status: "warning",
-      message:
-        "Agent workloads detected. Veeam Agents cannot write directly to object storage. Ensure you configure a Gateway Server or use Cloud Connect to route these backups to Vault.",
-      affectedItems: agentJobs.map((job) => job.JobName),
+      ruleId: "agent-standalone-unsupported",
+      title: "Standalone Agent Workloads",
+      status: "fail",
+      message: `${totalCount} standalone (unmanaged) agent ${totalCount === 1 ? "job" : "jobs"} detected. Standalone agents cannot target VDC Vault directly. Use a Backup Copy Job with encryption enabled to land their backups in Vault — that is the only supported path.`,
+      affectedItems: useJobInfo ? jobInfoMatches.map((j) => j.JobName) : [],
     };
   }
 
   return {
-    ruleId: "agent-workload",
-    title: "Agent Workload Configuration",
+    ruleId: "agent-standalone-unsupported",
+    title: "Standalone Agent Workloads",
     status: "pass",
-    message: "No agent workloads detected.",
+    message: "No standalone agent workloads detected.",
+    affectedItems: [],
+  };
+}
+
+function validateAgentPolicyGatewayRequired(
+  data: NormalizedDataset,
+): ValidationResult {
+  const matches = data.jobInfo.filter(
+    (job) => classifyAgentJobType(job.JobType)?.category === "policy",
+  );
+
+  if (matches.length > 0) {
+    return {
+      ruleId: "agent-policy-gateway-required",
+      title: "Managed Agent Policies",
+      status: "warning",
+      message:
+        "Managed agent policies require a VBR Gateway Server to reach VDC Vault — they cannot write directly to object storage. Ensure a Gateway Server is configured for these policies.",
+      affectedItems: matches.map((job) => job.JobName),
+    };
+  }
+
+  return {
+    ruleId: "agent-policy-gateway-required",
+    title: "Managed Agent Policies",
+    status: "pass",
+    message: "No managed agent policies detected.",
     affectedItems: [],
   };
 }
@@ -201,7 +272,7 @@ function validateLicenseEdition(data: NormalizedDataset): ValidationResult {
       title: "License/Edition Notes",
       status: "info",
       message:
-        "Community Edition detected. Ensure you are aware of SOBR limitations when designing your Vault strategy.",
+        "Community or Free edition detected. VDC Vault is fully supported on Community Edition. Note: Community / Free editions do not include Scale-Out Backup Repository (SOBR), so capacity-tier offload patterns are not available.",
       affectedItems: affectedLicenses.map((license) => license.Edition),
     };
   }
@@ -436,6 +507,40 @@ function validateCapacityTierResidency(
     title: "Capacity Tier Residency",
     status: "pass",
     message: `All capacity tier data meets the ${minDays}-day minimum residency requirement.`,
+    affectedItems: [],
+  };
+}
+
+function validateActiveFull(data: NormalizedDataset): ValidationResult {
+  if (data.jobInfo.length === 0) {
+    return {
+      ruleId: "active-full-enabled",
+      title: "Active Full Backup Schedules",
+      status: "skipped",
+      message:
+        "Active Full check skipped — no job data found in the healthcheck.",
+      affectedItems: [],
+    };
+  }
+
+  const affected = data.jobInfo.filter((job) => job.ActiveFullEnabled === true);
+
+  if (affected.length > 0) {
+    return {
+      ruleId: "active-full-enabled",
+      title: "Active Full Backup Schedules",
+      status: "warning",
+      message: `${affected.length} job(s) have Active Full enabled. The VDC Vault sizing calculator assumes Synthetic Full backups. Active Full runs create a complete new backup chain on each execution, consuming significantly more storage than the calculator estimates.`,
+      affectedItems: affected.map((job) => job.JobName),
+    };
+  }
+
+  return {
+    ruleId: "active-full-enabled",
+    title: "Active Full Backup Schedules",
+    status: "pass",
+    message:
+      "No jobs have Active Full enabled. Sizing estimates assume Synthetic Full backups.",
     affectedItems: [],
   };
 }

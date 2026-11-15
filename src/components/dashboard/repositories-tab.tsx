@@ -24,8 +24,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { groupByRepo, repoImmutabilityCounts } from "@/lib/chart-selectors";
+import { RepoImmutabilityChart } from "./repo-immutability-chart";
 import { SobrDetailSheet } from "./sobr-detail-sheet";
 import { RepoDetailSheet } from "./repo-detail-sheet";
+import { RepoSizeChart } from "./repo-size-chart";
 import { RepositoriesTable } from "./repositories-table";
 
 interface RepositoriesTabProps {
@@ -153,6 +156,10 @@ function buildRepoColumns(statsMap: Map<string, RepoStats>) {
   ];
 }
 
+// Badge styling note:
+// Immutability "No" uses destructive styling — missing immutability is a risk for Vault compliance.
+// Capacity Tier "No" and Archive Tier "No" use muted styling — these are optional SOBR features;
+// not having them configured is informational, not a blocker.
 function buildSobrColumns(
   statsMap: Map<string, RepoStats>,
   capExtents: SafeCapExtent[],
@@ -344,6 +351,10 @@ export function RepositoriesTab({
           <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             Standard Repositories
           </h2>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <RepoSizeChart data={groupByRepo(jobs).slice(0, 5)} />
+            <RepoImmutabilityChart data={repoImmutabilityCounts(repos, sobr)} />
+          </div>
           <RepositoriesTable
             table={repoTable}
             emptyMessage="No repositories found."

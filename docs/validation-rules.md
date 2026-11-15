@@ -6,16 +6,17 @@
 
 ## Status Taxonomy
 
-| Status    | Meaning                                       | Icon            | Badge     | Display Location                          |
-| --------- | --------------------------------------------- | --------------- | --------- | ----------------------------------------- |
-| `fail`    | Hard blocker preventing Vault onboarding      | `CircleX`       | `Blocker` | Blockers list (sorted first, red styling) |
-| `warning` | Actionable concern, not a hard blocker        | `TriangleAlert` | `Warning` | Blockers list (sorted after fails, amber) |
-| `info`    | Informational note, no action strictly needed | --              | --        | Not currently displayed in overview       |
-| `pass`    | Check passed, no issues found                 | `CheckCircle2`  | `Passed`  | Passing checks list (green styling)       |
+| Status    | Meaning                                        | Icon            | Badge     | Display Location                          |
+| --------- | ---------------------------------------------- | --------------- | --------- | ----------------------------------------- |
+| `fail`    | Hard blocker preventing Vault onboarding       | `CircleX`       | `Blocker` | Blockers list (sorted first, red styling) |
+| `warning` | Actionable concern, not a hard blocker         | `TriangleAlert` | `Warning` | Blockers list (sorted after fails, amber) |
+| `info`    | Advisory note (FYI, no action strictly needed) | `Info`          | `Note`    | Notes panel (neutral / grey styling)      |
+| `skipped` | Check could not run due to missing input data  | `CircleSlash`   | `Skipped` | Notes panel (neutral / grey styling)      |
+| `pass`    | Check passed, no issues found                  | `CheckCircle2`  | `Passed`  | Passing checks list (green styling)       |
 
-**Sorting:** Blockers list shows `fail` results first, then `warning`, preserving order within each group. Passing checks appear below blockers when blockers exist, or a success celebration is shown when there are no blockers.
+**Sorting:** Blockers list shows `fail` results first, then `warning`, preserving order within each group. The Notes panel (`info` + `skipped`) renders below the blockers list when blockers exist, or above the success celebration when there are none. Passing checks appear below the Notes panel when blockers exist; otherwise the success celebration takes their place.
 
-**Affected items:** Displayed as a bulleted list below the message, truncated to 5 visible items with "+ N more" overflow text.
+**Affected items:** Displayed as a bulleted list below the message, truncated to 5 visible items with "and N more" overflow text.
 
 ---
 
@@ -43,24 +44,23 @@
 
 ---
 
-### `global-encryption` -- Global Encryption Configuration
+### `config-backup-encryption` -- Configuration Backup Encryption
 
-|                       |                                                               |
-| --------------------- | ------------------------------------------------------------- |
-| **Status on failure** | `warning`                                                     |
-| **Data source**       | `NormalizedDataset.securitySummary` (`SafeSecuritySummary[]`) |
+|                         |                                                                      |
+| ----------------------- | -------------------------------------------------------------------- |
+| **Status on failure**   | `warning`                                                            |
+| **Status when skipped** | `skipped` (securitySummary missing from healthcheck data)            |
+| **Data source**         | `NormalizedDataset.securitySummary[0].ConfigBackupEncryptionEnabled` |
 
-**Conditions:**
+**Behavior:**
 
-| Condition                                                                 | Status    | Message                                                                                                                                                                                 |
-| ------------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| No security summary found (`securitySummary` is empty)                    | `pass`    | `No security summary found. Skipping global encryption check.`                                                                                                                          |
-| `BackupFileEncryptionEnabled` or `ConfigBackupEncryptionEnabled` is false | `warning` | `Global encryption is disabled. VDC Vault requires all data to be encrypted. Best practice is to enable BackupFileEncryption and ConfigBackupEncryption globally to ensure compliance.` |
-| Both encryption flags are true                                            | `pass`    | `Global encryption settings are enabled.`                                                                                                                                               |
+- `pass` — `ConfigBackupEncryptionEnabled === true`.
+- `skipped` — `securitySummary` array is empty.
+- `warning` — `ConfigBackupEncryptionEnabled === false`.
 
-**Affected items:** None (global setting, not per-item).
+**Rationale:** VDC Vault automatically disables VBR configuration backups when they are not encrypted. Encrypting the configuration backup is a hard requirement once Vault is in use and a best practice regardless because the file contains credentials and certificates.
 
-**Recommendations:** Enable both `BackupFileEncryption` and `ConfigBackupEncryption` globally in the VBR console.
+**Affected items:** none — single-server setting.
 
 ---
 
@@ -107,43 +107,61 @@
 
 ---
 
-### `agent-workload` -- Agent Workload Configuration
+### `agent-standalone-unsupported` -- Standalone Agent Workloads
 
-|                       |                                           |
-| --------------------- | ----------------------------------------- |
-| **Status on failure** | `warning`                                 |
-| **Data source**       | `NormalizedDataset.jobInfo` (`SafeJob[]`) |
+|                       |                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| **Status on failure** | `fail` (blocker)                                                                   |
+| **Data source**       | `NormalizedDataset.jobSummary` (`SafeJobSummary[]`)                                |
+| **Detection**         | Any row where `JobType.trim().toLowerCase() === "unmanaged agent"` and `Count > 0` |
 
-**Conditions:**
+**Behavior:**
 
-| Condition                                                     | Status    | Message                                                                                                                                                                       |
-| ------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Any job has `JobType` containing `"agent"` (case-insensitive) | `warning` | `Agent workloads detected. Veeam Agents cannot write directly to object storage. Ensure you configure a Gateway Server or use Cloud Connect to route these backups to Vault.` |
-| No agent workload jobs found                                  | `pass`    | `No agent workloads detected.`                                                                                                                                                |
+- `pass` — no matching rows, or all matching rows have `Count === 0`.
+- `fail` — one or more rows match with `Count > 0`; total count is included in the message.
 
-**Affected items:** Job names (`SafeJob.JobName`) of agent-based jobs.
+**Rationale:** Standalone (unmanaged) agents cannot target VDC Vault directly. The only supported path is a Backup Copy Job with encryption enabled. Real-world VBR healthcheck data does not include unmanaged agent rows in `jobInfo` — they only appear in `jobSummary` — so detection must read from `jobSummary`.
 
-**Recommendations:** Configure a Gateway Server or use Cloud Connect to route agent backups to Vault. Agents cannot write directly to object storage.
+**Affected items:** none — `jobSummary` does not enumerate per-job names; the aggregate count is included in the message instead.
+
+---
+
+### `agent-policy-gateway-required` -- Managed Agent Policies
+
+|                       |                                                                           |
+| --------------------- | ------------------------------------------------------------------------- |
+| **Status on failure** | `warning`                                                                 |
+| **Data source**       | `NormalizedDataset.jobInfo[].JobType`                                     |
+| **Detection**         | `JobType.trim().toLowerCase() ∈ {"epagentpolicy", "vmbapipolicytempjob"}` |
+
+**Behavior:**
+
+- `pass` — no jobs match.
+- `warning` — one or more jobs match.
+
+**Rationale:** Managed agent policies can reach VDC Vault only through a VBR Gateway Server — they cannot write directly to object storage.
+
+**Affected items:** `JobName` values of matching jobs.
 
 ---
 
 ### `license-edition` -- License/Edition Notes
 
-|                       |                                                |
-| --------------------- | ---------------------------------------------- |
-| **Status on failure** | `info`                                         |
-| **Data source**       | `NormalizedDataset.Licenses` (`SafeLicense[]`) |
+|                           |                                                |
+| ------------------------- | ---------------------------------------------- |
+| **Status when triggered** | `info`                                         |
+| **Data source**           | `NormalizedDataset.Licenses` (`SafeLicense[]`) |
 
 **Conditions:**
 
-| Condition                                                                                  | Status | Message                                                                                                    |
-| ------------------------------------------------------------------------------------------ | ------ | ---------------------------------------------------------------------------------------------------------- |
-| Any license has `Edition` containing `"community"` or `"free"` (case-insensitive, trimmed) | `info` | `Community Edition detected. Ensure you are aware of SOBR limitations when designing your Vault strategy.` |
-| No community or free editions found                                                        | `pass` | `No Community or Free editions detected.`                                                                  |
+| Condition                                                                                  | Status | Message                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any license has `Edition` containing `"community"` or `"free"` (case-insensitive, trimmed) | `info` | `Community or Free edition detected. VDC Vault is fully supported on Community Edition. Note: Community / Free editions do not include Scale-Out Backup Repository (SOBR), so capacity-tier offload patterns are not available.` |
+| No community or free editions found                                                        | `pass` | `No Community or Free editions detected.`                                                                                                                                                                                        |
 
 **Affected items:** Edition strings (`SafeLicense.Edition`) of matched licenses.
 
-**Recommendations:** Review SOBR (Scale-Out Backup Repository) limitations for Community Edition before designing a Vault strategy. See [`VDCVAULT-CHEETSHEET.md`](../VDCVAULT-CHEETSHEET.md) for edition-specific limitations.
+**Recommendations:** Vault is fully supported on Community Edition. Be aware that Community / Free editions do not include SOBR (Scale-Out Backup Repository), so Vault must be configured as a standard repository. See [`VDCVAULT-CHEETSHEET.md`](../VDCVAULT-CHEETSHEET.md) for edition-specific details.
 
 ---
 

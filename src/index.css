@@ -70,6 +70,7 @@
   --chart-3: var(--suma);
   --chart-4: var(--ignis);
   --chart-5: var(--french-grey);
+  --chart-buffer: oklch(0.72 0.01 240);
 
   /* Sidebar */
   --sidebar: oklch(0.985 0 0);
@@ -114,6 +115,9 @@
     --warning-foreground: oklch(0.15 0 0);
     --warning-muted: oklch(0.22 0.08 55);
     --info-muted: oklch(0.22 0.08 265);
+
+    /* Chart — Dark Mode */
+    --chart-buffer: oklch(0.45 0.01 240);
 
     /* Sidebar — Dark Mode */
     --sidebar: oklch(0.2 0 0);
@@ -176,6 +180,7 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-buffer: var(--chart-buffer);
 
   /* Sidebar */
   --color-sidebar: var(--sidebar);

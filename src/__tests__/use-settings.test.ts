@@ -1,0 +1,365 @@
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { act, renderHook } from "@testing-library/react";
+import { DEFAULT_SETTINGS } from "@/types/settings";
+import {
+  STORAGE_KEY,
+  __resetSettingsStoreForTests,
+  useSettings,
+} from "@/hooks/use-settings";
+
+describe("useSettings", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    __resetSettingsStoreForTests();
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+    __resetSettingsStoreForTests();
+  });
+
+  it("initializes from DEFAULT_SETTINGS when localStorage is empty", () => {
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it("initializes from localStorage when a valid value is present", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        targetCloud: "AWS",
+        growthPercent: 12,
+        growthYears: 3,
+        limitCalculationYears: 1,
+        limitCalculationMonths: 6,
+      }),
+    );
+    __resetSettingsStoreForTests();
+
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings).toEqual({
+      targetCloud: "AWS",
+      growthPercent: 12,
+      growthYears: 3,
+      limitCalculationYears: 1,
+      limitCalculationMonths: 6,
+      ignoreArchiveTier: false,
+      greenfieldSimulation: true,
+      historicalDataYears: 0,
+      bufferEnabled: false,
+      bufferPercent: 10,
+    });
+  });
+
+  it("accepts a boolean greenfieldSimulation and falls back to default when invalid", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ greenfieldSimulation: false }),
+    );
+    __resetSettingsStoreForTests();
+    const a = renderHook(() => useSettings());
+    expect(a.result.current.settings.greenfieldSimulation).toBe(false);
+    a.unmount();
+
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ greenfieldSimulation: "yes" }),
+    );
+    __resetSettingsStoreForTests();
+    const b = renderHook(() => useSettings());
+    expect(b.result.current.settings.greenfieldSimulation).toBe(
+      DEFAULT_SETTINGS.greenfieldSimulation,
+    );
+  });
+
+  it("falls back to DEFAULT_SETTINGS when localStorage holds malformed JSON", () => {
+    window.localStorage.setItem(STORAGE_KEY, "{not-json");
+    __resetSettingsStoreForTests();
+
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it("rejects an unknown targetCloud and falls back to the default", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ targetCloud: "GCP" }),
+    );
+    __resetSettingsStoreForTests();
+
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.targetCloud).toBe(
+      DEFAULT_SETTINGS.targetCloud,
+    );
+  });
+
+  it("clamps numeric growth fields to their valid ranges", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        targetCloud: "Azure",
+        growthPercent: 250, // > 100 → 100
+        growthYears: -3, // < 0 → 0
+        limitCalculationYears: null,
+      }),
+    );
+    __resetSettingsStoreForTests();
+
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.growthPercent).toBe(100);
+    expect(result.current.settings.growthYears).toBe(0);
+  });
+
+  it("treats non-finite or non-numeric growth values as defaults", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        growthPercent: "ten",
+        growthYears: null,
+      }),
+    );
+    __resetSettingsStoreForTests();
+
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.growthPercent).toBe(
+      DEFAULT_SETTINGS.growthPercent,
+    );
+    expect(result.current.settings.growthYears).toBe(
+      DEFAULT_SETTINGS.growthYears,
+    );
+  });
+
+  it("disables the retention cap when limitCalculationYears is NaN, non-integer, or out of range", () => {
+    for (const bad of [-1, 21, NaN, "1y", 1.5]) {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ limitCalculationYears: bad }),
+      );
+      __resetSettingsStoreForTests();
+      const { result, unmount } = renderHook(() => useSettings());
+      expect(result.current.settings.limitCalculationYears).toBeNull();
+      unmount();
+    }
+  });
+
+  it("accepts a valid integer in [0, 20] for limitCalculationYears", () => {
+    for (const value of [0, 3, 10, 13, 20]) {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ limitCalculationYears: value }),
+      );
+      __resetSettingsStoreForTests();
+
+      const { result, unmount } = renderHook(() => useSettings());
+      expect(result.current.settings.limitCalculationYears).toBe(value);
+      unmount();
+    }
+  });
+
+  it("defaults limitCalculationMonths to 0 when missing from storage", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ targetCloud: "Azure" }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.limitCalculationMonths).toBe(0);
+  });
+
+  it("accepts a valid integer in [0, 11] for limitCalculationMonths", () => {
+    for (const value of [0, 6, 11]) {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ limitCalculationMonths: value }),
+      );
+      __resetSettingsStoreForTests();
+      const { result, unmount } = renderHook(() => useSettings());
+      expect(result.current.settings.limitCalculationMonths).toBe(value);
+      unmount();
+    }
+  });
+
+  it("clamps and coerces invalid limitCalculationMonths values", () => {
+    for (const [bad, expected] of [
+      [-1, 0],
+      [15, 11],
+      [NaN, 0],
+      ["6m", 0],
+      [1.7, 1], // truncates
+    ] as const) {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ limitCalculationMonths: bad }),
+      );
+      __resetSettingsStoreForTests();
+      const { result, unmount } = renderHook(() => useSettings());
+      expect(result.current.settings.limitCalculationMonths).toBe(expected);
+      unmount();
+    }
+  });
+
+  it("defaults historicalDataYears to 0 when missing from storage", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ targetCloud: "Azure" }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.historicalDataYears).toBe(0);
+  });
+
+  it("accepts a valid integer in [0, 10] for historicalDataYears", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ historicalDataYears: 3 }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.historicalDataYears).toBe(3);
+  });
+
+  it("clamps and coerces invalid historicalDataYears values", () => {
+    for (const [bad, expected] of [
+      [-2, 0],
+      [25, 10],
+      [NaN, 0],
+      ["3y", 0],
+      [1.7, 1], // truncates
+    ] as const) {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ historicalDataYears: bad }),
+      );
+      __resetSettingsStoreForTests();
+      const { result, unmount } = renderHook(() => useSettings());
+      expect(result.current.settings.historicalDataYears).toBe(expected);
+      unmount();
+    }
+  });
+
+  it("merges partial localStorage values with defaults so missing keys are filled in", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ targetCloud: "AWS" }),
+    );
+    __resetSettingsStoreForTests();
+
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings).toEqual({
+      ...DEFAULT_SETTINGS,
+      targetCloud: "AWS",
+    });
+  });
+
+  it("updateSettings patches state and persists to localStorage", () => {
+    const { result } = renderHook(() => useSettings());
+
+    act(() => {
+      result.current.updateSettings({ targetCloud: "AWS", growthPercent: 25 });
+    });
+
+    expect(result.current.settings.targetCloud).toBe("AWS");
+    expect(result.current.settings.growthPercent).toBe(25);
+    expect(result.current.settings.growthYears).toBe(0); // default preserved
+
+    const persisted = JSON.parse(
+      window.localStorage.getItem(STORAGE_KEY) ?? "{}",
+    );
+    expect(persisted.targetCloud).toBe("AWS");
+    expect(persisted.growthPercent).toBe(25);
+  });
+
+  it("propagates updates to multiple consumers of the hook", () => {
+    const a = renderHook(() => useSettings());
+    const b = renderHook(() => useSettings());
+
+    act(() => {
+      a.result.current.updateSettings({ limitCalculationYears: 2 });
+    });
+
+    expect(a.result.current.settings.limitCalculationYears).toBe(2);
+    expect(b.result.current.settings.limitCalculationYears).toBe(2);
+  });
+
+  it("resetSettings restores DEFAULT_SETTINGS and persists them", () => {
+    const { result } = renderHook(() => useSettings());
+
+    act(() => {
+      result.current.updateSettings({
+        targetCloud: "AWS",
+        growthPercent: 10,
+        growthYears: 5,
+        limitCalculationYears: 3,
+      });
+    });
+    expect(result.current.settings.targetCloud).toBe("AWS");
+
+    act(() => {
+      result.current.resetSettings();
+    });
+
+    expect(result.current.settings).toEqual(DEFAULT_SETTINGS);
+    const persisted = JSON.parse(
+      window.localStorage.getItem(STORAGE_KEY) ?? "{}",
+    );
+    expect(persisted).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it("DEFAULT_SETTINGS has bufferEnabled: false", () => {
+    expect(DEFAULT_SETTINGS.bufferEnabled).toBe(false);
+  });
+
+  it("DEFAULT_SETTINGS has bufferPercent: 10", () => {
+    expect(DEFAULT_SETTINGS.bufferPercent).toBe(10);
+  });
+
+  it("clamps bufferPercent to a minimum of 1 (input 0 → 1)", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ bufferPercent: 0 }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.bufferPercent).toBe(1);
+  });
+
+  it("clamps bufferPercent to a maximum of 30 (input 31 → 30)", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ bufferPercent: 31 }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.bufferPercent).toBe(30);
+  });
+
+  it("persists and reads back bufferEnabled: true (happy path round-trip)", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ bufferEnabled: true }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.bufferEnabled).toBe(true);
+  });
+
+  it("passes through bufferPercent: 15 unchanged (in-range value)", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ bufferPercent: 15 }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.bufferPercent).toBe(15);
+  });
+
+  it("falls back to default bufferEnabled for non-boolean (string 'yes' → false)", () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ bufferEnabled: "yes" }),
+    );
+    __resetSettingsStoreForTests();
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.settings.bufferEnabled).toBe(false);
+  });
+});

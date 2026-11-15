@@ -30,6 +30,8 @@ function createEnrichedJob(overrides: Partial<EnrichedJob> = {}): EnrichedJob {
       Fails: 3,
       AvgJobTime: "00.01:15:30",
       MaxJobTime: "00.03:45:10",
+      AvgDedupRatio: null,
+      AvgCompressRatio: null,
     },
     ...overrides,
   };
@@ -94,28 +96,86 @@ describe("JobDetailSheet", () => {
       expect(screen.getByText("512 GB")).toBeInTheDocument();
     });
 
-    it("renders compression ratio when both sizes available", () => {
+    it("renders dedup ratio from session data", () => {
       const job = createEnrichedJob({
-        SourceSizeGB: 1024,
-        OnDiskGB: 512,
+        sessionData: {
+          JobName: "Test Job",
+          MaxDataSize: null,
+          AvgChangeRate: 5.2,
+          SuccessRate: 98.5,
+          SessionCount: 200,
+          Fails: 3,
+          AvgJobTime: "00.01:15:30",
+          MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: 3.03,
+          AvgCompressRatio: null,
+        },
+      });
+      render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+      expect(screen.getByText("Dedup Ratio")).toBeInTheDocument();
+      expect(screen.getByText("3.03x")).toBeInTheDocument();
+    });
+
+    it("renders compression ratio from session data", () => {
+      const job = createEnrichedJob({
+        sessionData: {
+          JobName: "Test Job",
+          MaxDataSize: null,
+          AvgChangeRate: 5.2,
+          SuccessRate: 98.5,
+          SessionCount: 200,
+          Fails: 3,
+          AvgJobTime: "00.01:15:30",
+          MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: 1.56,
+        },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
 
       expect(screen.getByText("Compression Ratio")).toBeInTheDocument();
-      expect(screen.getByText("2.0x")).toBeInTheDocument();
+      expect(screen.getByText("1.56x")).toBeInTheDocument();
     });
 
-    it("renders muted N/A compression ratio when sizes missing", () => {
+    it("renders muted em-dash with explanation when ratios are null", () => {
       const job = createEnrichedJob({
-        SourceSizeGB: null,
-        OnDiskGB: null,
+        sessionData: {
+          JobName: "Test Job",
+          MaxDataSize: null,
+          AvgChangeRate: 5.2,
+          SuccessRate: 98.5,
+          SessionCount: 200,
+          Fails: 3,
+          AvgJobTime: "00.01:15:30",
+          MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
+        },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
 
-      const row = screen.getByText("Compression Ratio").closest("div");
-      expect(row).not.toBeNull();
-      const value = within(row as HTMLElement).getByText("N/A");
-      expect(value).toHaveClass("text-muted-foreground");
+      // The em-dash should appear at least twice (once per ratio row).
+      const dashes = screen.getAllByText("—");
+      expect(dashes.length).toBeGreaterThanOrEqual(2);
+
+      // Screen-reader text spelling out the reason is rendered for accessibility.
+      const explanations = screen.getAllByText(
+        "Not reported by this healthcheck version",
+      );
+      expect(explanations.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("renders muted em-dash when sessionData is null", () => {
+      const job = createEnrichedJob({ sessionData: null });
+      render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+      const dashes = screen.getAllByText("—");
+      expect(dashes.length).toBeGreaterThanOrEqual(2);
+      const explanations = screen.getAllByText(
+        "Not reported by this healthcheck version",
+      );
+      expect(explanations.length).toBeGreaterThanOrEqual(2);
     });
 
     it("renders change rate from session data", () => {
@@ -129,6 +189,8 @@ describe("JobDetailSheet", () => {
           Fails: null,
           AvgJobTime: null,
           MaxJobTime: null,
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -148,6 +210,8 @@ describe("JobDetailSheet", () => {
           Fails: null,
           AvgJobTime: null,
           MaxJobTime: null,
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -167,6 +231,8 @@ describe("JobDetailSheet", () => {
           Fails: null,
           AvgJobTime: null,
           MaxJobTime: null,
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -246,6 +312,113 @@ describe("JobDetailSheet", () => {
       const value = within(row as HTMLElement).getByText("N/A");
       expect(value).toHaveClass("text-muted-foreground");
     });
+
+    describe("Archive Tier truncation note", () => {
+      async function setIgnoreArchiveTier(value: boolean) {
+        const { STORAGE_KEY, __resetSettingsStoreForTests } =
+          await import("@/hooks/use-settings");
+        window.localStorage.clear();
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ ignoreArchiveTier: value }),
+        );
+        __resetSettingsStoreForTests();
+      }
+
+      async function setRetentionCapYears(years: number) {
+        const { STORAGE_KEY, __resetSettingsStoreForTests } =
+          await import("@/hooks/use-settings");
+        window.localStorage.clear();
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ limitCalculationYears: years }),
+        );
+        __resetSettingsStoreForTests();
+      }
+
+      async function clearSettings() {
+        const { __resetSettingsStoreForTests } =
+          await import("@/hooks/use-settings");
+        window.localStorage.clear();
+        __resetSettingsStoreForTests();
+      }
+
+      it("renders the note when archiveOffloadDays is set and GFS is configured", async () => {
+        await clearSettings();
+        const job = createEnrichedJob({
+          GfsEnabled: true,
+          GfsDetails: "Weekly:8, Monthly:6, Yearly:2",
+          archiveOffloadDays: 28,
+        });
+        render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+        expect(
+          screen.getByText(/GFS retention truncated to 28 days/i),
+        ).toBeInTheDocument();
+      });
+
+      it("hides the note when the job has no GFS configured", async () => {
+        await clearSettings();
+        const job = createEnrichedJob({
+          GfsEnabled: false,
+          GfsDetails: null,
+          archiveOffloadDays: 28,
+        });
+        render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+        expect(
+          screen.queryByText(/GFS retention truncated/i),
+        ).not.toBeInTheDocument();
+      });
+
+      it("hides the note when ignoreArchiveTier is enabled", async () => {
+        await setIgnoreArchiveTier(true);
+        const job = createEnrichedJob({
+          GfsEnabled: true,
+          GfsDetails: "Weekly:8, Monthly:6, Yearly:2",
+          archiveOffloadDays: 28,
+        });
+        render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+        expect(
+          screen.queryByText(/GFS retention truncated/i),
+        ).not.toBeInTheDocument();
+
+        await clearSettings();
+      });
+
+      it("hides the note when global retention cap is tighter than archive offload", async () => {
+        // global cap = 1 * 365 = 365 days, archive = 1000 → global wins,
+        // so archive is not the effective constraint. Note should not claim
+        // archive-driven truncation.
+        await setRetentionCapYears(1);
+        const job = createEnrichedJob({
+          GfsEnabled: true,
+          GfsDetails: "Weekly:52, Monthly:12, Yearly:5",
+          archiveOffloadDays: 1000,
+        });
+        render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+        expect(
+          screen.queryByText(/GFS retention truncated/i),
+        ).not.toBeInTheDocument();
+
+        await clearSettings();
+      });
+
+      it("hides the note when archiveOffloadDays is undefined", async () => {
+        await clearSettings();
+        const job = createEnrichedJob({
+          GfsEnabled: true,
+          GfsDetails: "Weekly:4, Monthly:12, Yearly:1",
+        });
+        render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+        expect(
+          screen.queryByText(/GFS retention truncated/i),
+        ).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe("Configuration section", () => {
@@ -297,6 +470,8 @@ describe("JobDetailSheet", () => {
           Fails: 3,
           AvgJobTime: "00.01:15:30",
           MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -316,6 +491,8 @@ describe("JobDetailSheet", () => {
           Fails: 30,
           AvgJobTime: "00.01:15:30",
           MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -335,6 +512,8 @@ describe("JobDetailSheet", () => {
           Fails: 50,
           AvgJobTime: "00.01:15:30",
           MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -354,6 +533,8 @@ describe("JobDetailSheet", () => {
           Fails: 3,
           AvgJobTime: "00.01:15:30",
           MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
@@ -375,6 +556,8 @@ describe("JobDetailSheet", () => {
           Fails: 3,
           AvgJobTime: "00.01:15:30",
           MaxJobTime: "00.03:45:10",
+          AvgDedupRatio: null,
+          AvgCompressRatio: null,
         },
       });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);

@@ -1,0 +1,394 @@
+import { render, screen, within } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { SizingResults } from "@/components/dashboard/sizing-results";
+import type {
+  RestorePoint,
+  VmAgentResponse,
+  VmAgentResponseData,
+} from "@/types/veeam-api";
+import { formatTB } from "@/lib/format-utils";
+import { bufferFactor } from "@/lib/sizing-buffer";
+
+function rp(overrides: Partial<RestorePoint> = {}): RestorePoint {
+  return {
+    pointType: "performanceTier",
+    day: 1,
+    backupCapacity: 0,
+    isFull: false,
+    isGFS: false,
+    isImmutable: false,
+    flags: "D1",
+    ...overrides,
+  };
+}
+
+const RESTORE_POINTS: RestorePoint[] = [
+  rp({ day: 1, backupCapacity: 0.25, flags: "D1" }),
+  rp({ day: 7, backupCapacity: 0.5, flags: "W1" }),
+  rp({ day: 30, backupCapacity: 1.0, flags: "M1" }),
+  rp({ day: 365, backupCapacity: 5.25, flags: "Y1" }),
+];
+
+const MOCK_DATA: VmAgentResponseData = {
+  totalStorageTB: 12.5,
+  proxyCompute: { compute: { cores: 4, ram: 8, volumes: [] } },
+  repoCompute: {
+    compute: {
+      cores: 8,
+      ram: 16,
+      volumes: [{ diskGB: 13500, diskPurpose: 3 }],
+    },
+  },
+  transactions: {
+    capacityTierTransactions: {
+      firstMonthTransactions: 1000,
+      secondMonthTransactions: 800,
+      finalMonthTransactions: 600,
+    },
+  },
+  performanceTierImmutabilityTaxGB: 250,
+  capacityTierImmutabilityTaxGB: 0,
+  restorePoints: RESTORE_POINTS,
+};
+
+const MOCK_RESULT: VmAgentResponse = {
+  success: true,
+  data: MOCK_DATA,
+};
+
+const MOCK_UPGRADE_RESULT: VmAgentResponse = {
+  success: true,
+  data: {
+    totalStorageTB: 10.0,
+    proxyCompute: { compute: { cores: 4, ram: 8, volumes: [] } },
+    repoCompute: { compute: { cores: 8, ram: 16, volumes: [] } },
+    transactions: {},
+    performanceTierImmutabilityTaxGB: 200,
+    capacityTierImmutabilityTaxGB: 0,
+    restorePoints: RESTORE_POINTS,
+  },
+};
+
+function buildResult(
+  overrides: Partial<VmAgentResponseData> = {},
+): VmAgentResponse {
+  return {
+    success: true,
+    data: { ...MOCK_DATA, ...overrides },
+  };
+}
+
+describe("SizingResults", () => {
+  it("displays the total storage prominently as the hero metric", () => {
+    render(<SizingResults result={MOCK_RESULT} />);
+    expect(screen.getByText("12.50 TB")).toBeInTheDocument();
+  });
+
+  it("does not render proxy/repo compute (Storage-as-a-Service)", () => {
+    render(<SizingResults result={MOCK_RESULT} />);
+    expect(screen.queryByText(/cores/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/GB RAM/i)).not.toBeInTheDocument();
+  });
+
+  it("renders the performance-tier immutability inline within the hero legend", () => {
+    render(
+      <SizingResults
+        result={buildResult({
+          performanceTierImmutabilityTaxGB: 678.6973615114821,
+        })}
+      />,
+    );
+    expect(
+      screen.getAllByText(/Immutability Overhead/i).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText(/678\.7\s*GB/)).toBeInTheDocument();
+    expect(screen.queryByText(/678\.6973/)).not.toBeInTheDocument();
+    // The standalone Immutability Tax card is removed.
+    expect(screen.queryByText(/Immutability Tax/i)).not.toBeInTheDocument();
+  });
+
+  it("decorates the hero card with the top accent border", () => {
+    const { container } = render(<SizingResults result={MOCK_RESULT} />);
+    expect(
+      container.querySelector(".border-t-4.border-t-primary"),
+    ).not.toBeNull();
+  });
+
+  it("renders the proportion bar with five data segments incl. immutability", () => {
+    const { container } = render(<SizingResults result={MOCK_RESULT} />);
+    const segments = container.querySelectorAll("[data-segment]");
+    expect(segments.length).toBe(5);
+    const tiers = Array.from(segments).map((s) =>
+      s.getAttribute("data-segment"),
+    );
+    expect(tiers).toEqual([
+      "yearly",
+      "monthly",
+      "weekly",
+      "daily",
+      "immutability",
+    ]);
+  });
+
+  it("exposes a group aria-label naming each bucket and percentage", () => {
+    render(<SizingResults result={MOCK_RESULT} />);
+    const group = screen.getByRole("group", {
+      name: /retention composition/i,
+    });
+    const label = group.getAttribute("aria-label") ?? "";
+    expect(label).toMatch(/Yearly/);
+    expect(label).toMatch(/Monthly/);
+    expect(label).toMatch(/Weekly/);
+    expect(label).toMatch(/Daily/);
+    expect(label).toMatch(/Immutability/);
+  });
+
+  describe("empty restorePoints", () => {
+    it("shows the unavailable caption and dashes for both baselines", () => {
+      const { container } = render(
+        <SizingResults
+          result={buildResult({
+            restorePoints: [],
+            performanceTierImmutabilityTaxGB: 0,
+          })}
+        />,
+      );
+      expect(
+        screen.getByText(/restore-point breakdown unavailable/i),
+      ).toBeInTheDocument();
+
+      const baselinesCard = container
+        .querySelector('[data-slot="card-title"]')
+        ?.closest('[data-slot="card"]');
+      expect(baselinesCard).not.toBeNull();
+      const within_ = within(baselinesCard as HTMLElement);
+      expect(within_.getAllByText("—").length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  describe("inline upgrade annotations", () => {
+    it("shows no upgrade annotation when upgradeResult is absent", () => {
+      render(<SizingResults result={MOCK_RESULT} />);
+      expect(screen.queryByText(/VBR 13/i)).not.toBeInTheDocument();
+    });
+
+    it("shows the hero storage caption when an upgrade saves storage", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+        />,
+      );
+      expect(
+        screen.getByText(/upgrade to VBR 13 could reduce this to/i),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/10\.00 TB/)).toBeInTheDocument();
+      expect(screen.getByText(/saving 2\.50 TB/i)).toBeInTheDocument();
+    });
+
+    it("shows the immutability annotation when an upgrade saves perf-tier tax", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+        />,
+      );
+      expect(screen.getByText(/↓ VBR 13:/)).toBeInTheDocument();
+      // upgrade is 200 GB
+      expect(screen.getByText(/200\s*GB/)).toBeInTheDocument();
+    });
+
+    it("hides the hero caption when storageSavings <= 0", () => {
+      const noSavings = buildResult({ totalStorageTB: 12.5 });
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={{ success: true, data: noSavings.data }}
+        />,
+      );
+      expect(
+        screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("hides the immutability annotation when immutabilitySavings <= 0", () => {
+      const noImmutSavings = buildResult({
+        performanceTierImmutabilityTaxGB: 250,
+      });
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={{ success: true, data: noImmutSavings.data }}
+        />,
+      );
+      expect(screen.queryByText(/↓ VBR 13:/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("buffer props", () => {
+    it("does not change the headline TB when bufferEnabled is false (default)", () => {
+      render(<SizingResults result={MOCK_RESULT} bufferEnabled={false} />);
+      expect(screen.getByText("12.50 TB")).toBeInTheDocument();
+    });
+
+    it("grosses up the headline TB when bufferEnabled is true", () => {
+      const pct = 10;
+      const expected = formatTB(MOCK_DATA.totalStorageTB * bufferFactor(pct));
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          bufferEnabled={true}
+          bufferPercent={pct}
+        />,
+      );
+      expect(screen.getByText(expected)).toBeInTheDocument();
+      // Original headline should no longer be present.
+      expect(screen.queryByText("12.50 TB")).not.toBeInTheDocument();
+    });
+
+    it("computes upgrade savings from both-buffered totals (apples-to-apples)", () => {
+      const pct = 10;
+      const f = bufferFactor(pct);
+      const bufferedV12 = MOCK_DATA.totalStorageTB * f;
+      const bufferedV13 = 10.0 * f;
+      const expectedSavings = formatTB(bufferedV12 - bufferedV13);
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          bufferEnabled={true}
+          bufferPercent={pct}
+        />,
+      );
+      expect(
+        screen.getByText(new RegExp(expectedSavings.replace(".", "\\."), "i")),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("SOBR-blocks-upgrade copy", () => {
+    it("renders no caption when sobrBlocksUpgrade is true and no upgrade result is present", () => {
+      render(<SizingResults result={MOCK_RESULT} sobrBlocksUpgrade />);
+      expect(screen.queryByText(/Potentially save/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+      ).not.toBeInTheDocument();
+      // Legacy static disclaimer is removed.
+      expect(
+        screen.queryByText(/SOBR Capacity Tier still uses VBR 12 sizing/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows actionable SOBR copy when an upgrade saves storage", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          sobrBlocksUpgrade
+        />,
+      );
+      // Standard non-SOBR copy is replaced.
+      expect(
+        screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+      ).not.toBeInTheDocument();
+      expect(screen.getByText(/Potentially save/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /by upgrading to VBR 13 and transitioning SOBRs to direct Backup Copy jobs\./i,
+        ),
+      ).toBeInTheDocument();
+      // Savings math (12.5 - 10.0 = 2.50 TB) appears in the caption span.
+      // Scope tightly so we don't match the "12.50 TB" hero metric.
+      expect(screen.getByText(/^2\.50 TB$/)).toBeInTheDocument();
+      // Per-segment immutability annotation also surfaces under SOBR — the
+      // savings principle applies consistently across both UI surfaces.
+      expect(screen.getByText(/↓ VBR 13:/)).toBeInTheDocument();
+    });
+  });
+
+  describe("showAsV13 mode", () => {
+    it("with showAsV13=true, uses upgradeResult as the hero total", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          showAsV13={true}
+        />,
+      );
+      // upgradeResult.data.totalStorageTB = 10.0
+      expect(screen.getByText("10.00 TB")).toBeInTheDocument();
+      // MOCK_RESULT total (12.5) is now the comparison, not the hero
+      expect(screen.queryByText("12.50 TB")).not.toBeInTheDocument();
+    });
+
+    it("with showAsV13=true, shows the v12 comparison caption", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          showAsV13={true}
+        />,
+      );
+      expect(screen.getByText(/currently requires/i)).toBeInTheDocument();
+      expect(screen.getByText(/12\.50 TB/)).toBeInTheDocument();
+      expect(screen.getByText(/more without upgrading/i)).toBeInTheDocument();
+      expect(
+        screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("with showAsV13=true and upgradeGrowthLoading=true, renders growth skeleton not chart", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          showAsV13={true}
+          upgradeGrowthLoading={true}
+        />,
+      );
+      expect(
+        screen.getByText(/calculating VBR 13 projection/i),
+      ).toBeInTheDocument();
+    });
+
+    it("with showAsV13=true and upgradeGrowthError set, renders destructive alert in chart slot", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          showAsV13={true}
+          upgradeGrowthError="Could not retrieve sizing estimate. Check your connection and try again."
+        />,
+      );
+      expect(
+        screen.getByText(/could not retrieve sizing estimate/i),
+      ).toBeInTheDocument();
+    });
+
+    it("with showAsV13=false, still shows standard v12 upgrade caption", () => {
+      render(
+        <SizingResults
+          result={MOCK_RESULT}
+          upgradeResult={MOCK_UPGRADE_RESULT}
+          showAsV13={false}
+        />,
+      );
+      expect(
+        screen.getByText(/upgrade to VBR 13 could reduce this to/i),
+      ).toBeInTheDocument();
+      expect(screen.getByText("12.50 TB")).toBeInTheDocument();
+    });
+
+    it("with showAsV13=true but no upgradeResult, renders result as hero with no comparison captions", () => {
+      // upgradeResult absent: primaryResult falls back to result, comparisonResult must be null
+      render(<SizingResults result={MOCK_RESULT} showAsV13={true} />);
+      // Hero shows result's total (12.50 TB)
+      expect(screen.getByText("12.50 TB")).toBeInTheDocument();
+      // No comparison captions — comparisonResult should be null, not result itself
+      expect(screen.queryByText(/currently requires/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/upgrade to VBR 13 could reduce this to/i),
+      ).not.toBeInTheDocument();
+    });
+  });
+});
