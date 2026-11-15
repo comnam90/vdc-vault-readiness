@@ -12,7 +12,7 @@ Client-side SPA validating Veeam VBR environments against VDC Vault requirements
 
 ## STATUS: MVP + SOBR + REPOSITORIES + SIZING + HISTORY
 
-Full pipeline operational: JSON upload → normalize → validate → dashboard. Comprehensive test suite (57 test files, 1267 tests in `src/__tests__/`). 13 validation rules in `src/lib/validator.ts` (8 core + 4 SOBR + 1 active-full). Motion/animation system with `prefers-reduced-motion` support. Vault sizing calculator with Veeam API integration (gated behind a privacy-consent dialog), multi-year growth projection, and headroom buffer. Repositories tab with size and immutability charts. Recent-scans history persisted in IndexedDB; global settings (target cloud, GFS/retention caps, buffer) persisted in localStorage. SOBR analysis covers capacity tier encryption, immutability, archive tier edition, and capacity tier residency.
+Full pipeline operational: JSON upload → normalize → validate → dashboard. Comprehensive test suite (57 test files, 1295 tests in `src/__tests__/`). 13 validation rules in `src/lib/validator.ts` (8 core + 4 SOBR + 1 active-full). Motion/animation system with `prefers-reduced-motion` support. Vault sizing calculator with Veeam API integration (gated behind a privacy-consent dialog), multi-year growth projection, and headroom buffer. Repositories tab with size and immutability charts. Recent-scans history persisted in IndexedDB; global settings (target cloud, GFS/retention caps, buffer) persisted in localStorage. SOBR analysis covers capacity tier encryption, immutability, archive tier edition, and capacity tier residency.
 
 ## STRUCTURE
 
@@ -61,7 +61,7 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
     ├── components/
     │   ├── ui/                   # shadcn primitives (card, button, badge, sheet, dialog, etc.)
     │   └── dashboard/            # 29 components → see src/components/dashboard/AGENTS.md
-    └── __tests__/                # 57 test files, 1267 tests → see src/__tests__/AGENTS.md
+    └── __tests__/                # 57 test files, 1295 tests → see src/__tests__/AGENTS.md
 ```
 
 ## WHERE TO LOOK
