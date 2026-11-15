@@ -12,6 +12,7 @@ lib/
 ├── normalizer.ts          # Raw records → typed SafeJob/SafeBackupServer/SafeSobr/SafeCapExtent/SafeArchExtent/SafeJobSummary/etc. with error accumulation (highest complexity)
 ├── validator.ts           # 13 validation rules against NormalizedDataset. 8 core + 4 SOBR + 1 active-full
 ├── agent-classifier.ts    # classifyAgentJobType(): centralized JobType naming knowledge for agent rules (pattern + legacy allow-list)
+├── job-type-filter.ts     # isExcludedJobType(): drops replica jobs — legacy "Replica" + friendly "… Replication" labels (case-insensitive)
 ├── version-compare.ts     # isVersionAtLeast() — semver-like "12.1.2.456" comparison (ignores 4th segment)
 ├── constants.ts           # MINIMUM_VBR_VERSION ("12.1.2"), MINIMUM_RETENTION_DAYS (30), MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS (30), PIPELINE_STEPS
 ├── validation-selectors.ts # Filter helpers: getBlockerValidations(), getPassingValidations(), getNoteValidations(), hasBlockers(), getBlockerCount()
@@ -77,37 +78,39 @@ Recent scans (async, browser-only):
 
 ## WHERE TO LOOK
 
-| Need                     | File                     | Notes                                                                                                                        |
-| ------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| Agent JobType classifier | agent-classifier.ts      | Pure pattern match for Windows/Linux/Mac Agent {Standalone,Policy,Backup} + legacy exact strings. Used by validator.ts only. |
-| Validation rules         | validator.ts             | Add function, append to return array in validateHealthcheck()                                                                |
-| Version minimum          | constants.ts             | MINIMUM_VBR_VERSION — tests reference this constant                                                                          |
-| Retention minimum        | constants.ts             | MINIMUM_RETENTION_DAYS — used by validator + calculator                                                                      |
-| Residency minimum        | constants.ts             | MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS — used by SOBR validator                                                                |
-| New section parsing      | parser.ts                | zipSection() handles any Headers/Rows section                                                                                |
-| Normalized fields        | normalizer.ts            | Add extraction + error accumulation using flatMap/buildError                                                                 |
-| SOBR normalization       | normalizer.ts            | normalizeSobr(), normalizeCapExtent(), normalizeArchExtent() at bottom of file                                               |
-| UI step labels           | constants.ts             | PIPELINE_STEPS — NOT 1:1 with validator ruleIds. Includes "sobr-analysis" step                                               |
-| Validation filters       | validation-selectors.ts  | Blocker/passing splits consumed by dashboard components                                                                      |
-| Vault sizing inputs      | calculator-aggregator.ts | buildCalculatorSummary() is main entry; plus capGfs / globalCapDays cap helpers                                              |
-| Sizing derivation        | sizing-derivation.ts     | deriveSizing() turns VmAgentResponseData into GFS/immutability/buffer composition                                            |
-| Headroom buffer          | sizing-buffer.ts         | bufferFactor(pct); applyBufferToSizing / applyBufferToSeries                                                                 |
-| Multi-year projection    | growth-projector.ts      | generateGrowthSeries() — async, calls veeam-api per projected year                                                           |
-| Veeam sizing API         | veeam-api.ts             | buildVmAgentRequest() + callVmAgentApi() → /api/veeam-proxy (consent-gated)                                                  |
-| Chart data shapes        | chart-selectors.ts       | groupByJobType, bucketChangeRates, repoImmutabilityCounts, groupByRepo                                                       |
-| Per-repo rollups         | repo-aggregator.ts       | aggregateRepoStatsMap(jobs, filter?) → Map<repo, {sourceTB,onDiskTB}>                                                        |
-| Scan persistence         | indexed-db.ts            | saveScan/getRecentScans/loadScanPayload/deleteScan; StoredScan shape; MAX_SCANS=5                                            |
-| Scan eviction policy     | recent-scans-fifo.ts     | selectIdsToEvict(existingIds, maxKeep) — pure, unit-tested separately from IndexedDB                                         |
-| File reading             | file-reader.ts           | readFileAsText(File): Promise<string>                                                                                        |
-| Job + session join       | enrich-jobs.ts           | enrichJobs() → EnrichedJob[] via Map<JobName, SafeJobSession>                                                                |
-| Display formatting       | format-utils.ts          | formatSize, formatPercent, formatDuration, formatTB, formatRatio, formatGFS                                                  |
-| Relative timestamps      | relative-time.ts         | formatRelativeTime(iso) for recent-scans list                                                                                |
+| Need                     | File                     | Notes                                                                                                                                                    |
+| ------------------------ | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agent JobType classifier | agent-classifier.ts      | Pure pattern match for {OS} Agent {Standalone,Policy,Backup} (OS prefix optional for Standalone only) + legacy exact strings. Used by validator.ts only. |
+| Excluded job types       | job-type-filter.ts       | isExcludedJobType() — used by normalizer.ts; exact names come from EXCLUDED_JOB_TYPES in constants.ts                                                    |
+| Validation rules         | validator.ts             | Add function, append to return array in validateHealthcheck()                                                                                            |
+| Version minimum          | constants.ts             | MINIMUM_VBR_VERSION — tests reference this constant                                                                                                      |
+| Retention minimum        | constants.ts             | MINIMUM_RETENTION_DAYS — used by validator + calculator                                                                                                  |
+| Residency minimum        | constants.ts             | MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS — used by SOBR validator                                                                                            |
+| New section parsing      | parser.ts                | zipSection() handles any Headers/Rows section                                                                                                            |
+| Normalized fields        | normalizer.ts            | Add extraction + error accumulation using flatMap/buildError                                                                                             |
+| SOBR normalization       | normalizer.ts            | normalizeSobr(), normalizeCapExtent(), normalizeArchExtent() at bottom of file                                                                           |
+| UI step labels           | constants.ts             | PIPELINE_STEPS — NOT 1:1 with validator ruleIds. Includes "sobr-analysis" step                                                                           |
+| Validation filters       | validation-selectors.ts  | Blocker/passing splits consumed by dashboard components                                                                                                  |
+| Vault sizing inputs      | calculator-aggregator.ts | buildCalculatorSummary() is main entry; plus capGfs / globalCapDays cap helpers                                                                          |
+| Sizing derivation        | sizing-derivation.ts     | deriveSizing() turns VmAgentResponseData into GFS/immutability/buffer composition                                                                        |
+| Headroom buffer          | sizing-buffer.ts         | bufferFactor(pct); applyBufferToSizing / applyBufferToSeries                                                                                             |
+| Multi-year projection    | growth-projector.ts      | generateGrowthSeries() — async, calls veeam-api per projected year                                                                                       |
+| Veeam sizing API         | veeam-api.ts             | buildVmAgentRequest() + callVmAgentApi() → /api/veeam-proxy (consent-gated)                                                                              |
+| Chart data shapes        | chart-selectors.ts       | groupByJobType, bucketChangeRates, repoImmutabilityCounts, groupByRepo                                                                                   |
+| Per-repo rollups         | repo-aggregator.ts       | aggregateRepoStatsMap(jobs, filter?) → Map<repo, {sourceTB,onDiskTB}>                                                                                    |
+| Scan persistence         | indexed-db.ts            | saveScan/getRecentScans/loadScanPayload/deleteScan; StoredScan shape; MAX_SCANS=5                                                                        |
+| Scan eviction policy     | recent-scans-fifo.ts     | selectIdsToEvict(existingIds, maxKeep) — pure, unit-tested separately from IndexedDB                                                                     |
+| File reading             | file-reader.ts           | readFileAsText(File): Promise<string>                                                                                                                    |
+| Job + session join       | enrich-jobs.ts           | enrichJobs() → EnrichedJob[] via Map<JobName, SafeJobSession>                                                                                            |
+| Display formatting       | format-utils.ts          | formatSize, formatPercent, formatDuration, formatTB, formatRatio, formatGFS                                                                              |
+| Relative timestamps      | relative-time.ts         | formatRelativeTime(iso) for recent-scans list                                                                                                            |
 
 ## CONVENTIONS
 
-- **Two zones, different rules**: The **core pipeline** (parser, normalizer, validator, pipeline, version-compare, agent-classifier, selectors, formatters, constants) is pure and synchronous. The **support modules** (`veeam-api`, `indexed-db`, `file-reader`, and the async `growth-projector`) are intentionally side-effectful/async — network, browser storage, and file IO. Keep the network/IO contained to those modules; don't push it into the pipeline.
+- **Two zones, different rules**: The **core pipeline** (parser, normalizer, validator, pipeline, version-compare, agent-classifier, job-type-filter, selectors, formatters, constants) is pure and synchronous. The **support modules** (`veeam-api`, `indexed-db`, `file-reader`, and the async `growth-projector`) are intentionally side-effectful/async — network, browser storage, and file IO. Keep the network/IO contained to those modules; don't push it into the pipeline.
 - **Error accumulation**: Normalizer collects DataError[] instead of throwing. Invalid rows skipped via flatMap returning `[]`
 - **Pipeline side effect (documented)**: `validateHealthcheck()` emits a single `console.warn` per call when a legacy agent JobType string is detected (deprecation signal for older veeam-healthcheck tool versions) — see the side-scan block in `validator.ts`. This is the only side effect in the otherwise-pure pipeline.
+- **JobType labels**: Current veeam-healthcheck exports use friendly labels from VBR TypeToString ("VMware Backup", "VMware Replication", "Windows Agent Standalone", bare "Agent Standalone"); older exports use raw enums ("Backup", "Replica", "EpAgentBackup"). Handle both forms; only mark a label `legacy: true` in agent-classifier if regenerating with the current tool would change it.
 - **Version format**: "major.minor.patch.build" — only first 3 segments compared
 - **tick()**: Used by useAnalysis hook for visual delays; accepts AbortSignal for cleanup on unmount/re-upload
 - **PIPELINE_STEPS vs ruleIds**: Steps are presentation-layer groupings (e.g., "encryption" covers both "config-backup-encryption" and "job-encryption" rules; "sobr-analysis" covers 4 SOBR rules)
