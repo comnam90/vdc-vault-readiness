@@ -98,6 +98,39 @@ describe("normalizeHealthcheck", () => {
     expect(result.dataErrors).toHaveLength(0);
   });
 
+  it("excludes friendly-label replication jobs emitted by current healthcheck exports", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "VM Replica",
+          JobType: "VMware Replication",
+          Encrypted: "False",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "HV Replica",
+          JobType: "Hyper-V Replication",
+          Encrypted: "False",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "Job B",
+          JobType: "VMware Backup",
+          Encrypted: "True",
+          RepoName: "Repo2",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo.map((j) => j.JobName)).toEqual(["Job B"]);
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
   it("drops jobs missing required fields and logs data errors", () => {
     const raw: ParsedHealthcheckSections = {
       backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
