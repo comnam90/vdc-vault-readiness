@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://github.com/comnam90/vdc-vault-readiness/compare/v1.4.1...v1.5.0) (2026-11-18)
+
+
+### Features
+
+* **sizing:** add VBR 12→13 upgrade projection toggle ([#68](https://github.com/comnam90/vdc-vault-readiness/issues/68)) ([641f600](https://github.com/comnam90/vdc-vault-readiness/commit/641f600363cf8e31768fec237097b5dd12c07fdc))
+
+
+### Bug Fixes
+
+* handle friendly JobType labels — exclude replication jobs, detect bare Agent Standalone ([#93](https://github.com/comnam90/vdc-vault-readiness/issues/93)) ([73eddec](https://github.com/comnam90/vdc-vault-readiness/commit/73eddecec3e239536db47b496b7d29d75fc56724)), closes [#73](https://github.com/comnam90/vdc-vault-readiness/issues/73) [#74](https://github.com/comnam90/vdc-vault-readiness/issues/74)
+
 ## [1.4.1](https://github.com/comnam90/vdc-vault-readiness/compare/v1.4.0...v1.4.1) (2026-06-02)
 
 
