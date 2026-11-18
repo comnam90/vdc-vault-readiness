@@ -12,7 +12,7 @@ lib/
 ├── normalizer.ts          # Raw records → typed SafeJob/SafeBackupServer/SafeSobr/SafeCapExtent/SafeArchExtent/SafeJobSummary/etc. with error accumulation (highest complexity)
 ├── validator.ts           # 13 validation rules against NormalizedDataset. 8 core + 4 SOBR + 1 active-full
 ├── agent-classifier.ts    # classifyAgentJobType(): centralized JobType naming knowledge for agent rules (pattern + legacy allow-list)
-├── job-type-filter.ts     # isExcludedJobType(): drops replica jobs — legacy "Replica" + friendly "… Replication" labels (case-insensitive)
+├── job-type-filter.ts     # isExcludedJobType(): drops replica jobs — legacy "Replica", friendly "… Replication" labels, bare "Proxmox " (VBR TypeToString quirk); case-insensitive
 ├── version-compare.ts     # isVersionAtLeast() — semver-like "12.1.2.456" comparison (ignores 4th segment)
 ├── constants.ts           # MINIMUM_VBR_VERSION ("12.1.2"), MINIMUM_RETENTION_DAYS (30), MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS (30), PIPELINE_STEPS
 ├── validation-selectors.ts # Filter helpers: getBlockerValidations(), getPassingValidations(), getNoteValidations(), hasBlockers(), getBlockerCount()

@@ -1,6 +1,6 @@
 # src/\_\_tests\_\_ — Test Suite
 
-1318 tests across 58 test files. Vitest + React Testing Library + jsdom. `fake-indexeddb` for persistence tests. Run `npm run test:coverage` for current coverage.
+1321 tests across 58 test files. Vitest + React Testing Library + jsdom. `fake-indexeddb` for persistence tests. Run `npm run test:coverage` for current coverage.
 
 ## STRUCTURE
 
@@ -18,7 +18,7 @@ __tests__/
 ├── validator.test.ts                 # Core validation rules (incl. retention-period, active-full)
 ├── validator-sobr.test.ts            # 4 SOBR validation rules
 ├── agent-classifier.test.ts          # classifyAgentJobType() pattern + legacy strings
-├── job-type-filter.test.ts           # isExcludedJobType(): legacy + friendly replication labels, negatives
+├── job-type-filter.test.ts           # isExcludedJobType(): legacy, friendly + bare Proxmox replication labels, negatives
 ├── pipeline.test.ts                  # End-to-end analyzeHealthcheck() with real sample data
 ├── version-compare.test.ts           # Semver comparison edge cases
 ├── constants.test.ts                 # MINIMUM_* constants + PIPELINE_STEPS
