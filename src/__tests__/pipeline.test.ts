@@ -481,3 +481,40 @@ describe("analyzeHealthcheck (full pipeline)", () => {
     });
   });
 });
+
+describe("friendly replication labels (veeam-healthcheck ADR 0020 format)", () => {
+  const raw: HealthcheckRoot = {
+    Licenses: [],
+    Sections: {
+      backupServer: {
+        Headers: ["Name", "Version"],
+        Rows: [["VBR-01", "13.0.1.2067"]],
+      },
+      securitySummary: {
+        Headers: [
+          "BackupFileEncryptionEnabled",
+          "ConfigBackupEncryptionEnabled",
+        ],
+        Rows: [["True", "True"]],
+      },
+      jobInfo: {
+        Headers: ["JobName", "JobType", "Encrypted", "RepoName", "RetainDays"],
+        Rows: [
+          ["VM Backup", "VMware Backup", "True", "Repo1", "30"],
+          ["VM Replica", "VMware Replication", "False", "Repo1", "7"],
+          ["HV Replica", "Hyper-V Replication", "False", "Repo1", "7"],
+        ],
+      },
+    },
+  };
+
+  it("drops replica jobs so they cannot fail job-encryption or retention", () => {
+    const { data, validations } = analyzeHealthcheck(raw);
+    const status = (ruleId: string) =>
+      validations.find((v) => v.ruleId === ruleId)?.status;
+
+    expect(data.jobInfo.map((j) => j.JobName)).toEqual(["VM Backup"]);
+    expect(status("job-encryption")).toBe("pass");
+    expect(status("retention-period")).toBe("pass");
+  });
+});

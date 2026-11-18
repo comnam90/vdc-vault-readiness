@@ -15,7 +15,9 @@ const LEGACY_EXACT: ReadonlyMap<string, AgentCategory> = new Map([
 ]);
 
 const PATTERNS: ReadonlyArray<{ regex: RegExp; category: AgentCategory }> = [
-  { regex: /^.+\s+agent\s+standalone$/, category: "standalone" },
+  // OS prefix optional: veeam-healthcheck emits a bare "Agent Standalone"
+  // when VBR returns a blank TypeToString for an EndpointBackup job.
+  { regex: /^(?:.+\s+)?agent\s+standalone$/, category: "standalone" },
   { regex: /^.+\s+agent\s+policy$/, category: "policy" },
   { regex: /^.+\s+agent\s+backup$/, category: "managed-backup" },
 ];

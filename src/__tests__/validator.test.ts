@@ -890,6 +890,37 @@ describe("validateHealthcheck", () => {
       expect(check?.message).not.toContain("9");
       expect(check?.message).not.toContain("10");
     });
+
+    it("fails for a jobInfo row with bare 'Agent Standalone' JobType", () => {
+      const data = makeStandaloneDataWithJobs(
+        [],
+        [makeJobRow({ JobName: "Laptop-01", JobType: "Agent Standalone" })],
+      );
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-standalone-unsupported",
+      );
+
+      expect(check?.status).toBe("fail");
+      expect(check?.affectedItems).toEqual(["Laptop-01"]);
+      expect(check?.message).toContain("1 standalone");
+    });
+
+    it("does not emit the legacy deprecation warning for bare 'Agent Standalone'", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      try {
+        validateHealthcheck(
+          makeStandaloneDataWithJobs(
+            [{ JobType: "Agent Standalone", Count: 1 }],
+            [makeJobRow({ JobName: "Laptop-01", JobType: "Agent Standalone" })],
+          ),
+        );
+        expect(warn).not.toHaveBeenCalled();
+      } finally {
+        warn.mockRestore();
+      }
+    });
   });
 
   describe("Rule 5c: Managed Agent Policies (agent-policy-gateway-required)", () => {
