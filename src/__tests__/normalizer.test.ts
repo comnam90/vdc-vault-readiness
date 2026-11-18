@@ -131,6 +131,33 @@ describe("normalizeHealthcheck", () => {
     expect(result.dataErrors).toHaveLength(0);
   });
 
+  it("excludes Proxmox replication jobs exported with the bare 'Proxmox ' label", () => {
+    const raw: ParsedHealthcheckSections = {
+      backupServer: [],
+      securitySummary: [],
+      jobInfo: [
+        {
+          JobName: "PVE Replica",
+          JobType: "Proxmox ",
+          Encrypted: "False",
+          RepoName: "Repo1",
+        },
+        {
+          JobName: "PVE Backup",
+          JobType: "Proxmox Backup",
+          Encrypted: "True",
+          RepoName: "Repo1",
+        },
+      ],
+      Licenses: [],
+    };
+
+    const result = normalizeHealthcheck(raw);
+
+    expect(result.jobInfo.map((j) => j.JobName)).toEqual(["PVE Backup"]);
+    expect(result.dataErrors).toHaveLength(0);
+  });
+
   it("drops jobs missing required fields and logs data errors", () => {
     const raw: ParsedHealthcheckSections = {
       backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],

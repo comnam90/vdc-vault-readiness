@@ -18,6 +18,14 @@ describe("isExcludedJobType", () => {
     expect(isExcludedJobType("Replication")).toBe(true);
   });
 
+  it("excludes the bare 'Proxmox ' label VBR emits for Proxmox replication jobs", () => {
+    // VBR's TypeToString for a Proxmox replica is "Proxmox " (blank type word,
+    // trailing space). Verified against a VBR 13.1.2 export, where the raw-type
+    // jobSummary counted it as "Replica".
+    expect(isExcludedJobType("Proxmox ")).toBe(true);
+    expect(isExcludedJobType("proxmox")).toBe(true);
+  });
+
   it("matches case-insensitively and ignores surrounding whitespace", () => {
     expect(isExcludedJobType("replica")).toBe(true);
     expect(isExcludedJobType("  vmware REPLICATION  ")).toBe(true);
@@ -32,6 +40,7 @@ describe("isExcludedJobType", () => {
     "Windows Agent Standalone",
     "ReplicaSetBackup",
     "Replication Backup",
+    "Proxmox Backup",
   ])("keeps the non-replica job type '%s'", (jobType) => {
     expect(isExcludedJobType(jobType)).toBe(false);
   });
