@@ -17,6 +17,21 @@ export interface HealthcheckSections {
 export interface HealthcheckRoot {
   Sections: HealthcheckSections;
   Licenses?: License[];
+  // Root keys added by veeam-healthcheck 3.x exports; absent from older ones.
+  /** veeam-healthcheck tool version that produced the export (e.g. "3.1.1.301"). */
+  VhcVersion?: string;
+  /** Metadata for the tool's compliance scan run. Not read by the app. */
+  ComplianceScan?: {
+    StartedAt?: string;
+    CompletedAt?: string;
+    DurationSeconds?: number;
+    Status?: string;
+    RuleCount?: number;
+  };
+  /** Orphaned superseded backup chains found by the restore-point sweep. Not read by the app. */
+  OrphanedSupersededBackups?: unknown[];
+  /** Whether the restore-point sweep ran. Not read by the app. */
+  OrphanedBackupsSweepEvaluated?: boolean;
   [key: string]: unknown;
 }
 

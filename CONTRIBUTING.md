@@ -4,12 +4,14 @@ Welcome! This guide covers contribution workflows for both **human developers** 
 
 ## Quick Reference
 
-| Resource                                           | Purpose                                        |
-| -------------------------------------------------- | ---------------------------------------------- |
-| [PRD.md](./PRD.md)                                 | Functional requirements (authoritative source) |
-| [VDCVAULT-CHEETSHEET.md](./VDCVAULT-CHEETSHEET.md) | Domain knowledge & Vault limitations           |
-| [AGENTS.md](./AGENTS.md)                           | Engineering standards & agent protocols        |
-| `veeam-healthcheck.example.json`                   | Sample input data (30 jobs, 1863 lines)        |
+| Resource                                              | Purpose                                        |
+| ----------------------------------------------------- | ---------------------------------------------- |
+| [PRD.md](./PRD.md)                                    | Functional requirements (authoritative source) |
+| [VDCVAULT-CHEETSHEET.md](./VDCVAULT-CHEETSHEET.md)    | Domain knowledge & Vault limitations           |
+| [AGENTS.md](./AGENTS.md)                              | Engineering standards & agent protocols        |
+| `veeam-healthcheck.example.json`                      | Sample input data (30 jobs, 1863 lines)        |
+| `veeam-healthcheck.v12-win` / `.v13-vsa.example.json` | Older-format samples (not imported by tests)   |
+| `veeam-healthcheck.v13.1-*.example.json`              | Sanitised current-format exports (vHC 3.1.1)   |
 
 ---
 

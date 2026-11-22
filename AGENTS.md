@@ -12,7 +12,7 @@ Client-side SPA validating Veeam VBR environments against VDC Vault requirements
 
 ## STATUS: MVP + SOBR + REPOSITORIES + SIZING + HISTORY
 
-Full pipeline operational: JSON upload → normalize → validate → dashboard. Comprehensive test suite (57 test files, 1267 tests in `src/__tests__/`). 13 validation rules in `src/lib/validator.ts` (8 core + 4 SOBR + 1 active-full). Motion/animation system with `prefers-reduced-motion` support. Vault sizing calculator with Veeam API integration (gated behind a privacy-consent dialog), multi-year growth projection, and headroom buffer. Repositories tab with size and immutability charts. Recent-scans history persisted in IndexedDB; global settings (target cloud, GFS/retention caps, buffer) persisted in localStorage. SOBR analysis covers capacity tier encryption, immutability, archive tier edition, and capacity tier residency.
+Full pipeline operational: JSON upload → normalize → validate → dashboard. Comprehensive test suite (59 test files, 1334 tests in `src/__tests__/`). 13 validation rules in `src/lib/validator.ts` (8 core + 4 SOBR + 1 active-full). Motion/animation system with `prefers-reduced-motion` support. Vault sizing calculator with Veeam API integration (gated behind a privacy-consent dialog), multi-year growth projection, and headroom buffer. Repositories tab with size and immutability charts. Recent-scans history persisted in IndexedDB; global settings (target cloud, GFS/retention caps, buffer) persisted in localStorage. SOBR analysis covers capacity tier encryption, immutability, archive tier edition, and capacity tier residency.
 
 ## STRUCTURE
 
@@ -24,7 +24,10 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
 ├── DESIGN-SYSTEM.md              # Motion tokens, animation philosophy (41KB)
 ├── CONTRIBUTING.md               # Branch/commit/PR/testing conventions (15KB)
 ├── MIGRATION.md                  # Branch strategy migration notes
-├── veeam-healthcheck.example.json # Sample input (1863 lines, 30 jobs)
+├── veeam-healthcheck.example.json # Sample input (1863 lines, 30 jobs) — older raw-JobType format, used by pipeline.test.ts
+├── veeam-healthcheck.v12-win.example.json / .v13-vsa.example.json # Older-format samples (not imported by tests)
+├── veeam-healthcheck.v13.1-replicas-plugins.example.json # Sanitised vHC 3.1.1 export: VBR 13.1.2, replicas + plug-ins
+├── veeam-healthcheck.v13.1-windows-agents.example.json   # Sanitised vHC 3.1.1 export: VBR 13.1.0, Windows agents
 ├── package.json                  # Dependencies locked per PRD
 ├── vite.config.ts                # React + Tailwind + Vitest config, @ alias
 ├── tsconfig.json                 # References app/node configs, @/* alias
@@ -61,7 +64,7 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
     ├── components/
     │   ├── ui/                   # shadcn primitives (card, button, badge, sheet, dialog, etc.)
     │   └── dashboard/            # 29 components → see src/components/dashboard/AGENTS.md
-    └── __tests__/                # 57 test files, 1267 tests → see src/__tests__/AGENTS.md
+    └── __tests__/                # 59 test files, 1334 tests → see src/__tests__/AGENTS.md
 ```
 
 ## WHERE TO LOOK
@@ -112,7 +115,7 @@ Must normalize to: `[{ "Name": "Job A", "Encrypted": "False" }]`
 
 **Key sections:** `backupServer`, `securitySummary`, `jobInfo`, `Licenses`, `sobr`, `capextents`, `archextents`
 
-**Sample data:** 30 jobs, VBR 13.0.1.1071, mixed encryption, repos: LinuxHardened/WinLocal/VeeamVault/AmazonS3/DDBoost
+**Sample data:** 30 jobs, VBR 13.0.1.1071, mixed encryption, repos: LinuxHardened/WinLocal/VeeamVault/AmazonS3/DDBoost. Current-format samples (`veeam-healthcheck.v13.1-*.example.json`) come from veeam-healthcheck 3.1.1.301 with friendly JobType labels; they are sanitised lab exports (names aliased consistently, credentials/registry/e-mail/licensee blanked) and are tested in `sample-exports.test.ts`.
 
 ## CONVENTIONS
 
