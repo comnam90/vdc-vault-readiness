@@ -10,6 +10,7 @@ Welcome! This guide covers contribution workflows for both **human developers** 
 | [VDCVAULT-CHEETSHEET.md](./VDCVAULT-CHEETSHEET.md) | Domain knowledge & Vault limitations           |
 | [AGENTS.md](./AGENTS.md)                           | Engineering standards & agent protocols        |
 | `veeam-healthcheck.example.json`                   | Sample input data (30 jobs, 1863 lines)        |
+| `veeam-healthcheck.v13.1-*.example.json`           | Sanitised current-format exports (vHC 3.1.1)   |
 
 ---
 

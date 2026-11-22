@@ -24,7 +24,9 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
 ├── DESIGN-SYSTEM.md              # Motion tokens, animation philosophy (41KB)
 ├── CONTRIBUTING.md               # Branch/commit/PR/testing conventions (15KB)
 ├── MIGRATION.md                  # Branch strategy migration notes
-├── veeam-healthcheck.example.json # Sample input (1863 lines, 30 jobs)
+├── veeam-healthcheck.example.json # Sample input (1863 lines, 30 jobs) — older raw-JobType format
+├── veeam-healthcheck.v13.1-replicas-plugins.example.json # Sanitised vHC 3.1.1 export: VBR 13.1.2, replicas + plug-ins
+├── veeam-healthcheck.v13.1-windows-agents.example.json   # Sanitised vHC 3.1.1 export: VBR 13.1.0, Windows agents
 ├── package.json                  # Dependencies locked per PRD
 ├── vite.config.ts                # React + Tailwind + Vitest config, @ alias
 ├── tsconfig.json                 # References app/node configs, @/* alias
@@ -112,7 +114,7 @@ Must normalize to: `[{ "Name": "Job A", "Encrypted": "False" }]`
 
 **Key sections:** `backupServer`, `securitySummary`, `jobInfo`, `Licenses`, `sobr`, `capextents`, `archextents`
 
-**Sample data:** 30 jobs, VBR 13.0.1.1071, mixed encryption, repos: LinuxHardened/WinLocal/VeeamVault/AmazonS3/DDBoost
+**Sample data:** 30 jobs, VBR 13.0.1.1071, mixed encryption, repos: LinuxHardened/WinLocal/VeeamVault/AmazonS3/DDBoost. Current-format samples (`veeam-healthcheck.v13.1-*.example.json`) come from veeam-healthcheck 3.1.1.301 with friendly JobType labels; they are sanitised lab exports (names aliased consistently, credentials/registry/e-mail/licensee blanked) and are tested in `sample-exports.test.ts`.
 
 ## CONVENTIONS
 

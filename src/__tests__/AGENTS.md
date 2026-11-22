@@ -1,6 +1,6 @@
 # src/\_\_tests\_\_ — Test Suite
 
-1321 tests across 58 test files. Vitest + React Testing Library + jsdom. `fake-indexeddb` for persistence tests. Run `npm run test:coverage` for current coverage.
+1333 tests across 59 test files. Vitest + React Testing Library + jsdom. `fake-indexeddb` for persistence tests. Run `npm run test:coverage` for current coverage.
 
 ## STRUCTURE
 
@@ -20,6 +20,7 @@ __tests__/
 ├── agent-classifier.test.ts          # classifyAgentJobType() pattern + legacy strings
 ├── job-type-filter.test.ts           # isExcludedJobType(): legacy, friendly + bare Proxmox replication labels, negatives
 ├── pipeline.test.ts                  # End-to-end analyzeHealthcheck() with real sample data
+├── sample-exports.test.ts            # E2E against sanitised current-format (vHC 3.1.1) exports: replicas, plug-ins, agents, sizing
 ├── version-compare.test.ts           # Semver comparison edge cases
 ├── constants.test.ts                 # MINIMUM_* constants + PIPELINE_STEPS
 ├── validation-selectors.test.ts      # Blocker/passing filter helpers
@@ -113,7 +114,7 @@ __tests__/
 - **Animation classes**: Assert `motion-safe:` prefix exists; never assert raw `animate-*` without prefix
 - **Float comparison**: Use `toBeCloseTo(expected, decimals)` for calculator/sizing aggregation tests
 - **Charts**: recharts renders an SVG in jsdom with zero dimensions — assert on data/labels/legend text, not pixel geometry
-- **Real sample data**: `pipeline.test.ts` imports `veeam-healthcheck.example.json` for E2E validation
+- **Real sample data**: `pipeline.test.ts` imports `veeam-healthcheck.example.json` (older format); `sample-exports.test.ts` imports the `veeam-healthcheck.v13.1-*.example.json` current-format exports. Expected values there were verified against the unsanitised originals
 
 ## ANTI-PATTERNS
 
