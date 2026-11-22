@@ -17,6 +17,11 @@ export interface HealthcheckSections {
 export interface HealthcheckRoot {
   Sections: HealthcheckSections;
   Licenses?: License[];
+  /** veeam-healthcheck tool version that produced the export (e.g. "3.1.1.301"). */
+  VhcVersion?: string;
+  ComplianceScan?: Record<string, unknown>;
+  OrphanedSupersededBackups?: unknown[];
+  OrphanedBackupsSweepEvaluated?: boolean;
   [key: string]: unknown;
 }
 
