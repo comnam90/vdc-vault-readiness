@@ -26,7 +26,9 @@ describe("current-format sample: VBR 13.1.2 with replicas and plug-ins", () => {
   let warnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeAll(() => {
-    // jobSummary still carries the raw VmbApiPolicyTempJob type (#94).
+    // jobSummary still carries the raw VmbApiPolicyTempJob type, which
+    // triggers the legacy-JobType warning.
+    // TODO(#94): assert the warning is NOT emitted once that is fixed.
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     result = analyzeHealthcheck(root);
   });
@@ -35,7 +37,7 @@ describe("current-format sample: VBR 13.1.2 with replicas and plug-ins", () => {
     warnSpy.mockRestore();
   });
 
-  it("is a current veeam-healthcheck export", () => {
+  it("fixture guard: is a current veeam-healthcheck export", () => {
     expect(root.VhcVersion?.startsWith("3.")).toBe(true);
     expect(result.data.backupServer[0].Version).toBe("13.1.2.57");
   });
@@ -58,6 +60,8 @@ describe("current-format sample: VBR 13.1.2 with replicas and plug-ins", () => {
   });
 
   it("joins sessions to jobs and skips the Total summary row", () => {
+    // 21 session rows minus the Total row. Replica sessions stay in the
+    // summary but no longer join to a job.
     expect(result.data.jobSessionSummary).toHaveLength(20);
     expect(
       result.data.jobSessionSummary.map((s) => s.JobName.toLowerCase()),
@@ -66,6 +70,7 @@ describe("current-format sample: VBR 13.1.2 with replicas and plug-ins", () => {
       result.data.jobInfo,
       result.data.jobSessionSummary,
     );
+    // 3 of the 19 kept jobs have no sessions in the export window
     expect(enriched.filter((j) => j.sessionData)).toHaveLength(16);
   });
 
@@ -89,11 +94,14 @@ describe("current-format sample: VBR 13.1.2 with replicas and plug-ins", () => {
     expect(statusOf(result, "vbr-version").status).toBe("pass");
   });
 
-  it("sizes without replica data or their zero change rates", () => {
+  it("sizes without the VMware/Hyper-V replicas or their zero change rates", () => {
     const summary = buildCalculatorSummary(
       result.data.jobInfo,
       result.data.jobSessionSummary,
     );
+    // Including the 450 GB + 32.38 GB replicas gave 3.407 TB and a 3.50%
+    // weighted change rate (their sessions report 0%). The Proxmox replica
+    // is 0 GB, so it doesn't move these totals (covered by the type test).
     expect(summary.totalSourceDataTB).toBeCloseTo(2.936, 3);
     expect(summary.weightedAvgChangeRate).toBeCloseTo(4.147, 3);
     expect(summary.maxRetentionDays).toBe(180);
@@ -114,7 +122,7 @@ describe("current-format sample: VBR 13.1.0 with Windows agents", () => {
     warnSpy.mockRestore();
   });
 
-  it("is a current veeam-healthcheck export", () => {
+  it("fixture guard: is a current veeam-healthcheck export", () => {
     expect(root.VhcVersion?.startsWith("3.")).toBe(true);
     expect(result.data.backupServer[0].Version).toBe("13.1.0.411");
   });
@@ -156,12 +164,15 @@ describe("current-format sample: VBR 13.1.0 with Windows agents", () => {
     });
   });
 
-  it("joins every job to its session data for sizing", () => {
+  it("joins every job to its session data", () => {
     const enriched = enrichJobs(
       result.data.jobInfo,
       result.data.jobSessionSummary,
     );
     expect(enriched.every((j) => j.sessionData)).toBe(true);
+  });
+
+  it("sizes from the four jobs' source data and session change rates", () => {
     const summary = buildCalculatorSummary(
       result.data.jobInfo,
       result.data.jobSessionSummary,
