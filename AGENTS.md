@@ -267,3 +267,17 @@ Types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`. `feat:` → minor rel
 7. ~~Growth projection~~ ✅ Done (growth-projector, growth-chart — multi-year)
 8. ~~Recent-scans history + global settings~~ ✅ Done (IndexedDB persistence, localStorage settings)
 9. Polish: loading states, error recovery UX, mobile responsiveness
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues (`comnam90/vdc-vault-readiness`) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `GLOSSARY.md` (created lazily) + `docs/adr/`. See `docs/agents/domain.md`.
