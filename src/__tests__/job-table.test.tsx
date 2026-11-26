@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { JobTable } from "@/components/dashboard/job-table";
 import type { EnrichedJob } from "@/types/enriched-job";
@@ -513,6 +513,46 @@ describe("JobTable", () => {
     fireEvent.click(vmwareOption);
     expect(screen.getByText("VM Backup Daily")).toBeInTheDocument();
     expect(screen.queryByText("SQL Agent Backup")).not.toBeInTheDocument();
+  });
+
+  describe("jobs with no VBR repository", () => {
+    const jobs = [
+      createEnrichedJob({ JobName: "Ordinary Job", RepoName: "LinuxHardened" }),
+      createEnrichedJob({
+        JobName: "Cloud Policy",
+        JobType: "Azure VM Backup",
+        RepoName: null,
+      }),
+    ];
+
+    it('shows "Cloud-native" in the repository column', () => {
+      render(<JobTable jobs={jobs} />);
+      const row = screen.getByText("Cloud Policy").closest("tr");
+      expect(row).not.toBeNull();
+      expect(
+        within(row as HTMLElement).getByText("Cloud-native"),
+      ).toBeInTheDocument();
+    });
+
+    it('can be selected with the "Cloud-native" repository filter', () => {
+      render(<JobTable jobs={jobs} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /filter by repository/i }),
+      );
+      fireEvent.click(screen.getByRole("checkbox", { name: "Cloud-native" }));
+      expect(screen.getByText("Cloud Policy")).toBeInTheDocument();
+      expect(screen.queryByText("Ordinary Job")).not.toBeInTheDocument();
+    });
+
+    it("still filters by a named repository", () => {
+      render(<JobTable jobs={jobs} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /filter by repository/i }),
+      );
+      fireEvent.click(screen.getByRole("checkbox", { name: "LinuxHardened" }));
+      expect(screen.getByText("Ordinary Job")).toBeInTheDocument();
+      expect(screen.queryByText("Cloud Policy")).not.toBeInTheDocument();
+    });
   });
 
   it("filters rows by encryption toggle", () => {

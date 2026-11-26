@@ -430,6 +430,19 @@ describe("JobDetailSheet", () => {
       expect(screen.getByText("LinuxHardened")).toBeInTheDocument();
     });
 
+    it("shows the repository as absent when the job has no VBR repository", () => {
+      const job = createEnrichedJob({
+        JobType: "Azure VM Backup",
+        RepoName: null,
+      });
+      render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);
+
+      const row = screen.getByText("Repository").closest("div");
+      expect(row).not.toBeNull();
+      const value = within(row as HTMLElement).getByText("None (cloud-native)");
+      expect(value).toHaveClass("text-muted-foreground");
+    });
+
     it("renders compression level", () => {
       const job = createEnrichedJob({ CompressionLevel: "Optimal" });
       render(<JobDetailSheet job={job} open={true} onOpenChange={noop} />);

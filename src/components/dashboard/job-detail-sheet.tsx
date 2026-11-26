@@ -204,7 +204,11 @@ function ConfigurationSection({ job }: { job: EnrichedJob }) {
     <div className="space-y-1">
       <SectionHeading>Configuration</SectionHeading>
       <PropertyRow label="Repository">
-        <NullableValue value={job.RepoName} />
+        {job.RepoName === null ? (
+          <span className="text-muted-foreground">None (cloud-native)</span>
+        ) : (
+          <span>{job.RepoName}</span>
+        )}
       </PropertyRow>
       <PropertyRow label="Compression">
         <NullableValue value={job.CompressionLevel} />
