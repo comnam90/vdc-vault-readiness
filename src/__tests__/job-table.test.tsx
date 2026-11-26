@@ -544,6 +544,35 @@ describe("JobTable", () => {
       expect(screen.queryByText("Ordinary Job")).not.toBeInTheDocument();
     });
 
+    it('sorts cloud-native jobs by their "Cloud-native" label', () => {
+      // More than 10 rows, so TanStack's auto sorting picks its text sorter.
+      const middleJobs = Array.from({ length: 8 }, (_, i) =>
+        createEnrichedJob({ JobName: `Middle Job ${i}`, RepoName: "Middle" }),
+      );
+      render(
+        <JobTable
+          jobs={[
+            createEnrichedJob({ JobName: "Zeta Job", RepoName: "Zeta Repo" }),
+            ...middleJobs,
+            createEnrichedJob({ JobName: "Cloud Job", RepoName: null }),
+            createEnrichedJob({ JobName: "Alpha Job", RepoName: "Alpha Repo" }),
+          ]}
+        />,
+      );
+      const sortButton = screen.getByRole("button", { name: /^repository$/i });
+
+      fireEvent.click(sortButton);
+      expect(getJobNamesInOrder().slice(0, 2)).toEqual([
+        "Alpha Job",
+        "Cloud Job",
+      ]);
+
+      fireEvent.click(sortButton);
+      const descending = getJobNamesInOrder();
+      expect(descending[0]).toBe("Zeta Job");
+      expect(descending[descending.length - 1]).toBe("Cloud Job");
+    });
+
     it("still filters by a named repository", () => {
       render(<JobTable jobs={jobs} />);
       fireEvent.click(

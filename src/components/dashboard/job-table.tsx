@@ -86,6 +86,10 @@ function repoLabel(repoName: string | null): string {
   return repoName ?? CLOUD_NATIVE_REPO_LABEL;
 }
 
+function compareLabels(a: string, b: string): number {
+  return a.localeCompare(b, undefined, { sensitivity: "base" });
+}
+
 interface FilterOption<T> {
   value: T;
   label: string;
@@ -301,6 +305,11 @@ function buildColumns(
         if (!filterValue || filterValue.length === 0) return true;
         return filterValue.includes(row.original.RepoName);
       },
+      sortingFn: (rowA, rowB) =>
+        compareLabels(
+          repoLabel(rowA.original.RepoName),
+          repoLabel(rowB.original.RepoName),
+        ),
       cell: (info) => {
         const value = repoLabel(info.getValue());
         return (
@@ -425,7 +434,7 @@ export function JobTable({
     () =>
       [...new Set(jobs.map((j) => j.RepoName))]
         .map((repoName) => ({ value: repoName, label: repoLabel(repoName) }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
+        .sort((a, b) => compareLabels(a.label, b.label)),
     [jobs],
   );
 
