@@ -59,6 +59,39 @@ function findRule(
 }
 
 describe("validateJobEncryption (SOBR encryption exemption)", () => {
+  it("does not treat an unencrypted job with no repository as SOBR-exempt", () => {
+    const data = makeDataset({
+      jobInfo: [
+        makeJob({ JobName: "Job A", Encrypted: false, RepoName: "SOBR-01" }),
+        makeJob({ JobName: "Job B", Encrypted: false, RepoName: null }),
+      ],
+      sobr: [
+        {
+          Name: "SOBR-01",
+          EnableCapacityTier: true,
+          CapacityTierCopy: true,
+          CapacityTierMove: false,
+          ArchiveTierEnabled: false,
+          ImmutableEnabled: false,
+          ExtentCount: null,
+          JobCount: null,
+          PolicyType: null,
+          UsePerVMFiles: null,
+          CapTierType: null,
+          ImmutablePeriod: null,
+          SizeLimitEnabled: null,
+          SizeLimit: null,
+        },
+      ],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "job-encryption");
+
+    expect(rule?.status).toBe("fail");
+    expect(rule?.affectedItems).toEqual(["Job B"]);
+  });
+
   it("warns for unencrypted job on SOBR with capacity tier (SOBR-layer assumption)", () => {
     const data = makeDataset({
       jobInfo: [
@@ -512,6 +545,22 @@ describe("validateCapacityTierResidency (capacity-tier-residency)", () => {
     const rule = findRule(results, "capacity-tier-residency");
 
     expect(rule?.status).toBe("pass");
+  });
+
+  it("never matches a job with no repository to a SOBR", () => {
+    const data = makeDataset({
+      sobr: [makeSobr()],
+      capExtents: [makeCapExtent()],
+      jobInfo: [
+        makeJob({ JobName: "No Repo", RepoName: null, RetainDays: 30 }),
+      ],
+    });
+
+    const results = validateHealthcheck(data);
+    const rule = findRule(results, "capacity-tier-residency");
+
+    expect(rule?.status).toBe("pass");
+    expect(rule?.affectedItems).toEqual([]);
   });
 
   it("passes: copy mode with sufficient retention", () => {

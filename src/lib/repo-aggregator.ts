@@ -11,6 +11,7 @@ export function aggregateRepoStatsMap(
 ): Map<string, RepoStats> {
   const map = new Map<string, RepoStats>();
   for (const job of jobs) {
+    if (job.RepoName === null) continue;
     if (filter && !filter.has(job.RepoName)) continue;
     const cur = map.get(job.RepoName) ?? { sourceTB: 0, onDiskTB: 0 };
     map.set(job.RepoName, {
