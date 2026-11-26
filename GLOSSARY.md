@@ -7,7 +7,7 @@ Checks whether a Veeam Backup & Replication environment, as described by a veeam
 ### Jobs
 
 **Cloud plug-in job type**:
-A JobType label for a Veeam Backup for AWS, Azure or Google Cloud policy, or the legacy raw `VmbApiPolicyTempJob` type. Excludes the Proxmox, AHV and Morpheus plug-ins.
+A JobType label for a Veeam Backup for AWS, Azure or Google Cloud policy, or the legacy raw `VmbApiPolicyTempJob` type. Excludes the Proxmox, AHV and Morpheus friendly labels.
 _Avoid_: cloud job type, VMB API job
 
 **Cloud-native job**:

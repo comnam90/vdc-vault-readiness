@@ -78,33 +78,33 @@ Recent scans (async, browser-only):
 
 ## WHERE TO LOOK
 
-| Need                     | File                     | Notes                                                                                                                                                    |
-| ------------------------ | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Agent JobType classifier | agent-classifier.ts      | Pure pattern match for {OS} Agent {Standalone,Policy,Backup} (OS prefix optional for Standalone only) + legacy exact strings. Used by validator.ts only. |
-| Excluded job types       | job-type-filter.ts       | isExcludedJobType() — used by normalizer.ts; exact names come from EXCLUDED_JOB_TYPES in constants.ts                                                    |
-| Cloud-native jobs        | job-type-filter.ts       | isCloudPluginJobType() lets the normalizer keep a null RepoName; rules and sizing use isCloudNativeJob() (type + no repository). See docs/adr/0003       |
-| Validation rules         | validator.ts             | Add function, append to return array in validateHealthcheck()                                                                                            |
-| Version minimum          | constants.ts             | MINIMUM_VBR_VERSION — tests reference this constant                                                                                                      |
-| Retention minimum        | constants.ts             | MINIMUM_RETENTION_DAYS — used by validator + calculator                                                                                                  |
-| Residency minimum        | constants.ts             | MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS — used by SOBR validator                                                                                            |
-| New section parsing      | parser.ts                | zipSection() handles any Headers/Rows section                                                                                                            |
-| Normalized fields        | normalizer.ts            | Add extraction + error accumulation using flatMap/buildError                                                                                             |
-| SOBR normalization       | normalizer.ts            | normalizeSobr(), normalizeCapExtent(), normalizeArchExtent() at bottom of file                                                                           |
-| UI step labels           | constants.ts             | PIPELINE_STEPS — NOT 1:1 with validator ruleIds. Includes "sobr-analysis" step                                                                           |
-| Validation filters       | validation-selectors.ts  | Blocker/passing splits consumed by dashboard components                                                                                                  |
-| Vault sizing inputs      | calculator-aggregator.ts | buildCalculatorSummary() is main entry; plus capGfs / globalCapDays cap helpers                                                                          |
-| Sizing derivation        | sizing-derivation.ts     | deriveSizing() turns VmAgentResponseData into GFS/immutability/buffer composition                                                                        |
-| Headroom buffer          | sizing-buffer.ts         | bufferFactor(pct); applyBufferToSizing / applyBufferToSeries                                                                                             |
-| Multi-year projection    | growth-projector.ts      | generateGrowthSeries() — async, calls veeam-api per projected year                                                                                       |
-| Veeam sizing API         | veeam-api.ts             | buildVmAgentRequest() + callVmAgentApi() → /api/veeam-proxy (consent-gated)                                                                              |
-| Chart data shapes        | chart-selectors.ts       | groupByJobType, bucketChangeRates, repoImmutabilityCounts, groupByRepo                                                                                   |
-| Per-repo rollups         | repo-aggregator.ts       | aggregateRepoStatsMap(jobs, filter?) → Map<repo, {sourceTB,onDiskTB}>                                                                                    |
-| Scan persistence         | indexed-db.ts            | saveScan/getRecentScans/loadScanPayload/deleteScan; StoredScan shape; MAX_SCANS=5                                                                        |
-| Scan eviction policy     | recent-scans-fifo.ts     | selectIdsToEvict(existingIds, maxKeep) — pure, unit-tested separately from IndexedDB                                                                     |
-| File reading             | file-reader.ts           | readFileAsText(File): Promise<string>                                                                                                                    |
-| Job + session join       | enrich-jobs.ts           | enrichJobs() → EnrichedJob[] via Map<JobName, SafeJobSession>                                                                                            |
-| Display formatting       | format-utils.ts          | formatSize, formatPercent, formatDuration, formatTB, formatRatio, formatGFS                                                                              |
-| Relative timestamps      | relative-time.ts         | formatRelativeTime(iso) for recent-scans list                                                                                                            |
+| Need                     | File                     | Notes                                                                                                                                                               |
+| ------------------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agent JobType classifier | agent-classifier.ts      | Pure pattern match for {OS} Agent {Standalone,Policy,Backup} (OS prefix optional for Standalone only) + legacy exact strings. Used by validator.ts only.            |
+| Excluded job types       | job-type-filter.ts       | isExcludedJobType() — used by normalizer.ts; exact names come from EXCLUDED_JOB_TYPES in constants.ts                                                               |
+| Cloud-native jobs        | job-type-filter.ts       | isCloudPluginJobType() lets the normalizer keep a null RepoName; rules and sizing will use isCloudNativeJob() (type + no repository; #101, #102). See docs/adr/0003 |
+| Validation rules         | validator.ts             | Add function, append to return array in validateHealthcheck()                                                                                                       |
+| Version minimum          | constants.ts             | MINIMUM_VBR_VERSION — tests reference this constant                                                                                                                 |
+| Retention minimum        | constants.ts             | MINIMUM_RETENTION_DAYS — used by validator + calculator                                                                                                             |
+| Residency minimum        | constants.ts             | MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS — used by SOBR validator                                                                                                       |
+| New section parsing      | parser.ts                | zipSection() handles any Headers/Rows section                                                                                                                       |
+| Normalized fields        | normalizer.ts            | Add extraction + error accumulation using flatMap/buildError                                                                                                        |
+| SOBR normalization       | normalizer.ts            | normalizeSobr(), normalizeCapExtent(), normalizeArchExtent() at bottom of file                                                                                      |
+| UI step labels           | constants.ts             | PIPELINE_STEPS — NOT 1:1 with validator ruleIds. Includes "sobr-analysis" step                                                                                      |
+| Validation filters       | validation-selectors.ts  | Blocker/passing splits consumed by dashboard components                                                                                                             |
+| Vault sizing inputs      | calculator-aggregator.ts | buildCalculatorSummary() is main entry; plus capGfs / globalCapDays cap helpers                                                                                     |
+| Sizing derivation        | sizing-derivation.ts     | deriveSizing() turns VmAgentResponseData into GFS/immutability/buffer composition                                                                                   |
+| Headroom buffer          | sizing-buffer.ts         | bufferFactor(pct); applyBufferToSizing / applyBufferToSeries                                                                                                        |
+| Multi-year projection    | growth-projector.ts      | generateGrowthSeries() — async, calls veeam-api per projected year                                                                                                  |
+| Veeam sizing API         | veeam-api.ts             | buildVmAgentRequest() + callVmAgentApi() → /api/veeam-proxy (consent-gated)                                                                                         |
+| Chart data shapes        | chart-selectors.ts       | groupByJobType, bucketChangeRates, repoImmutabilityCounts, groupByRepo                                                                                              |
+| Per-repo rollups         | repo-aggregator.ts       | aggregateRepoStatsMap(jobs, filter?) → Map<repo, {sourceTB,onDiskTB}>                                                                                               |
+| Scan persistence         | indexed-db.ts            | saveScan/getRecentScans/loadScanPayload/deleteScan; StoredScan shape; MAX_SCANS=5                                                                                   |
+| Scan eviction policy     | recent-scans-fifo.ts     | selectIdsToEvict(existingIds, maxKeep) — pure, unit-tested separately from IndexedDB                                                                                |
+| File reading             | file-reader.ts           | readFileAsText(File): Promise<string>                                                                                                                               |
+| Job + session join       | enrich-jobs.ts           | enrichJobs() → EnrichedJob[] via Map<JobName, SafeJobSession>                                                                                                       |
+| Display formatting       | format-utils.ts          | formatSize, formatPercent, formatDuration, formatTB, formatRatio, formatGFS                                                                                         |
+| Relative timestamps      | relative-time.ts         | formatRelativeTime(iso) for recent-scans list                                                                                                                       |
 
 ## CONVENTIONS
 

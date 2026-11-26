@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { isCloudNativeJob, isExcludedJobType } from "@/lib/job-type-filter";
+import {
+  isCloudNativeJob,
+  isCloudPluginJobType,
+  isExcludedJobType,
+} from "@/lib/job-type-filter";
 
 describe("isExcludedJobType", () => {
   it("excludes the legacy 'Replica' job type", () => {
@@ -43,6 +47,33 @@ describe("isExcludedJobType", () => {
     "Proxmox Backup",
   ])("keeps the non-replica job type '%s'", (jobType) => {
     expect(isExcludedJobType(jobType)).toBe(false);
+  });
+});
+
+describe("isCloudPluginJobType", () => {
+  it.each([
+    "AWS EC2 Backup",
+    "Azure IaaS Backup",
+    "GCE Backup",
+    "Google Cloud SQL Backup",
+    "  aws ec2 backup  ",
+    "VmbApiPolicyTempJob",
+    "vmbapipolicytempjob",
+  ])("matches %j", (jobType) => {
+    expect(isCloudPluginJobType(jobType)).toBe(true);
+  });
+
+  it.each([
+    "Proxmox Backup",
+    "Nutanix AHV Backup",
+    "HPE Morpheus VME Backup",
+    "File Backup",
+    "Backup Copy",
+    "AWS EC2 Backup Copy",
+    "GCP Backup",
+    "Windows Agent Policy",
+  ])("does not match %j", (jobType) => {
+    expect(isCloudPluginJobType(jobType)).toBe(false);
   });
 });
 
