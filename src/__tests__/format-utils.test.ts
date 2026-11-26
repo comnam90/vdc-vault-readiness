@@ -8,6 +8,7 @@ import {
   formatGFS,
   formatShortGfs,
   formatRatio,
+  formatRepoName,
 } from "@/lib/format-utils";
 
 describe("formatSize", () => {
@@ -191,5 +192,15 @@ describe("formatRatio", () => {
 
   it("formats zero", () => {
     expect(formatRatio(0)).toBe("0.00x");
+  });
+});
+
+describe("formatRepoName", () => {
+  it("returns the repository name unchanged", () => {
+    expect(formatRepoName("Repo A")).toBe("Repo A");
+  });
+
+  it('labels a missing repository as "Cloud-native"', () => {
+    expect(formatRepoName(null)).toBe("Cloud-native");
   });
 });

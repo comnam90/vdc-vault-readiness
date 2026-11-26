@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import type { EnrichedJob } from "@/types/enriched-job";
 import { cn } from "@/lib/utils";
-import { formatSize, formatPercent } from "@/lib/format-utils";
+import { formatSize, formatPercent, formatRepoName } from "@/lib/format-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -79,13 +79,6 @@ function SourceSizeCell({ gb }: { gb: number | null }) {
 
 // ── Filter helpers ────────────────────────────────────────────────────────────
 
-/** Repository label for jobs with no VBR repository (`RepoName === null`). */
-const CLOUD_NATIVE_REPO_LABEL = "Cloud-native";
-
-function repoLabel(repoName: string | null): string {
-  return repoName ?? CLOUD_NATIVE_REPO_LABEL;
-}
-
 function compareLabels(a: string, b: string): number {
   return a.localeCompare(b, undefined, { sensitivity: "base" });
 }
@@ -133,6 +126,8 @@ function MultiSelectFilter<T>({
         <div className="space-y-1">
           {options.map((opt) => (
             <label
+              // Prefix by null-ness so a real repository named like the
+              // null option's label ("Cloud-native") gets a distinct key.
               key={`${opt.value === null ? "null" : "value"}:${opt.label}`}
               className="hover:bg-muted flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm"
             >
@@ -307,14 +302,14 @@ function buildColumns(
       },
       sortingFn: (rowA, rowB) =>
         compareLabels(
-          repoLabel(rowA.original.RepoName),
-          repoLabel(rowB.original.RepoName),
+          formatRepoName(rowA.original.RepoName),
+          formatRepoName(rowB.original.RepoName),
         ),
       // Sorted by label, so always start ascending; TanStack would otherwise
       // infer descending when the first row's RepoName is null.
       sortDescFirst: false,
       cell: (info) => {
-        const value = repoLabel(info.getValue());
+        const value = formatRepoName(info.getValue());
         return (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -436,7 +431,10 @@ export function JobTable({
   const repoNameOptions = useMemo(
     () =>
       [...new Set(jobs.map((j) => j.RepoName))]
-        .map((repoName) => ({ value: repoName, label: repoLabel(repoName) }))
+        .map((repoName) => ({
+          value: repoName,
+          label: formatRepoName(repoName),
+        }))
         .sort((a, b) => compareLabels(a.label, b.label)),
     [jobs],
   );

@@ -439,7 +439,7 @@ describe("JobDetailSheet", () => {
 
       const row = screen.getByText("Repository").closest("div");
       expect(row).not.toBeNull();
-      const value = within(row as HTMLElement).getByText("None (cloud-native)");
+      const value = within(row as HTMLElement).getByText("Cloud-native");
       expect(value).toHaveClass("text-muted-foreground");
     });
 

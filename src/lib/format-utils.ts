@@ -94,3 +94,11 @@ export function formatRatio(value: number | null): string {
   if (value === null) return "—";
   return `${value.toFixed(2)}x`;
 }
+
+/**
+ * Display label for a job's repository. `null` means the job has no VBR
+ * repository (a cloud plug-in policy, see #96), shown as "Cloud-native".
+ */
+export function formatRepoName(repoName: string | null): string {
+  return repoName ?? "Cloud-native";
+}

@@ -5,6 +5,7 @@ import {
   formatPercent,
   formatDuration,
   formatRatio,
+  formatRepoName,
 } from "@/lib/format-utils";
 import { Info } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
@@ -205,7 +206,7 @@ function ConfigurationSection({ job }: { job: EnrichedJob }) {
       <SectionHeading>Configuration</SectionHeading>
       <PropertyRow label="Repository">
         {job.RepoName === null ? (
-          <span className="text-muted-foreground">None (cloud-native)</span>
+          <span className="text-muted-foreground">{formatRepoName(null)}</span>
         ) : (
           <span>{job.RepoName}</span>
         )}
