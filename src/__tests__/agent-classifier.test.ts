@@ -122,8 +122,7 @@ describe("classifyAgentJobType", () => {
       expect(classifyAgentJobType(jobType)).toBeNull();
     });
 
-    // VmbApiPolicyTempJob is the upstream parent type for VM Backup API
-    // plug-ins (AWS, Azure, GCE, Proxmox, AHV, Morpheus), never agents (#99).
+    // VM Backup API plug-in type, never an agent (#99).
     it("does not classify 'VmbapiPolicyTempJob' as an agent (plug-in type)", () => {
       expect(classifyAgentJobType("VmbapiPolicyTempJob")).toBeNull();
       expect(classifyAgentJobType("VmbApiPolicyTempJob")).toBeNull();

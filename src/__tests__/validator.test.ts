@@ -973,7 +973,56 @@ describe("validateHealthcheck", () => {
       expect(check?.status).toBe("pass");
     });
 
-    it("warns for EpAgentPolicy but not VmbApiPolicyTempJob (plug-in type, #99)", () => {
+    it("ignores VmbApiPolicyTempJob plug-in rows (#99)", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "PolicyJob2",
+            JobType: "vmbapipolicytempjob",
+            Encrypted: true,
+            RepoName: "Repo2",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+            OnDiskGB: null,
+            RetentionScheme: null,
+            CompressionLevel: null,
+            BlockSize: null,
+            GfsEnabled: null,
+            ActiveFullEnabled: null,
+            SyntheticFullEnabled: null,
+            BackupChainType: null,
+            IndexingEnabled: null,
+          },
+        ],
+        Licenses: [],
+        jobSummary: [],
+        dataErrors: [],
+        jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        extents: [],
+        archExtents: [],
+        repos: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-policy-gateway-required",
+      );
+
+      expect(check?.status).toBe("pass");
+      expect(check?.affectedItems).toEqual([]);
+    });
+
+    it("matches legacy EpAgentPolicy case-insensitively", () => {
       const data: NormalizedDataset = {
         backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
         securitySummary: [
@@ -988,24 +1037,6 @@ describe("validateHealthcheck", () => {
             JobType: "epagentpolicy",
             Encrypted: true,
             RepoName: "Repo1",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
-          {
-            JobName: "PolicyJob2",
-            JobType: "vmbapipolicytempjob",
-            Encrypted: true,
-            RepoName: "Repo2",
             RetainDays: null,
             GfsDetails: null,
             SourceSizeGB: null,
