@@ -175,7 +175,9 @@ describe("analyzeHealthcheck (full pipeline)", () => {
         "agent-policy-gateway-required",
       );
       expect(rule.status).toBe("warning");
-      expect(rule.affectedItems.length).toBeGreaterThan(0);
+      // Only the EpAgentPolicy row. The sample's two VmbApiPolicyTempJob
+      // rows are VM Backup API plug-in jobs, not agent policies (#99).
+      expect(rule.affectedItems).toEqual(["Job_72"]);
     });
 
     // Rule 6: License Edition - EnterprisePlus → pass

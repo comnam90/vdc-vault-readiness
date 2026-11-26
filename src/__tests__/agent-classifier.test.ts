@@ -64,13 +64,6 @@ describe("classifyAgentJobType", () => {
       });
     });
 
-    it("classifies 'VmbapiPolicyTempJob' as policy with legacy=true", () => {
-      expect(classifyAgentJobType("VmbapiPolicyTempJob")).toEqual({
-        category: "policy",
-        legacy: true,
-      });
-    });
-
     it("classifies 'EpAgentBackup' as managed-backup with legacy=true", () => {
       expect(classifyAgentJobType("EpAgentBackup")).toEqual({
         category: "managed-backup",
@@ -127,6 +120,13 @@ describe("classifyAgentJobType", () => {
       ["WindowsAgentPolicy"], // no whitespace separator
     ])("returns null for non-agent JobType %j", (jobType) => {
       expect(classifyAgentJobType(jobType)).toBeNull();
+    });
+
+    // VM Backup API plug-in type, never an agent (#99).
+    it("does not classify 'VmbapiPolicyTempJob' as an agent (plug-in type)", () => {
+      expect(classifyAgentJobType("VmbapiPolicyTempJob")).toBeNull();
+      expect(classifyAgentJobType("VmbApiPolicyTempJob")).toBeNull();
+      expect(classifyAgentJobType("  vmbapipolicytempjob  ")).toBeNull();
     });
 
     it("returns null for null", () => {

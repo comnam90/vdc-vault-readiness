@@ -973,7 +973,7 @@ describe("validateHealthcheck", () => {
       expect(check?.status).toBe("pass");
     });
 
-    it("warns when EpAgentPolicy or VmbApiPolicyTempJob jobs are present (case-insensitive)", () => {
+    it("ignores VmbApiPolicyTempJob plug-in rows (#99)", () => {
       const data: NormalizedDataset = {
         backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
         securitySummary: [
@@ -983,24 +983,6 @@ describe("validateHealthcheck", () => {
           },
         ],
         jobInfo: [
-          {
-            JobName: "PolicyJob1",
-            JobType: "EpAgentPolicy",
-            Encrypted: true,
-            RepoName: "Repo1",
-            RetainDays: null,
-            GfsDetails: null,
-            SourceSizeGB: null,
-            OnDiskGB: null,
-            RetentionScheme: null,
-            CompressionLevel: null,
-            BlockSize: null,
-            GfsEnabled: null,
-            ActiveFullEnabled: null,
-            SyntheticFullEnabled: null,
-            BackupChainType: null,
-            IndexingEnabled: null,
-          },
           {
             JobName: "PolicyJob2",
             JobType: "vmbapipolicytempjob",
@@ -1036,8 +1018,57 @@ describe("validateHealthcheck", () => {
         (r) => r.ruleId === "agent-policy-gateway-required",
       );
 
+      expect(check?.status).toBe("pass");
+      expect(check?.affectedItems).toEqual([]);
+    });
+
+    it("matches legacy EpAgentPolicy case-insensitively", () => {
+      const data: NormalizedDataset = {
+        backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
+        securitySummary: [
+          {
+            BackupFileEncryptionEnabled: true,
+            ConfigBackupEncryptionEnabled: true,
+          },
+        ],
+        jobInfo: [
+          {
+            JobName: "PolicyJob1",
+            JobType: "epagentpolicy",
+            Encrypted: true,
+            RepoName: "Repo1",
+            RetainDays: null,
+            GfsDetails: null,
+            SourceSizeGB: null,
+            OnDiskGB: null,
+            RetentionScheme: null,
+            CompressionLevel: null,
+            BlockSize: null,
+            GfsEnabled: null,
+            ActiveFullEnabled: null,
+            SyntheticFullEnabled: null,
+            BackupChainType: null,
+            IndexingEnabled: null,
+          },
+        ],
+        Licenses: [],
+        jobSummary: [],
+        dataErrors: [],
+        jobSessionSummary: [],
+        sobr: [],
+        capExtents: [],
+        extents: [],
+        archExtents: [],
+        repos: [],
+      };
+
+      const results = validateHealthcheck(data);
+      const check = results.find(
+        (r) => r.ruleId === "agent-policy-gateway-required",
+      );
+
       expect(check?.status).toBe("warning");
-      expect(check?.affectedItems).toEqual(["PolicyJob1", "PolicyJob2"]);
+      expect(check?.affectedItems).toEqual(["PolicyJob1"]);
       expect(check?.message).toContain("Gateway Server");
     });
 
@@ -1894,7 +1925,7 @@ describe("validateHealthcheck — legacy job type deprecation warning", () => {
     const data = emptyDataset();
     data.jobInfo = [
       jobRow({ JobName: "A", JobType: "EpAgentPolicy" }),
-      jobRow({ JobName: "B", JobType: "VmbapiPolicyTempJob" }),
+      jobRow({ JobName: "B", JobType: "unmanaged agent" }),
       jobRow({ JobName: "C", JobType: "EpAgentBackup" }),
     ];
     data.jobSummary = [{ JobType: "Unmanaged Agent", Count: 2 }];
@@ -1924,6 +1955,28 @@ describe("validateHealthcheck — legacy job type deprecation warning", () => {
     validateHealthcheck(data);
 
     expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("does NOT warn when only VmbApiPolicyTempJob plug-in rows are present (#99)", () => {
+    const data = emptyDataset();
+    data.jobInfo = [jobRow({ JobName: "P", JobType: "VmbApiPolicyTempJob" })];
+    data.jobSummary = [{ JobType: "VmbApiPolicyTempJob", Count: 3 }];
+
+    validateHealthcheck(data);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not name VmbApiPolicyTempJob in the deprecation warning", () => {
+    const data = emptyDataset();
+    data.jobInfo = [jobRow({ JobName: "P", JobType: "EpAgentPolicy" })];
+
+    validateHealthcheck(data);
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(String(warnSpy.mock.calls[0][0]).toLowerCase()).not.toContain(
+      "vmbapipolicytempjob",
+    );
   });
 });
 

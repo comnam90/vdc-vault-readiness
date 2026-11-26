@@ -128,11 +128,11 @@
 
 ### `agent-policy-gateway-required` -- Managed Agent Policies
 
-|                       |                                                                           |
-| --------------------- | ------------------------------------------------------------------------- |
-| **Status on failure** | `warning`                                                                 |
-| **Data source**       | `NormalizedDataset.jobInfo[].JobType`                                     |
-| **Detection**         | `JobType.trim().toLowerCase() ∈ {"epagentpolicy", "vmbapipolicytempjob"}` |
+|                       |                                                                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **Status on failure** | `warning`                                                                                                                 |
+| **Data source**       | `NormalizedDataset.jobInfo[].JobType`                                                                                     |
+| **Detection**         | `classifyAgentJobType(JobType)?.category === "policy"`: `<OS> Agent Policy`, or legacy `EpAgentPolicy` (case-insensitive) |
 
 **Behavior:**
 
@@ -140,6 +140,8 @@
 - `warning` — one or more jobs match.
 
 **Rationale:** Managed agent policies can reach VDC Vault only through a VBR Gateway Server — they cannot write directly to object storage.
+
+`VmbApiPolicyTempJob` is not matched. Upstream defines it as the parent type for VM Backup API plug-ins (AWS, Azure, GCE, Proxmox, AHV, HPE Morpheus), not agents.
 
 **Affected items:** `JobName` values of matching jobs.
 
