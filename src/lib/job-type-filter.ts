@@ -1,4 +1,5 @@
 import { EXCLUDED_JOB_TYPES } from "@/lib/constants";
+import type { SafeJob } from "@/types/domain";
 
 // VBR's TypeToString for a Proxmox replication job is "Proxmox " (platform
 // name, blank type word), unlike "Proxmox Backup". A VBR 13.1.2 export
@@ -42,4 +43,16 @@ export function isCloudPluginJobType(jobType: string): boolean {
   return (
     normalized === LEGACY_PLUGIN_TYPE || CLOUD_PLUGIN_LABEL.test(normalized)
   );
+}
+
+/**
+ * True for a cloud-native job: a cloud plug-in job type with no VBR
+ * repository. Rules and sizing use this, not the type predicate, so a legacy
+ * `VmbApiPolicyTempJob` row with a repository stays an ordinary job.
+ * See ADR 0003.
+ */
+export function isCloudNativeJob(
+  job: Pick<SafeJob, "JobType" | "RepoName">,
+): boolean {
+  return job.RepoName === null && isCloudPluginJobType(job.JobType);
 }

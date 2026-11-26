@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isExcludedJobType } from "@/lib/job-type-filter";
+import { isCloudNativeJob, isExcludedJobType } from "@/lib/job-type-filter";
 
 describe("isExcludedJobType", () => {
   it("excludes the legacy 'Replica' job type", () => {
@@ -44,4 +44,34 @@ describe("isExcludedJobType", () => {
   ])("keeps the non-replica job type '%s'", (jobType) => {
     expect(isExcludedJobType(jobType)).toBe(false);
   });
+});
+
+describe("isCloudNativeJob", () => {
+  it.each([
+    "AWS EC2 Backup",
+    "Azure IaaS Backup",
+    "GCE Backup",
+    "VmbApiPolicyTempJob",
+  ])("is true for a '%s' job with no repository", (JobType) => {
+    expect(isCloudNativeJob({ JobType, RepoName: null })).toBe(true);
+  });
+
+  it("is false for a legacy VmbApiPolicyTempJob job that has a repository", () => {
+    expect(
+      isCloudNativeJob({ JobType: "VmbApiPolicyTempJob", RepoName: "Repo1" }),
+    ).toBe(false);
+  });
+
+  it("is false for a cloud plug-in label that has a repository", () => {
+    expect(
+      isCloudNativeJob({ JobType: "AWS EC2 Backup", RepoName: "Repo1" }),
+    ).toBe(false);
+  });
+
+  it.each(["VMware Backup", "Proxmox Backup", "Nutanix AHV Backup"])(
+    "is false for a '%s' job even with no repository",
+    (JobType) => {
+      expect(isCloudNativeJob({ JobType, RepoName: null })).toBe(false);
+    },
+  );
 });
