@@ -11,7 +11,7 @@
   - [Source](https://helpcenter.veeam.com/docs/vdc/userguide/vault_integration.html)
 - **Agents — It Depends on the Job Type:** Vault support varies by agent job type:
   - **Managed Agent Jobs** (`Agent Backup`, `EpAgentBackup`): ✅ Direct to Vault — no Gateway Server required.
-  - **Managed Agent Policies** (`EpAgentPolicy`, `VmbApiPolicyTempJob`): ⚠️ Require a **Gateway Server** — policies can't write directly to object storage.
+  - **Managed Agent Policies** (`<OS> Agent Policy`, legacy `EpAgentPolicy`): ⚠️ Require a **Gateway Server** — policies can't write directly to object storage.
   - **Standalone (Unmanaged) Agents** (`Unmanaged Agent`): ❌ Cannot target Vault at all. Land their backups in Vault via a **Backup Copy Job** instead.
   - [Source](https://helpcenter.veeam.com/docs/vbr/userguide/data_cloud_limitations.html)
 - **Veeam Backup for Azure (Restore Gaps):** If Vault is your target, you're losing several restore options:
