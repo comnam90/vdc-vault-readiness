@@ -12,7 +12,7 @@ lib/
 ├── normalizer.ts          # Raw records → typed SafeJob/SafeBackupServer/SafeSobr/SafeCapExtent/SafeArchExtent/SafeJobSummary/etc. with error accumulation (highest complexity)
 ├── validator.ts           # 13 validation rules against NormalizedDataset. 8 core + 4 SOBR + 1 active-full
 ├── agent-classifier.ts    # classifyAgentJobType(): centralized JobType naming knowledge for agent rules (pattern + legacy allow-list)
-├── job-type-filter.ts     # isExcludedJobType(): drops replica jobs — legacy "Replica", friendly "… Replication" labels, bare "Proxmox " (VBR TypeToString quirk); case-insensitive
+├── job-type-filter.ts     # isExcludedJobType(): drops replica jobs — legacy "Replica", friendly "… Replication" labels, bare "Proxmox " (VBR TypeToString quirk); case-insensitive. isCloudPluginJobType() / isCloudNativeJob(): cloud plug-in policies with no repository (ADR 0003)
 ├── version-compare.ts     # isVersionAtLeast() — semver-like "12.1.2.456" comparison (ignores 4th segment)
 ├── constants.ts           # MINIMUM_VBR_VERSION ("12.1.2"), MINIMUM_RETENTION_DAYS (30), MINIMUM_CAPACITY_TIER_RESIDENCY_DAYS (30), PIPELINE_STEPS
 ├── validation-selectors.ts # Filter helpers: getBlockerValidations(), getPassingValidations(), getNoteValidations(), hasBlockers(), getBlockerCount()
@@ -82,6 +82,7 @@ Recent scans (async, browser-only):
 | ------------------------ | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Agent JobType classifier | agent-classifier.ts      | Pure pattern match for {OS} Agent {Standalone,Policy,Backup} (OS prefix optional for Standalone only) + legacy exact strings. Used by validator.ts only. |
 | Excluded job types       | job-type-filter.ts       | isExcludedJobType() — used by normalizer.ts; exact names come from EXCLUDED_JOB_TYPES in constants.ts                                                    |
+| Cloud-native jobs        | job-type-filter.ts       | isCloudPluginJobType() lets the normalizer keep a null RepoName; rules and sizing use isCloudNativeJob() (type + no repository). See docs/adr/0003       |
 | Validation rules         | validator.ts             | Add function, append to return array in validateHealthcheck()                                                                                            |
 | Version minimum          | constants.ts             | MINIMUM_VBR_VERSION — tests reference this constant                                                                                                      |
 | Retention minimum        | constants.ts             | MINIMUM_RETENTION_DAYS — used by validator + calculator                                                                                                  |
