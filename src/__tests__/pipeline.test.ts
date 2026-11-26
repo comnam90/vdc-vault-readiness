@@ -563,4 +563,40 @@ describe("cloud plug-in policies with no repository (#100)", () => {
       });
     },
   );
+
+  it.each([
+    "VMware Backup",
+    "File Backup",
+    "Proxmox Backup",
+    "Nutanix AHV Backup",
+    "HPE Morpheus Backup",
+  ])(
+    "still drops a '%s' job with an empty repository as a data error",
+    (jobType) => {
+      const { data } = analyzeHealthcheck(
+        exportWithJobs([["Broken Job", jobType, "True", ""]]),
+      );
+
+      expect(data.jobInfo).toEqual([]);
+      expect(data.dataErrors).toEqual([
+        expect.objectContaining({
+          section: "jobInfo",
+          field: "RepoName",
+          reason: "Missing required RepoName",
+        }),
+      ]);
+    },
+  );
+
+  it("keeps a legacy VmbApiPolicyTempJob row's repository when it has one", () => {
+    // The raw type also covers Proxmox, AHV and Morpheus jobs; with a
+    // repository it is an ordinary job, not a cloud-native one.
+    const { data } = analyzeHealthcheck(
+      exportWithJobs([
+        ["Plug-in Job", "VmbApiPolicyTempJob", "False", "Repo1"],
+      ]),
+    );
+
+    expect(data.jobInfo[0].RepoName).toBe("Repo1");
+  });
 });
