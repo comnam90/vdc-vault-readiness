@@ -54,14 +54,6 @@ describe("classifyAgentJobType", () => {
     it("still leaves bare 'Agent Backup' unclassified (jobSummary aggregate label)", () => {
       expect(classifyAgentJobType("Agent Backup")).toBeNull();
     });
-
-    // VmbApiPolicyTempJob is the upstream parent type for VM Backup API
-    // plug-ins (AWS, Azure, GCE, Proxmox, AHV, Morpheus), never agents (#99).
-    it("does not classify 'VmbapiPolicyTempJob' as an agent (plug-in type)", () => {
-      expect(classifyAgentJobType("VmbapiPolicyTempJob")).toBeNull();
-      expect(classifyAgentJobType("VmbApiPolicyTempJob")).toBeNull();
-      expect(classifyAgentJobType("  vmbapipolicytempjob  ")).toBeNull();
-    });
   });
 
   describe("legacy matches (exact strings)", () => {
@@ -128,6 +120,14 @@ describe("classifyAgentJobType", () => {
       ["WindowsAgentPolicy"], // no whitespace separator
     ])("returns null for non-agent JobType %j", (jobType) => {
       expect(classifyAgentJobType(jobType)).toBeNull();
+    });
+
+    // VmbApiPolicyTempJob is the upstream parent type for VM Backup API
+    // plug-ins (AWS, Azure, GCE, Proxmox, AHV, Morpheus), never agents (#99).
+    it("does not classify 'VmbapiPolicyTempJob' as an agent (plug-in type)", () => {
+      expect(classifyAgentJobType("VmbapiPolicyTempJob")).toBeNull();
+      expect(classifyAgentJobType("VmbApiPolicyTempJob")).toBeNull();
+      expect(classifyAgentJobType("  vmbapipolicytempjob  ")).toBeNull();
     });
 
     it("returns null for null", () => {
