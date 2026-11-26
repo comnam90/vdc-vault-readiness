@@ -140,7 +140,7 @@ function validateJobEncryption(data: NormalizedDataset): ValidationResult {
   }
 
   const nonExempt = allUnencrypted.filter(
-    (job) => !capTierSobrs.has(job.RepoName),
+    (job) => job.RepoName === null || !capTierSobrs.has(job.RepoName),
   );
 
   if (nonExempt.length > 0) {

@@ -101,6 +101,15 @@ describe("groupByRepo", () => {
     expect(result[0].repoName).toBe("Repo B");
     expect(result[1].repoName).toBe("Repo A");
   });
+
+  it("leaves out jobs with no VBR repository", () => {
+    const jobs = [
+      makeJob({ RepoName: "Repo A", SourceSizeGB: 1024 }),
+      makeJob({ RepoName: null, SourceSizeGB: 4096 }),
+    ];
+    const result = groupByRepo(jobs);
+    expect(result).toEqual([{ repoName: "Repo A", totalTB: 1 }]);
+  });
 });
 
 describe("repoImmutabilityCounts", () => {

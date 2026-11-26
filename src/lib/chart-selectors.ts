@@ -97,6 +97,7 @@ export function repoImmutabilityCounts(
 export function groupByRepo(jobs: SafeJob[]): RepoChartDatum[] {
   const map = new Map<string, number>();
   for (const job of jobs) {
+    if (job.RepoName === null) continue;
     const prev = map.get(job.RepoName) ?? 0;
     map.set(job.RepoName, prev + (job.SourceSizeGB ?? 0));
   }

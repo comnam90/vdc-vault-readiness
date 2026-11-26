@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { JobTable } from "@/components/dashboard/job-table";
 import type { EnrichedJob } from "@/types/enriched-job";
@@ -513,6 +513,98 @@ describe("JobTable", () => {
     fireEvent.click(vmwareOption);
     expect(screen.getByText("VM Backup Daily")).toBeInTheDocument();
     expect(screen.queryByText("SQL Agent Backup")).not.toBeInTheDocument();
+  });
+
+  describe("jobs with no VBR repository", () => {
+    const jobs = [
+      createEnrichedJob({ JobName: "Ordinary Job", RepoName: "LinuxHardened" }),
+      createEnrichedJob({
+        JobName: "Cloud Policy",
+        JobType: "Azure VM Backup",
+        RepoName: null,
+      }),
+    ];
+
+    it('shows "Cloud-native" in the repository column', () => {
+      render(<JobTable jobs={jobs} />);
+      const row = screen.getByText("Cloud Policy").closest("tr");
+      expect(row).not.toBeNull();
+      expect(
+        within(row as HTMLElement).getByText("Cloud-native"),
+      ).toBeInTheDocument();
+    });
+
+    it('can be selected with the "Cloud-native" repository filter', () => {
+      render(<JobTable jobs={jobs} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /filter by repository/i }),
+      );
+      fireEvent.click(screen.getByRole("checkbox", { name: "Cloud-native" }));
+      expect(screen.getByText("Cloud Policy")).toBeInTheDocument();
+      expect(screen.queryByText("Ordinary Job")).not.toBeInTheDocument();
+    });
+
+    it("sorts ascending on first click even when the first row is cloud-native", () => {
+      // TanStack picks the first-click direction from the first row's value:
+      // a non-string (null) would make it start descending.
+      render(
+        <JobTable
+          jobs={[
+            createEnrichedJob({ JobName: "Cloud Job", RepoName: null }),
+            createEnrichedJob({ JobName: "Alpha Job", RepoName: "Alpha Repo" }),
+            createEnrichedJob({ JobName: "Zeta Job", RepoName: "Zeta Repo" }),
+          ]}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^repository$/i }));
+      expect(getJobNamesInOrder()).toEqual([
+        "Alpha Job",
+        "Cloud Job",
+        "Zeta Job",
+      ]);
+    });
+
+    it('sorts cloud-native jobs by their "Cloud-native" label', () => {
+      // 11 rows: TanStack infers its auto sorter from rows after the first 10,
+      // so this guards that the explicit sortingFn (not auto text sort, which
+      // would read null as "") decides the order.
+      const middleJobs = Array.from({ length: 8 }, (_, i) =>
+        createEnrichedJob({ JobName: `Middle Job ${i}`, RepoName: "Middle" }),
+      );
+      render(
+        <JobTable
+          jobs={[
+            createEnrichedJob({ JobName: "Zeta Job", RepoName: "Zeta Repo" }),
+            ...middleJobs,
+            createEnrichedJob({ JobName: "Cloud Job", RepoName: null }),
+            createEnrichedJob({ JobName: "Alpha Job", RepoName: "Alpha Repo" }),
+          ]}
+        />,
+      );
+      const sortButton = screen.getByRole("button", { name: /^repository$/i });
+
+      fireEvent.click(sortButton);
+      expect(getJobNamesInOrder().slice(0, 2)).toEqual([
+        "Alpha Job",
+        "Cloud Job",
+      ]);
+
+      fireEvent.click(sortButton);
+      const descending = getJobNamesInOrder();
+      expect(descending[0]).toBe("Zeta Job");
+      expect(descending[descending.length - 1]).toBe("Cloud Job");
+    });
+
+    it("still filters by a named repository", () => {
+      render(<JobTable jobs={jobs} />);
+      fireEvent.click(
+        screen.getByRole("button", { name: /filter by repository/i }),
+      );
+      fireEvent.click(screen.getByRole("checkbox", { name: "LinuxHardened" }));
+      expect(screen.getByText("Ordinary Job")).toBeInTheDocument();
+      expect(screen.queryByText("Cloud Policy")).not.toBeInTheDocument();
+    });
   });
 
   it("filters rows by encryption toggle", () => {

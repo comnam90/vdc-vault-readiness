@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import type { EnrichedJob } from "@/types/enriched-job";
 import { cn } from "@/lib/utils";
-import { formatSize, formatPercent } from "@/lib/format-utils";
+import { formatSize, formatPercent, formatRepoName } from "@/lib/format-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -79,19 +79,28 @@ function SourceSizeCell({ gb }: { gb: number | null }) {
 
 // ── Filter helpers ────────────────────────────────────────────────────────────
 
-interface MultiSelectFilterProps {
-  label: string;
-  options: string[];
-  value: string[];
-  onChange: (v: string[]) => void;
+function compareLabels(a: string, b: string): number {
+  return a.localeCompare(b, undefined, { sensitivity: "base" });
 }
 
-function MultiSelectFilter({
+interface FilterOption<T> {
+  value: T;
+  label: string;
+}
+
+interface MultiSelectFilterProps<T> {
+  label: string;
+  options: FilterOption<T>[];
+  value: T[];
+  onChange: (v: T[]) => void;
+}
+
+function MultiSelectFilter<T>({
   label,
   options,
   value,
   onChange,
-}: MultiSelectFilterProps) {
+}: MultiSelectFilterProps<T>) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -117,19 +126,21 @@ function MultiSelectFilter({
         <div className="space-y-1">
           {options.map((opt) => (
             <label
-              key={opt}
+              // Prefix by null-ness so a real repository named like the
+              // null option's label ("Cloud-native") gets a distinct key.
+              key={`${opt.value === null ? "null" : "value"}:${opt.label}`}
               className="hover:bg-muted flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm"
             >
               <Checkbox
-                checked={value.includes(opt)}
+                checked={value.includes(opt.value)}
                 onCheckedChange={(checked) => {
                   const next = checked
-                    ? [...value, opt]
-                    : value.filter((v) => v !== opt);
+                    ? [...value, opt.value]
+                    : value.filter((v) => v !== opt.value);
                   onChange(next);
                 }}
               />
-              <span>{opt}</span>
+              <span>{opt.label}</span>
             </label>
           ))}
         </div>
@@ -285,12 +296,20 @@ function buildColumns(
     }),
     columnHelper.accessor("RepoName", {
       header: "Repository",
-      filterFn: (row, _id, filterValue: string[]) => {
+      filterFn: (row, _id, filterValue: (string | null)[]) => {
         if (!filterValue || filterValue.length === 0) return true;
         return filterValue.includes(row.original.RepoName);
       },
+      sortingFn: (rowA, rowB) =>
+        compareLabels(
+          formatRepoName(rowA.original.RepoName),
+          formatRepoName(rowB.original.RepoName),
+        ),
+      // Sorted by label, so always start ascending; TanStack would otherwise
+      // infer descending when the first row's RepoName is null.
+      sortDescFirst: false,
       cell: (info) => {
-        const value = info.getValue();
+        const value = formatRepoName(info.getValue());
         return (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -403,11 +422,20 @@ export function JobTable({
   );
 
   const jobTypeOptions = useMemo(
-    () => [...new Set(jobs.map((j) => j.JobType))].sort(),
+    () =>
+      [...new Set(jobs.map((j) => j.JobType))]
+        .sort()
+        .map((jobType) => ({ value: jobType, label: jobType })),
     [jobs],
   );
   const repoNameOptions = useMemo(
-    () => [...new Set(jobs.map((j) => j.RepoName))].sort(),
+    () =>
+      [...new Set(jobs.map((j) => j.RepoName))]
+        .map((repoName) => ({
+          value: repoName,
+          label: formatRepoName(repoName),
+        }))
+        .sort((a, b) => compareLabels(a.label, b.label)),
     [jobs],
   );
 
@@ -472,7 +500,9 @@ export function JobTable({
             label="Repository"
             options={repoNameOptions}
             value={
-              (table.getColumn("RepoName")?.getFilterValue() as string[]) ?? []
+              (table.getColumn("RepoName")?.getFilterValue() as
+                | (string | null)[]
+                | undefined) ?? []
             }
             onChange={(v) =>
               table

@@ -2,7 +2,8 @@ export interface SafeJob {
   JobName: string;
   JobType: string;
   Encrypted: boolean;
-  RepoName: string;
+  /** `null` means the job has no VBR repository (e.g. a cloud plug-in policy). */
+  RepoName: string | null;
   RetainDays: number | null;
   GfsDetails: string | null;
   SourceSizeGB: number | null;

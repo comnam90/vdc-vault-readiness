@@ -25,6 +25,15 @@ function makeJob(overrides: Partial<SafeJob> = {}): SafeJob {
 }
 
 describe("aggregateRepoStatsMap", () => {
+  it("leaves out jobs with no VBR repository", () => {
+    const jobs = [
+      makeJob({ RepoName: "Repo A", SourceSizeGB: 1024, OnDiskGB: 512 }),
+      makeJob({ RepoName: null, SourceSizeGB: 2048, OnDiskGB: 1024 }),
+    ];
+    const map = aggregateRepoStatsMap(jobs);
+    expect([...map.keys()]).toEqual(["Repo A"]);
+  });
+
   it("sums sourceTB and onDiskTB from all jobs", () => {
     const jobs = [
       makeJob({ RepoName: "Repo A", SourceSizeGB: 1024, OnDiskGB: 512 }),
