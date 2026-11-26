@@ -43,7 +43,7 @@ export function validateHealthcheck(
   if (sawLegacy) {
     console.warn(
       "[vdc-vault-readiness] Legacy agent job type strings detected " +
-        "(EpAgentBackup / EpAgentPolicy / Unmanaged Agent / VmbapiPolicyTempJob). " +
+        "(EpAgentBackup / EpAgentPolicy / Unmanaged Agent). " +
         "These will be removed in a future release once the updated veeam-healthcheck " +
         "tool is widely deployed. Please regenerate your healthcheck using the latest version.",
     );

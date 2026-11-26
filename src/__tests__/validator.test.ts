@@ -973,7 +973,7 @@ describe("validateHealthcheck", () => {
       expect(check?.status).toBe("pass");
     });
 
-    it("warns when EpAgentPolicy or VmbApiPolicyTempJob jobs are present (case-insensitive)", () => {
+    it("warns for EpAgentPolicy but not VmbApiPolicyTempJob (plug-in type, #99)", () => {
       const data: NormalizedDataset = {
         backupServer: [{ Version: "13.0.1.1071", Name: "ServerA" }],
         securitySummary: [
@@ -1037,7 +1037,7 @@ describe("validateHealthcheck", () => {
       );
 
       expect(check?.status).toBe("warning");
-      expect(check?.affectedItems).toEqual(["PolicyJob1", "PolicyJob2"]);
+      expect(check?.affectedItems).toEqual(["PolicyJob1"]);
       expect(check?.message).toContain("Gateway Server");
     });
 
@@ -1894,7 +1894,7 @@ describe("validateHealthcheck — legacy job type deprecation warning", () => {
     const data = emptyDataset();
     data.jobInfo = [
       jobRow({ JobName: "A", JobType: "EpAgentPolicy" }),
-      jobRow({ JobName: "B", JobType: "VmbapiPolicyTempJob" }),
+      jobRow({ JobName: "B", JobType: "unmanaged agent" }),
       jobRow({ JobName: "C", JobType: "EpAgentBackup" }),
     ];
     data.jobSummary = [{ JobType: "Unmanaged Agent", Count: 2 }];
@@ -1924,6 +1924,28 @@ describe("validateHealthcheck — legacy job type deprecation warning", () => {
     validateHealthcheck(data);
 
     expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("does NOT warn when only VmbApiPolicyTempJob plug-in rows are present (#99)", () => {
+    const data = emptyDataset();
+    data.jobInfo = [jobRow({ JobName: "P", JobType: "VmbApiPolicyTempJob" })];
+    data.jobSummary = [{ JobType: "VmbApiPolicyTempJob", Count: 3 }];
+
+    validateHealthcheck(data);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not name VmbApiPolicyTempJob in the deprecation warning", () => {
+    const data = emptyDataset();
+    data.jobInfo = [jobRow({ JobName: "P", JobType: "EpAgentPolicy" })];
+
+    validateHealthcheck(data);
+
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(String(warnSpy.mock.calls[0][0]).toLowerCase()).not.toContain(
+      "vmbapipolicytempjob",
+    );
   });
 });
 

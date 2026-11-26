@@ -26,9 +26,6 @@ describe("current-format sample: VBR 13.1.2 with replicas and plug-ins", () => {
   let warnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeAll(() => {
-    // jobSummary still carries the raw VmbApiPolicyTempJob type, which
-    // triggers the legacy-JobType warning.
-    // TODO(#94): assert the warning is NOT emitted once that is fixed.
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     result = analyzeHealthcheck(root);
   });
@@ -40,6 +37,12 @@ describe("current-format sample: VBR 13.1.2 with replicas and plug-ins", () => {
   it("fixture guard: is a current veeam-healthcheck export", () => {
     expect(root.VhcVersion?.startsWith("3.")).toBe(true);
     expect(result.data.backupServer[0].Version).toBe("13.1.2.57");
+  });
+
+  it("does not emit the legacy agent JobType deprecation warning", () => {
+    // jobSummary carries the raw VmbApiPolicyTempJob plug-in type, which is
+    // not an agent type (#99).
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 
   it("drops VMware, Hyper-V and Proxmox replication jobs", () => {

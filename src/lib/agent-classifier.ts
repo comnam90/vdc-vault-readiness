@@ -7,10 +7,12 @@ export interface AgentClassification {
 
 // "Agent Backup" is intentionally absent — it's an old-format jobSummary
 // aggregate label (not a per-job JobType); per-job rows use EpAgentBackup.
+// "VmbApiPolicyTempJob" is also absent: upstream defines it as the parent
+// type for VM Backup API plug-ins (AWS, Azure, GCE, Proxmox, AHV, HPE
+// Morpheus), never agents (#99).
 const LEGACY_EXACT: ReadonlyMap<string, AgentCategory> = new Map([
   ["unmanaged agent", "standalone"],
   ["epagentpolicy", "policy"],
-  ["vmbapipolicytempjob", "policy"],
   ["epagentbackup", "managed-backup"],
 ]);
 
