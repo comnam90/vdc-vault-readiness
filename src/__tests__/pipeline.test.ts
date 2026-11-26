@@ -176,7 +176,7 @@ describe("analyzeHealthcheck (full pipeline)", () => {
       );
       expect(rule.status).toBe("warning");
       // Only the EpAgentPolicy row. The sample's two VmbApiPolicyTempJob
-      // rows are cloud plug-in policies, not agent policies (#99).
+      // rows are VM Backup API plug-in jobs, not agent policies (#99).
       expect(rule.affectedItems).toEqual(["Job_72"]);
     });
 

@@ -985,7 +985,7 @@ describe("validateHealthcheck", () => {
         jobInfo: [
           {
             JobName: "PolicyJob1",
-            JobType: "EpAgentPolicy",
+            JobType: "epagentpolicy",
             Encrypted: true,
             RepoName: "Repo1",
             RetainDays: null,
