@@ -5,6 +5,7 @@ import { enrichJobs } from "@/lib/enrich-jobs";
 import type { HealthcheckRoot } from "@/types/healthcheck";
 import replicasPluginsSample from "../../veeam-healthcheck.v13.1-replicas-plugins.example.json";
 import windowsAgentsSample from "../../veeam-healthcheck.v13.1-windows-agents.example.json";
+import cloudPluginSample from "../../veeam-healthcheck.v13.1-cloud-plugin-policies.example.json";
 
 /**
  * End-to-end checks against sanitised real exports from the current
@@ -182,5 +183,56 @@ describe("current-format sample: VBR 13.1.0 with Windows agents", () => {
     );
     expect(summary.totalSourceDataTB).toBeCloseTo(0.188, 3);
     expect(summary.weightedAvgChangeRate).toBeCloseTo(29.692, 3);
+  });
+});
+
+describe("current-format sample: VBR 13.1.1 with cloud plug-in policies", () => {
+  const root = cloudPluginSample as HealthcheckRoot;
+  let result: Analysis;
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeAll(() => {
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    result = analyzeHealthcheck(root);
+  });
+
+  afterAll(() => {
+    warnSpy.mockRestore();
+  });
+
+  it("fixture guard: is a current veeam-healthcheck export", () => {
+    expect(root.VhcVersion?.startsWith("3.")).toBe(true);
+    expect(result.data.backupServer[0].Version).toBe("13.1.1.18");
+  });
+
+  it("keeps all 22 jobs, including the 17 plug-in policies with no repository", () => {
+    expect(root.Sections.jobInfo?.Rows).toHaveLength(22);
+    expect(result.data.jobInfo).toHaveLength(22);
+    expect(
+      result.data.dataErrors.filter((e) => e.field === "RepoName"),
+    ).toEqual([]);
+
+    const noRepo = result.data.jobInfo.filter((j) => j.RepoName === null);
+    expect(noRepo).toHaveLength(17);
+    expect([...new Set(noRepo.map((j) => j.JobType))].sort()).toEqual([
+      "AWS EC2 Backup",
+      "Azure IaaS Backup",
+      "GCE Backup",
+    ]);
+  });
+
+  it("does not emit the legacy agent JobType deprecation warning", () => {
+    // jobSummary carries the raw VmbApiPolicyTempJob type (#99).
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("includes the plug-in policies' source size in total source TB", () => {
+    const summary = buildCalculatorSummary(
+      result.data.jobInfo,
+      result.data.jobSessionSummary,
+    );
+    // 691.01 GB from ordinary jobs + 448 GB from plug-in policies
+    // (AWS 30 + 33, Azure 129 + 129 + 127) = 1139.01 GB.
+    expect(summary.totalSourceDataTB).toBeCloseTo(1139.01 / 1024, 3);
   });
 });
