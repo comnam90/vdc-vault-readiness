@@ -1,5 +1,5 @@
 import type { NormalizerInput } from "@/types/healthcheck";
-import { isExcludedJobType } from "@/lib/job-type-filter";
+import { isCloudPluginJobType, isExcludedJobType } from "@/lib/job-type-filter";
 import type {
   DataError,
   NormalizedDataset,
@@ -54,8 +54,10 @@ export function normalizeHealthcheck(
       return [];
     }
 
+    // Cloud plug-in policies write to appliance-managed storage, so they have
+    // no VBR repository; keep them with a null RepoName (ADR 0003).
     const repoName = normalizeString(job.RepoName as string | null | undefined);
-    if (!repoName) {
+    if (!repoName && !isCloudPluginJobType(jobType)) {
       dataErrors.push(
         buildError(
           "jobInfo",
@@ -129,7 +131,8 @@ export function normalizeHealthcheck(
       ),
     };
 
-    const archiveOffloadDays = archiveOffloadBySobr.get(repoName);
+    const archiveOffloadDays =
+      repoName === null ? undefined : archiveOffloadBySobr.get(repoName);
     if (archiveOffloadDays != null) {
       safeJob.archiveOffloadDays = archiveOffloadDays;
     }

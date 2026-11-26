@@ -520,3 +520,47 @@ describe("friendly replication labels (veeam-healthcheck ADR 0020 format)", () =
     expect(status("retention-period")).toBe("pass");
   });
 });
+
+describe("cloud plug-in policies with no repository (#100)", () => {
+  function exportWithJobs(rows: string[][]): HealthcheckRoot {
+    return {
+      Licenses: [],
+      Sections: {
+        backupServer: {
+          Headers: ["Name", "Version"],
+          Rows: [["VBR-01", "13.1.1.18"]],
+        },
+        jobInfo: {
+          Headers: ["JobName", "JobType", "Encrypted", "RepoName"],
+          Rows: rows,
+        },
+      },
+    };
+  }
+
+  it.each([
+    "AWS EC2 Backup",
+    "AWS RDS Backup",
+    "aws efs backup",
+    "Azure IaaS Backup",
+    "Azure SQL Backup",
+    "GCE Backup",
+    "Google Cloud SQL Backup",
+    "VmbApiPolicyTempJob",
+  ])(
+    "keeps a '%s' job with an empty repository as a null repository",
+    (jobType) => {
+      const { data } = analyzeHealthcheck(
+        exportWithJobs([["Cloud Policy", jobType, "False", ""]]),
+      );
+
+      expect(data.dataErrors).toEqual([]);
+      expect(data.jobInfo).toHaveLength(1);
+      expect(data.jobInfo[0]).toMatchObject({
+        JobName: "Cloud Policy",
+        JobType: jobType,
+        RepoName: null,
+      });
+    },
+  );
+});
