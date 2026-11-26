@@ -544,8 +544,31 @@ describe("JobTable", () => {
       expect(screen.queryByText("Ordinary Job")).not.toBeInTheDocument();
     });
 
+    it("sorts ascending on first click even when the first row is cloud-native", () => {
+      // TanStack picks the first-click direction from the first row's value:
+      // a non-string (null) would make it start descending.
+      render(
+        <JobTable
+          jobs={[
+            createEnrichedJob({ JobName: "Cloud Job", RepoName: null }),
+            createEnrichedJob({ JobName: "Alpha Job", RepoName: "Alpha Repo" }),
+            createEnrichedJob({ JobName: "Zeta Job", RepoName: "Zeta Repo" }),
+          ]}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /^repository$/i }));
+      expect(getJobNamesInOrder()).toEqual([
+        "Alpha Job",
+        "Cloud Job",
+        "Zeta Job",
+      ]);
+    });
+
     it('sorts cloud-native jobs by their "Cloud-native" label', () => {
-      // More than 10 rows, so TanStack's auto sorting picks its text sorter.
+      // 11 rows: TanStack infers its auto sorter from rows after the first 10,
+      // so this guards that the explicit sortingFn (not auto text sort, which
+      // would read null as "") decides the order.
       const middleJobs = Array.from({ length: 8 }, (_, i) =>
         createEnrichedJob({ JobName: `Middle Job ${i}`, RepoName: "Middle" }),
       );

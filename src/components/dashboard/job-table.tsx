@@ -310,6 +310,9 @@ function buildColumns(
           repoLabel(rowA.original.RepoName),
           repoLabel(rowB.original.RepoName),
         ),
+      // Sorted by label, so always start ascending; TanStack would otherwise
+      // infer descending when the first row's RepoName is null.
+      sortDescFirst: false,
       cell: (info) => {
         const value = repoLabel(info.getValue());
         return (
