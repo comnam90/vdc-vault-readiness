@@ -236,3 +236,17 @@ describe("current-format sample: VBR 13.1.1 with cloud plug-in policies", () => 
     expect(summary.totalSourceDataTB).toBeCloseTo(1139.01 / 1024, 3);
   });
 });
+
+describe("current-format sample: VBR 13.1.1 cloud plug-in policies in sizing (#102)", () => {
+  it("computes the weighted change rate from ordinary jobs alone", () => {
+    const result = analyzeHealthcheck(cloudPluginSample as HealthcheckRoot);
+    const summary = buildCalculatorSummary(
+      result.data.jobInfo,
+      result.data.jobSessionSummary,
+    );
+    // Every plug-in policy with a session reports 0 ("not collected"). Of the ordinary
+    // jobs, only Job-17 (Backup Copy, 33 GB) has a session change rate:
+    // 0.31. Counting the plug-in zeros would drag it to about 0.029.
+    expect(summary.weightedAvgChangeRate).toBeCloseTo(0.31, 3);
+  });
+});
