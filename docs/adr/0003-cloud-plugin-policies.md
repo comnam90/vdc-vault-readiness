@@ -35,6 +35,7 @@ What this means for the existing views:
 - The Jobs tab shows the repository as "Cloud-native" (`formatRepoName()`), and the repository filter can select it.
 - Per-repository aggregations (size-by-repository chart, Repositories tab) leave these jobs out, so those views only describe VBR repositories.
 - Sizing's total source TB includes cloud-native jobs' `SourceSizeGB`.
+- Sizing's weighted change rate treats a cloud-native job's `0` change rate as missing, because upstream writes `0` when it couldn't collect the value (#102). Ordinary jobs' zeros, including a legacy `VmbApiPolicyTempJob` row with a repository, still count, and so does a cloud-native job's non-zero rate.
 
 ### The exported fields aren't reliable for these jobs
 
