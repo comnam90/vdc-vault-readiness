@@ -8,6 +8,7 @@ import {
 import { isVersionAtLeast } from "./version-compare";
 import { parseGfsDetails } from "./calculator-aggregator";
 import { classifyAgentJobType } from "./agent-classifier";
+import { isCloudNativeJob } from "./job-type-filter";
 
 export function validateHealthcheck(
   data: NormalizedDataset,
@@ -122,6 +123,12 @@ function validateConfigBackupEncryption(
   };
 }
 
+const CLOUD_NATIVE_ENCRYPTION_NOTE =
+  "Cloud plug-in encryption is configured in the Veeam Backup for AWS / Azure / Google Cloud appliance and isn't in the healthcheck. Confirm that the Vault repository or the backup copy job for these jobs is encrypted.";
+
+const SOBR_EXEMPT_ENCRYPTION_NOTE =
+  "Some jobs do not have job-level encryption enabled but target SOBRs with a capacity tier, where encryption is assumed at the SOBR layer. Verify capacity tier encryption is configured correctly.";
+
 function validateJobEncryption(data: NormalizedDataset): ValidationResult {
   const capTierSobrs = new Set(
     data.sobr.filter((s) => s.EnableCapacityTier).map((s) => s.Name),
@@ -139,28 +146,46 @@ function validateJobEncryption(data: NormalizedDataset): ValidationResult {
     };
   }
 
-  const nonExempt = allUnencrypted.filter(
-    (job) => job.RepoName === null || !capTierSobrs.has(job.RepoName),
+  // A cloud-native job's Encrypted flag comes from VBR's job object, not the
+  // appliance, so it can't be verified and never fails the rule (ADR 0003).
+  const cloudNative = allUnencrypted.filter(isCloudNativeJob);
+  const ordinary = allUnencrypted.filter((job) => !isCloudNativeJob(job));
+  const sobrExempt = ordinary.filter(
+    (job) => job.RepoName !== null && capTierSobrs.has(job.RepoName),
   );
+  const nonExempt = ordinary.filter((job) => !sobrExempt.includes(job));
 
   if (nonExempt.length > 0) {
+    const cloudNativeNote =
+      cloudNative.length > 0
+        ? ` These cloud-native jobs couldn't be verified: ${cloudNative
+            .map((job) => job.JobName)
+            .join(", ")}. ${CLOUD_NATIVE_ENCRYPTION_NOTE}`
+        : "";
     return {
       ruleId: "job-encryption",
       title: "Job Encryption Audit",
       status: "fail",
       message:
-        "Vault requires source-side encryption. You must enable encryption on these jobs or use an encrypted Backup Copy Job. Unencrypted data cannot use Move/Copy Backup to migrate to Vault.",
+        "Vault requires source-side encryption. You must enable encryption on these jobs or use an encrypted Backup Copy Job. Unencrypted data cannot use Move/Copy Backup to migrate to Vault." +
+        cloudNativeNote,
       affectedItems: nonExempt.map((job) => job.JobName),
     };
   }
 
-  // All unencrypted jobs are on cap-tier SOBRs
+  // Every unencrypted job is SOBR-exempt or cloud-native.
+  const notes = [
+    sobrExempt.length > 0 ? SOBR_EXEMPT_ENCRYPTION_NOTE : null,
+    cloudNative.length > 0
+      ? `Some cloud-native jobs report no job-level encryption, which can't be verified. ${CLOUD_NATIVE_ENCRYPTION_NOTE}`
+      : null,
+  ].filter((note): note is string => note !== null);
+
   return {
     ruleId: "job-encryption",
     title: "Job Encryption Audit",
     status: "warning",
-    message:
-      "Some jobs do not have job-level encryption enabled but target SOBRs with a capacity tier, where encryption is assumed at the SOBR layer. Verify capacity tier encryption is configured correctly.",
+    message: notes.join(" "),
     affectedItems: allUnencrypted.map((job) => job.JobName),
   };
 }

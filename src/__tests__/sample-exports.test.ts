@@ -236,3 +236,44 @@ describe("current-format sample: VBR 13.1.1 with cloud plug-in policies", () => 
     expect(summary.totalSourceDataTB).toBeCloseTo(1139.01 / 1024, 3);
   });
 });
+
+describe("current-format sample: VBR 13.1.1 cloud plug-in job-encryption (#101)", () => {
+  const CLOUD_NATIVE_JOBS = [
+    "Job-01",
+    "Job-02",
+    "Job-04",
+    "Job-05",
+    "Job-06",
+    "Job-07",
+    "Job-08",
+    "Job-09",
+    "Job-11",
+    "Job-12",
+    "Job-13",
+    "Job-15",
+    "Job-16",
+    "Job-18",
+    "Job-19",
+    "Job-20",
+    "Job-21",
+  ];
+
+  it("fails on the 4 unencrypted ordinary jobs and names the 17 cloud-native jobs", () => {
+    const rule = analyzeHealthcheck(
+      cloudPluginSample as HealthcheckRoot,
+    ).validations.find((v) => v.ruleId === "job-encryption");
+
+    // The sample's SOBR has no capacity tier, so nothing is SOBR-exempt:
+    // two VMware/object-storage jobs and two backup copy jobs are unencrypted.
+    expect(rule?.status).toBe("fail");
+    expect(rule?.affectedItems).toEqual([
+      "Job-03",
+      "Job-14",
+      "Job-17",
+      "Job-22",
+    ]);
+    for (const job of CLOUD_NATIVE_JOBS) {
+      expect(rule?.message).toContain(job);
+    }
+  });
+});
