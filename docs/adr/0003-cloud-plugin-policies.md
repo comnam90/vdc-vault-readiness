@@ -44,7 +44,17 @@ The upstream veeam-healthcheck collector reads every `jobInfo` row through VBR's
 - **The repository** comes from a lookup by `TargetRepositoryId`, which never matches appliance-managed storage. Hence the empty `RepoName`.
 - **`0`** is the collector's fallback for "not collected" in change rate, data size and source size. Every plug-in session in the 13.1.1 export reports `AvgChangeRate` 0.
 
-For now, retention and GFS are kept as exported (#104 will check them against a lab). How the encryption rule and the sizing change rate treat cloud-native jobs is decided in #101 and #102.
+For now, retention and GFS are kept as exported (#104 will check them against a lab). How the sizing change rate treats cloud-native jobs is decided in #102.
+
+### How rules treat cloud-native jobs
+
+- **`job-encryption` (#101):** an unencrypted cloud-native job never makes the rule fail, because its `Encrypted` flag can't be verified.
+  - If unencrypted ordinary jobs (not SOBR-exempt) are present, the rule fails with only those jobs as affected items, and the message names the cloud-native jobs that couldn't be verified.
+  - Otherwise it warns, listing the SOBR-exempt and cloud-native jobs. The message explains that cloud plug-in encryption is configured in the Veeam Backup for AWS / Azure / Google Cloud appliance and asks the user to confirm that the Vault repository or backup copy job is encrypted.
+  - A legacy `VmbApiPolicyTempJob` row with a repository is an ordinary job, so its unencrypted flag still fails the rule.
+- **`retention-period`:** unchanged; it uses the exported retention until #104 settles whether those values are real.
+- **`active-full`:** unchanged; every plug-in row exports Active Full off.
+- **Capacity-tier residency and the SOBR exemption:** never match a `null` repository.
 
 ## Alternatives Considered
 
@@ -54,7 +64,8 @@ For now, retention and GFS are kept as exported (#104 will check them against a 
 ## Consequences
 
 - **Positive:** cloud plug-in policies appear in the Jobs tab and count towards sizing's total source TB, instead of disappearing silently.
-- **Negative, until #101 and #102 land:** these jobs feed their unreliable `Encrypted` flag into `job-encryption` and their zero change rates into sizing's weighted change rate. #101 and #102 fix both, using `isCloudNativeJob()`.
+- **Positive:** `job-encryption` no longer blocks readiness on an encryption flag the healthcheck can't see; it asks the user to confirm encryption on the appliance or backup copy job instead (#101).
+- **Negative, until #102 lands:** these jobs feed their zero change rates into sizing's weighted change rate. #102 fixes this, using `isCloudNativeJob()`.
 
 ## References
 

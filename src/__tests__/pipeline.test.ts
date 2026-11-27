@@ -600,3 +600,156 @@ describe("cloud plug-in policies with no repository (#100)", () => {
     expect(data.jobInfo[0].RepoName).toBe("Repo1");
   });
 });
+
+describe("job-encryption with cloud-native jobs (#101)", () => {
+  const CAP_TIER_SOBR = {
+    Name: "SOBR-Cap",
+    EnableCapacityTier: "True",
+    CapacityTierCopy: "True",
+    CapacityTierMove: "False",
+    ArchiveTierEnabled: "False",
+    ImmutableEnabled: "False",
+  };
+
+  function exportWith(
+    rows: string[][],
+    sobrRows: Record<string, string>[] = [],
+  ): HealthcheckRoot {
+    return {
+      Licenses: [],
+      Sections: {
+        backupServer: {
+          Headers: ["Name", "Version"],
+          Rows: [["VBR-01", "13.1.1.18"]],
+        },
+        jobInfo: {
+          Headers: ["JobName", "JobType", "Encrypted", "RepoName"],
+          Rows: rows,
+        },
+        sobr: {
+          Headers: Object.keys(CAP_TIER_SOBR),
+          Rows: sobrRows.map((row) =>
+            Object.keys(CAP_TIER_SOBR).map((key) => row[key]),
+          ),
+        },
+      },
+    };
+  }
+
+  function encryptionRule(raw: HealthcheckRoot) {
+    return findRule(analyzeHealthcheck(raw).validations, "job-encryption");
+  }
+
+  it("warns, naming them, when only cloud-native jobs are unencrypted", () => {
+    const rule = encryptionRule(
+      exportWith([
+        ["AWS Policy", "AWS EC2 Backup", "False", ""],
+        ["Azure Policy", "Azure IaaS Backup", "False", ""],
+        ["VM Job", "VMware Backup", "True", "Repo1"],
+      ]),
+    );
+
+    expect(rule.status).toBe("warning");
+    expect(rule.affectedItems).toEqual(["AWS Policy", "Azure Policy"]);
+    expect(rule.message).toMatch(/Veeam Backup for AWS/);
+    expect(rule.message).toMatch(/backup copy job/i);
+  });
+
+  it("fails on unencrypted ordinary jobs only and names the cloud-native jobs in the message", () => {
+    const rule = encryptionRule(
+      exportWith([
+        ["AWS Policy", "AWS EC2 Backup", "False", ""],
+        ["VM Job", "VMware Backup", "False", "Repo1"],
+        ["GCE Policy", "GCE Backup", "False", ""],
+      ]),
+    );
+
+    expect(rule.status).toBe("fail");
+    expect(rule.affectedItems).toEqual(["VM Job"]);
+    expect(rule.message).toContain("AWS Policy");
+    expect(rule.message).toContain("GCE Policy");
+  });
+
+  it("warns covering both SOBR-exempt and cloud-native jobs", () => {
+    const rule = encryptionRule(
+      exportWith(
+        [
+          ["SOBR Job", "VMware Backup", "False", "SOBR-Cap"],
+          ["Azure Policy", "Azure IaaS Backup", "False", ""],
+        ],
+        [CAP_TIER_SOBR],
+      ),
+    );
+
+    expect(rule.status).toBe("warning");
+    expect(rule.affectedItems).toEqual(["SOBR Job", "Azure Policy"]);
+    expect(rule.message).toMatch(/capacity tier/i);
+    expect(rule.message).toMatch(/Veeam Backup for AWS/);
+  });
+
+  it("still fails a legacy VmbApiPolicyTempJob row that has a repository", () => {
+    // With a repository the raw type may be a Proxmox, AHV or Morpheus job,
+    // so it is an ordinary job and its encryption flag is real.
+    const rule = encryptionRule(
+      exportWith([["Plug-in Job", "VmbApiPolicyTempJob", "False", "Repo1"]]),
+    );
+
+    expect(rule.status).toBe("fail");
+    expect(rule.affectedItems).toEqual(["Plug-in Job"]);
+  });
+
+  it("treats a legacy VmbApiPolicyTempJob row with no repository as cloud-native", () => {
+    const rule = encryptionRule(
+      exportWith([["Plug-in Policy", "VmbApiPolicyTempJob", "False", ""]]),
+    );
+
+    expect(rule.status).toBe("warning");
+    expect(rule.affectedItems).toEqual(["Plug-in Policy"]);
+  });
+
+  it("fails on ordinary jobs only when SOBR-exempt and cloud-native jobs are also unencrypted", () => {
+    const rule = encryptionRule(
+      exportWith(
+        [
+          ["SOBR Job", "VMware Backup", "False", "SOBR-Cap"],
+          ["VM Job", "VMware Backup", "False", "Repo1"],
+          ["AWS Policy", "AWS EC2 Backup", "False", ""],
+        ],
+        [CAP_TIER_SOBR],
+      ),
+    );
+
+    expect(rule.status).toBe("fail");
+    expect(rule.affectedItems).toEqual(["VM Job"]);
+    expect(rule.message).toContain("1 cloud-native job couldn't be verified");
+    expect(rule.message).toContain("AWS Policy");
+    expect(rule.message).not.toContain("SOBR Job");
+  });
+
+  it("leaves the cloud plug-in note out of a fail with no cloud-native jobs", () => {
+    const rule = encryptionRule(
+      exportWith([["VM Job", "VMware Backup", "False", "Repo1"]]),
+    );
+
+    expect(rule.status).toBe("fail");
+    expect(rule.message).not.toMatch(/cloud-native|Veeam Backup for AWS/);
+  });
+
+  it("names at most 5 cloud-native jobs in a fail message, then counts the rest", () => {
+    const policies = Array.from({ length: 7 }, (_, i) => [
+      `Policy ${i + 1}`,
+      "Azure IaaS Backup",
+      "False",
+      "",
+    ]);
+    const rule = encryptionRule(
+      exportWith([["VM Job", "VMware Backup", "False", "Repo1"], ...policies]),
+    );
+
+    expect(rule.status).toBe("fail");
+    expect(rule.message).toContain(
+      "7 cloud-native jobs couldn't be verified: Policy 1, Policy 2, Policy 3, Policy 4, Policy 5 and 2 more.",
+    );
+    expect(rule.message).not.toContain("Policy 6");
+  });
+});
