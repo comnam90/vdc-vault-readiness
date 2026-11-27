@@ -603,6 +603,83 @@ describe("buildCalculatorSummary", () => {
 
       expect(result.weightedAvgChangeRate).toBeCloseTo(10, 6);
     });
+
+    it("still counts a 0 change rate from an ordinary job", () => {
+      const jobs: SafeJob[] = [
+        makeJob({ JobName: "Busy", SourceSizeGB: 100 }),
+        makeJob({ JobName: "Idle", SourceSizeGB: 300 }),
+      ];
+      const sessions: SafeJobSession[] = [
+        makeSession({ JobName: "Busy", AvgChangeRate: 10 }),
+        makeSession({ JobName: "Idle", AvgChangeRate: 0 }),
+      ];
+
+      const result = buildCalculatorSummary(jobs, sessions);
+
+      // (100 × 10 + 300 × 0) / 400
+      expect(result.weightedAvgChangeRate).toBeCloseTo(2.5, 6);
+    });
+
+    it("counts a 0 change rate from a legacy VmbApiPolicyTempJob row that has a repository", () => {
+      const jobs: SafeJob[] = [
+        makeJob({ JobName: "Busy", SourceSizeGB: 100 }),
+        makeJob({
+          JobName: "Legacy Plug-in",
+          JobType: "VmbApiPolicyTempJob",
+          RepoName: "Repo-01",
+          SourceSizeGB: 300,
+        }),
+      ];
+      const sessions: SafeJobSession[] = [
+        makeSession({ JobName: "Busy", AvgChangeRate: 10 }),
+        makeSession({ JobName: "Legacy Plug-in", AvgChangeRate: 0 }),
+      ];
+
+      const result = buildCalculatorSummary(jobs, sessions);
+
+      expect(result.weightedAvgChangeRate).toBeCloseTo(2.5, 6);
+    });
+
+    it("counts a non-zero change rate from a cloud-native job", () => {
+      const jobs: SafeJob[] = [
+        makeJob({ JobName: "Ordinary", SourceSizeGB: 100 }),
+        makeJob({
+          JobName: "Cloud Policy",
+          JobType: "AWS EC2 Backup",
+          RepoName: null,
+          SourceSizeGB: 300,
+        }),
+      ];
+      const sessions: SafeJobSession[] = [
+        makeSession({ JobName: "Ordinary", AvgChangeRate: 10 }),
+        makeSession({ JobName: "Cloud Policy", AvgChangeRate: 2 }),
+      ];
+
+      const result = buildCalculatorSummary(jobs, sessions);
+
+      // (100 × 10 + 300 × 2) / 400
+      expect(result.weightedAvgChangeRate).toBeCloseTo(4, 6);
+    });
+
+    it("still counts a cloud-native job's source size in total source TB", () => {
+      const jobs: SafeJob[] = [
+        makeJob({ JobName: "Ordinary", SourceSizeGB: 512 }),
+        makeJob({
+          JobName: "Cloud Policy",
+          JobType: "GCE Backup",
+          RepoName: null,
+          SourceSizeGB: 512,
+        }),
+      ];
+      const sessions: SafeJobSession[] = [
+        makeSession({ JobName: "Ordinary", AvgChangeRate: 10 }),
+        makeSession({ JobName: "Cloud Policy", AvgChangeRate: 0 }),
+      ];
+
+      const result = buildCalculatorSummary(jobs, sessions);
+
+      expect(result.totalSourceDataTB).toBeCloseTo(1, 6);
+    });
   });
 
   describe("buildCalculatorSummary retention floor", () => {
