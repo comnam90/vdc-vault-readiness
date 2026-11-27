@@ -1,4 +1,4 @@
-import type { NormalizedDataset, SafeCapExtent } from "@/types/domain";
+import type { NormalizedDataset, SafeCapExtent, SafeJob } from "@/types/domain";
 import type { ValidationResult } from "@/types/validation";
 import {
   MINIMUM_VBR_VERSION,
@@ -124,7 +124,18 @@ function validateConfigBackupEncryption(
 }
 
 const CLOUD_NATIVE_ENCRYPTION_NOTE =
-  "Cloud plug-in encryption is configured in the Veeam Backup for AWS / Azure / Google Cloud appliance and isn't in the healthcheck. Confirm that the Vault repository or the backup copy job for these jobs is encrypted.";
+  "Cloud plug-in encryption is configured in the Veeam Backup for AWS / Azure / Google Cloud appliance and isn't in the healthcheck. Confirm that the Vault repository or the backup copy job for the cloud-native jobs is encrypted.";
+
+// Cloud-native names go in the message, which the UI doesn't truncate, so cap
+// them like the affected-items list (blockers-list MAX_VISIBLE_ITEMS).
+const MAX_NAMED_CLOUD_NATIVE_JOBS = 5;
+
+function describeUnverifiedCloudNativeJobs(names: string[]): string {
+  const shown = names.slice(0, MAX_NAMED_CLOUD_NATIVE_JOBS).join(", ");
+  const hidden = names.length - MAX_NAMED_CLOUD_NATIVE_JOBS;
+  const noun = names.length === 1 ? "job" : "jobs";
+  return `${names.length} cloud-native ${noun} couldn't be verified: ${shown}${hidden > 0 ? ` and ${hidden} more` : ""}.`;
+}
 
 const SOBR_EXEMPT_ENCRYPTION_NOTE =
   "Some jobs do not have job-level encryption enabled but target SOBRs with a capacity tier, where encryption is assumed at the SOBR layer. Verify capacity tier encryption is configured correctly.";
@@ -148,26 +159,29 @@ function validateJobEncryption(data: NormalizedDataset): ValidationResult {
 
   // A cloud-native job's Encrypted flag comes from VBR's job object, not the
   // appliance, so it can't be verified and never fails the rule (ADR 0003).
-  const cloudNative = allUnencrypted.filter(isCloudNativeJob);
-  const ordinary = allUnencrypted.filter((job) => !isCloudNativeJob(job));
-  const sobrExempt = ordinary.filter(
-    (job) => job.RepoName !== null && capTierSobrs.has(job.RepoName),
-  );
-  const nonExempt = ordinary.filter((job) => !sobrExempt.includes(job));
+  const cloudNative: SafeJob[] = [];
+  const sobrExempt: SafeJob[] = [];
+  const nonExempt: SafeJob[] = [];
+  for (const job of allUnencrypted) {
+    if (isCloudNativeJob(job)) cloudNative.push(job);
+    else if (job.RepoName !== null && capTierSobrs.has(job.RepoName))
+      sobrExempt.push(job);
+    else nonExempt.push(job);
+  }
 
   if (nonExempt.length > 0) {
     const cloudNativeNote =
       cloudNative.length > 0
-        ? ` These cloud-native jobs couldn't be verified: ${cloudNative
-            .map((job) => job.JobName)
-            .join(", ")}. ${CLOUD_NATIVE_ENCRYPTION_NOTE}`
+        ? ` ${describeUnverifiedCloudNativeJobs(
+            cloudNative.map((job) => job.JobName),
+          )} ${CLOUD_NATIVE_ENCRYPTION_NOTE}`
         : "";
     return {
       ruleId: "job-encryption",
       title: "Job Encryption Audit",
       status: "fail",
       message:
-        "Vault requires source-side encryption. You must enable encryption on these jobs or use an encrypted Backup Copy Job. Unencrypted data cannot use Move/Copy Backup to migrate to Vault." +
+        "Vault requires source-side encryption. You must enable encryption on the affected jobs or use an encrypted Backup Copy Job. Unencrypted data cannot use Move/Copy Backup to migrate to Vault." +
         cloudNativeNote,
       affectedItems: nonExempt.map((job) => job.JobName),
     };
@@ -177,7 +191,7 @@ function validateJobEncryption(data: NormalizedDataset): ValidationResult {
   const notes = [
     sobrExempt.length > 0 ? SOBR_EXEMPT_ENCRYPTION_NOTE : null,
     cloudNative.length > 0
-      ? `Some cloud-native jobs report no job-level encryption, which can't be verified. ${CLOUD_NATIVE_ENCRYPTION_NOTE}`
+      ? `Some cloud-native jobs report no job-level encryption; this flag can't be verified for cloud plug-in jobs. ${CLOUD_NATIVE_ENCRYPTION_NOTE}`
       : null,
   ].filter((note): note is string => note !== null);
 

@@ -77,26 +77,17 @@
 
 **Conditions:**
 
-| Condition                                                      | Status    | Message                                                                                                                                                                                           |
-| -------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| All jobs have `Encrypted` = true                               | `pass`    | `All jobs have encryption enabled.`                                                                                                                                                               |
-| Any unencrypted ordinary job NOT on a cap-tier SOBR            | `fail`    | `Vault requires source-side encryption. …` If cloud-native jobs are also unencrypted, the message adds `These cloud-native jobs couldn't be verified: <names>.` and the cloud plug-in note below. |
-| Every unencrypted job is on a cap-tier SOBR or is cloud-native | `warning` | The SOBR note (`Some jobs do not have job-level encryption enabled but target SOBRs with a capacity tier, …`) and/or the cloud plug-in note, depending on which kinds are present.                |
+| Condition                                                      | Status    | Message                                                                                                                                                                                                                                |
+| -------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| All jobs have `Encrypted` = true                               | `pass`    | `All jobs have encryption enabled.`                                                                                                                                                                                                    |
+| Any unencrypted ordinary job NOT on a cap-tier SOBR            | `fail`    | `Vault requires source-side encryption. …` If cloud-native jobs are also unencrypted, the message adds `<N> cloud-native jobs couldn't be verified: <names>.` (at most 5 names, then `and <M> more`) and the cloud plug-in note below. |
+| Every unencrypted job is on a cap-tier SOBR or is cloud-native | `warning` | The SOBR note (`Some jobs do not have job-level encryption enabled but target SOBRs with a capacity tier, …`) and/or the cloud plug-in note, depending on which kinds are present.                                                     |
 
-Cloud plug-in note: `Cloud plug-in encryption is configured in the Veeam Backup for AWS / Azure / Google Cloud appliance and isn't in the healthcheck. Confirm that the Vault repository or the backup copy job for these jobs is encrypted.`
+Cloud plug-in note: `Cloud plug-in encryption is configured in the Veeam Backup for AWS / Azure / Google Cloud appliance and isn't in the healthcheck. Confirm that the Vault repository or the backup copy job for the cloud-native jobs is encrypted.`
 
 **Affected items:** For `fail`: names of the non-exempt unencrypted ordinary jobs only (cloud-native jobs are named in the message instead). For `warning`: names of all unencrypted jobs (SOBR-exempt and cloud-native).
 
 **Recommendations:** Enable encryption on each affected job, or create encrypted Backup Copy Jobs. Unencrypted data cannot use Move/Copy Backup to migrate to Vault. Jobs targeting SOBRs with a capacity tier are assumed to have encryption at the SOBR layer -- verify capacity tier encryption is configured correctly. For cloud-native jobs, confirm encryption on the appliance's Vault repository or on the backup copy job.
-
------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| All jobs have `Encrypted` = true | `pass` | `All jobs have encryption enabled.` |
-| Some unencrypted, ALL on cap-tier SOBRs | `warning` | `Some jobs do not have job-level encryption enabled but target SOBRs with a capacity tier, where encryption is assumed at the SOBR layer. Verify capacity tier encryption is configured correctly.` |
-| Any unencrypted job NOT on a cap-tier SOBR | `fail` | `Vault requires source-side encryption. You must enable encryption on these jobs or use an encrypted Backup Copy Job. Unencrypted data cannot use Move/Copy Backup to migrate to Vault.` |
-
-**Affected items:** For `fail`: job names of non-exempt unencrypted jobs. For `warning`: job names of all unencrypted jobs (all exempt via SOBR cap tier).
-
-**Recommendations:** Enable encryption on each affected job, or create encrypted Backup Copy Jobs. Unencrypted data cannot use Move/Copy Backup to migrate to Vault. Jobs targeting SOBRs with a capacity tier are assumed to have encryption at the SOBR layer -- verify capacity tier encryption is configured correctly.
 
 ---
 

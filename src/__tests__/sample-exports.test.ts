@@ -258,7 +258,7 @@ describe("current-format sample: VBR 13.1.1 cloud plug-in job-encryption (#101)"
     "Job-21",
   ];
 
-  it("fails on the 4 unencrypted ordinary jobs and names the 17 cloud-native jobs", () => {
+  it("fails on the 4 unencrypted ordinary jobs and counts the 17 cloud-native jobs", () => {
     const rule = analyzeHealthcheck(
       cloudPluginSample as HealthcheckRoot,
     ).validations.find((v) => v.ruleId === "job-encryption");
@@ -272,8 +272,12 @@ describe("current-format sample: VBR 13.1.1 cloud plug-in job-encryption (#101)"
       "Job-17",
       "Job-22",
     ]);
-    for (const job of CLOUD_NATIVE_JOBS) {
-      expect(rule?.message).toContain(job);
+    // The message names the first 5 cloud-native jobs and counts the rest.
+    expect(rule?.message).toContain(
+      `17 cloud-native jobs couldn't be verified: ${CLOUD_NATIVE_JOBS.slice(0, 5).join(", ")} and 12 more.`,
+    );
+    for (const job of CLOUD_NATIVE_JOBS.slice(5)) {
+      expect(rule?.message).not.toContain(job);
     }
   });
 });
