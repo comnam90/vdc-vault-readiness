@@ -22,7 +22,7 @@ lib/
 ├── delay.ts               # tick(ms, signal) — abortable timer for visual step progression
 └── utils.ts               # cn() — clsx + tailwind-merge (shadcn standard)
 # Sizing / calculator
-├── calculator-aggregator.ts # Vault sizing inputs: source TB, change rates, retention, GFS aggregation; cap helpers (capGfs, globalCapDays)
+├── calculator-aggregator.ts # Vault sizing inputs: source TB, change rates, retention, GFS aggregation; cap helpers (capGfs, globalCapDays). Weighted change rate skips a cloud-native job's 0 (isCloudNativeJob, ADR 0003)
 ├── sizing-derivation.ts   # deriveSizing(VmAgentResponseData) → DerivedSizing (GFS buckets, immutability overhead, composition)
 ├── sizing-buffer.ts       # Applies headroom buffer (bufferFactor) to DerivedSizing and growth series
 ├── growth-projector.ts    # generateGrowthSeries() — async: multi-year projection (calls Veeam API per year)

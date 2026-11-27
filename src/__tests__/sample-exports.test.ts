@@ -235,4 +235,15 @@ describe("current-format sample: VBR 13.1.1 with cloud plug-in policies", () => 
     // (AWS 30 + 33, Azure 129 + 129 + 127) = 1139.01 GB.
     expect(summary.totalSourceDataTB).toBeCloseTo(1139.01 / 1024, 3);
   });
+
+  it("computes the weighted change rate from ordinary jobs alone (#102)", () => {
+    const summary = buildCalculatorSummary(
+      result.data.jobInfo,
+      result.data.jobSessionSummary,
+    );
+    // Every plug-in policy with a session reports 0 ("not collected").
+    // Of the ordinary jobs, only Job-17 (Backup Copy, 33 GB) has a session
+    // change rate: 0.31. Counting the plug-in zeros would drag it to ~0.029.
+    expect(summary.weightedAvgChangeRate).toBeCloseTo(0.31, 3);
+  });
 });
