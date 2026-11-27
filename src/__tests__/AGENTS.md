@@ -18,9 +18,9 @@ __tests__/
 ├── validator.test.ts                 # Core validation rules (incl. retention-period, active-full)
 ├── validator-sobr.test.ts            # 4 SOBR validation rules
 ├── agent-classifier.test.ts          # classifyAgentJobType() pattern + legacy strings
-├── job-type-filter.test.ts           # isExcludedJobType(): legacy, friendly + bare Proxmox replication labels, negatives
+├── job-type-filter.test.ts           # isExcludedJobType(): legacy, friendly + bare Proxmox replication labels, negatives; isCloudNativeJob()
 ├── pipeline.test.ts                  # End-to-end analyzeHealthcheck() with real sample data
-├── sample-exports.test.ts            # E2E against sanitised current-format (vHC 3.1.1) exports: replicas, plug-ins, agents, sizing
+├── sample-exports.test.ts            # E2E against sanitised current-format (vHC 3.1.1) exports: replicas, plug-ins, agents, cloud plug-in policies, sizing
 ├── version-compare.test.ts           # Semver comparison edge cases
 ├── constants.test.ts                 # MINIMUM_* constants + PIPELINE_STEPS
 ├── validation-selectors.test.ts      # Blocker/passing filter helpers

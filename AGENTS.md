@@ -19,6 +19,7 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
 ```
 ./
 ├── PRD.md                        # Tech spec (START HERE)
+├── GLOSSARY.md                   # Domain terms (cloud plug-in job type, cloud-native job)
 ├── VDCVAULT-CHEETSHEET.md        # Domain knowledge, Vault limitations
 ├── ARCHITECTURE.md               # Data flow, component hierarchy, decisions
 ├── DESIGN-SYSTEM.md              # Motion tokens, animation philosophy (41KB)
@@ -28,6 +29,7 @@ Full pipeline operational: JSON upload → normalize → validate → dashboard.
 ├── veeam-healthcheck.v12-win.example.json / .v13-vsa.example.json # Older-format samples (not imported by tests)
 ├── veeam-healthcheck.v13.1-replicas-plugins.example.json # Sanitised vHC 3.1.1 export: VBR 13.1.2, replicas + plug-ins
 ├── veeam-healthcheck.v13.1-windows-agents.example.json   # Sanitised vHC 3.1.1 export: VBR 13.1.0, Windows agents
+├── veeam-healthcheck.v13.1-cloud-plugin-policies.example.json # Sanitised vHC 3.1.1 export: VBR 13.1.1, AWS/Azure/GCE plug-in policies with no repository
 ├── package.json                  # Dependencies locked per PRD
 ├── vite.config.ts                # React + Tailwind + Vitest config, @ alias
 ├── tsconfig.json                 # References app/node configs, @/* alias

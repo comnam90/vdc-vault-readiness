@@ -520,3 +520,83 @@ describe("friendly replication labels (veeam-healthcheck ADR 0020 format)", () =
     expect(status("retention-period")).toBe("pass");
   });
 });
+
+describe("cloud plug-in policies with no repository (#100)", () => {
+  function exportWithJobs(rows: string[][]): HealthcheckRoot {
+    return {
+      Licenses: [],
+      Sections: {
+        backupServer: {
+          Headers: ["Name", "Version"],
+          Rows: [["VBR-01", "13.1.1.18"]],
+        },
+        jobInfo: {
+          Headers: ["JobName", "JobType", "Encrypted", "RepoName"],
+          Rows: rows,
+        },
+      },
+    };
+  }
+
+  it.each([
+    "AWS EC2 Backup",
+    "AWS RDS Backup",
+    "aws efs backup",
+    "Azure IaaS Backup",
+    "Azure SQL Backup",
+    "GCE Backup",
+    "Google Cloud SQL Backup",
+    "VmbApiPolicyTempJob",
+  ])(
+    "keeps a '%s' job with an empty repository as a null repository",
+    (jobType) => {
+      const { data } = analyzeHealthcheck(
+        exportWithJobs([["Cloud Policy", jobType, "False", ""]]),
+      );
+
+      expect(data.dataErrors).toEqual([]);
+      expect(data.jobInfo).toHaveLength(1);
+      expect(data.jobInfo[0]).toMatchObject({
+        JobName: "Cloud Policy",
+        JobType: jobType,
+        RepoName: null,
+      });
+    },
+  );
+
+  it.each([
+    "VMware Backup",
+    "File Backup",
+    "Proxmox Backup",
+    "Nutanix AHV Backup",
+    "HPE Morpheus Backup",
+  ])(
+    "still drops a '%s' job with an empty repository as a data error",
+    (jobType) => {
+      const { data } = analyzeHealthcheck(
+        exportWithJobs([["Broken Job", jobType, "True", ""]]),
+      );
+
+      expect(data.jobInfo).toEqual([]);
+      expect(data.dataErrors).toEqual([
+        expect.objectContaining({
+          section: "jobInfo",
+          field: "RepoName",
+          reason: "Missing required RepoName",
+        }),
+      ]);
+    },
+  );
+
+  it("keeps a legacy VmbApiPolicyTempJob row's repository when it has one", () => {
+    // The raw type also covers Proxmox, AHV and Morpheus jobs; with a
+    // repository it is an ordinary job, not a cloud-native one.
+    const { data } = analyzeHealthcheck(
+      exportWithJobs([
+        ["Plug-in Job", "VmbApiPolicyTempJob", "False", "Repo1"],
+      ]),
+    );
+
+    expect(data.jobInfo[0].RepoName).toBe("Repo1");
+  });
+});
