@@ -601,7 +601,54 @@ describe("buildCalculatorSummary", () => {
 
       const result = buildCalculatorSummary(jobs, sessions);
 
+      // Cloud job's 0 skipped (size and rate): 100 × 10 / 100
       expect(result.weightedAvgChangeRate).toBeCloseTo(10, 6);
+    });
+
+    it("ignores a 0 change rate from a legacy VmbApiPolicyTempJob row with no repository", () => {
+      const jobs: SafeJob[] = [
+        makeJob({ JobName: "Ordinary", SourceSizeGB: 100 }),
+        makeJob({
+          JobName: "Legacy Policy",
+          JobType: "VmbApiPolicyTempJob",
+          RepoName: null,
+          SourceSizeGB: 300,
+        }),
+      ];
+      const sessions: SafeJobSession[] = [
+        makeSession({ JobName: "Ordinary", AvgChangeRate: 10 }),
+        makeSession({ JobName: "Legacy Policy", AvgChangeRate: 0 }),
+      ];
+
+      const result = buildCalculatorSummary(jobs, sessions);
+
+      // Cloud-native via the legacy type: 100 × 10 / 100
+      expect(result.weightedAvgChangeRate).toBeCloseTo(10, 6);
+    });
+
+    it("reports no change rate, not 0, when every rate is a cloud-native 0", () => {
+      const jobs: SafeJob[] = [
+        makeJob({
+          JobName: "AWS Policy",
+          JobType: "AWS EC2 Backup",
+          RepoName: null,
+          SourceSizeGB: 100,
+        }),
+        makeJob({
+          JobName: "Azure Policy",
+          JobType: "Azure IaaS Backup",
+          RepoName: null,
+          SourceSizeGB: 300,
+        }),
+      ];
+      const sessions: SafeJobSession[] = [
+        makeSession({ JobName: "AWS Policy", AvgChangeRate: 0 }),
+        makeSession({ JobName: "Azure Policy", AvgChangeRate: 0 }),
+      ];
+
+      const result = buildCalculatorSummary(jobs, sessions);
+
+      expect(result.weightedAvgChangeRate).toBeNull();
     });
 
     it("still counts a 0 change rate from an ordinary job", () => {
@@ -637,6 +684,7 @@ describe("buildCalculatorSummary", () => {
 
       const result = buildCalculatorSummary(jobs, sessions);
 
+      // Has a repository, so ordinary: (100 × 10 + 300 × 0) / 400
       expect(result.weightedAvgChangeRate).toBeCloseTo(2.5, 6);
     });
 

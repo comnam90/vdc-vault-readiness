@@ -235,11 +235,8 @@ describe("current-format sample: VBR 13.1.1 with cloud plug-in policies", () => 
     // (AWS 30 + 33, Azure 129 + 129 + 127) = 1139.01 GB.
     expect(summary.totalSourceDataTB).toBeCloseTo(1139.01 / 1024, 3);
   });
-});
 
-describe("current-format sample: VBR 13.1.1 cloud plug-in policies in sizing (#102)", () => {
-  it("computes the weighted change rate from ordinary jobs alone", () => {
-    const result = analyzeHealthcheck(cloudPluginSample as HealthcheckRoot);
+  it("computes the weighted change rate from ordinary jobs alone (#102)", () => {
     const summary = buildCalculatorSummary(
       result.data.jobInfo,
       result.data.jobSessionSummary,
