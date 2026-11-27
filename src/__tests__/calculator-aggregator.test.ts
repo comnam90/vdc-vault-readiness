@@ -583,6 +583,28 @@ describe("buildCalculatorSummary", () => {
     expect(result.immutabilityDays).toBe(DEFAULT_IMMUTABILITY_DAYS);
   });
 
+  describe("cloud-native jobs' change rates (#102)", () => {
+    it("ignores a 0 change rate from a cloud-native job", () => {
+      const jobs: SafeJob[] = [
+        makeJob({ JobName: "Ordinary", SourceSizeGB: 100 }),
+        makeJob({
+          JobName: "Cloud Policy",
+          JobType: "Azure IaaS Backup",
+          RepoName: null,
+          SourceSizeGB: 300,
+        }),
+      ];
+      const sessions: SafeJobSession[] = [
+        makeSession({ JobName: "Ordinary", AvgChangeRate: 10 }),
+        makeSession({ JobName: "Cloud Policy", AvgChangeRate: 0 }),
+      ];
+
+      const result = buildCalculatorSummary(jobs, sessions);
+
+      expect(result.weightedAvgChangeRate).toBeCloseTo(10, 6);
+    });
+  });
+
   describe("buildCalculatorSummary retention floor", () => {
     it("applies 30-day floor when max retention is 14 days", () => {
       const jobs: SafeJob[] = [makeJob({ RetainDays: 14 })];

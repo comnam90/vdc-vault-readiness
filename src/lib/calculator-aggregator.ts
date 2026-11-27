@@ -3,6 +3,7 @@ import type { CalculatorSummary } from "@/types/calculator";
 import { DEFAULT_SETTINGS, type GlobalSettings } from "@/types/settings";
 import { MINIMUM_RETENTION_DAYS, DEFAULT_IMMUTABILITY_DAYS } from "./constants";
 import { formatShortGfs } from "./format-utils";
+import { isCloudNativeJob } from "./job-type-filter";
 
 export interface GfsResult {
   weekly: number | null;
@@ -136,6 +137,12 @@ export function calculateWeightedChangeRate(
     const changeRate = changeRateByJob.get(job.JobName);
 
     if (changeRate == null) {
+      continue;
+    }
+
+    // A cloud-native job's 0 means "not collected" upstream, not "no change"
+    // (ADR 0003), so it's treated as missing.
+    if (changeRate === 0 && isCloudNativeJob(job)) {
       continue;
     }
 
